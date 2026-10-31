@@ -65,6 +65,11 @@ function resize() {
   if (!$('automap').classList.contains('hidden')) drawMap();
 }
 window.addEventListener('resize', resize);
+// Phones drop the WebGL context when short of memory; preventDefault lets three.js restore it.
+canvas.addEventListener('webglcontextlost', e => {
+  e.preventDefault();
+  message('Graphics were reset by the phone. If the world looks wrong, open the menu and try fewer generations.');
+});
 
 // ---------------- Audio (tiny synth, no files) ----------------
 let actx = null, noiseBuf = null;
@@ -173,13 +178,18 @@ $('couplesToggle').addEventListener('change', e => {
 });
 
 // ---------------- Menu: loading a tree ----------------
+function loadStatus(text, error = false) {
+  $('loadStatus').textContent = text;
+  $('loadStatus').style.color = error ? '#ff6a3a' : '';
+}
 async function loadText(text, name) {
-  $('loadStatus').textContent = 'Reading…';
+  loadStatus('Reading…');
   await new Promise(r => setTimeout(r, 20));
-  const data = parseGedcom(text);
-  if (!data.individuals.size) { $('loadStatus').textContent = 'No people found in that file. Is it a GEDCOM (.ged)?'; return; }
+  let data;
+  try { data = parseGedcom(text); } catch (e) { loadStatus(`Could not read ${name}: ${e.message}`, true); return; }
+  if (!data.individuals.size) { loadStatus('No people found in that file. Is it a GEDCOM (.ged)?', true); return; }
   S.data = data; S.fileName = name; S.fileKey = 'a3d:' + hashString(text.length + name + text.slice(0, 2000));
-  $('loadStatus').textContent = `Loaded ${name}: ${data.individuals.size} people, ${data.families.size} families.`;
+  loadStatus(`Loaded ${name}: ${data.individuals.size} people, ${data.families.size} families.`);
   const savedRoot = store.get(S.fileKey + ':root');
   S.rootId = savedRoot && data.individuals.has(savedRoot) ? savedRoot : bestDefaultRoot(data);
   $('cardSetup').classList.remove('hidden');
@@ -226,16 +236,24 @@ function renderRootList() {
 function updateGenInfo() {
   S.maxGen = +$('genRange').value;
   $('genVal').textContent = S.maxGen;
+  $('genInfo').style.color = '';
   if (!S.data || !S.rootId) return;
   const n = countAncestors(S.data, S.rootId, S.maxGen) - 1;
   const root = S.data.individuals.get(S.rootId);
   $('genInfo').textContent = `You play as ${displayName(root)}. ${n} ancestor${n === 1 ? '' : 's'} will be waiting.${n > 1500 ? ' That is a lot; fewer generations will run faster on a phone.' : ''}`;
 }
 
+// No accept filter on the input: Android doesn't know the .ged type and greys those files out in its picker.
 $('fileInput').addEventListener('change', async e => {
   const f = e.target.files[0];
+  e.target.value = ''; // lets the same file be picked again after an error
   if (!f) return;
-  const buf = await f.arrayBuffer();
+  if (/\.zip$/i.test(f.name)) { loadStatus('That is a .zip file. Unzip it first, then load the .ged file inside.', true); return; }
+  loadStatus('Reading…');
+  let buf;
+  // Files still in Google Drive or another cloud app can fail to read or arrive empty on phones.
+  try { buf = await f.arrayBuffer(); } catch (err) { loadStatus(`Could not open ${f.name}. Download it to your phone (e.g. the Downloads folder) and pick it from there.`, true); return; }
+  if (!buf.byteLength) { loadStatus(`${f.name} is empty. If it is in Google Drive or email, download it to your phone first, then pick it again.`, true); return; }
   const text = decodeGedcomBytes(buf);
   if (text.length < 4.5e6 && store.set('a3d:last', text)) store.set('a3d:lastName', f.name);
   loadText(text, f.name);
@@ -246,7 +264,7 @@ async function demoText() {
 }
 $('btnDemo').onclick = async () => {
   sfx.select();
-  try { loadText(await demoText(), 'Demo family (fictional)'); } catch (e) { $('loadStatus').textContent = 'Could not load the demo file.'; }
+  try { loadText(await demoText(), 'Demo family (fictional)'); } catch (e) { loadStatus('Could not load the demo file.', true); }
 };
 if (store.get('a3d:last')) {
   $('btnLast').classList.remove('hidden');
@@ -255,7 +273,16 @@ if (store.get('a3d:last')) {
 }
 $('rootSearch').addEventListener('input', renderRootList);
 $('genRange').addEventListener('input', updateGenInfo);
-$('btnStart').onclick = () => { sfx.select(); startGame(); };
+$('btnStart').onclick = () => {
+  sfx.select();
+  startGame().catch(err => {
+    // Show what went wrong on the menu instead of leaving the loading screen up forever.
+    console.error(err);
+    $('loading').classList.add('hidden');
+    $('genInfo').textContent = `Could not build the courtyard: ${err.message}. Try fewer generations.`;
+    $('genInfo').style.color = '#ff6a3a';
+  });
+};
 $('btnResume').onclick = () => { sfx.select(); closeMenu(); };
 
 // ---------------- Building the level ----------------

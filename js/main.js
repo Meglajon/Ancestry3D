@@ -1,7 +1,7 @@
 // Ancestry 3D — walk around a GEDCOM family tree as the person at its root.
 import * as THREE from 'three';
 import { parseGedcom, decodeGedcomBytes } from './gedcom.js';
-import { collectAncestors, layoutAncestors, displayName, firstName, lifespan, relationship, countAncestors, birthYear, hashString } from './ancestry.js';
+import { genAt, collectAncestors, layoutAncestors, displayName, firstName, lifespan, relationship, countAncestors, birthYear, hashString } from './ancestry.js';
 import { buildWorld, GEN_NAMES, THEMES } from './world.js';
 import { buildDialogue, shotQuip, stompQuip } from './dialogue.js';
 import { drawPortrait, drawIslandPortrait } from './textures.js';
@@ -152,10 +152,18 @@ function applyStyle(style, { silent = false } = {}) {
 }
 function refreshResume() {
   // A different world look or couples layout needs the courtyard rebuilt, so offer ENTER rather than RESUME.
-  const same = S.running && S.builtTheme === S.theme && S.builtCouples === S.couples;
+  const same = S.running && S.builtTheme === S.theme && S.builtCouples === S.couples && S.builtShape === S.shape;
   $('cardResume').style.display = same ? '' : 'none';
 }
 for (const b of $('styleSeg').querySelectorAll('button')) b.onclick = () => applyStyle(b.dataset.style);
+for (const b of $('shapeSeg').querySelectorAll('button')) b.onclick = () => {
+  S.shape = b.dataset.shape;
+  store.set('a3d:shape', S.shape);
+  $('shapeSeg').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+  sfx.select();
+  refreshResume();
+  if (!S.running && S.booted) buildAttract();
+};
 $('couplesToggle').addEventListener('change', e => {
   S.couples = e.target.checked;
   store.set('a3d:couples', S.couples ? '1' : '0');
@@ -275,10 +283,10 @@ async function startGame() {
   await new Promise(r => setTimeout(r, 30));
   try { await Promise.all(['700 16px "Fredoka"', '16px "Press Start 2P"', '16px "Pixelify Sans"', '22px "Lilita One"'].map(f => document.fonts.load(f))); } catch (e) { /* fallback fonts */ }
   store.set(S.fileKey + ':root', S.rootId);
-  const tree = layoutAncestors(collectAncestors(S.data, S.rootId, S.maxGen), { couples: S.couples });
+  const tree = layoutAncestors(collectAncestors(S.data, S.rootId, S.maxGen), { couples: S.couples, shape: S.shape });
   computeTraits(tree, S.data);
   buildLevel(tree);
-  S.builtTheme = S.theme; S.builtCouples = S.couples;
+  S.builtTheme = S.theme; S.builtCouples = S.couples; S.builtShape = S.shape;
   const rootLook = S.world.rootLook;
   // You are the root person: in the island look you see yourself; in the shooter looks you hold the minigun.
   if (cute()) {
@@ -294,7 +302,7 @@ async function startGame() {
   $('ammoCell').style.display = S.gun && S.gun.state.ammo == null ? 'none' : '';
   S.met = new Set(JSON.parse(store.get(S.fileKey + ':met:' + S.rootId) || '[]'));
   for (const id of S.met) { const n = S.world.byId.get(id); if (n) n.met = true; }
-  S.pos.set(0, 0, 0); S.vel.set(0, 0, 0); S.posY = 0.3; S.vy = 0; S.coins = 0; S.onGround = true;
+  S.pos.set(tree.hub.x, 0, tree.hub.z); S.vel.set(0, 0, 0); S.posY = 0.3; S.vy = 0; S.coins = 0; S.onGround = true;
   S.yaw = 0; // facing your father's side
   S.avatarYaw = Math.PI;
   S.pitch = cute() ? 0 : -0.05;
@@ -462,7 +470,16 @@ function movePlayer(dt) {
   };
   for (const n of S.world.npcs) if (n.near && S.posY < 1.2) push(n.person.x, n.person.z, 0.85);
   for (const c of S.world.colliders) if (S.posY > 1.2) c.skip = true; else c.skip = false;
-  for (const c of S.world.colliders) if (!c.skip && Math.abs(c.x - S.pos.x) < 2 && Math.abs(c.z - S.pos.z) < 2) push(c.x, c.z, c.r + 0.3);
+  for (const c of S.world.colliders) if (!c.skip && !(c.barrel && !c.barrel.alive) && Math.abs(c.x - S.pos.x) < 2 && Math.abs(c.z - S.pos.z) < 2) push(c.x, c.z, c.r + 0.3);
+  // boxes of bullets
+  if (S.gun?.kind === 'minigun') for (const a of S.world.pickups || []) {
+    if (a.taken || Math.abs(a.x - S.pos.x) > 0.9 || Math.abs(a.z - S.pos.z) > 0.9) continue;
+    if (S.gun.state.ammo >= S.gun.state.maxAmmo) continue;
+    S.world.takeAmmo(a);
+    S.gun.state.ammo = Math.min(S.gun.state.maxAmmo, S.gun.state.ammo + 150);
+    message('Picked up a box of bullets.');
+    beep(520, 0.05, 'square', 0.05); setTimeout(() => beep(780, 0.08, 'square', 0.05), 60);
+  }
   if (platform()) jumpPhysics(dt);
   const r = Math.hypot(S.pos.x, S.pos.z), maxR = S.world.wallRadius - 0.6;
   if (r > maxR) { S.pos.x *= maxR / r; S.pos.z *= maxR / r; }
@@ -658,8 +675,9 @@ function updateGun(dt) {
     camera.getWorldDirection(fwdV);
     fwdV.x += (Math.random() - 0.5) * G.spread; fwdV.y += (Math.random() - 0.5) * G.spread; fwdV.z += (Math.random() - 0.5) * G.spread;
     fwdV.normalize();
-    const hit = traceShot(camera.position, fwdV, S.world.npcs, S.world.wallRadius, G.range);
+    const hit = traceShot(camera.position, fwdV, S.world.npcs, S.world.wallRadius, G.range, S.world.shootables || []);
     if (!hit) continue;
+    if (hit.prop) { blowUp(hit.prop); continue; }
     if (!G.melee || hit.npc) S.impacts.spawn(hit.point.addScaledVector(fwdV, -0.15));
     if (hit.npc) {
       const n = hit.npc;
@@ -675,6 +693,32 @@ function updateGun(dt) {
   if (shots) { S.pitch = Math.min(1.2, S.pitch + 0.002 * shots); S.face.grinUntil = performance.now() + 600; }
   S.impacts.update(dt);
   if (S.gun.state.ammo != null) $('sAmmo').textContent = Math.floor(S.gun.state.ammo);
+}
+
+// A toxic barrel bursting: noise, dust, and everyone nearby jumps out of their skin.
+function blowUp(b) {
+  S.world.explodeBarrel?.(b);
+  boomSound();
+  for (let k = 0; k < 6; k++) S.impacts.spawn(new THREE.Vector3(b.x + (Math.random() - 0.5) * 1.6, 0.3 + Math.random() * 1.4, b.z + (Math.random() - 0.5) * 1.6));
+  S.face.grinUntil = performance.now() + 900;
+  for (const n of S.world.npcs) {
+    if (n.dist > 40 || Math.hypot(n.person.x - b.x, n.person.z - b.z) > 6) continue;
+    n.flinch = 0.6;
+    const now = performance.now();
+    if (now - (S.quipAt.get(n.person.id) || 0) > 3500 && Math.random() < 0.5) { S.quipAt.set(n.person.id, now); message(`${firstName(n.person.indi)}: "${shotQuip(n.person, S.quipN++)}"`); }
+  }
+  // set off barrels right next to it, one after another
+  for (const o of S.world.shootables || []) if (o.alive && o !== b && Math.hypot(o.x - b.x, o.z - b.z) < 1.6) setTimeout(() => blowUp(o), 180);
+}
+function boomSound() {
+  const a = audio(); if (!a) return;
+  try {
+    const len = a.sampleRate * 0.6, buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2);
+    const src = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+    src.buffer = buf; f.type = 'lowpass'; f.frequency.value = 700; g.gain.value = 0.5;
+    src.connect(f).connect(g).connect(a.destination); src.start();
+  } catch (e) { /* optional */ }
 }
 
 // ---------------- Dialogue ----------------
@@ -785,9 +829,7 @@ function updateCompass() {
 let lastStatus = 0;
 function updateStatus(t = 0) {
   if (!S.tree || !S.world.rootLook) return;
-  const r = Math.hypot(S.pos.x, S.pos.z);
-  let gen = 0;
-  S.tree.radii.forEach((rad, g) => { if (r >= rad - 3.5) gen = g; });
+  const gen = genAt(S.tree, S.pos.x, S.pos.z);
   if (gen !== S.lastGen && S.lastGen !== -1 && gen > 0) message(`Gen ${gen}: ${GEN_NAMES(gen).toLowerCase().replace(/^./, c => c.toUpperCase())}`);
   S.lastGen = gen;
   const total = S.world.npcs.length;
@@ -870,7 +912,12 @@ function drawMap() {
   c.strokeStyle = C.edge;
   if (!isl) { c.beginPath(); c.arc(X(0), Y(0), S.tree.worldRadius * scale, 0, Math.PI * 2); c.stroke(); }
   c.strokeStyle = C.ring;
-  S.tree.radii.forEach((r, g) => { if (g) { c.beginPath(); c.arc(X(0), Y(0), (r - 1.45) * scale, 0, Math.PI * 2); c.stroke(); } });
+  for (const gd of S.tree.guides) {
+    c.beginPath();
+    if (gd.kind === 'row') { c.moveTo(X(gd.x0), Y(gd.z + 1.45)); c.lineTo(X(gd.x1), Y(gd.z + 1.45)); }
+    else c.arc(X(gd.cx), Y(gd.cz), (gd.r - 1.45) * scale, gd.t0, gd.t0 + gd.tl);
+    c.stroke();
+  }
   c.lineWidth = Math.max(1, scale * 0.15);
   for (const e of S.tree.edges) {
     const a = S.tree.people.get(e.child), b = S.tree.people.get(e.parent);
@@ -1005,12 +1052,13 @@ async function buildAttract() {
   if (S.running) return;
   try { attractData ||= parseGedcom(await demoText()); } catch (e) { return; }
   if (S.running) return;
-  const tree = layoutAncestors(collectAncestors(attractData, attractData.individuals.keys().next().value, 6), { couples: S.couples });
+  const tree = layoutAncestors(collectAncestors(attractData, attractData.individuals.keys().next().value, 6), { couples: S.couples, shape: S.shape });
   computeTraits(tree, attractData);
   buildLevel(tree);
   if (cute()) {
     const a = buildIslandFigure(S.world.rootLook, S.world.material, { legs: true });
     a.root.rotation.y = Math.PI;
+    a.root.position.set(tree.hub.x, 0, tree.hub.z);
     scene.add(a.root);
   }
   if (attractLoop) return;
@@ -1031,6 +1079,8 @@ async function buildAttract() {
 }
 
 S.couples = store.get('a3d:couples') === '1';
+S.shape = ['circle', 'half', 'tree'].includes(store.get('a3d:shape')) ? store.get('a3d:shape') : 'circle';
+$('shapeSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.shape === S.shape));
 $('couplesToggle').checked = S.couples;
 applyStyle({ chunky: 'retro', sharp: 'retro', action: 'platform' }[store.get('a3d:style')] || store.get('a3d:style') || 'retro', { silent: true });
 S.booted = true;

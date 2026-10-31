@@ -8,8 +8,10 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 VENDOR = pathlib.Path(os.environ.get('THREE_DIR', '/home/claude/vendor/three'))
 OUT = pathlib.Path(os.environ.get('SHOTS', '/tmp/claude-0/shots')); OUT.mkdir(parents=True, exist_ok=True)
 PAGE = os.environ.get('PAGE', 'dev.html')
+RUNS = [('retro', False, 'circle'), ('platform', True, 'circle'), ('blocks', False, 'circle'), ('island', True, 'circle'),
+        ('retro', False, 'half'), ('retro', True, 'tree'), ('platform', False, 'tree'), ('blocks', True, 'half'), ('island', False, 'tree')]
 
-async def run(b, name, vp, mobile, style, couples):
+async def run(b, name, vp, mobile, style, couples, shape='circle'):
     ctx = await b.new_context(viewport=vp, is_mobile=mobile, has_touch=mobile, device_scale_factor=2 if mobile else 1)
     page = await ctx.new_page()
     errors = []
@@ -28,10 +30,11 @@ async def run(b, name, vp, mobile, style, couples):
     await page.wait_for_timeout(1200)
     await page.click(f'#styleSeg [data-style="{style}"]')
     await page.wait_for_timeout(1500)
-    tag = f'{name}-{style}'
+    tag = f'{name}-{style}-{shape}'
     await page.screenshot(path=str(OUT / f'{tag}-0-title.png'))
     await page.click('#btnDemo')
     await page.wait_for_selector('#cardSetup:not(.hidden)')
+    await page.click(f'#shapeSeg [data-shape="{shape}"]')
     if couples:
         await page.click('label.toggle')
     await page.screenshot(path=str(OUT / f'{tag}-1-setup.png'))
@@ -40,8 +43,8 @@ async def run(b, name, vp, mobile, style, couples):
     await page.screenshot(path=str(OUT / f'{tag}-2-spawn.png'))
     # walk up to a gen-3 ancestor
     await page.evaluate("""() => { const A = window.__A3D; const p = [...A.S.tree.people.values()].find(p => p.gen === 3);
-      const ang = Math.atan2(p.z, p.x); const r = p.radius - 2.2;
-      A.S.pos.set(Math.cos(ang)*r + 0.3, 0, Math.sin(ang)*r); A.S.yaw = Math.atan2(-(p.x-A.S.pos.x), -(p.z-A.S.pos.z)); A.S.pitch = 0; window.__p = p; }""")
+      const h = A.S.tree.hub; let dx = h.x - p.x, dz = h.z - p.z; if (A.S.tree.shape === 'tree') { dx = 0; dz = 1; }
+      const l = Math.hypot(dx, dz) || 1; A.S.pos.set(p.x + dx / l * 2.2 + 0.3, 0, p.z + dz / l * 2.2); A.S.yaw = Math.atan2(-(p.x-A.S.pos.x), -(p.z-A.S.pos.z)); A.S.pitch = 0; window.__p = p; }""")
     await page.wait_for_timeout(1500)
     await page.screenshot(path=str(OUT / f'{tag}-3-npc.png'))
     if style == 'platform':
@@ -60,13 +63,23 @@ async def run(b, name, vp, mobile, style, couples):
         await page.screenshot(path=str(OUT / f'{tag}-4-fire.png'))
         await page.evaluate("() => { window.__A3D.S.firing = false; }")
         print(tag, 'ammo after burst:', await page.inner_text('#sAmmo'), '| msgs:', (await page.inner_text('#msgs')).replace('\n', ' / ')[:160])
+    if style == 'retro':
+        await page.evaluate("""() => { const A = window.__A3D, b = A.S.world.shootables[0]; window.__b = b;
+          A.S.pos.set(b.x + 4, 0, b.z); A.S.yaw = Math.atan2(-(b.x - A.S.pos.x), -(b.z - A.S.pos.z)); A.S.pitch = -0.2; A.S.firing = true; }""")
+        await page.wait_for_timeout(900)
+        await page.screenshot(path=str(OUT / f'{tag}-4b-barrel.png'))
+        alive = await page.evaluate("() => { const A = window.__A3D; A.S.firing = false; return window.__b.alive; }")
+        await page.evaluate("() => { const A = window.__A3D, a = A.S.world.pickups[0]; A.S.gun.state.ammo = 50; A.S.pos.set(a.x, 0, a.z + 0.3); }")
+        await page.wait_for_timeout(500)
+        print(tag, 'barrel exploded:', not alive, '| ammo after pickup:', await page.inner_text('#sAmmo'), '| props:',
+              await page.evaluate("() => { const W = window.__A3D.S.world; return { barrels: W.shootables.length, ammo: W.pickups.length, colliders: W.colliders.length }; }"))
     await page.evaluate("() => { const A = window.__A3D; A.openDialog(A.S.world.byId.get(window.__p.id)); }")
     await page.wait_for_timeout(2200)
     await page.screenshot(path=str(OUT / f'{tag}-5-talk.png'))
     for _ in range(14):
         await page.evaluate("() => { const d = document.querySelector('#dialog'); if (!d.classList.contains('hidden')) { d.click(); d.click(); } }")
         await page.wait_for_timeout(40)
-    await page.evaluate("() => { const A = window.__A3D; A.S.pos.set(0, 0, 9); A.S.yaw = 0; A.S.pitch = -0.1; }")
+    await page.evaluate("() => { const A = window.__A3D; const h = A.S.tree.hub; A.S.pos.set(h.x, 0, h.z + (A.S.tree.shape === 'circle' ? 9 : 4)); A.S.yaw = 0; A.S.pitch = -0.1; }")
     await page.wait_for_timeout(1200)
     await page.screenshot(path=str(OUT / f'{tag}-6-vista.png'))
     await page.evaluate("() => window.__A3D.openMap()")
@@ -85,7 +98,8 @@ async def main():
     async with async_playwright() as p:
         b = await p.chromium.launch(executable_path='/usr/bin/google-chrome', args=['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'])
         for name, vp, mobile in [('desktop', {'width': 1280, 'height': 720}, False), ('mobile', {'width': 412, 'height': 860}, True)]:
-            for style, couples in [('retro', False), ('platform', True), ('blocks', False), ('island', True)]:
-                await run(b, name, vp, mobile, style, couples)
+            for style, couples, shape in RUNS:
+                if mobile and shape != 'circle': continue
+                await run(b, name, vp, mobile, style, couples, shape)
         await b.close()
 asyncio.run(main())

@@ -142,8 +142,9 @@ export function collectAncestors(data, rootId, maxGen) {
 }
 
 /**
- * Ground layout. Each person owns an angular wedge proportional to the number of family lines behind
- * them; parents split their child's wedge (father first). Ring radii grow so neighbours never crowd.
+ * Ground layout. Each person owns a wedge proportional to the number of family lines behind them;
+ * parents split their child's wedge (father first). Rings or rows spread just enough that neighbours
+ * never crowd.
  */
 export function layoutAncestors(tree, opts = {}) {
   const ringGap = opts.ringGap ?? 7;
@@ -161,7 +162,13 @@ export function layoutAncestors(tree, opts = {}) {
   };
   w(rootId);
 
-  // Start the father's side on the left of the player's initial view (player looks along -Z).
+  // Shapes: 'circle' (full 360° fan), 'half' (180° fan opening ahead of you) or 'tree' (straight rows that
+  // widen as you go back). Wedges are angles for the fans and fractions of a row's width for the tree.
+  // The father's side is always on the left as you look along -Z from the root.
+  const shape = ['circle', 'half', 'tree'].includes(opts.shape) ? opts.shape : 'circle';
+  const isTree = shape === 'tree';
+  const START = isTree ? 0 : shape === 'half' ? Math.PI + 0.08 : Math.PI, SPAN = isTree ? 1 : shape === 'half' ? Math.PI - 0.16 : Math.PI * 2;
+  const wrap = shape === 'circle';
   const assign = (id, start, span) => {
     const p = people.get(id);
     p.angle = start + span / 2;
@@ -175,7 +182,7 @@ export function layoutAncestors(tree, opts = {}) {
       a += s;
     }
   };
-  assign(rootId, Math.PI, Math.PI * 2);
+  assign(rootId, START, SPAN);
 
   // Group each generation into units. Normally a unit is one person; with couples on, the father and
   // mother of the same child form one unit standing side by side where their two wedges meet.
@@ -183,10 +190,7 @@ export function layoutAncestors(tree, opts = {}) {
   const coupleGap = opts.coupleGap ?? 1.4;
   const unitSpacing = couples ? minSpacing + coupleGap : minSpacing;
   const byGen = [];
-  for (const p of people.values()) {
-    if (p.gen === 0) continue;
-    (byGen[p.gen] ||= []);
-  }
+  for (const p of people.values()) if (p.gen > 0) (byGen[p.gen] ||= []);
   const seenUnit = new Set();
   for (const p of people.values()) {
     if (p.gen === 0 || seenUnit.has(p.id)) continue;
@@ -199,31 +203,43 @@ export function layoutAncestors(tree, opts = {}) {
     const angle = members.length === 2 ? members[0].wedgeStart + members[0].wedgeSpan : p.angle;
     byGen[p.gen].push({ members, angle });
   }
-  // Crowded generations are split into up to 5 staggered rows instead of pushing the ring far out,
+  // Crowded generations are split into up to 5 staggered rows instead of spreading far out,
   // so a big tree stays walkable.
   const rowDepth = opts.rowDepth ?? 2.6;
   const maxRows = opts.maxRows ?? 5;
-  const radii = [0];
+  const radii = [0];   // distance of each generation's line from the root (ring radius or row depth)
   const rows = [1];
-  let outer = 0;
+  const guides = [];
+  let outer = 0, width = 0;
   for (let g = 1; g < byGen.length; g++) {
     const ring = (byGen[g] || []).slice().sort((a, b) => a.angle - b.angle);
     let minSep = Infinity;
     for (let i = 0; i < ring.length; i++) {
-      const a = ring[i].angle, b = i + 1 < ring.length ? ring[i + 1].angle : ring[0].angle + Math.PI * 2;
-      if (ring.length > 1) minSep = Math.min(minSep, b - a);
+      if (ring.length < 2) break;
+      const b = i + 1 < ring.length ? ring[i + 1].angle : wrap ? ring[0].angle + SPAN : null;
+      if (b != null) minSep = Math.min(minSep, b - ring[i].angle);
     }
     const needed = isFinite(minSep) && minSep > 0 ? unitSpacing / minSep : 0;
     const base = outer + ringGap;
-    let k = 1;
-    if (needed > base) k = Math.min(maxRows, Math.ceil(needed / base));
-    if (k > ring.length) k = Math.max(1, ring.length);
-    radii[g] = Math.max(base, needed / k);
+    let k = 1, scale;
+    if (isTree) {
+      const limit = 14 + g * 12; // how wide a row may get before it is split
+      if (needed > limit) k = Math.min(maxRows, Math.ceil(needed / limit));
+      if (k > ring.length) k = Math.max(1, ring.length);
+      width = Math.max(width, needed / k, 6);
+      scale = width;
+      radii[g] = base;
+    } else {
+      if (needed > base) k = Math.min(maxRows, Math.ceil(needed / base));
+      if (k > ring.length) k = Math.max(1, ring.length);
+      radii[g] = Math.max(base, needed / k);
+      scale = radii[g];
+    }
     rows[g] = k;
     outer = radii[g] + (k - 1) * rowDepth;
     ring.forEach((u, i) => { u.row = k > 1 ? i % k : 0; });
-    // the ring wraps around: the last units must not share a row with the first ones
-    if (k > 1 && ring.length > k) {
+    // a full circle wraps around: the last units must not share a row with the first ones
+    if (wrap && k > 1 && ring.length > k) {
       const n = ring.length;
       let extra = k;
       for (let i = n - k; i < n; i++) {
@@ -234,9 +250,15 @@ export function layoutAncestors(tree, opts = {}) {
       outer = radii[g] + (extra - 1) * rowDepth;
     }
     for (const u of ring) {
-      const r = radii[g] + u.row * rowDepth;
-      const cx = Math.cos(u.angle) * r, cz = Math.sin(u.angle) * r;
-      const tx = -Math.sin(u.angle), tz = Math.cos(u.angle); // tangent, toward increasing angle
+      let cx, cz, tx, tz, r;
+      if (isTree) {
+        r = radii[g] + u.row * rowDepth;
+        cx = (u.angle - 0.5) * scale; cz = -r; tx = 1; tz = 0;
+      } else {
+        r = radii[g] + u.row * rowDepth;
+        cx = Math.cos(u.angle) * r; cz = Math.sin(u.angle) * r;
+        tx = -Math.sin(u.angle); tz = Math.cos(u.angle); // tangent, toward increasing angle
+      }
       u.members.forEach((m, i) => {
         const off = u.members.length === 2 ? (i === 0 ? -coupleGap / 2 : coupleGap / 2) : 0;
         m.row = u.row;
@@ -246,13 +268,45 @@ export function layoutAncestors(tree, opts = {}) {
         m.spouseInUnit = u.members.length === 2 ? u.members[1 - i].id : null;
       });
     }
+    guides.push(isTree
+      ? { g, kind: 'row', m: radii[g], z: -radii[g], x0: -width / 2 - 3, x1: width / 2 + 3 }
+      : { g, kind: 'ring', m: radii[g], r: radii[g], t0: START, tl: SPAN, cx: 0, cz: 0 });
   }
   const root = people.get(rootId);
   root.radius = 0; root.x = 0; root.z = 0; root.row = 0;
+
+  // Re-centre so the middle of everything sits at the origin (walls and sky are circles round it).
+  const pts = [[0, 0]];
+  for (const p of people.values()) pts.push([p.x, p.z]);
+  for (const gd of guides) {
+    if (gd.kind === 'row') pts.push([gd.x0, gd.z], [gd.x1, gd.z]);
+    else for (let i = 0; i <= 16; i++) { const a = gd.t0 + gd.tl * i / 16; pts.push([Math.cos(a) * gd.r, Math.sin(a) * gd.r]); }
+  }
+  let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+  for (const [x, z] of pts) { minX = Math.min(minX, x); maxX = Math.max(maxX, x); minZ = Math.min(minZ, z); maxZ = Math.max(maxZ, z); }
+  const ox = shape === 'circle' ? 0 : (minX + maxX) / 2, oz = shape === 'circle' ? 0 : (minZ + maxZ) / 2;
+  for (const p of people.values()) { p.x -= ox; p.z -= oz; }
+  for (const gd of guides) { if (gd.kind === 'row') { gd.z -= oz; gd.x0 -= ox; gd.x1 -= ox; } else { gd.cx -= ox; gd.cz -= oz; } }
+  let far = 0;
+  for (const [x, z] of pts) far = Math.max(far, Math.hypot(x - ox, z - oz));
+  tree.shape = shape;
+  tree.hub = { x: -ox, z: -oz };
   tree.radii = radii;
   tree.rows = rows;
-  tree.worldRadius = (outer || ringGap) + 10;
+  tree.guides = guides;
+  tree.worldRadius = (shape === 'circle' ? (outer || ringGap) : far + 2) + 10;
   return tree;
+}
+
+/** How far "out" (back in time) a point is: distance from the root for fans, distance ahead for the tree. */
+export function genMetric(tree, x, z) {
+  return tree.shape === 'tree' ? tree.hub.z - z : Math.hypot(x - tree.hub.x, z - tree.hub.z);
+}
+export function genAt(tree, x, z) {
+  const m = genMetric(tree, x, z);
+  let gen = 0;
+  for (const gd of tree.guides || []) if (m >= gd.m - 3.5) gen = gd.g;
+  return gen;
 }
 
 export function familiesAsSpouse(data, id) {

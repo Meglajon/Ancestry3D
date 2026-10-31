@@ -11,6 +11,8 @@ import { floorTexture, brickTexture, techTexture, skyTexture, flameFrames, label
 import { buildFigure, lookFor, npcMaterial, buildIslandFigure, islandMaterial } from './npc.js';
 import { relationship, birthYear, seededRandom } from './ancestry.js';
 import { platformEnvironment, blocksEnvironment } from './envs.js';
+import { bandGeometry, placeGuideLabels, openSpots } from './guides.js';
+import { retroProps } from './props.js';
 
 const THEMES = {
   doom: {
@@ -53,21 +55,6 @@ function stripGeometry(segments, width, y) {
 const GEN_COLORS = ['#ffd030', '#30d0ff', '#60ff60', '#ff60ff', '#ff9030', '#a0a0ff', '#ff5050', '#50ffc0', '#ffff70', '#c080ff', '#80ff40', '#ff80a0', '#40c0ff'];
 const GEN_NAMES = g => g === 0 ? 'YOU' : g === 1 ? 'PARENTS' : g === 2 ? 'GRANDPARENTS' : g === 3 ? 'GREAT-GRANDPARENTS' : g === 4 ? '2X GREAT-GRANDPARENTS' : `${g - 2}X GREAT-GRANDPARENTS`;
 
-function placeLabels(group, r, text, makeTex, size = [8, 0.5]) {
-  const tex = makeTex(text);
-  const labels = Math.max(3, Math.round(r / 12));
-  for (let i = 0; i < labels; i++) {
-    const a = (i / labels) * Math.PI * 2 + 0.3;
-    const lr = r - 2.4;
-    const plane = new THREE.Mesh(new THREE.PlaneGeometry(size[0], size[1]), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }));
-    plane.rotation.order = 'YXZ';
-    plane.rotation.x = -Math.PI / 2;
-    plane.rotation.y = -a - Math.PI / 2;
-    plane.position.set(Math.cos(a) * lr, 0.03, Math.sin(a) * lr);
-    group.add(plane);
-  }
-}
-
 // ---------------- Doom environment ----------------
 function doomEnvironment(scene, tree, world) {
   const R = tree.worldRadius;
@@ -97,15 +84,14 @@ function doomEnvironment(scene, tree, world) {
   scene.add(outer);
 
   const ringGroup = new THREE.Group();
-  tree.radii.forEach((r, g) => {
-    if (g === 0) return;
+  for (const gd of tree.guides) {
+    const g = gd.g;
     const color = new THREE.Color(GEN_COLORS[g % GEN_COLORS.length]);
-    const ring = new THREE.Mesh(new THREE.RingGeometry(r - 1.6, r - 1.35, Math.max(48, Math.round(r * 4)), 1),
-      new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.55 }));
-    ring.rotation.x = -Math.PI / 2; ring.position.y = 0.012;
+    const ring = new THREE.Mesh(bandGeometry(gd, 1.35, 1.6), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.55 }));
+    ring.position.y = 0.012;
     ringGroup.add(ring);
-    placeLabels(ringGroup, r, `GEN ${g} · ${GEN_NAMES(g)}`, t => labelTexture(t, GEN_COLORS[g % GEN_COLORS.length]));
-  });
+    placeGuideLabels(ringGroup, gd, labelTexture(`GEN ${g} · ${GEN_NAMES(g)}`, GEN_COLORS[g % GEN_COLORS.length]), [8, 0.5], 2.4);
+  }
   scene.add(ringGroup);
 
   const wallTex = toTexture(brickTexture());
@@ -136,13 +122,17 @@ function doomEnvironment(scene, tree, world) {
 
   // Spawn pad where you start
   const dais = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.4, 0.08, 8), new THREE.MeshLambertMaterial({ map: techTex, color: '#b0a090' }));
-  dais.position.y = 0.04;
+  dais.position.set(tree.hub.x, 0.04, tree.hub.z);
   scene.add(dais);
   world.wallRadius = R + 1.5;
 
+  const propsUpdate = retroProps(scene, tree, world, flameMat);
+  let lastT = null;
   world.envUpdate = t => {
+    const dt = lastT == null ? 0 : Math.min(0.1, t - lastT); lastT = t;
+    propsUpdate(t, dt);
     const f = Math.floor(t * 8);
-    for (const fl of world.torches) fl.material = flameMat[(f + fl.userData.phase) % 4];
+    for (const fl of world.torches) fl.material = flameMat[(((f + fl.userData.phase) % 4) + 4) % 4];
   };
 }
 
@@ -199,29 +189,29 @@ function islandEnvironment(scene, tree, world) {
 
   // Generation rings as sandy paths with painted labels
   const ringGroup = new THREE.Group();
-  const pathTex = sandTexture(); pathTex.repeat.set(30, 1);
-  tree.radii.forEach((r, g) => {
-    if (g === 0) return;
-    const ring = new THREE.Mesh(new THREE.RingGeometry(r - 1.9, r - 1.0, Math.max(64, Math.round(r * 5)), 1), new THREE.MeshLambertMaterial({ map: pathTex }));
-    ring.rotation.x = -Math.PI / 2; ring.position.y = 0.012;
+  const pathMat = new THREE.MeshLambertMaterial({ map: sandTexture() });
+  for (const gd of tree.guides) {
+    const g = gd.g;
+    const ring = new THREE.Mesh(bandGeometry(gd, 1.0, 1.9, 2), pathMat);
+    ring.position.y = 0.012;
     ringGroup.add(ring);
     const name = GEN_NAMES(g).toLowerCase().replace(/(^|\s|-)\w/g, c => c.toUpperCase()).replace('X ', '× ');
-    placeLabels(ringGroup, r + 0.95, `Gen ${g} · ${name}`, t => labelTexture(t, '#7a5230', 512, '700 17px "Fredoka", "Nunito", sans-serif', null, true), [8, 0.5]);
-  });
+    placeGuideLabels(ringGroup, gd, labelTexture(`Gen ${g} · ${name}`, '#7a5230', 512, '700 17px "Fredoka", "Nunito", sans-serif', null, true), [8, 0.5], 1.45);
+  }
   scene.add(ringGroup);
 
   // Central plaza
   const plaza = new THREE.Mesh(new THREE.CircleGeometry(2.6, 40), toon('#e8dcc4'));
-  plaza.rotation.x = -Math.PI / 2; plaza.position.y = 0.02;
+  plaza.rotation.x = -Math.PI / 2; plaza.position.set(tree.hub.x, 0.02, tree.hub.z);
   scene.add(plaza);
   const plazaRim = new THREE.Mesh(new THREE.RingGeometry(2.6, 2.85, 40, 1), toon('#c9b48e'));
-  plazaRim.rotation.x = -Math.PI / 2; plazaRim.position.y = 0.021;
+  plazaRim.rotation.x = -Math.PI / 2; plazaRim.position.set(tree.hub.x, 0.021, tree.hub.z);
   scene.add(plazaRim);
 
   // Trees around the shore and in gaps between people
   const spots = [];
   const ok = (x, z, clear) => {
-    if (Math.hypot(x, z) < 4) return false;
+    if (Math.hypot(x - tree.hub.x, z - tree.hub.z) < 4) return false;
     for (const p of tree.people.values()) if (Math.hypot(p.x - x, p.z - z) < clear) return false;
     for (const s of spots) if (Math.hypot(s[0] - x, s[1] - z) < 3.2) return false;
     return true;

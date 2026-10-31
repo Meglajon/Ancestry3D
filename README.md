@@ -4,8 +4,12 @@ Walk among your ancestors. Load a GEDCOM family tree and explore it as the perso
 middle of a courtyard where every ancestor stands on the ground as a 3D person you can walk up to and talk to.
 
 - **You are the root person.** Pick who you're playing on the setup screen; you start at the centre as them.
-- **Generations are rings on the ground.** Walk outward to go back in time. Each ancestor stands directly behind
+- **Generations are paths on the ground.** Walk outward to go back in time. Each ancestor stands directly behind
   the child they descend through, fathers first.
+- **Choose a layout** (setup screen):
+  - *Full circle*: rings all the way round you.
+  - *Half fan*: the same rings squeezed into the half circle in front of you, so everyone is closer together.
+  - *Tree*: straight rows that branch out ahead of you like a family-tree chart.
 - **Keep couples together** (setup toggle): husbands and wives stand side by side where their family lines meet.
 - **Lines of descent** run along the floor: blue through a father, red or pink through a mother. When a family
   married back into itself, the lines cross the courtyard.
@@ -28,7 +32,7 @@ middle of a courtyard where every ancestor stands on the ground as a 3D person y
 
 | Look | What you get |
 |---|---|
-| **Retro** | 90s demon-shooter: flagstones, brick walls, torches, a burning sky, a status bar with your own face, and a **minigun**. |
+| **Retro** | 90s demon-shooter: flagstones, brick walls, torches, a burning sky, a status bar with your own face, and a **minigun**. The courtyard is dotted with toxic barrels (shoot them and they explode, setting off any next to them), burning barrels, tech lamps, candelabras, crate stacks, broken pillars and boxes of bullets to top up your ammo. |
 | **Platform** | A bright 3D-platformer land: checkered grass, yellow brick paths, rolling hills, floating brick platforms and coins to collect. **Jump** on platforms and bounce on your ancestors' heads. |
 | **Blocks** | A voxel world: grass blocks, gravel paths, block trees, cube-headed people, a hotbar and XP bar, and you can **punch**. |
 | **Island** | A bright, cozy island seen from behind your own villager, with round villagers and speech-bubble chats. |
@@ -75,7 +79,9 @@ js/places.js        place gazetteer: region, dialect and colouring for a GEDCOM 
 js/traits.js        per-person class, schooling, dress decade, inherited colouring
 js/outfits.js       period wardrobe by decade, sex, class, job and region
 js/npc.js           blocky, voxel and island figure builders (4 draw calls near, 1 far)
-js/world.js         rings, descent lines, NPCs, beacon; Retro and Island environments
+js/world.js         generation paths, descent lines, NPCs, beacon; Retro and Island environments
+js/guides.js        generation paths for any layout (rings, arcs or rows), floor labels, open-spot finder
+js/props.js         Retro props: barrels, lamps, candelabras, crates, pillars, ammo pickups, explosions
 js/envs.js          Platform and Blocks environments (platforms and coins included)
 js/dialogue.js      dialect, period and schooling-aware speech, job memories, local history
 js/weapon.js        minigun and arm viewmodels, impacts, shot tracing
@@ -87,7 +93,7 @@ tests/              parser/layout tests (npm test) and a headless browser smoke 
 ```
 
 ```
-npm test            # parser, dates, layout spacing (incl. a 2,047-person tree and couples mode)
+npm test            # parser, dates, layout spacing (incl. a 2,047-person tree, couples mode and every layout)
 npm run build       # writes index.html (self-contained) and dist/artifact.html
 ```
 
@@ -96,8 +102,8 @@ then run `npm run build` to refresh `index.html`.
 
 ### Layout
 
-Each person owns an angular wedge proportional to the number of family lines behind them, split between their
+Each person owns a wedge (an angle in the fan layouts, a share of the width in the tree layout) proportional to the number of family lines behind them, split between their
 father and mother. With couples together, each father/mother pair is placed as one unit where their two wedges
-meet, standing 1.4 m apart. Rings are at least 7 m apart and grow just enough that neighbours stay about 2.8 m apart; crowded outer generations are packed into up to five staggered rows, so even a
+meet, standing 1.4 m apart. Generations are at least 7 m apart and grow just enough that neighbours stay about 2.8 m apart; crowded outer generations are packed into up to five staggered rows, so even a
 complete 10-generation tree stays walkable. Large trees tighten the fog (which doubles as draw distance) to keep
 phones smooth.

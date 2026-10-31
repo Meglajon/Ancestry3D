@@ -7,7 +7,7 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 
 const root = new URL('../', import.meta.url);
 const read = p => readFileSync(new URL(p, root), 'utf8');
-const ORDER = ['gedcom', 'ancestry', 'places', 'textures', 'outfits', 'traits', 'npc', 'dialogue', 'envs', 'world', 'weapon', 'main'];
+const ORDER = ['gedcom', 'ancestry', 'places', 'textures', 'outfits', 'traits', 'npc', 'dialogue', 'guides', 'props', 'envs', 'world', 'weapon', 'main'];
 const external = new Map();
 let bundle = '';
 
@@ -19,7 +19,7 @@ for (const name of ORDER) {
   // local imports become destructuring from the module object
   src = src.replace(/^import\s+\{([^}]+)\}\s+from\s+'\.\/(\w+)\.js';\s*$/gm, (m, names, mod) => {
     if (ORDER.indexOf(mod) < 0 || ORDER.indexOf(mod) >= ORDER.indexOf(name)) throw new Error(`${name}.js imports ${mod}.js, which must come earlier in ORDER`);
-    return `const {${names}} = __m_${mod};`;
+    return `const {${names.replace(/(\w+)\s+as\s+(\w+)/g, '$1: $2')}} = __m_${mod};`;
   });
   src = src.replace(/^export\s+(async\s+)?function\s+(\w+)/gm, (m, a, n) => { exports.push(n); return `${a || ''}function ${n}`; });
   src = src.replace(/^export\s+(const|let|class)\s+(\w+)/gm, (m, k, n) => { exports.push(n); return `${k} ${n}`; });

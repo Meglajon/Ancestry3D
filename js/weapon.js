@@ -214,8 +214,8 @@ export function createImpacts(worldScene) {
  * Trace one round from `origin` along `dir` (unit Vector3). NPCs are treated as upright cylinders.
  * Returns { npc?, point } for the first thing hit, or null if it flies off into the sky.
  */
-export function traceShot(origin, dir, npcs, wallRadius, range = 120) {
-  let best = null, bestT = range;
+export function traceShot(origin, dir, npcs, wallRadius, range = 120, props = []) {
+  let best = null, bestT = range, bestProp = null;
   for (const n of npcs) {
     if (!n.fig.root.visible || n.dist > 70) continue;
     const ox = origin.x - n.person.x, oz = origin.z - n.person.z;
@@ -230,10 +230,25 @@ export function traceShot(origin, dir, npcs, wallRadius, range = 120) {
     if (y < 0 || y > 1.85) continue;
     bestT = t; best = n;
   }
+  // props such as barrels: upright cylinders too
+  for (const p of props) {
+    if (!p.alive) continue;
+    const ox = origin.x - p.x, oz = origin.z - p.z;
+    const a = dir.x * dir.x + dir.z * dir.z;
+    if (a < 1e-6) continue;
+    const b = 2 * (ox * dir.x + oz * dir.z), c = ox * ox + oz * oz - p.r * p.r;
+    const disc = b * b - 4 * a * c;
+    if (disc < 0) continue;
+    const t = (-b - Math.sqrt(disc)) / (2 * a);
+    if (t <= 0.05 || t >= bestT) continue;
+    const y = origin.y + dir.y * t;
+    if (y < 0 || y > p.h) continue;
+    bestT = t; best = null; bestProp = p;
+  }
   // floor
   if (dir.y < -1e-4) {
     const t = -origin.y / dir.y;
-    if (t > 0 && t < bestT) { bestT = t; best = null; }
+    if (t > 0 && t < bestT) { bestT = t; best = null; bestProp = null; }
   }
   // outer wall (circle)
   {
@@ -242,11 +257,11 @@ export function traceShot(origin, dir, npcs, wallRadius, range = 120) {
     if (a > 1e-6 && disc >= 0) {
       const t = (-b + Math.sqrt(disc)) / (2 * a);
       const y = origin.y + dir.y * t;
-      if (t > 0 && t < bestT && y < 6) { bestT = t; best = null; }
+      if (t > 0 && t < bestT && y < 6) { bestT = t; best = null; bestProp = null; }
     }
   }
   if (bestT >= range) return null;
-  return { npc: best, point: origin.clone().addScaledVector(dir, bestT) };
+  return { npc: best, prop: bestProp, point: origin.clone().addScaledVector(dir, bestT) };
 }
 
 // ---------------- Blocky arm (Blocks look) ----------------

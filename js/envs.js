@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { seededRandom } from './ancestry.js';
 import { labelTexture } from './textures.js';
+import { bandGeometry, placeGuideLabels, spotsAlong, segDist as segDistG } from './guides.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 function cvs(w, h, draw) { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); return c; }
@@ -71,29 +72,23 @@ export function platformEnvironment(scene, tree, world) {
   const pathMat = new THREE.MeshLambertMaterial({ map: pathT });
   const brickT = tex(cvs(16, 16, (x) => { x.fillStyle = '#c8602a'; x.fillRect(0, 0, 16, 16); x.fillStyle = '#5a2a10'; for (let r = 0; r < 4; r++) { x.fillRect(0, r * 4 + 3, 16, 1); x.fillRect(r % 2 ? 4 : 0, r * 4, 1, 3); x.fillRect(r % 2 ? 12 : 8, r * 4, 1, 3); } x.fillStyle = '#f0905a'; for (let r = 0; r < 4; r++) x.fillRect(0, r * 4, 16, 1); }));
   const brickMat = new THREE.MeshLambertMaterial({ map: brickT });
-  tree.radii.forEach((r, g) => {
-    if (!g) return;
-    const path = new THREE.Mesh(groundUVs(new THREE.RingGeometry(r - 2, r - 0.9, Math.max(64, Math.round(r * 5)), 1), 1.2), pathMat);
-    path.rotation.x = -Math.PI / 2; path.position.y = 0.02; scene.add(path);
-    const t = labelTexture(`GEN ${g}`, '#ffffff', 256, '22px "Lilita One", "Fredoka", sans-serif', 'rgba(60,30,10,0.9)', true);
-    const labels = Math.max(3, Math.round(r / 12));
-    for (let i = 0; i < labels; i++) {
-      const a = (i / labels) * Math.PI * 2 + 0.3, lr = r - 1.45;
-      const plane = new THREE.Mesh(new THREE.PlaneGeometry(3, 0.5), new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false }));
-      plane.rotation.order = 'YXZ'; plane.rotation.x = -Math.PI / 2; plane.rotation.y = -a - Math.PI / 2;
-      plane.position.set(Math.cos(a) * lr, 0.04, Math.sin(a) * lr); scene.add(plane);
-    }
-  });
+  const labelGroup = new THREE.Group();
+  for (const gd of tree.guides) {
+    const path = new THREE.Mesh(bandGeometry(gd, 0.9, 2, 1.2), pathMat);
+    path.position.y = 0.02; scene.add(path);
+    placeGuideLabels(labelGroup, gd, labelTexture(`GEN ${gd.g}`, '#ffffff', 256, '22px "Lilita One", "Fredoka", sans-serif', 'rgba(60,30,10,0.9)', true), [3, 0.5], 1.45, 0.04);
+  }
+  scene.add(labelGroup);
   const plaza = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.8, 0.3, 24), pathMat);
-  plaza.position.y = 0.15; scene.add(plaza);
-  world.platforms.push({ x: 0, z: 0, hw: 1.9, hd: 1.9, top: 0.3, round: 2.6 });
+  plaza.position.set(tree.hub.x, 0.15, tree.hub.z); scene.add(plaza);
+  world.platforms.push({ x: tree.hub.x, z: tree.hub.z, hw: 1.9, hd: 1.9, top: 0.3, round: 2.6 });
 
   // Keep clear of people and the lines between them
   const segs = tree.edges.map(e => [tree.people.get(e.child), tree.people.get(e.parent)]);
-  const segDist = (px, pz, a, b) => { const dx = b.x - a.x, dz = b.z - a.z, l2 = dx * dx + dz * dz || 1; let t = ((px - a.x) * dx + (pz - a.z) * dz) / l2; t = Math.max(0, Math.min(1, t)); return Math.hypot(px - (a.x + t * dx), pz - (a.z + t * dz)); };
+  const segDist = segDistG;
   const used = [];
   const clear = (x, z, d) => {
-    if (Math.hypot(x, z) < 5 || Math.hypot(x, z) > R - 2) return false;
+    if (Math.hypot(x - tree.hub.x, z - tree.hub.z) < 5 || Math.hypot(x, z) > R - 2) return false;
     for (const p of tree.people.values()) if (Math.hypot(p.x - x, p.z - z) < d) return false;
     for (const u of used) if (Math.hypot(u[0] - x, u[1] - z) < d + u[2]) return false;
     return true;
@@ -136,16 +131,12 @@ export function platformEnvironment(scene, tree, world) {
 
   // Coins: rows along the paths, and over every platform
   const coins = [];
-  tree.radii.forEach((r, g) => {
-    if (!g) return;
-    const n = Math.round(r * Math.PI * 2 / 9);
-    for (let i = 0; i < n; i++) {
-      const a = (i / n) * Math.PI * 2 + 0.15, cr = r - 1.45;
-      const x = Math.cos(a) * cr, z = Math.sin(a) * cr;
+  for (const gd of tree.guides) {
+    for (const { x, z } of spotsAlong(gd, 1.45, 9)) {
       let ok = true; for (const p of tree.people.values()) if (Math.hypot(p.x - x, p.z - z) < 1.4) { ok = false; break; }
       if (ok) coins.push({ x, y: 1.0, z });
     }
-  });
+  }
   for (const p of plats) {
     const c = Math.cos(p.rot), s = Math.sin(p.rot);
     for (let k = 0; k < p.n; k++) { const off = (k - (p.n - 1) / 2); coins.push({ x: p.x + c * off, y: p.top + 0.8, z: p.z - s * off }); }
@@ -246,24 +237,18 @@ export function blocksEnvironment(scene, tree, world) {
   water.rotation.x = -Math.PI / 2; water.position.y = -0.9; scene.add(water);
   // Gravel paths for the generation rings
   const gravel = lam('gravel');
-  tree.radii.forEach((r, g) => {
-    if (!g) return;
-    const path = new THREE.Mesh(groundUVs(new THREE.RingGeometry(r - 2, r - 0.9, Math.max(64, Math.round(r * 5)), 1), 1), gravel);
-    path.rotation.x = -Math.PI / 2; path.position.y = 0.02; scene.add(path);
-    const t = labelTexture(`Gen ${g}`, '#ffffff', 256, '18px "Pixelify Sans", monospace', 'rgba(60,60,60,0.9)');
-    const labels = Math.max(3, Math.round(r / 12));
-    for (let i = 0; i < labels; i++) {
-      const a = (i / labels) * Math.PI * 2 + 0.3, lr = r - 1.45;
-      const plane = new THREE.Mesh(new THREE.PlaneGeometry(3, 0.5), new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false }));
-      plane.rotation.order = 'YXZ'; plane.rotation.x = -Math.PI / 2; plane.rotation.y = -a - Math.PI / 2;
-      plane.position.set(Math.cos(a) * lr, 0.04, Math.sin(a) * lr); scene.add(plane);
-    }
-  });
+  const labelGroup = new THREE.Group();
+  for (const gd of tree.guides) {
+    const path = new THREE.Mesh(bandGeometry(gd, 0.9, 2, 1), gravel);
+    path.position.y = 0.02; scene.add(path);
+    placeGuideLabels(labelGroup, gd, labelTexture(`Gen ${gd.g}`, '#ffffff', 256, '18px "Pixelify Sans", monospace', 'rgba(60,60,60,0.9)'), [3, 0.5], 1.45, 0.04);
+  }
+  scene.add(labelGroup);
   const plaza = new THREE.Mesh(new THREE.BoxGeometry(5, 0.1, 5), new THREE.MeshLambertMaterial({ map: T('stone') }));
-  plaza.position.y = 0.05; scene.add(plaza);
+  plaza.position.set(tree.hub.x, 0.05, tree.hub.z); scene.add(plaza);
   // Oak trees made of blocks
   const spots = [];
-  const clear = (x, z, d) => { if (Math.hypot(x, z) < 5) return false; for (const p of tree.people.values()) if (Math.hypot(p.x - x, p.z - z) < d) return false; for (const s of spots) if (Math.hypot(s[0] - x, s[1] - z) < 5) return false; return true; };
+  const clear = (x, z, d) => { if (Math.hypot(x - tree.hub.x, z - tree.hub.z) < 5) return false; for (const p of tree.people.values()) if (Math.hypot(p.x - x, p.z - z) < d) return false; for (const s of spots) if (Math.hypot(s[0] - x, s[1] - z) < 5) return false; return true; };
   for (let i = 0; i < 300 && spots.length < 40; i++) {
     const a = rnd() * Math.PI * 2, r = 6 + rnd() * (R - 6);
     const x = Math.round(Math.cos(a) * r), z = Math.round(Math.sin(a) * r);

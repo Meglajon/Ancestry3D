@@ -65,3 +65,31 @@ console.log('ok big');
   console.log('couples mode:', pairs, 'couples side by side; min distance between others', minOther.toFixed(2), 'radius', t2.worldRadius.toFixed(0));
   assert.ok(pairs > 20 && minOther > 2.5);
 }
+
+// Half fan and tree layouts: nobody crowded, everyone ahead of the root, sensible size
+{
+  const L = ['0 HEAD']; let id = 1, fid = 1;
+  const make = (gen, y) => { const me = id++; L.push(`0 @I${me}@ INDI`, `1 NAME P${me} /F${gen}/`, `1 SEX ${me % 2 ? 'F' : 'M'}`, '1 BIRT', `2 DATE ${y}`);
+    if (gen < 9) { const f = make(gen + 1, y - 28), m = make(gen + 1, y - 26); const F = fid++; L.push(`0 @F${F}@ FAM`, `1 HUSB @I${f}@`, `1 WIFE @I${m}@`, `1 CHIL @I${me}@`); } return me; };
+  make(0, 2000);
+  const big = parseGedcom(L.join('\n'));
+  const minDist = (pts, skipSpouse) => {
+    const cell = 3, grid = new Map(); let md = 1e9;
+    for (const p of pts) { const k = Math.floor(p.x / cell) + ',' + Math.floor(p.z / cell); (grid.get(k) || grid.set(k, []).get(k)).push(p); }
+    for (const p of pts) { const cx = Math.floor(p.x / cell), cz = Math.floor(p.z / cell);
+      for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) for (const q of grid.get((cx + i) + ',' + (cz + j)) || []) if (q !== p && !(skipSpouse && p.spouseInUnit === q.id)) md = Math.min(md, Math.hypot(p.x - q.x, p.z - q.z)); }
+    return md;
+  };
+  for (const shape of ['half', 'tree']) for (const [label, d] of [['demo', data], ['full 9-gen', big]]) for (const couples of [false, true]) {
+    const t = layoutAncestors(collectAncestors(d, d === data ? '@I1@' : '@I1@', 12), { shape, couples });
+    const pts = [...t.people.values()];
+    const root = t.people.get('@I1@');
+    const md = minDist(pts.filter(p => p.gen > 0), couples);
+    const ahead = pts.every(p => p.gen === 0 || p.z < root.z + 1);
+    console.log(`${shape} ${label}${couples ? ' couples' : ''}: ${pts.length} people, world radius ${t.worldRadius.toFixed(0)} m, min spacing ${md.toFixed(2)}, all ahead ${ahead}`);
+    assert.ok(md > 2.5, 'spacing');
+    assert.ok(ahead, 'ahead of root');
+    assert.ok(Math.abs(t.hub.x - root.x) < 1e-9 && Math.abs(t.hub.z - root.z) < 1e-9);
+  }
+}
+console.log('ok shapes');

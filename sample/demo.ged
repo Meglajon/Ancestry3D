@@ -1,0 +1,4483 @@
+0 HEAD
+1 SOUR ANCESTRY3D_DEMO
+1 GEDC
+2 VERS 5.5.1
+2 FORM LINEAGE-LINKED
+1 CHAR UTF-8
+1 NOTE Entirely fictional family generated for the Ancestry 3D demo.
+0 @I1@ INDI
+1 NAME Jess /Ashworth/
+2 GIVN Jess
+2 SURN Ashworth
+1 SEX F
+1 BIRT
+2 DATE 14 JAN 1991
+2 PLAC Leeds, Yorkshire, England
+1 OCCU Teacher
+1 NOTE Started this family tree in 2019 after finding a box of old photographs in the loft.
+1 FAMC @F1@
+0 @I2@ INDI
+1 NAME John Hugh /Ashworth/
+2 GIVN John Hugh
+2 SURN Ashworth
+1 SEX M
+1 BIRT
+2 DATE 11 FEB 1960
+2 PLAC Leeds, Yorkshire, England
+1 DEAT
+2 DATE 13 FEB 2012
+2 PLAC Huddersfield, Yorkshire, England
+1 OCCU Electrician
+1 FAMC @F2@
+1 FAMS @F1@
+0 @I3@ INDI
+1 NAME Sarah /Whiteley/
+2 GIVN Sarah
+2 SURN Whiteley
+1 SEX F
+1 BIRT
+2 DATE 21 JUN 1967
+2 PLAC Leeds, Yorkshire, England
+1 DEAT
+2 DATE 18 AUG 2015
+2 PLAC Leeds, Yorkshire, England
+2 CAUS Stroke
+1 BURI
+2 DATE 14 JUL 2015
+2 PLAC Leeds General Cemetery, Yorkshire, England
+1 OCCU Nurse
+1 FAMC @F3@
+1 FAMS @F1@
+0 @I4@ INDI
+1 NAME Catherine /Ashworth/
+2 GIVN Catherine
+2 SURN Ashworth
+1 SEX F
+1 BIRT
+2 DATE 16 DEC 1997
+2 PLAC Leeds, Yorkshire, England
+1 DEAT
+2 DATE 26 NOV 1997
+2 PLAC Leeds, Yorkshire, England
+2 CAUS Heart failure
+1 BURI
+2 DATE 6 SEP 1997
+2 PLAC Leeds General Cemetery, Yorkshire, England
+1 FAMC @F1@
+0 @I5@ INDI
+1 NAME Daniel William /Ashworth/
+2 GIVN Daniel William
+2 SURN Ashworth
+1 SEX M
+1 FAMC @F1@
+0 @I6@ INDI
+1 NAME Martha /Ashworth/
+2 GIVN Martha
+2 SURN Ashworth
+1 SEX F
+1 BIRT
+2 DATE 23 DEC 1994
+2 PLAC Leeds, Yorkshire, England
+1 FAMC @F1@
+0 @I7@ INDI
+1 NAME William Matthew /Ashworth/
+2 GIVN William Matthew
+2 SURN Ashworth
+1 SEX M
+1 BIRT
+2 DATE 18 FEB 1929
+2 PLAC Leeds, Yorkshire, England
+1 DEAT
+2 DATE 27 NOV 1982
+2 PLAC Leeds, Yorkshire, England
+1 BURI
+2 DATE 20 DEC 1982
+2 PLAC Leeds General Cemetery, Yorkshire, England
+1 OCCU Shopkeeper
+1 FAMC @F4@
+1 FAMS @F2@
+0 @I8@ INDI
+1 NAME Harriet /Brennan/
+2 GIVN Harriet
+2 SURN Brennan
+1 SEX F
+1 BIRT
+2 DATE 2 MAR 1932
+2 PLAC Leeds, Yorkshire, England
+1 DEAT
+2 DATE 20 NOV 1997
+2 PLAC Leeds, Yorkshire, England
+1 BURI
+2 DATE 14 MAY 1997
+2 PLAC Leeds General Cemetery, Yorkshire, England
+1 OCCU Shop assistant
+1 FAMC @F5@
+1 FAMS @F2@
+0 @I9@ INDI
+1 NAME Elizabeth /Ashworth/
+2 GIVN Elizabeth
+2 SURN Ashworth
+1 SEX F
+1 BIRT
+2 DATE 3 AUG 1958
+2 PLAC Leeds, Yorkshire, England
+1 FAMC @F2@
+0 @I10@ INDI
+1 NAME Elizabeth /Ashworth/
+2 GIVN Elizabeth
+2 SURN Ashworth
+1 SEX F
+1 BIRT
+2 DATE 15 JAN 1958
+2 PLAC Leeds, Yorkshire, England
+1 FAMC @F2@
+0 @I11@ INDI
+1 NAME Samuel Owen /Whiteley/
+2 GIVN Samuel Owen
+2 SURN Whiteley
+1 SEX M
+1 BIRT
+2 DATE 7 SEP 1941
+2 PLAC Leeds, Yorkshire, England
+1 DEAT
+2 DATE 12 AUG 1990
+2 PLAC Leeds, Yorkshire, England
+2 CAUS Heart failure
+1 BURI
+2 DATE 22 MAY 1990
+2 PLAC Leeds General Cemetery, Yorkshire, England
+1 OCCU Shopkeeper
+1 FAMC @F6@
+1 FAMS @F3@
+0 @I12@ INDI
+1 NAME Martha /Garside/
+2 GIVN Martha
+2 SURN Garside
+1 SEX F
+1 BIRT
+2 DATE 5 JAN 1945
+2 PLAC Cork, County Cork, Ireland
+1 DEAT
+2 DATE 28 MAR 2019
+2 PLAC Halifax, Yorkshire, England
+1 OCCU Weaver
+1 FAMC @F7@
+1 FAMS @F3@
+0 @I13@ INDI
+1 NAME Walter /Ashworth/
+2 GIVN Walter
+2 SURN Ashworth
+1 SEX M
+1 DEAT
+2 DATE 10 APR 1943
+2 PLAC Halifax, Yorkshire, England
+1 OCCU Power-loom weaver
+1 RESI
+2 DATE 1911
+2 PLAC 84 Chapel Row, Halifax, Yorkshire, England
+1 FAMC @F8@
+1 FAMS @F4@
+0 @I14@ INDI
+1 NAME Catherine /Holroyd/
+2 GIVN Catherine
+2 SURN Holroyd
+1 SEX F
+1 BIRT
+2 DATE 22 MAY 1904
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE 7 SEP 1962
+2 PLAC Halifax, Yorkshire, England
+1 OCCU Dressmaker
+1 RESI
+2 DATE 1921
+2 PLAC 58 Union Road, Halifax, Yorkshire, England
+1 FAMC @F9@
+1 FAMS @F4@
+0 @I15@ INDI
+1 NAME Agnes /Ashworth/
+2 GIVN Agnes
+2 SURN Ashworth
+1 SEX F
+1 BIRT
+2 DATE 10 JUL 1934
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE 21 NOV 1936
+2 PLAC Halifax, Yorkshire, England
+1 BURI
+2 DATE 14 FEB 1936
+2 PLAC Halifax General Cemetery, Yorkshire, England
+1 FAMC @F4@
+0 @I16@ INDI
+1 NAME Patrick Edward /Ashworth/
+2 GIVN Patrick Edward
+2 SURN Ashworth
+1 SEX M
+1 BIRT
+2 DATE 23 JUL 1928
+2 PLAC Halifax, Yorkshire, England
+1 FAMC @F4@
+0 @I17@ INDI
+1 NAME Joseph /Brennan/
+2 GIVN Joseph
+2 SURN Brennan
+1 SEX M
+1 BIRT
+2 DATE 23 MAR 1902
+2 PLAC Calcutta, Bengal, India
+1 DEAT
+2 DATE 16 OCT 1980
+2 PLAC Leeds, Yorkshire, England
+2 CAUS Old age
+1 OCCU Iron moulder
+1 NOTE Remembered for her singing in the chapel choir.
+1 EVEN
+2 TYPE Military service
+2 DATE FROM 1914 TO 1918
+2 PLAC Western Front, France
+1 FAMC @F10@
+1 FAMS @F5@
+0 @I18@ INDI
+1 NAME Ann /Quarmby/
+2 GIVN Ann
+2 SURN Quarmby
+1 SEX F
+1 BIRT
+2 DATE 9 SEP 1906
+2 PLAC Cradley Heath, Staffordshire, England
+1 DEAT
+2 DATE 14 APR 1986
+2 PLAC Cradley Heath, Staffordshire, England
+2 CAUS Heart failure
+1 OCCU Power-loom weaver
+1 RESI
+2 DATE 1921
+2 PLAC 62 Victoria Terrace, Cradley Heath, Staffordshire, England
+1 FAMC @F11@
+1 FAMS @F5@
+0 @I19@ INDI
+1 NAME George John /Whiteley/
+2 GIVN George John
+2 SURN Whiteley
+1 SEX M
+1 BIRT
+2 DATE 23 NOV 1910
+2 PLAC Kingston, Jamaica
+1 DEAT
+2 DATE 11 JUL 1984
+2 PLAC Kingston, Jamaica
+1 OCCU Bus conductor
+1 FAMC @F12@
+1 FAMS @F6@
+0 @I20@ INDI
+1 NAME Emily /Yeadon/
+2 GIVN Emily
+2 SURN Yeadon
+1 SEX F
+1 BIRT
+2 DATE 14 FEB 1913
+2 PLAC Burnley, Lancashire, England
+1 DEAT
+2 DATE 25 APR 1975
+2 PLAC Burnley, Lancashire, England
+2 CAUS Heart failure
+1 BURI
+2 DATE 7 JAN 1975
+2 PLAC Burnley General Cemetery, Lancashire, England
+1 OCCU Shop assistant
+1 RESI
+2 DATE 1931
+2 PLAC 65 Chapel Row, Burnley, Lancashire, England
+1 FAMC @F13@
+1 FAMS @F6@
+0 @I21@ INDI
+1 NAME Hugh Patrick /Whiteley/
+2 GIVN Hugh Patrick
+2 SURN Whiteley
+1 SEX M
+1 BIRT
+2 DATE 20 JAN 1943
+2 PLAC Bolton, Lancashire, England
+1 FAMC @F6@
+0 @I22@ INDI
+1 NAME James /Whiteley/
+2 GIVN James
+2 SURN Whiteley
+1 SEX M
+1 BIRT
+2 DATE 1 NOV 1942
+2 PLAC Bolton, Lancashire, England
+1 FAMC @F6@
+0 @I23@ INDI
+1 NAME Catherine /Whiteley/
+2 GIVN Catherine
+2 SURN Whiteley
+1 SEX F
+1 BIRT
+2 DATE 8 OCT 1936
+2 PLAC Bolton, Lancashire, England
+1 FAMC @F6@
+0 @I24@ INDI
+1 NAME Daniel /Whiteley/
+2 GIVN Daniel
+2 SURN Whiteley
+1 SEX M
+1 BIRT
+2 DATE 1 JUN 1943
+2 PLAC Bolton, Lancashire, England
+1 FAMC @F6@
+0 @I25@ INDI
+1 NAME Patrick /Garside/
+2 GIVN Patrick
+2 SURN Garside
+1 SEX M
+1 BIRT
+2 DATE 20 JUL 1912
+2 PLAC Cork, County Cork, Ireland
+1 DEAT
+2 DATE 5 NOV 2000
+2 PLAC Cork, County Cork, Ireland
+2 CAUS Stroke
+1 BURI
+2 DATE 9 JUN 2000
+2 PLAC Cork General Cemetery, County Cork, Ireland
+1 OCCU Electrician
+1 FAMC @F14@
+1 FAMS @F7@
+0 @I26@ INDI
+1 NAME Hannah /Brennan/
+2 GIVN Hannah
+2 SURN Brennan
+1 SEX F
+1 BIRT
+2 DATE 7 JAN 1919
+2 PLAC Cork, County Cork, Ireland
+1 DEAT
+2 DATE 1 JAN 1972
+2 PLAC Whitby, Yorkshire, England
+1 OCCU Shopkeeper
+1 RESI
+2 DATE 1941
+2 PLAC 62 Mill Lane, Cork, County Cork, Ireland
+1 FAMS @F7@
+0 @I27@ INDI
+1 NAME William /Ashworth/
+2 GIVN William
+2 SURN Ashworth
+1 SEX M
+1 BIRT
+2 DATE 26 JAN 1866
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 DEAT
+2 DATE 15 DEC 1950
+2 PLAC Pemberton, Wigan, Lancashire, England
+2 CAUS Old age
+1 OCCU Dock labourer
+1 RESI
+2 DATE 1881
+2 PLAC 20 Victoria Terrace, Pemberton, Wigan, Lancashire, England
+1 FAMC @F15@
+1 FAMS @F8@
+0 @I28@ INDI
+1 NAME Jane /Ormerod/
+2 GIVN Jane
+2 SURN Ormerod
+1 SEX F
+1 BIRT
+2 DATE 16 MAR 1875
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 DEAT
+2 DATE 5 MAY 1952
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 OCCU Power-loom weaver
+1 RESI
+2 DATE 1891
+2 PLAC 29 Mill Lane, Pemberton, Wigan, Lancashire, England
+1 FAMC @F16@
+1 FAMS @F8@
+0 @I29@ INDI
+1 NAME Emily /Ashworth/
+2 GIVN Emily
+2 SURN Ashworth
+1 SEX F
+1 BIRT
+2 DATE 22 MAR 1897
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 FAMC @F8@
+0 @I30@ INDI
+1 NAME William Isaac /Holroyd/
+2 GIVN William Isaac
+2 SURN Holroyd
+1 SEX M
+1 BIRT
+2 DATE 4 MAY 1874
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE 9 JUL 1954
+2 PLAC Halifax, Yorkshire, England
+2 CAUS Pneumonia
+1 OCCU Railway porter
+1 RESI
+2 DATE 1891
+2 PLAC 44 Back Street, Halifax, Yorkshire, England
+1 FAMC @F17@
+1 FAMS @F9@
+0 @I31@ INDI
+1 NAME Sarah /Ashworth/
+2 GIVN Sarah
+2 SURN Ashworth
+1 SEX F
+1 BIRT
+2 DATE 15 SEP 1876
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE 11 SEP 1931
+2 PLAC Halifax, Yorkshire, England
+1 BURI
+2 DATE 6 JUL 1931
+2 PLAC Halifax General Cemetery, Yorkshire, England
+1 OCCU Chain maker
+1 NOTE Served as a churchwarden; his name is on a plaque in the parish church.
+1 FAMS @F9@
+0 @I32@ INDI
+1 NAME Hugh /Holroyd/
+2 GIVN Hugh
+2 SURN Holroyd
+1 SEX M
+1 BIRT
+2 DATE 1 FEB 1901
+2 PLAC Halifax, Yorkshire, England
+1 FAMC @F9@
+0 @I33@ INDI
+1 NAME John /Brennan/
+2 GIVN John
+2 SURN Brennan
+1 SEX M
+1 BIRT
+2 DATE 19 MAY 1878
+2 PLAC Bradford, Yorkshire, England
+1 DEAT
+2 DATE 7 MAR 1956
+2 PLAC Bradford, Yorkshire, England
+1 OCCU Dock labourer
+1 RESI
+2 DATE 1891
+2 PLAC 72 Mill Lane, Bradford, Yorkshire, England
+1 NOTE Listed in the census as "scholar" aged eleven.
+1 FAMS @F10@
+0 @I34@ INDI
+1 NAME Esther /Doherty/
+2 GIVN Esther
+2 SURN Doherty
+1 SEX F
+1 BIRT
+2 DATE 26 JAN 1875
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE 17 AUG 1925
+2 PLAC Halifax, Yorkshire, England
+1 OCCU Domestic servant
+1 FAMC @F18@
+1 FAMS @F10@
+0 @I35@ INDI
+1 NAME Florence /Brennan/
+2 GIVN Florence
+2 SURN Brennan
+1 SEX F
+1 BIRT
+2 DATE 5 JAN 1906
+2 PLAC Cradley Heath, Staffordshire, England
+1 FAMC @F10@
+0 @I36@ INDI
+1 NAME Harriet Gwen /Brennan/
+2 GIVN Harriet Gwen
+2 SURN Brennan
+1 SEX F
+1 BIRT
+2 DATE 20 DEC 1901
+2 PLAC Cradley Heath, Staffordshire, England
+1 FAMC @F10@
+0 @I37@ INDI
+1 NAME Hannah /Brennan/
+2 GIVN Hannah
+2 SURN Brennan
+1 SEX F
+1 BIRT
+2 DATE 17 JUL 1901
+2 PLAC Cradley Heath, Staffordshire, England
+1 FAMC @F10@
+0 @I38@ INDI
+1 NAME George /Quarmby/
+2 GIVN George
+2 SURN Quarmby
+1 SEX M
+1 BIRT
+2 DATE 26 JAN 1871
+2 PLAC Cradley Heath, Staffordshire, England
+1 DEAT
+2 DATE 21 JUL 1931
+2 PLAC Cradley Heath, Staffordshire, England
+1 OCCU Iron moulder
+1 RESI
+2 DATE 1891
+2 PLAC 86 Back Street, Cradley Heath, Staffordshire, England
+1 NOTE Family story says he walked from the coast to find mill work.
+1 FAMC @F19@
+1 FAMS @F11@
+0 @I39@ INDI
+1 NAME Margaret Jane /Brennan/
+2 GIVN Margaret Jane
+2 SURN Brennan
+1 SEX F
+1 BIRT
+2 DATE 14 FEB 1886
+2 PLAC Gateshead, Durham, England
+1 DEAT
+2 DATE 26 NOV 1960
+2 PLAC Gateshead, Durham, England
+2 CAUS Pneumonia
+1 BURI
+2 DATE 19 OCT 1960
+2 PLAC Gateshead General Cemetery, Durham, England
+1 OCCU Dressmaker
+1 RESI
+2 DATE 1901
+2 PLAC 42 Moor End, Gateshead, Durham, England
+1 NOTE Emigrated briefly to Pennsylvania but returned within five years.
+1 FAMS @F11@
+0 @I40@ INDI
+1 NAME George George /Quarmby/
+2 GIVN George George
+2 SURN Quarmby
+1 SEX M
+1 BIRT
+2 DATE 17 FEB 1912
+2 PLAC Cradley Heath, Staffordshire, England
+1 FAMC @F11@
+0 @I41@ INDI
+1 NAME Harriet /Quarmby/
+2 GIVN Harriet
+2 SURN Quarmby
+1 SEX F
+1 BIRT
+2 DATE 14 MAR 1912
+2 PLAC Cradley Heath, Staffordshire, England
+1 DEAT
+2 DATE 11 JAN 1991
+2 PLAC Cradley Heath, Staffordshire, England
+1 BURI
+2 DATE 23 AUG 1991
+2 PLAC Cradley Heath General Cemetery, Staffordshire, England
+1 FAMC @F11@
+0 @I42@ INDI
+1 NAME Hugh /Quarmby/
+2 GIVN Hugh
+2 SURN Quarmby
+1 SEX M
+1 BIRT
+2 DATE 20 JUL 1910
+2 PLAC Cradley Heath, Staffordshire, England
+1 FAMC @F11@
+0 @I43@ INDI
+1 NAME Thomas /Whiteley/
+2 GIVN Thomas
+2 SURN Whiteley
+1 SEX M
+1 DEAT
+2 DATE 17 SEP 1962
+2 PLAC Spanish Town, Jamaica
+1 OCCU Coal miner
+1 NOTE Remembered for her singing in the chapel choir.
+1 FAMS @F12@
+0 @I44@ INDI
+1 NAME Alice /Ormerod/
+2 GIVN Alice
+2 SURN Ormerod
+1 SEX F
+1 BIRT
+2 DATE 1 AUG 1887
+2 PLAC Kingston, Jamaica
+1 DEAT
+2 DATE 12 DEC 1967
+2 PLAC Kingston, Jamaica
+1 BURI
+2 DATE 5 DEC 1967
+2 PLAC Kingston General Cemetery, Jamaica
+1 OCCU Milliner
+1 FAMS @F12@
+0 @I45@ INDI
+1 NAME Alice Harriet /Whiteley/
+2 GIVN Alice Harriet
+2 SURN Whiteley
+1 SEX F
+1 BIRT
+2 DATE 18 MAY 1909
+2 PLAC Bolton, Lancashire, England
+1 DEAT
+2 DATE 28 FEB 1962
+2 PLAC Leeds, Yorkshire, England
+1 FAMC @F12@
+0 @I46@ INDI
+1 NAME Robert /Yeadon/
+2 GIVN Robert
+2 SURN Yeadon
+1 SEX M
+1 BIRT
+2 DATE 6 MAR 1881
+2 PLAC Burnley, Lancashire, England
+1 DEAT
+2 DATE 7 FEB 1963
+2 PLAC Rochdale, Lancashire, England
+1 OCCU Dock labourer
+1 RESI
+2 DATE 1901
+2 PLAC 13 Moor End, Burnley, Lancashire, England
+1 FAMC @F17@
+1 FAMS @F13@
+0 @I47@ INDI
+1 NAME Emily Hannah /Kershaw/
+2 GIVN Emily Hannah
+2 SURN Kershaw
+1 SEX F
+1 BIRT
+2 DATE 21 DEC 1892
+2 PLAC Burnley, Lancashire, England
+1 DEAT
+2 DATE 25 OCT 1977
+2 PLAC Glasgow, Lanarkshire, Scotland
+1 OCCU Schoolmistress
+1 NOTE Family story says he walked from the coast to find mill work.
+1 FAMC @F20@
+1 FAMS @F13@
+0 @I48@ INDI
+1 NAME James /Yeadon/
+2 GIVN James
+2 SURN Yeadon
+1 SEX M
+1 BIRT
+2 DATE 26 SEP 1908
+2 PLAC Burnley, Lancashire, England
+1 FAMC @F13@
+0 @I49@ INDI
+1 NAME Hugh /Garside/
+2 GIVN Hugh
+2 SURN Garside
+1 SEX M
+1 BIRT
+2 DATE 1 MAY 1877
+2 PLAC Hebden Bridge, Yorkshire, England
+1 DEAT
+2 DATE 22 OCT 1961
+2 PLAC Hebden Bridge, Yorkshire, England
+1 OCCU Grocer
+1 RESI
+2 DATE 1891
+2 PLAC 70 Victoria Terrace, Hebden Bridge, Yorkshire, England
+1 FAMC @F21@
+1 FAMS @F14@
+0 @I50@ INDI
+1 NAME Martha /Thwaite/
+2 GIVN Martha
+2 SURN Thwaite
+1 SEX F
+1 BIRT
+2 DATE 1 OCT 1887
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 DEAT
+2 DATE 24 JUN 1944
+2 PLAC Pemberton, Wigan, Lancashire, England
+2 CAUS Pneumonia
+1 OCCU Schoolmistress
+1 FAMC @F22@
+1 FAMS @F14@
+0 @I51@ INDI
+1 NAME Florence /Garside/
+2 GIVN Florence
+2 SURN Garside
+1 SEX F
+1 BIRT
+2 DATE 6 OCT 1919
+2 PLAC Hebden Bridge, Yorkshire, England
+1 DEAT
+2 DATE 7 SEP 2008
+2 PLAC Hebden Bridge, Yorkshire, England
+1 BURI
+2 DATE 23 JUL 2008
+2 PLAC Hebden Bridge General Cemetery, Yorkshire, England
+1 FAMC @F14@
+0 @I52@ INDI
+1 NAME Florence /Garside/
+2 GIVN Florence
+2 SURN Garside
+1 SEX F
+1 BIRT
+2 DATE 14 APR 1909
+2 PLAC Hebden Bridge, Yorkshire, England
+1 DEAT
+2 DATE 4 FEB 1962
+2 PLAC Hebden Bridge, Yorkshire, England
+1 FAMC @F14@
+0 @I53@ INDI
+1 NAME Catherine /Garside/
+2 GIVN Catherine
+2 SURN Garside
+1 SEX F
+1 BIRT
+2 DATE 21 SEP 1916
+2 PLAC Hebden Bridge, Yorkshire, England
+1 FAMC @F14@
+0 @I54@ INDI
+1 NAME Joseph /Ashworth/
+2 GIVN Joseph
+2 SURN Ashworth
+1 SEX M
+1 BIRT
+2 DATE 7 JAN 1831
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 DEAT
+2 DATE 28 OCT 1878
+2 PLAC Halifax, Yorkshire, England
+1 BURI
+2 DATE 8 OCT 1878
+2 PLAC Pemberton General Cemetery, Wigan, Lancashire, England
+1 OCCU Wool comber
+1 FAMC @F23@
+1 FAMS @F15@
+0 @I55@ INDI
+1 NAME Emily /Brennan/
+2 GIVN Emily
+2 SURN Brennan
+1 SEX F
+1 BIRT
+2 DATE 11 APR 1842
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 DEAT
+2 DATE 26 FEB 1931
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 BURI
+2 DATE 15 DEC 1931
+2 PLAC Pemberton General Cemetery, Wigan, Lancashire, England
+1 OCCU Power-loom weaver
+1 FAMC @F24@
+1 FAMS @F15@
+0 @I56@ INDI
+1 NAME Hugh /Ashworth/
+2 GIVN Hugh
+2 SURN Ashworth
+1 SEX M
+1 BIRT
+2 DATE 4 JAN 1864
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 FAMC @F15@
+0 @I57@ INDI
+1 NAME Edward /Ormerod/
+2 GIVN Edward
+2 SURN Ormerod
+1 SEX M
+1 BIRT
+2 DATE 19 JUL 1847
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 DEAT
+2 DATE 19 MAR 1917
+2 PLAC Pemberton, Wigan, Lancashire, England
+2 CAUS Pneumonia
+1 OCCU Mill hand
+1 FAMC @F25@
+1 FAMS @F16@
+0 @I58@ INDI
+1 NAME Bridget /Brennan/
+2 GIVN Bridget
+2 SURN Brennan
+1 SEX F
+1 BIRT
+2 DATE 19 JAN 1848
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 DEAT
+2 DATE 25 NOV 1907
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 OCCU Laundress
+1 NOTE Family story says he walked from the coast to find mill work.
+1 FAMS @F16@
+0 @I59@ INDI
+1 NAME Mary Margaret /Ormerod/
+2 GIVN Mary Margaret
+2 SURN Ormerod
+1 SEX F
+1 BIRT
+2 DATE 15 FEB 1882
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 DEAT
+2 DATE 12 OCT 1938
+2 PLAC Bradford, Yorkshire, England
+1 BURI
+2 DATE 4 NOV 1938
+2 PLAC Pemberton General Cemetery, Wigan, Lancashire, England
+1 FAMC @F16@
+0 @I60@ INDI
+1 NAME Matthew /Holroyd/
+2 GIVN Matthew
+2 SURN Holroyd
+1 SEX M
+1 DEAT
+2 DATE 19 JAN 1926
+2 PLAC Leeds, Yorkshire, England
+1 OCCU Solicitor
+1 FAMC @F26@
+1 FAMS @F17@
+0 @I61@ INDI
+1 NAME Harriet /Ellery/
+2 GIVN Harriet
+2 SURN Ellery
+1 SEX F
+1 BIRT
+2 DATE 17 MAY 1848
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE 26 OCT 1918
+2 PLAC Halifax, Yorkshire, England
+1 BURI
+2 DATE 12 JAN 1918
+2 PLAC Halifax General Cemetery, Yorkshire, England
+1 OCCU Laundress
+1 RESI
+2 DATE 1861
+2 PLAC 39 Union Road, Halifax, Yorkshire, England
+1 FAMC @F27@
+1 FAMS @F17@
+0 @I62@ INDI
+1 NAME Arthur /Holroyd/
+2 GIVN Arthur
+2 SURN Holroyd
+1 SEX M
+1 BIRT
+2 DATE 13 SEP 1876
+2 PLAC Halifax, Yorkshire, England
+1 FAMC @F17@
+0 @I63@ INDI
+1 NAME Isaac /Doherty/
+2 GIVN Isaac
+2 SURN Doherty
+1 SEX M
+1 BIRT
+2 DATE 6 JUL 1846
+2 PLAC Bolton, Lancashire, England
+1 DEAT
+2 DATE 14 JAN 1928
+2 PLAC Bolton, Lancashire, England
+1 BURI
+2 DATE 6 JUL 1928
+2 PLAC Bolton General Cemetery, Lancashire, England
+1 OCCU Agricultural labourer
+1 RESI
+2 DATE 1861
+2 PLAC 45 Mill Lane, Bolton, Lancashire, England
+1 NOTE Family story says he walked from the coast to find mill work.
+1 FAMC @F28@
+1 FAMS @F18@
+0 @I64@ INDI
+1 NAME Emily /Flanagan/
+2 GIVN Emily
+2 SURN Flanagan
+1 SEX F
+1 BIRT
+2 DATE 15 JUN 1854
+2 PLAC Bolton, Lancashire, England
+1 DEAT
+2 DATE 15 MAY 1927
+2 PLAC Bolton, Lancashire, England
+1 OCCU Schoolmistress
+1 FAMC @F29@
+1 FAMS @F18@
+0 @I65@ INDI
+1 NAME Owen William /Doherty/
+2 GIVN Owen William
+2 SURN Doherty
+1 SEX M
+1 BIRT
+2 DATE 2 DEC 1869
+2 PLAC Bolton, Lancashire, England
+1 DEAT
+2 DATE 27 SEP 1950
+2 PLAC Bolton, Lancashire, England
+2 CAUS Stroke
+1 BURI
+2 DATE 21 SEP 1950
+2 PLAC Bolton General Cemetery, Lancashire, England
+1 FAMC @F18@
+0 @I66@ INDI
+1 NAME Owen /Doherty/
+2 GIVN Owen
+2 SURN Doherty
+1 SEX M
+1 BIRT
+2 DATE 9 MAY 1882
+2 PLAC Bolton, Lancashire, England
+1 FAMC @F18@
+0 @I67@ INDI
+1 NAME Florence /Doherty/
+2 GIVN Florence
+2 SURN Doherty
+1 SEX F
+1 BIRT
+2 DATE 20 DEC 1871
+2 PLAC Bolton, Lancashire, England
+1 DEAT
+2 DATE 16 MAY 1948
+2 PLAC Merthyr Tydfil, Glamorgan, Wales
+1 FAMC @F18@
+0 @I68@ INDI
+1 NAME Owen Henry /Quarmby/
+2 GIVN Owen Henry
+2 SURN Quarmby
+1 SEX M
+1 BIRT
+2 DATE 22 FEB 1846
+2 PLAC Cradley Heath, Staffordshire, England
+1 DEAT
+2 DATE 1 JUL 1920
+2 PLAC Cradley Heath, Staffordshire, England
+1 OCCU Mill hand
+1 NOTE Survived the cholera outbreak that took two of her siblings.
+1 FAMC @F30@
+1 FAMS @F19@
+0 @I69@ INDI
+1 NAME Catherine /Yeadon/
+2 GIVN Catherine
+2 SURN Yeadon
+1 SEX F
+1 BIRT
+2 DATE 24 AUG 1851
+2 PLAC Cradley Heath, Staffordshire, England
+1 DEAT
+2 DATE 14 JAN 1899
+2 PLAC Cradley Heath, Staffordshire, England
+1 BURI
+2 DATE 17 OCT 1899
+2 PLAC Cradley Heath General Cemetery, Staffordshire, England
+1 OCCU Domestic servant
+1 RESI
+2 DATE 1871
+2 PLAC 84 Moor End, Cradley Heath, Staffordshire, England
+1 FAMC @F31@
+1 FAMS @F19@
+0 @I70@ INDI
+1 NAME William /Kershaw/
+2 GIVN William
+2 SURN Kershaw
+1 SEX M
+1 BIRT
+2 DATE 11 DEC 1865
+2 PLAC Westport, County Mayo, Ireland
+1 DEAT
+2 DATE 11 JUN 1916
+2 PLAC Bradford, Yorkshire, England
+1 OCCU Coal miner
+1 RESI
+2 DATE 1881
+2 PLAC 36 Back Street, Westport, County Mayo, Ireland
+1 FAMS @F20@
+0 @I71@ INDI
+1 NAME Mary /Rhodes/
+2 GIVN Mary
+2 SURN Rhodes
+1 SEX F
+1 BIRT
+2 DATE 27 DEC 1869
+2 PLAC Paisley, Renfrewshire, Scotland
+1 DEAT
+2 DATE 23 AUG 1932
+2 PLAC Westport, County Mayo, Ireland
+1 BURI
+2 DATE 10 OCT 1932
+2 PLAC Paisley General Cemetery, Renfrewshire, Scotland
+1 OCCU Dressmaker
+1 FAMC @F32@
+1 FAMS @F20@
+0 @I72@ INDI
+1 NAME Martha /Kershaw/
+2 GIVN Martha
+2 SURN Kershaw
+1 SEX F
+1 BIRT
+2 DATE 25 MAR 1888
+2 PLAC Westport, County Mayo, Ireland
+1 FAMC @F20@
+0 @I73@ INDI
+1 NAME Isaac /Garside/
+2 GIVN Isaac
+2 SURN Garside
+1 SEX M
+1 BIRT
+2 DATE 5 OCT 1850
+2 PLAC Hebden Bridge, Yorkshire, England
+1 DEAT
+2 DATE 14 DEC 1919
+2 PLAC Hebden Bridge, Yorkshire, England
+1 BURI
+2 DATE 21 NOV 1919
+2 PLAC Hebden Bridge General Cemetery, Yorkshire, England
+1 OCCU Iron moulder
+1 RESI
+2 DATE 1871
+2 PLAC 79 Victoria Terrace, Hebden Bridge, Yorkshire, England
+1 NOTE Remembered for her singing in the chapel choir.
+1 FAMC @F33@
+1 FAMS @F21@
+0 @I74@ INDI
+1 NAME Florence /Yeadon/
+2 GIVN Florence
+2 SURN Yeadon
+1 SEX F
+1 BIRT
+2 DATE 14 NOV 1855
+2 PLAC Hebden Bridge, Yorkshire, England
+1 DEAT
+2 DATE 11 JUL 1917
+2 PLAC Hebden Bridge, Yorkshire, England
+2 CAUS Consumption
+1 OCCU Schoolmistress
+1 RESI
+2 DATE 1871
+2 PLAC 84 Back Street, Hebden Bridge, Yorkshire, England
+1 NOTE Family story says he walked from the coast to find mill work.
+1 FAMC @F34@
+1 FAMS @F21@
+0 @I75@ INDI
+1 NAME James Robert /Garside/
+2 GIVN James Robert
+2 SURN Garside
+1 SEX M
+1 BIRT
+2 DATE 15 NOV 1880
+2 PLAC Hebden Bridge, Yorkshire, England
+1 DEAT
+2 DATE 24 DEC 1880
+2 PLAC Hebden Bridge, Yorkshire, England
+1 BURI
+2 DATE 2 MAY 1880
+2 PLAC Hebden Bridge General Cemetery, Yorkshire, England
+1 FAMC @F21@
+0 @I76@ INDI
+1 NAME James /Garside/
+2 GIVN James
+2 SURN Garside
+1 SEX M
+1 FAMC @F21@
+0 @I77@ INDI
+1 NAME Edward /Garside/
+2 GIVN Edward
+2 SURN Garside
+1 SEX M
+1 BIRT
+2 DATE 17 MAR 1884
+2 PLAC Hebden Bridge, Yorkshire, England
+1 FAMC @F21@
+0 @I78@ INDI
+1 NAME Patrick /Thwaite/
+2 GIVN Patrick
+2 SURN Thwaite
+1 SEX M
+1 BIRT
+2 DATE 10 SEP 1863
+2 PLAC Portree, Isle of Skye, Scotland
+1 DEAT
+2 DATE 28 DEC 1909
+2 PLAC Portree, Isle of Skye, Scotland
+1 BURI
+2 DATE 23 FEB 1909
+2 PLAC Portree General Cemetery, Isle of Skye, Scotland
+1 OCCU Railway porter
+1 FAMS @F22@
+0 @I79@ INDI
+1 NAME Isabella /Iveson/
+2 GIVN Isabella
+2 SURN Iveson
+1 SEX F
+1 BIRT
+2 DATE 16 FEB 1864
+2 PLAC Portree, Isle of Skye, Scotland
+1 DEAT
+2 DATE 23 JAN 1929
+2 PLAC Whitby, Yorkshire, England
+1 OCCU Schoolmistress
+1 RESI
+2 DATE 1881
+2 PLAC 34 Victoria Terrace, Portree, Isle of Skye, Scotland
+1 FAMC @F35@
+1 FAMS @F22@
+0 @I80@ INDI
+1 NAME Walter /Thwaite/
+2 GIVN Walter
+2 SURN Thwaite
+1 SEX M
+1 BIRT
+2 DATE 28 SEP 1886
+2 PLAC Portree, Isle of Skye, Scotland
+1 FAMC @F22@
+0 @I81@ INDI
+1 NAME John Isaac /Ashworth/
+2 GIVN John Isaac
+2 SURN Ashworth
+1 SEX M
+1 BIRT
+2 DATE 10 MAY 1800
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 DEAT
+2 DATE 5 SEP 1862
+2 PLAC Pemberton, Wigan, Lancashire, England
+2 CAUS Old age
+1 OCCU Solicitor
+1 NOTE Listed in the census as "scholar" aged eleven.
+1 FAMS @F23@
+0 @I82@ INDI
+1 NAME Gwen /Brennan/
+2 GIVN Gwen
+2 SURN Brennan
+1 SEX F
+1 BIRT
+2 DATE 4 MAY 1809
+2 PLAC Gateshead, Durham, England
+1 DEAT
+2 DATE 3 JUL 1864
+2 PLAC Gateshead, Durham, England
+2 CAUS Bronchitis
+1 BURI
+2 DATE 7 APR 1864
+2 PLAC Gateshead General Cemetery, Durham, England
+1 OCCU Fish wife
+1 NOTE Kept a small shop on the ground floor of the family home for over thirty years.
+1 FAMC @F36@
+1 FAMS @F23@
+0 @I83@ INDI
+1 NAME Mary /Ashworth/
+2 GIVN Mary
+2 SURN Ashworth
+1 SEX F
+1 BIRT
+2 DATE 25 FEB 1829
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 DEAT
+2 DATE 2 NOV 1916
+2 PLAC Pemberton, Wigan, Lancashire, England
+2 CAUS Consumption
+1 FAMC @F23@
+0 @I84@ INDI
+1 NAME Henry /Brennan/
+2 GIVN Henry
+2 SURN Brennan
+1 SEX M
+1 BIRT
+2 DATE ABT 1808
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 DEAT
+2 DATE 22 FEB 1893
+2 PLAC Pemberton, Wigan, Lancashire, England
+2 CAUS Old age
+1 BURI
+2 DATE 3 AUG 1893
+2 PLAC Pemberton General Cemetery, Wigan, Lancashire, England
+1 OCCU Agricultural labourer
+1 NOTE Remembered for her singing in the chapel choir.
+1 FAMC @F37@
+1 FAMS @F24@
+0 @I85@ INDI
+1 NAME Elizabeth /Jagger/
+2 GIVN Elizabeth
+2 SURN Jagger
+1 SEX F
+1 CHR
+2 DATE 9 NOV 1822
+2 PLAC St Mary, Pemberton, Wigan, Lancashire, England
+1 DEAT
+2 DATE 25 FEB 1902
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 OCCU Fish wife
+1 RESI
+2 DATE 1841
+2 PLAC 42 Mill Lane, Pemberton, Wigan, Lancashire, England
+1 FAMC @F38@
+1 FAMS @F24@
+0 @I86@ INDI
+1 NAME Emily /Brennan/
+2 GIVN Emily
+2 SURN Brennan
+1 SEX F
+1 BIRT
+2 DATE 6 AUG 1842
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 DEAT
+2 DATE 11 MAY 1931
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 BURI
+2 DATE 13 DEC 1931
+2 PLAC Pemberton General Cemetery, Wigan, Lancashire, England
+1 FAMC @F24@
+0 @I87@ INDI
+1 NAME John Robert /Brennan/
+2 GIVN John Robert
+2 SURN Brennan
+1 SEX M
+1 BIRT
+2 DATE 7 SEP 1841
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 DEAT
+2 DATE 5 MAY 1895
+2 PLAC Pemberton, Wigan, Lancashire, England
+2 CAUS Pneumonia
+1 BURI
+2 DATE 3 APR 1895
+2 PLAC Pemberton General Cemetery, Wigan, Lancashire, England
+1 FAMC @F24@
+0 @I88@ INDI
+1 NAME Joseph /Brennan/
+2 GIVN Joseph
+2 SURN Brennan
+1 SEX M
+1 BIRT
+2 DATE 27 DEC 1846
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 FAMC @F24@
+0 @I89@ INDI
+1 NAME Owen /Brennan/
+2 GIVN Owen
+2 SURN Brennan
+1 SEX M
+1 BIRT
+2 DATE 6 FEB 1847
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 DEAT
+2 DATE 25 NOV 1896
+2 PLAC Chipping Campden, Gloucestershire, England
+1 BURI
+2 DATE 7 SEP 1896
+2 PLAC Pemberton General Cemetery, Wigan, Lancashire, England
+1 FAMC @F24@
+0 @I90@ INDI
+1 NAME Patrick /Ormerod/
+2 GIVN Patrick
+2 SURN Ormerod
+1 SEX M
+1 BIRT
+2 DATE 21 NOV 1817
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 DEAT
+2 DATE 16 NOV 1866
+2 PLAC Liverpool, Lancashire, England
+2 CAUS Typhoid
+1 OCCU Blacksmith
+1 FAMC @F39@
+1 FAMS @F25@
+0 @I91@ INDI
+1 NAME Margaret /Uttley/
+2 GIVN Margaret
+2 SURN Uttley
+1 SEX F
+1 BIRT
+2 DATE 26 AUG 1824
+2 PLAC Cork, County Cork, Ireland
+1 DEAT
+2 DATE 27 APR 1903
+2 PLAC Cork, County Cork, Ireland
+1 BURI
+2 DATE 23 JAN 1903
+2 PLAC Cork General Cemetery, County Cork, Ireland
+1 OCCU Domestic servant
+1 FAMC @F40@
+1 FAMS @F25@
+0 @I92@ INDI
+1 NAME Gwen /Ormerod/
+2 GIVN Gwen
+2 SURN Ormerod
+1 SEX F
+1 BIRT
+2 DATE 19 MAY 1846
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 FAMC @F25@
+0 @I93@ INDI
+1 NAME Joseph /Holroyd/
+2 GIVN Joseph
+2 SURN Holroyd
+1 SEX M
+1 BIRT
+2 DATE ABT 1817
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE 12 OCT 1901
+2 PLAC Halifax, Yorkshire, England
+1 OCCU Surgeon
+1 NOTE Served as a churchwarden; his name is on a plaque in the parish church.
+1 FAMC @F41@
+1 FAMS @F26@
+0 @I94@ INDI
+1 NAME Esther /Ellery/
+2 GIVN Esther
+2 SURN Ellery
+1 SEX F
+1 BIRT
+2 DATE ABT 1827
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE 20 NOV 1896
+2 PLAC Bradford, Yorkshire, England
+1 BURI
+2 DATE 18 AUG 1896
+2 PLAC Halifax General Cemetery, Yorkshire, England
+1 OCCU Domestic servant
+1 RESI
+2 DATE 1841
+2 PLAC 57 Back Street, Halifax, Yorkshire, England
+1 FAMC @F42@
+1 FAMS @F26@
+0 @I95@ INDI
+1 NAME Isaac /Ellery/
+2 GIVN Isaac
+2 SURN Ellery
+1 SEX M
+1 BIRT
+2 DATE 1 SEP 1819
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 DEAT
+2 DATE 7 FEB 1890
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 BURI
+2 DATE 19 MAY 1890
+2 PLAC Pemberton General Cemetery, Wigan, Lancashire, England
+1 OCCU Stonemason
+1 FAMS @F27@
+0 @I96@ INDI
+1 NAME Harriet /Vickers/
+2 GIVN Harriet
+2 SURN Vickers
+1 SEX F
+1 BIRT
+2 DATE ABT 1821
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 DEAT
+2 DATE 18 AUG 1872
+2 PLAC Pemberton, Wigan, Lancashire, England
+2 CAUS Bronchitis
+1 BURI
+2 DATE 27 MAY 1872
+2 PLAC Pemberton General Cemetery, Wigan, Lancashire, England
+1 OCCU Power-loom weaver
+1 FAMC @F43@
+1 FAMS @F27@
+0 @I97@ INDI
+1 NAME Harriet /Ellery/
+2 GIVN Harriet
+2 SURN Ellery
+1 SEX F
+1 BIRT
+2 DATE 12 MAR 1849
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 DEAT
+2 DATE 10 AUG 1854
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 FAMC @F27@
+0 @I98@ INDI
+1 NAME Hugh /Doherty/
+2 GIVN Hugh
+2 SURN Doherty
+1 SEX M
+1 BIRT
+2 DATE 7 SEP 1821
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE 5 JUN 1878
+2 PLAC Halifax, Yorkshire, England
+1 OCCU Blacksmith
+1 NOTE Served as a churchwarden; his name is on a plaque in the parish church.
+1 FAMC @F44@
+1 FAMS @F28@
+0 @I99@ INDI
+1 NAME Bridget /Pickles/
+2 GIVN Bridget
+2 SURN Pickles
+1 SEX F
+1 CHR
+2 DATE 8 JUL 1823
+2 PLAC St Mary, Halifax, Yorkshire, England
+1 DEAT
+2 DATE 5 MAY 1911
+2 PLAC Halifax, Yorkshire, England
+1 OCCU Fish wife
+1 FAMC @F45@
+1 FAMS @F28@
+0 @I100@ INDI
+1 NAME James James /Flanagan/
+2 GIVN James James
+2 SURN Flanagan
+1 SEX M
+1 BIRT
+2 DATE ABT 1830
+2 PLAC Bolton, Lancashire, England
+1 DEAT
+2 DATE 11 MAY 1910
+2 PLAC Bolton, Lancashire, England
+1 BURI
+2 DATE 9 JUL 1910
+2 PLAC Bolton General Cemetery, Lancashire, England
+1 OCCU Cotton spinner
+1 RESI
+2 DATE 1851
+2 PLAC 42 Back Street, Bolton, Lancashire, England
+1 FAMC @F46@
+1 FAMS @F29@
+0 @I101@ INDI
+1 NAME Sarah /Lumb/
+2 GIVN Sarah
+2 SURN Lumb
+1 SEX F
+1 BIRT
+2 DATE 4 FEB 1825
+2 PLAC Bethnal Green, London, England
+1 DEAT
+2 DATE 2 MAR 1890
+2 PLAC Westport, County Mayo, Ireland
+2 CAUS Typhoid
+1 BURI
+2 DATE 16 APR 1890
+2 PLAC Bethnal Green General Cemetery, London, England
+1 OCCU Power-loom weaver
+1 RESI
+2 DATE 1841
+2 PLAC 15 Back Street, Bethnal Green, London, England
+1 NOTE Emigrated briefly to Pennsylvania but returned within five years.
+1 FAMC @F47@
+1 FAMS @F29@
+0 @I102@ INDI
+1 NAME William Edward /Quarmby/
+2 GIVN William Edward
+2 SURN Quarmby
+1 SEX M
+1 BIRT
+2 DATE ABT 1812
+2 PLAC Bolton, Lancashire, England
+1 DEAT
+2 DATE 16 MAR 1863
+2 PLAC Chipping Campden, Gloucestershire, England
+1 OCCU Coal miner
+1 FAMC @F48@
+1 FAMS @F30@
+0 @I103@ INDI
+1 NAME Mary Martha /Jagger/
+2 GIVN Mary Martha
+2 SURN Jagger
+1 SEX F
+1 BIRT
+2 DATE 19 MAR 1819
+2 PLAC Bolton, Lancashire, England
+1 DEAT
+2 DATE 11 NOV 1908
+2 PLAC Bolton, Lancashire, England
+1 OCCU Power-loom weaver
+1 NOTE Signed the marriage register with an X.
+1 FAMC @F49@
+1 FAMS @F30@
+0 @I104@ INDI
+1 NAME Albert /Quarmby/
+2 GIVN Albert
+2 SURN Quarmby
+1 SEX M
+1 BIRT
+2 DATE 28 DEC 1841
+2 PLAC Bolton, Lancashire, England
+1 DEAT
+2 DATE 9 AUG 1923
+2 PLAC Bolton, Lancashire, England
+1 FAMC @F30@
+0 @I105@ INDI
+1 NAME Albert /Yeadon/
+2 GIVN Albert
+2 SURN Yeadon
+1 SEX M
+1 BIRT
+2 DATE 9 FEB 1821
+2 PLAC Cradley Heath, Staffordshire, England
+1 DEAT
+2 DATE 19 SEP 1879
+2 PLAC Burnley, Lancashire, England
+1 OCCU Blacksmith
+1 FAMC @F50@
+1 FAMS @F31@
+0 @I106@ INDI
+1 NAME Alice /Ellery/
+2 GIVN Alice
+2 SURN Ellery
+1 SEX F
+1 BIRT
+2 DATE ABT 1822
+2 PLAC Cradley Heath, Staffordshire, England
+1 DEAT
+2 DATE 15 FEB 1870
+2 PLAC Cradley Heath, Staffordshire, England
+2 CAUS Mining accident
+1 BURI
+2 DATE 8 AUG 1870
+2 PLAC Cradley Heath General Cemetery, Staffordshire, England
+1 OCCU Domestic servant
+1 RESI
+2 DATE 1841
+2 PLAC 9 Union Road, Cradley Heath, Staffordshire, England
+1 FAMC @F51@
+1 FAMS @F31@
+0 @I107@ INDI
+1 NAME Thomas /Yeadon/
+2 GIVN Thomas
+2 SURN Yeadon
+1 SEX M
+1 BIRT
+2 DATE 2 APR 1849
+2 PLAC Cradley Heath, Staffordshire, England
+1 DEAT
+2 DATE 15 MAR 1926
+2 PLAC Cradley Heath, Staffordshire, England
+1 FAMC @F31@
+0 @I108@ INDI
+1 NAME William /Yeadon/
+2 GIVN William
+2 SURN Yeadon
+1 SEX M
+1 BIRT
+2 DATE 7 AUG 1853
+2 PLAC Cradley Heath, Staffordshire, England
+1 DEAT
+2 DATE 14 DEC 1927
+2 PLAC Cradley Heath, Staffordshire, England
+1 FAMC @F31@
+0 @I109@ INDI
+1 NAME Isabella /Yeadon/
+2 GIVN Isabella
+2 SURN Yeadon
+1 SEX F
+1 BIRT
+2 DATE 23 NOV 1849
+2 PLAC Cradley Heath, Staffordshire, England
+1 FAMC @F31@
+0 @I110@ INDI
+1 NAME Ann /Yeadon/
+2 GIVN Ann
+2 SURN Yeadon
+1 SEX F
+1 BIRT
+2 DATE 20 DEC 1849
+2 PLAC Cradley Heath, Staffordshire, England
+1 DEAT
+2 DATE 1 JUL 1850
+2 PLAC Cradley Heath, Staffordshire, England
+1 BURI
+2 DATE 23 APR 1850
+2 PLAC Cradley Heath General Cemetery, Staffordshire, England
+1 FAMC @F31@
+0 @I111@ INDI
+1 NAME Thomas /Rhodes/
+2 GIVN Thomas
+2 SURN Rhodes
+1 SEX M
+1 BIRT
+2 DATE 5 FEB 1844
+2 PLAC Paisley, Renfrewshire, Scotland
+1 DEAT
+2 DATE 18 APR 1916
+2 PLAC Paisley, Renfrewshire, Scotland
+2 CAUS Typhoid
+1 BURI
+2 DATE 14 FEB 1916
+2 PLAC Paisley General Cemetery, Renfrewshire, Scotland
+1 OCCU Coal miner
+1 RESI
+2 DATE 1861
+2 PLAC 9 Mill Lane, Paisley, Renfrewshire, Scotland
+1 FAMS @F32@
+0 @I112@ INDI
+1 NAME Hannah /Dunmore/
+2 GIVN Hannah
+2 SURN Dunmore
+1 SEX F
+1 BIRT
+2 DATE 11 DEC 1840
+2 PLAC Paisley, Renfrewshire, Scotland
+1 DEAT
+2 DATE 28 JUN 1907
+2 PLAC Paisley, Renfrewshire, Scotland
+1 BURI
+2 DATE 28 APR 1907
+2 PLAC Paisley General Cemetery, Renfrewshire, Scotland
+1 OCCU Domestic servant
+1 RESI
+2 DATE 1861
+2 PLAC 73 Moor End, Paisley, Renfrewshire, Scotland
+1 FAMS @F32@
+0 @I113@ INDI
+1 NAME Matthew /Rhodes/
+2 GIVN Matthew
+2 SURN Rhodes
+1 SEX M
+1 BIRT
+2 DATE 6 AUG 1866
+2 PLAC Paisley, Renfrewshire, Scotland
+1 DEAT
+2 DATE 12 SEP 1869
+2 PLAC Paisley, Renfrewshire, Scotland
+2 CAUS Consumption
+1 FAMC @F32@
+0 @I114@ INDI
+1 NAME Ellen /Rhodes/
+2 GIVN Ellen
+2 SURN Rhodes
+1 SEX F
+1 BIRT
+2 DATE 28 OCT 1876
+2 PLAC Paisley, Renfrewshire, Scotland
+1 DEAT
+2 DATE 5 APR 1943
+2 PLAC Cradley Heath, Staffordshire, England
+1 FAMC @F32@
+0 @I115@ INDI
+1 NAME Frederick /Rhodes/
+2 GIVN Frederick
+2 SURN Rhodes
+1 SEX M
+1 BIRT
+2 DATE 25 APR 1867
+2 PLAC Paisley, Renfrewshire, Scotland
+1 FAMC @F32@
+0 @I116@ INDI
+1 NAME Jane /Rhodes/
+2 GIVN Jane
+2 SURN Rhodes
+1 SEX F
+1 BIRT
+2 DATE 12 JAN 1864
+2 PLAC Paisley, Renfrewshire, Scotland
+1 DEAT
+2 DATE 6 NOV 1939
+2 PLAC Paisley, Renfrewshire, Scotland
+1 BURI
+2 DATE 23 JUL 1939
+2 PLAC Paisley General Cemetery, Renfrewshire, Scotland
+1 FAMC @F32@
+0 @I117@ INDI
+1 NAME Henry /Garside/
+2 GIVN Henry
+2 SURN Garside
+1 SEX M
+1 BIRT
+2 DATE 19 FEB 1824
+2 PLAC Liverpool, Lancashire, England
+1 DEAT
+2 DATE 8 NOV 1909
+2 PLAC Liverpool, Lancashire, England
+1 OCCU Wool comber
+1 RESI
+2 DATE 1841
+2 PLAC 31 Moor End, Liverpool, Lancashire, England
+1 NOTE Survived the cholera outbreak that took two of her siblings.
+1 FAMC @F52@
+1 FAMS @F33@
+0 @I118@ INDI
+1 NAME Ellen /Lumb/
+2 GIVN Ellen
+2 SURN Lumb
+1 SEX F
+1 BIRT
+2 DATE ABT 1823
+2 PLAC Liverpool, Lancashire, England
+1 DEAT
+2 DATE 4 FEB 1885
+2 PLAC Liverpool, Lancashire, England
+1 OCCU Dressmaker
+1 NOTE Family story says he walked from the coast to find mill work.
+1 FAMS @F33@
+0 @I119@ INDI
+1 NAME Edward /Yeadon/
+2 GIVN Edward
+2 SURN Yeadon
+1 SEX M
+1 BIRT
+2 DATE 7 NOV 1821
+2 PLAC Stroud, Gloucestershire, England
+1 DEAT
+2 DATE 28 MAY 1899
+2 PLAC Stroud, Gloucestershire, England
+1 BURI
+2 DATE 2 SEP 1899
+2 PLAC Stroud General Cemetery, Gloucestershire, England
+1 OCCU Agricultural labourer
+1 RESI
+2 DATE 1841
+2 PLAC 38 Back Street, Stroud, Gloucestershire, England
+1 NOTE Kept a small shop on the ground floor of the family home for over thirty years.
+1 FAMC @F53@
+1 FAMS @F34@
+0 @I120@ INDI
+1 NAME Eliza /Calloway/
+2 GIVN Eliza
+2 SURN Calloway
+1 SEX F
+1 CHR
+2 DATE 12 JAN 1834
+2 PLAC St Mary, Bethnal Green, London, England
+1 DEAT
+2 DATE 21 JUN 1887
+2 PLAC Bethnal Green, London, England
+2 CAUS Pneumonia
+1 OCCU Cotton spinner
+1 RESI
+2 DATE 1851
+2 PLAC 39 Moor End, Bethnal Green, London, England
+1 NOTE Served as a churchwarden; his name is on a plaque in the parish church.
+1 FAMC @F54@
+1 FAMS @F34@
+0 @I121@ INDI
+1 NAME Frederick /Iveson/
+2 GIVN Frederick
+2 SURN Iveson
+1 SEX M
+1 BIRT
+2 DATE 5 AUG 1840
+2 PLAC Cradley Heath, Staffordshire, England
+1 DEAT
+2 DATE 2 APR 1914
+2 PLAC Cradley Heath, Staffordshire, England
+1 BURI
+2 DATE 8 JUL 1914
+2 PLAC Cradley Heath General Cemetery, Staffordshire, England
+1 OCCU Agricultural labourer
+1 NOTE Kept a small shop on the ground floor of the family home for over thirty years.
+1 FAMC @F55@
+1 FAMS @F35@
+0 @I122@ INDI
+1 NAME Florence Bridget /Ashworth/
+2 GIVN Florence Bridget
+2 SURN Ashworth
+1 SEX F
+1 BIRT
+2 DATE ABT 1839
+2 PLAC Cradley Heath, Staffordshire, England
+1 DEAT
+2 DATE 10 MAY 1920
+2 PLAC Halifax, Yorkshire, England
+2 CAUS Mining accident
+1 OCCU Domestic servant
+1 NOTE Listed in the census as "scholar" aged eleven.
+1 FAMC @F56@
+1 FAMS @F35@
+0 @I123@ INDI
+1 NAME Arthur /Iveson/
+2 GIVN Arthur
+2 SURN Iveson
+1 SEX M
+1 BIRT
+2 DATE 15 APR 1858
+2 PLAC Cradley Heath, Staffordshire, England
+1 DEAT
+2 DATE 13 FEB 1924
+2 PLAC Merthyr Tydfil, Glamorgan, Wales
+2 CAUS Typhoid
+1 BURI
+2 DATE 2 OCT 1924
+2 PLAC Cradley Heath General Cemetery, Staffordshire, England
+1 FAMC @F35@
+0 @I124@ INDI
+1 NAME Joseph /Brennan/
+2 GIVN Joseph
+2 SURN Brennan
+1 SEX M
+1 BIRT
+2 DATE 28 JAN 1779
+2 PLAC Gateshead, Durham, England
+1 DEAT
+2 DATE 21 SEP 1847
+2 PLAC Gateshead, Durham, England
+1 BURI
+2 DATE 11 JAN 1847
+2 PLAC Gateshead General Cemetery, Durham, England
+1 OCCU Clerk in holy orders
+1 NOTE Signed the marriage register with an X.
+1 FAMS @F36@
+0 @I125@ INDI
+1 NAME Florence /Uttley/
+2 GIVN Florence
+2 SURN Uttley
+1 SEX F
+1 BIRT
+2 DATE 3 MAR 1780
+2 PLAC Bolton, Lancashire, England
+1 DEAT
+2 DATE 18 APR 1869
+2 PLAC Bolton, Lancashire, England
+2 CAUS Pneumonia
+1 BURI
+2 DATE 10 FEB 1869
+2 PLAC Bolton General Cemetery, Lancashire, England
+1 OCCU Dressmaker
+1 FAMS @F36@
+0 @I126@ INDI
+1 NAME Robert /Brennan/
+2 GIVN Robert
+2 SURN Brennan
+1 SEX M
+1 BIRT
+2 DATE 1 JUL 1814
+2 PLAC Gateshead, Durham, England
+1 FAMC @F36@
+0 @I127@ INDI
+1 NAME Thomas /Brennan/
+2 GIVN Thomas
+2 SURN Brennan
+1 SEX M
+1 BIRT
+2 DATE ABT 1810
+2 PLAC Gateshead, Durham, England
+1 FAMC @F36@
+0 @I128@ INDI
+1 NAME Owen /Brennan/
+2 GIVN Owen
+2 SURN Brennan
+1 SEX M
+1 CHR
+2 DATE 11 MAY 1780
+2 PLAC St Mary, Pemberton, Wigan, Lancashire, England
+1 DEAT
+2 DATE 6 NOV 1849
+2 PLAC Portree, Isle of Skye, Scotland
+1 OCCU Blacksmith
+1 FAMC @F57@
+1 FAMS @F37@
+0 @I129@ INDI
+1 NAME Catherine /Thwaite/
+2 GIVN Catherine
+2 SURN Thwaite
+1 SEX F
+1 BIRT
+2 DATE 19 SEP 1786
+2 PLAC Chipping Campden, Gloucestershire, England
+1 DEAT
+2 DATE 17 SEP 1839
+2 PLAC Westport, County Mayo, Ireland
+1 BURI
+2 DATE 24 SEP 1839
+2 PLAC Chipping Campden General Cemetery, Gloucestershire, England
+1 OCCU Laundress
+1 FAMS @F37@
+0 @I130@ INDI
+1 NAME Robert /Brennan/
+2 GIVN Robert
+2 SURN Brennan
+1 SEX M
+1 BIRT
+2 DATE 4 FEB 1802
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 DEAT
+2 DATE 2 DEC 1857
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 FAMC @F37@
+0 @I131@ INDI
+1 NAME Samuel Albert /Jagger/
+2 GIVN Samuel Albert
+2 SURN Jagger
+1 SEX M
+1 BIRT
+2 DATE 2 NOV 1791
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 DEAT
+2 DATE 27 AUG 1847
+2 PLAC Pemberton, Wigan, Lancashire, England
+2 CAUS Typhoid
+1 BURI
+2 DATE 1 FEB 1847
+2 PLAC Pemberton General Cemetery, Wigan, Lancashire, England
+1 OCCU Mill hand
+1 NOTE Survived the cholera outbreak that took two of her siblings.
+1 FAMS @F38@
+0 @I132@ INDI
+1 NAME Emily Elizabeth /Marsden/
+2 GIVN Emily Elizabeth
+2 SURN Marsden
+1 SEX F
+1 BIRT
+2 DATE 15 FEB 1799
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 DEAT
+2 DATE 5 JAN 1866
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 OCCU Fish wife
+1 FAMC @F58@
+1 FAMS @F38@
+0 @I133@ INDI
+1 NAME Ann /Jagger/
+2 GIVN Ann
+2 SURN Jagger
+1 SEX F
+1 BIRT
+2 DATE 25 MAY 1823
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 DEAT
+2 DATE 10 APR 1893
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 FAMC @F38@
+0 @I134@ INDI
+1 NAME Henry Patrick /Ormerod/
+2 GIVN Henry Patrick
+2 SURN Ormerod
+1 SEX M
+1 BIRT
+2 DATE ABT 1785
+2 PLAC Bolton, Lancashire, England
+1 DEAT
+2 DATE 5 NOV 1873
+2 PLAC Bolton, Lancashire, England
+1 OCCU Fisherman
+1 FAMC @F59@
+1 FAMS @F39@
+0 @I135@ INDI
+1 NAME Ann /Quarmby/
+2 GIVN Ann
+2 SURN Quarmby
+1 SEX F
+1 BIRT
+2 DATE 15 JUL 1790
+2 PLAC Bethnal Green, London, England
+1 DEAT
+2 DATE 20 FEB 1869
+2 PLAC Bethnal Green, London, England
+1 BURI
+2 DATE 15 AUG 1869
+2 PLAC Bethnal Green General Cemetery, London, England
+1 OCCU Power-loom weaver
+1 NOTE Served as a churchwarden; his name is on a plaque in the parish church.
+1 FAMC @F60@
+1 FAMS @F39@
+0 @I136@ INDI
+1 NAME Ann /Ormerod/
+2 GIVN Ann
+2 SURN Ormerod
+1 SEX F
+1 BIRT
+2 DATE 17 MAY 1821
+2 PLAC Bolton, Lancashire, England
+1 DEAT
+2 DATE 23 DEC 1866
+2 PLAC Bolton, Lancashire, England
+1 BURI
+2 DATE 22 JAN 1866
+2 PLAC Bolton General Cemetery, Lancashire, England
+1 FAMC @F39@
+0 @I137@ INDI
+1 NAME John Robert /Ormerod/
+2 GIVN John Robert
+2 SURN Ormerod
+1 SEX M
+1 BIRT
+2 DATE 1 AUG 1822
+2 PLAC Bolton, Lancashire, England
+1 FAMC @F39@
+0 @I138@ INDI
+1 NAME James /Uttley/
+2 GIVN James
+2 SURN Uttley
+1 SEX M
+1 BIRT
+2 DATE ABT 1797
+2 PLAC Cork, County Cork, Ireland
+1 DEAT
+2 DATE 15 MAY 1858
+2 PLAC Cork, County Cork, Ireland
+1 OCCU Agricultural labourer
+1 FAMS @F40@
+0 @I139@ INDI
+1 NAME Agnes /Ellery/
+2 GIVN Agnes
+2 SURN Ellery
+1 SEX F
+1 BIRT
+2 DATE ABT 1795
+2 PLAC Cork, County Cork, Ireland
+1 DEAT
+2 DATE 3 AUG 1878
+2 PLAC Cork, County Cork, Ireland
+1 BURI
+2 DATE 16 NOV 1878
+2 PLAC Cork General Cemetery, County Cork, Ireland
+1 OCCU Laundress
+1 FAMS @F40@
+0 @I140@ INDI
+1 NAME Samuel /Uttley/
+2 GIVN Samuel
+2 SURN Uttley
+1 SEX M
+1 BIRT
+2 DATE 14 AUG 1826
+2 PLAC Cork, County Cork, Ireland
+1 FAMC @F40@
+0 @I141@ INDI
+1 NAME Daniel /Uttley/
+2 GIVN Daniel
+2 SURN Uttley
+1 SEX M
+1 BIRT
+2 DATE ABT 1827
+2 PLAC Cork, County Cork, Ireland
+1 FAMC @F40@
+0 @I142@ INDI
+1 NAME Henry /Uttley/
+2 GIVN Henry
+2 SURN Uttley
+1 SEX M
+1 BIRT
+2 DATE 11 FEB 1820
+2 PLAC Cork, County Cork, Ireland
+1 DEAT
+2 DATE 4 MAY 1868
+2 PLAC Paisley, Renfrewshire, Scotland
+1 FAMC @F40@
+0 @I143@ INDI
+1 NAME Patrick William /Holroyd/
+2 GIVN Patrick William
+2 SURN Holroyd
+1 SEX M
+1 BIRT
+2 DATE 2 DEC 1787
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE 18 JUN 1835
+2 PLAC Halifax, Yorkshire, England
+1 OCCU Mill hand
+1 NOTE Emigrated briefly to Pennsylvania but returned within five years.
+1 FAMS @F41@
+0 @I144@ INDI
+1 NAME Margaret /Yeadon/
+2 GIVN Margaret
+2 SURN Yeadon
+1 SEX F
+1 BIRT
+2 DATE 7 JAN 1788
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE 4 JAN 1865
+2 PLAC Halifax, Yorkshire, England
+1 OCCU Cotton spinner
+1 NOTE Survived the cholera outbreak that took two of her siblings.
+1 FAMC @F61@
+1 FAMS @F41@
+0 @I145@ INDI
+1 NAME Alice /Holroyd/
+2 GIVN Alice
+2 SURN Holroyd
+1 SEX F
+1 BIRT
+2 DATE 3 NOV 1822
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE 13 JUN 1905
+2 PLAC Halifax, Yorkshire, England
+1 FAMC @F41@
+0 @I146@ INDI
+1 NAME Esther /Holroyd/
+2 GIVN Esther
+2 SURN Holroyd
+1 SEX F
+1 BIRT
+2 DATE 26 OCT 1811
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE 3 AUG 1899
+2 PLAC Halifax, Yorkshire, England
+1 BURI
+2 DATE 21 JUL 1899
+2 PLAC Halifax General Cemetery, Yorkshire, England
+1 FAMC @F41@
+0 @I147@ INDI
+1 NAME Florence Ann /Holroyd/
+2 GIVN Florence Ann
+2 SURN Holroyd
+1 SEX F
+1 BIRT
+2 DATE 17 AUG 1817
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE 15 DEC 1905
+2 PLAC Halifax, Yorkshire, England
+1 FAMC @F41@
+0 @I148@ INDI
+1 NAME Margaret Esther /Holroyd/
+2 GIVN Margaret Esther
+2 SURN Holroyd
+1 SEX F
+1 BIRT
+2 DATE 18 FEB 1811
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE 24 DEC 1876
+2 PLAC Halifax, Yorkshire, England
+1 FAMC @F41@
+0 @I149@ INDI
+1 NAME Joseph /Ellery/
+2 GIVN Joseph
+2 SURN Ellery
+1 SEX M
+1 BIRT
+2 DATE 18 MAY 1799
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE 14 JAN 1864
+2 PLAC Halifax, Yorkshire, England
+2 CAUS Mining accident
+1 OCCU Wool comber
+1 FAMC @F62@
+1 FAMS @F42@
+0 @I150@ INDI
+1 NAME Margaret /Iveson/
+2 GIVN Margaret
+2 SURN Iveson
+1 SEX F
+1 BIRT
+2 DATE 12 JUN 1803
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE 22 NOV 1861
+2 PLAC Halifax, Yorkshire, England
+1 OCCU Laundress
+1 FAMS @F42@
+0 @I151@ INDI
+1 NAME Elizabeth Alice /Ellery/
+2 GIVN Elizabeth Alice
+2 SURN Ellery
+1 SEX F
+1 BIRT
+2 DATE 13 SEP 1824
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE 3 FEB 1897
+2 PLAC Halifax, Yorkshire, England
+1 FAMC @F42@
+0 @I152@ INDI
+1 NAME Catherine /Ellery/
+2 GIVN Catherine
+2 SURN Ellery
+1 SEX F
+1 BIRT
+2 DATE 1 AUG 1833
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE 7 DEC 1920
+2 PLAC Halifax, Yorkshire, England
+2 CAUS Typhoid
+1 BURI
+2 DATE 21 OCT 1920
+2 PLAC Halifax General Cemetery, Yorkshire, England
+1 FAMC @F42@
+0 @I153@ INDI
+1 NAME Ellen /Ellery/
+2 GIVN Ellen
+2 SURN Ellery
+1 SEX F
+1 BIRT
+2 DATE 22 DEC 1825
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE 5 JAN 1896
+2 PLAC Halifax, Yorkshire, England
+2 CAUS Consumption
+1 BURI
+2 DATE 24 AUG 1896
+2 PLAC Halifax General Cemetery, Yorkshire, England
+1 FAMC @F42@
+0 @I154@ INDI
+1 NAME Henry Edward /Vickers/
+2 GIVN Henry Edward
+2 SURN Vickers
+1 SEX M
+1 BIRT
+2 DATE 16 OCT 1791
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 DEAT
+2 DATE 10 AUG 1842
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 BURI
+2 DATE 27 AUG 1842
+2 PLAC Pemberton General Cemetery, Wigan, Lancashire, England
+1 OCCU Wool comber
+1 FAMC @F63@
+1 FAMS @F43@
+0 @I155@ INDI
+1 NAME Gwen /Nuttall/
+2 GIVN Gwen
+2 SURN Nuttall
+1 SEX F
+1 BIRT
+2 DATE 15 JUL 1800
+2 PLAC Bolton, Lancashire, England
+1 DEAT
+2 DATE 7 NOV 1869
+2 PLAC Huddersfield, Yorkshire, England
+1 OCCU Dressmaker
+1 FAMS @F43@
+0 @I156@ INDI
+1 NAME Harriet /Vickers/
+2 GIVN Harriet
+2 SURN Vickers
+1 SEX F
+1 BIRT
+2 DATE 17 DEC 1821
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 FAMC @F43@
+0 @I157@ INDI
+1 NAME Mary /Vickers/
+2 GIVN Mary
+2 SURN Vickers
+1 SEX F
+1 BIRT
+2 DATE 26 DEC 1821
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 DEAT
+2 DATE 7 NOV 1899
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 BURI
+2 DATE 5 JUN 1899
+2 PLAC Pemberton General Cemetery, Wigan, Lancashire, England
+1 FAMC @F43@
+0 @I158@ INDI
+1 NAME Patrick /Doherty/
+2 GIVN Patrick
+2 SURN Doherty
+1 SEX M
+1 CHR
+2 DATE 9 JAN 1789
+2 PLAC St Mary, Halifax, Yorkshire, England
+1 DEAT
+2 DATE 9 DEC 1835
+2 PLAC Halifax, Yorkshire, England
+1 BURI
+2 DATE 4 DEC 1835
+2 PLAC Halifax General Cemetery, Yorkshire, England
+1 OCCU Agricultural labourer
+1 NOTE Family story says he walked from the coast to find mill work.
+1 FAMC @F64@
+1 FAMS @F44@
+0 @I159@ INDI
+1 NAME Hannah /Ashworth/
+2 GIVN Hannah
+2 SURN Ashworth
+1 SEX F
+1 BIRT
+2 DATE 28 FEB 1793
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE 1 NOV 1849
+2 PLAC Halifax, Yorkshire, England
+1 OCCU Laundress
+1 FAMC @F65@
+1 FAMS @F44@
+0 @I160@ INDI
+1 NAME Edward /Doherty/
+2 GIVN Edward
+2 SURN Doherty
+1 SEX M
+1 BIRT
+2 DATE ABT 1815
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE 10 SEP 1881
+2 PLAC Halifax, Yorkshire, England
+2 CAUS Typhoid
+1 BURI
+2 DATE 24 DEC 1881
+2 PLAC Halifax General Cemetery, Yorkshire, England
+1 FAMC @F44@
+0 @I161@ INDI
+1 NAME Samuel /Pickles/
+2 GIVN Samuel
+2 SURN Pickles
+1 SEX M
+1 BIRT
+2 DATE 5 MAR 1795
+2 PLAC Burnley, Lancashire, England
+1 DEAT
+2 DATE 13 JAN 1842
+2 PLAC Burnley, Lancashire, England
+1 OCCU Fisherman
+1 NOTE Served as a churchwarden; his name is on a plaque in the parish church.
+1 FAMC @F66@
+1 FAMS @F45@
+0 @I162@ INDI
+1 NAME Mary /Jagger/
+2 GIVN Mary
+2 SURN Jagger
+1 SEX F
+1 BIRT
+2 DATE 27 NOV 1801
+2 PLAC Portree, Isle of Skye, Scotland
+1 DEAT
+2 DATE 27 APR 1867
+2 PLAC Portree, Isle of Skye, Scotland
+2 CAUS Bronchitis
+1 BURI
+2 DATE 5 DEC 1867
+2 PLAC Portree General Cemetery, Isle of Skye, Scotland
+1 OCCU Power-loom weaver
+1 FAMS @F45@
+0 @I163@ INDI
+1 NAME Daniel James /Pickles/
+2 GIVN Daniel James
+2 SURN Pickles
+1 SEX M
+1 BIRT
+2 DATE ABT 1825
+2 PLAC Burnley, Lancashire, England
+1 DEAT
+2 DATE 4 JAN 1914
+2 PLAC Burnley, Lancashire, England
+1 FAMC @F45@
+0 @I164@ INDI
+1 NAME Gwen /Pickles/
+2 GIVN Gwen
+2 SURN Pickles
+1 SEX F
+1 BIRT
+2 DATE 17 AUG 1824
+2 PLAC Burnley, Lancashire, England
+1 DEAT
+2 DATE 15 SEP 1906
+2 PLAC Leeds, Yorkshire, England
+1 BURI
+2 DATE 18 OCT 1906
+2 PLAC Burnley General Cemetery, Lancashire, England
+1 FAMC @F45@
+0 @I165@ INDI
+1 NAME James /Flanagan/
+2 GIVN James
+2 SURN Flanagan
+1 SEX M
+1 BIRT
+2 DATE 6 JUN 1798
+2 PLAC Bolton, Lancashire, England
+1 DEAT
+2 DATE 16 MAY 1852
+2 PLAC Bolton, Lancashire, England
+1 OCCU Stonemason
+1 NOTE Kept a small shop on the ground floor of the family home for over thirty years.
+1 FAMS @F46@
+0 @I166@ INDI
+1 NAME Hannah Gwen /Rhodes/
+2 GIVN Hannah Gwen
+2 SURN Rhodes
+1 SEX F
+1 BIRT
+2 DATE 27 AUG 1806
+2 PLAC Bolton, Lancashire, England
+1 DEAT
+2 DATE 27 FEB 1894
+2 PLAC Bolton, Lancashire, England
+1 BURI
+2 DATE 24 JAN 1894
+2 PLAC Bolton General Cemetery, Lancashire, England
+1 OCCU Dressmaker
+1 NOTE Signed the marriage register with an X.
+1 FAMC @F67@
+1 FAMS @F46@
+0 @I167@ INDI
+1 NAME Gwen /Flanagan/
+2 GIVN Gwen
+2 SURN Flanagan
+1 SEX F
+1 BIRT
+2 DATE 2 NOV 1833
+2 PLAC Bolton, Lancashire, England
+1 DEAT
+2 DATE 2 OCT 1891
+2 PLAC Bolton, Lancashire, England
+1 FAMC @F46@
+0 @I168@ INDI
+1 NAME Matthew /Flanagan/
+2 GIVN Matthew
+2 SURN Flanagan
+1 SEX M
+1 BIRT
+2 DATE 16 NOV 1832
+2 PLAC Bolton, Lancashire, England
+1 FAMC @F46@
+0 @I169@ INDI
+1 NAME Emily /Flanagan/
+2 GIVN Emily
+2 SURN Flanagan
+1 SEX F
+1 BIRT
+2 DATE 19 JUL 1825
+2 PLAC Bolton, Lancashire, England
+1 DEAT
+2 DATE 20 AUG 1887
+2 PLAC Merthyr Tydfil, Glamorgan, Wales
+1 FAMC @F46@
+0 @I170@ INDI
+1 NAME John /Lumb/
+2 GIVN John
+2 SURN Lumb
+1 SEX M
+1 BIRT
+2 DATE 21 JAN 1800
+2 PLAC Bethnal Green, London, England
+1 DEAT
+2 DATE 22 NOV 1873
+2 PLAC Bethnal Green, London, England
+1 BURI
+2 DATE 25 JAN 1873
+2 PLAC Bethnal Green General Cemetery, London, England
+1 OCCU Cotton spinner
+1 NOTE Kept a small shop on the ground floor of the family home for over thirty years.
+1 FAMS @F47@
+0 @I171@ INDI
+1 NAME Elizabeth /Calloway/
+2 GIVN Elizabeth
+2 SURN Calloway
+1 SEX F
+1 BIRT
+2 DATE 15 MAY 1804
+2 PLAC Manchester, Lancashire, England
+1 DEAT
+2 DATE 4 DEC 1853
+2 PLAC Manchester, Lancashire, England
+1 OCCU Power-loom weaver
+1 NOTE Kept a small shop on the ground floor of the family home for over thirty years.
+1 FAMS @F47@
+0 @I172@ INDI
+1 NAME Hannah /Lumb/
+2 GIVN Hannah
+2 SURN Lumb
+1 SEX F
+1 CHR
+2 DATE 18 APR 1831
+2 PLAC St Mary, Bethnal Green, London, England
+1 FAMC @F47@
+0 @I173@ INDI
+1 NAME Gwen /Lumb/
+2 GIVN Gwen
+2 SURN Lumb
+1 SEX F
+1 BIRT
+2 DATE ABT 1826
+2 PLAC Bethnal Green, London, England
+1 DEAT
+2 DATE 15 OCT 1893
+2 PLAC Paisley, Renfrewshire, Scotland
+2 CAUS Consumption
+1 FAMC @F47@
+0 @I174@ INDI
+1 NAME John /Lumb/
+2 GIVN John
+2 SURN Lumb
+1 SEX M
+1 BIRT
+2 DATE 11 JAN 1830
+2 PLAC Bethnal Green, London, England
+1 DEAT
+2 DATE 14 OCT 1919
+2 PLAC Bethnal Green, London, England
+1 FAMC @F47@
+0 @I175@ INDI
+1 NAME Matthew /Quarmby/
+2 GIVN Matthew
+2 SURN Quarmby
+1 SEX M
+1 BIRT
+2 DATE 1 MAY 1780
+2 PLAC Bolton, Lancashire, England
+1 DEAT
+2 DATE 22 APR 1869
+2 PLAC Bolton, Lancashire, England
+1 BURI
+2 DATE 25 JUN 1869
+2 PLAC Bolton General Cemetery, Lancashire, England
+1 OCCU Surgeon
+1 NOTE Survived the cholera outbreak that took two of her siblings.
+1 FAMS @F48@
+0 @I176@ INDI
+1 NAME Isabella /Doherty/
+2 GIVN Isabella
+2 SURN Doherty
+1 SEX F
+1 BIRT
+2 DATE 11 NOV 1783
+2 PLAC Burnley, Lancashire, England
+1 DEAT
+2 DATE 21 JUN 1857
+2 PLAC Burnley, Lancashire, England
+1 OCCU Laundress
+1 FAMS @F48@
+0 @I177@ INDI
+1 NAME Frederick /Jagger/
+2 GIVN Frederick
+2 SURN Jagger
+1 SEX M
+1 CHR
+2 DATE 11 NOV 1792
+2 PLAC St Mary, Bolton, Lancashire, England
+1 DEAT
+2 DATE 15 AUG 1871
+2 PLAC Bolton, Lancashire, England
+1 OCCU Fisherman
+1 FAMS @F49@
+0 @I178@ INDI
+1 NAME Margaret /Iveson/
+2 GIVN Margaret
+2 SURN Iveson
+1 SEX F
+1 CHR
+2 DATE 28 DEC 1793
+2 PLAC St Mary, Bolton, Lancashire, England
+1 DEAT
+2 DATE 2 AUG 1866
+2 PLAC Bolton, Lancashire, England
+1 BURI
+2 DATE 26 FEB 1866
+2 PLAC Bolton General Cemetery, Lancashire, England
+1 OCCU Cotton spinner
+1 NOTE Emigrated briefly to Pennsylvania but returned within five years.
+1 FAMS @F49@
+0 @I179@ INDI
+1 NAME Isaac /Jagger/
+2 GIVN Isaac
+2 SURN Jagger
+1 SEX M
+1 BIRT
+2 DATE 2 OCT 1826
+2 PLAC Bolton, Lancashire, England
+1 DEAT
+2 DATE 26 OCT 1887
+2 PLAC Bolton, Lancashire, England
+2 CAUS Typhoid
+1 BURI
+2 DATE 16 MAY 1887
+2 PLAC Bolton General Cemetery, Lancashire, England
+1 FAMC @F49@
+0 @I180@ INDI
+1 NAME Frederick Arthur /Jagger/
+2 GIVN Frederick Arthur
+2 SURN Jagger
+1 SEX M
+1 CHR
+2 DATE 27 JUN 1818
+2 PLAC St Mary, Bolton, Lancashire, England
+1 FAMC @F49@
+0 @I181@ INDI
+1 NAME Samuel /Jagger/
+2 GIVN Samuel
+2 SURN Jagger
+1 SEX M
+1 BIRT
+2 DATE 23 NOV 1817
+2 PLAC Bolton, Lancashire, England
+1 FAMC @F49@
+0 @I182@ INDI
+1 NAME Robert Joseph /Jagger/
+2 GIVN Robert Joseph
+2 SURN Jagger
+1 SEX M
+1 BIRT
+2 DATE 3 APR 1819
+2 PLAC Bolton, Lancashire, England
+1 FAMC @F49@
+0 @I183@ INDI
+1 NAME Frederick William /Yeadon/
+2 GIVN Frederick William
+2 SURN Yeadon
+1 SEX M
+1 BIRT
+2 DATE 23 OCT 1792
+2 PLAC Cradley Heath, Staffordshire, England
+1 DEAT
+2 DATE 23 OCT 1879
+2 PLAC Cradley Heath, Staffordshire, England
+2 CAUS Pneumonia
+1 OCCU Coal miner
+1 FAMC @F68@
+1 FAMS @F50@
+0 @I184@ INDI
+1 NAME Bridget /Whiteley/
+2 GIVN Bridget
+2 SURN Whiteley
+1 SEX F
+1 BIRT
+2 DATE 8 AUG 1801
+2 PLAC Cradley Heath, Staffordshire, England
+1 DEAT
+2 DATE 7 JUL 1883
+2 PLAC Cradley Heath, Staffordshire, England
+1 OCCU Laundress
+1 NOTE Kept a small shop on the ground floor of the family home for over thirty years.
+1 FAMS @F50@
+0 @I185@ INDI
+1 NAME Edward /Yeadon/
+2 GIVN Edward
+2 SURN Yeadon
+1 SEX M
+1 BIRT
+2 DATE ABT 1825
+2 PLAC Cradley Heath, Staffordshire, England
+1 DEAT
+2 DATE 27 OCT 1892
+2 PLAC Cradley Heath, Staffordshire, England
+2 CAUS Bronchitis
+1 FAMC @F50@
+0 @I186@ INDI
+1 NAME George /Ellery/
+2 GIVN George
+2 SURN Ellery
+1 SEX M
+1 BIRT
+2 DATE 4 MAY 1790
+2 PLAC Cradley Heath, Staffordshire, England
+1 DEAT
+2 DATE 27 SEP 1867
+2 PLAC Halifax, Yorkshire, England
+1 BURI
+2 DATE 6 AUG 1867
+2 PLAC Cradley Heath General Cemetery, Staffordshire, England
+1 OCCU Stonemason
+1 FAMS @F51@
+0 @I187@ INDI
+1 NAME Gwen /Ashworth/
+2 GIVN Gwen
+2 SURN Ashworth
+1 SEX F
+1 BIRT
+2 DATE 4 DEC 1795
+2 PLAC Chipping Campden, Gloucestershire, England
+1 DEAT
+2 DATE 2 AUG 1857
+2 PLAC Chipping Campden, Gloucestershire, England
+2 CAUS Old age
+1 BURI
+2 DATE 28 NOV 1857
+2 PLAC Chipping Campden General Cemetery, Gloucestershire, England
+1 OCCU Dressmaker
+1 FAMC @F69@
+1 FAMS @F51@
+0 @I188@ INDI
+1 NAME Gwen /Ellery/
+2 GIVN Gwen
+2 SURN Ellery
+1 SEX F
+1 BIRT
+2 DATE 24 APR 1822
+2 PLAC Cradley Heath, Staffordshire, England
+1 FAMC @F51@
+0 @I189@ INDI
+1 NAME Martha /Ellery/
+2 GIVN Martha
+2 SURN Ellery
+1 SEX F
+1 BIRT
+2 DATE ABT 1816
+2 PLAC Cradley Heath, Staffordshire, England
+1 DEAT
+2 DATE 28 JUN 1864
+2 PLAC Bethnal Green, London, England
+1 FAMC @F51@
+0 @I190@ INDI
+1 NAME Edward Edward /Ellery/
+2 GIVN Edward Edward
+2 SURN Ellery
+1 SEX M
+1 BIRT
+2 DATE ABT 1822
+2 PLAC Cradley Heath, Staffordshire, England
+1 DEAT
+2 DATE 19 NOV 1891
+2 PLAC Cradley Heath, Staffordshire, England
+1 BURI
+2 DATE 26 DEC 1891
+2 PLAC Cradley Heath General Cemetery, Staffordshire, England
+1 FAMC @F51@
+0 @I191@ INDI
+1 NAME John Hugh /Ellery/
+2 GIVN John Hugh
+2 SURN Ellery
+1 SEX M
+1 BIRT
+2 DATE ABT 1825
+2 PLAC Cradley Heath, Staffordshire, England
+1 DEAT
+2 DATE 28 JUL 1830
+2 PLAC Cradley Heath, Staffordshire, England
+1 BURI
+2 DATE 27 DEC 1830
+2 PLAC Cradley Heath General Cemetery, Staffordshire, England
+1 FAMC @F51@
+0 @I192@ INDI
+1 NAME Hugh /Garside/
+2 GIVN Hugh
+2 SURN Garside
+1 SEX M
+1 BIRT
+2 DATE 25 FEB 1794
+2 PLAC Liverpool, Lancashire, England
+1 DEAT
+2 DATE 4 SEP 1876
+2 PLAC Stroud, Gloucestershire, England
+1 OCCU Agricultural labourer
+1 NOTE Kept a small shop on the ground floor of the family home for over thirty years.
+1 FAMS @F52@
+0 @I193@ INDI
+1 NAME Florence Harriet /Pryce/
+2 GIVN Florence Harriet
+2 SURN Pryce
+1 SEX F
+1 BIRT
+2 DATE 5 SEP 1801
+2 PLAC Portree, Isle of Skye, Scotland
+1 DEAT
+2 DATE 24 JAN 1884
+2 PLAC Portree, Isle of Skye, Scotland
+1 BURI
+2 DATE 14 SEP 1884
+2 PLAC Portree General Cemetery, Isle of Skye, Scotland
+1 OCCU Fish wife
+1 FAMC @F70@
+1 FAMS @F52@
+0 @I194@ INDI
+1 NAME Thomas /Garside/
+2 GIVN Thomas
+2 SURN Garside
+1 SEX M
+1 BIRT
+2 DATE 3 APR 1829
+2 PLAC Liverpool, Lancashire, England
+1 DEAT
+2 DATE 17 JUN 1834
+2 PLAC Liverpool, Lancashire, England
+1 FAMC @F52@
+0 @I195@ INDI
+1 NAME Albert /Yeadon/
+2 GIVN Albert
+2 SURN Yeadon
+1 SEX M
+1 BIRT
+2 DATE ABT 1789
+2 PLAC Stroud, Gloucestershire, England
+1 DEAT
+2 DATE 20 SEP 1835
+2 PLAC Stroud, Gloucestershire, England
+1 OCCU Fisherman
+1 FAMS @F53@
+0 @I196@ INDI
+1 NAME Elizabeth /McKellar/
+2 GIVN Elizabeth
+2 SURN McKellar
+1 SEX F
+1 BIRT
+2 DATE 16 OCT 1795
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE 4 MAY 1851
+2 PLAC Halifax, Yorkshire, England
+1 OCCU Power-loom weaver
+1 FAMC @F71@
+1 FAMS @F53@
+0 @I197@ INDI
+1 NAME George /Calloway/
+2 GIVN George
+2 SURN Calloway
+1 SEX M
+1 CHR
+2 DATE 18 MAR 1807
+2 PLAC St Mary, Bethnal Green, London, England
+1 DEAT
+2 DATE 2 JUL 1892
+2 PLAC Bethnal Green, London, England
+1 OCCU Blacksmith
+1 FAMS @F54@
+0 @I198@ INDI
+1 NAME Martha Ellen /McKellar/
+2 GIVN Martha Ellen
+2 SURN McKellar
+1 SEX F
+1 BIRT
+2 DATE 18 FEB 1810
+2 PLAC Bethnal Green, London, England
+1 DEAT
+2 DATE 27 JAN 1865
+2 PLAC Bethnal Green, London, England
+1 OCCU Fish wife
+1 FAMS @F54@
+0 @I199@ INDI
+1 NAME Gwen Ellen /Calloway/
+2 GIVN Gwen Ellen
+2 SURN Calloway
+1 SEX F
+1 BIRT
+2 DATE 5 JUL 1839
+2 PLAC Bethnal Green, London, England
+1 DEAT
+2 DATE 4 APR 1886
+2 PLAC Bethnal Green, London, England
+2 CAUS Pneumonia
+1 FAMC @F54@
+0 @I200@ INDI
+1 NAME Joseph /Calloway/
+2 GIVN Joseph
+2 SURN Calloway
+1 SEX M
+1 BIRT
+2 DATE 26 JAN 1841
+2 PLAC Bethnal Green, London, England
+1 DEAT
+2 DATE 6 JUN 1930
+2 PLAC Bethnal Green, London, England
+2 CAUS Pneumonia
+1 FAMC @F54@
+0 @I201@ INDI
+1 NAME Agnes /Calloway/
+2 GIVN Agnes
+2 SURN Calloway
+1 SEX F
+1 BIRT
+2 DATE 13 MAY 1839
+2 PLAC Bethnal Green, London, England
+1 FAMC @F54@
+0 @I202@ INDI
+1 NAME George /Iveson/
+2 GIVN George
+2 SURN Iveson
+1 SEX M
+1 BIRT
+2 DATE ABT 1806
+2 PLAC Cradley Heath, Staffordshire, England
+1 DEAT
+2 DATE 7 DEC 1875
+2 PLAC Cradley Heath, Staffordshire, England
+1 BURI
+2 DATE 7 NOV 1875
+2 PLAC Cradley Heath General Cemetery, Staffordshire, England
+1 OCCU Fisherman
+1 FAMC @F72@
+1 FAMS @F55@
+0 @I203@ INDI
+1 NAME Bridget /Uttley/
+2 GIVN Bridget
+2 SURN Uttley
+1 SEX F
+1 BIRT
+2 DATE 10 NOV 1814
+2 PLAC Stroud, Gloucestershire, England
+1 DEAT
+2 DATE 24 MAR 1870
+2 PLAC Stroud, Gloucestershire, England
+2 CAUS Bronchitis
+1 OCCU Laundress
+1 FAMC @F73@
+1 FAMS @F55@
+0 @I204@ INDI
+1 NAME Patrick Walter /Iveson/
+2 GIVN Patrick Walter
+2 SURN Iveson
+1 SEX M
+1 BIRT
+2 DATE 3 NOV 1834
+2 PLAC Cradley Heath, Staffordshire, England
+1 DEAT
+2 DATE 14 OCT 1893
+2 PLAC Cradley Heath, Staffordshire, England
+2 CAUS Typhoid
+1 FAMC @F55@
+0 @I205@ INDI
+1 NAME Eliza /Iveson/
+2 GIVN Eliza
+2 SURN Iveson
+1 SEX F
+1 CHR
+2 DATE 14 APR 1836
+2 PLAC St Mary, Cradley Heath, Staffordshire, England
+1 DEAT
+2 DATE 14 JUL 1839
+2 PLAC Cradley Heath, Staffordshire, England
+2 CAUS Consumption
+1 FAMC @F55@
+0 @I206@ INDI
+1 NAME Florence /Iveson/
+2 GIVN Florence
+2 SURN Iveson
+1 SEX F
+1 BIRT
+2 DATE 18 JAN 1838
+2 PLAC Cradley Heath, Staffordshire, England
+1 FAMC @F55@
+0 @I207@ INDI
+1 NAME Emily /Iveson/
+2 GIVN Emily
+2 SURN Iveson
+1 SEX F
+1 BIRT
+2 DATE 12 MAY 1845
+2 PLAC Cradley Heath, Staffordshire, England
+1 FAMC @F55@
+0 @I208@ INDI
+1 NAME Albert /Ashworth/
+2 GIVN Albert
+2 SURN Ashworth
+1 SEX M
+1 BIRT
+2 DATE 16 JAN 1810
+2 PLAC Burnley, Lancashire, England
+1 DEAT
+2 DATE 19 JUL 1890
+2 PLAC Burnley, Lancashire, England
+1 BURI
+2 DATE 24 DEC 1890
+2 PLAC Burnley General Cemetery, Lancashire, England
+1 OCCU Cotton spinner
+1 FAMC @F74@
+1 FAMS @F56@
+0 @I209@ INDI
+1 NAME Harriet /Lumb/
+2 GIVN Harriet
+2 SURN Lumb
+1 SEX F
+1 BIRT
+2 DATE 12 DEC 1812
+2 PLAC Huddersfield, Yorkshire, England
+1 DEAT
+2 DATE 11 APR 1886
+2 PLAC Huddersfield, Yorkshire, England
+1 OCCU Power-loom weaver
+1 FAMC @F75@
+1 FAMS @F56@
+0 @I210@ INDI
+1 NAME Ellen /Ashworth/
+2 GIVN Ellen
+2 SURN Ashworth
+1 SEX F
+1 DEAT
+2 DATE 15 JUL 1910
+2 PLAC Burnley, Lancashire, England
+2 CAUS Old age
+1 FAMC @F56@
+0 @I211@ INDI
+1 NAME Walter /Ashworth/
+2 GIVN Walter
+2 SURN Ashworth
+1 SEX M
+1 BIRT
+2 DATE ABT 1833
+2 PLAC Burnley, Lancashire, England
+1 DEAT
+2 DATE 3 FEB 1890
+2 PLAC Burnley, Lancashire, England
+2 CAUS Mining accident
+1 BURI
+2 DATE 27 FEB 1890
+2 PLAC Burnley General Cemetery, Lancashire, England
+1 FAMC @F56@
+0 @I212@ INDI
+1 NAME Margaret Mary /Ashworth/
+2 GIVN Margaret Mary
+2 SURN Ashworth
+1 SEX F
+1 BIRT
+2 DATE 15 JUL 1834
+2 PLAC Burnley, Lancashire, England
+1 DEAT
+2 DATE 15 MAR 1915
+2 PLAC Merthyr Tydfil, Glamorgan, Wales
+1 BURI
+2 DATE 17 DEC 1915
+2 PLAC Burnley General Cemetery, Lancashire, England
+1 FAMC @F56@
+0 @I213@ INDI
+1 NAME Arthur /Brennan/
+2 GIVN Arthur
+2 SURN Brennan
+1 SEX M
+1 BIRT
+2 DATE 20 OCT 1755
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 DEAT
+2 DATE 6 APR 1840
+2 PLAC Paisley, Renfrewshire, Scotland
+2 CAUS Typhoid
+1 OCCU Wheelwright
+1 NOTE Kept a small shop on the ground floor of the family home for over thirty years.
+1 FAMS @F57@
+0 @I214@ INDI
+1 NAME Alice Agnes /Yeadon/
+2 GIVN Alice Agnes
+2 SURN Yeadon
+1 SEX F
+1 BIRT
+2 DATE 13 JUL 1752
+2 PLAC Manchester, Lancashire, England
+1 DEAT
+2 DATE 20 FEB 1797
+2 PLAC Manchester, Lancashire, England
+1 OCCU Seamstress
+1 FAMS @F57@
+0 @I215@ INDI
+1 NAME Catherine /Brennan/
+2 GIVN Catherine
+2 SURN Brennan
+1 SEX F
+1 BIRT
+2 DATE ABT 1786
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 FAMC @F57@
+0 @I216@ INDI
+1 NAME Robert Arthur /Brennan/
+2 GIVN Robert Arthur
+2 SURN Brennan
+1 SEX M
+1 BIRT
+2 DATE ABT 1777
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 DEAT
+2 DATE 13 JAN 1853
+2 PLAC Pemberton, Wigan, Lancashire, England
+2 CAUS Old age
+1 FAMC @F57@
+0 @I217@ INDI
+1 NAME Mary /Brennan/
+2 GIVN Mary
+2 SURN Brennan
+1 SEX F
+1 BIRT
+2 DATE ABT 1781
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 FAMC @F57@
+0 @I218@ INDI
+1 NAME Arthur /Marsden/
+2 GIVN Arthur
+2 SURN Marsden
+1 SEX M
+1 CHR
+2 DATE 9 JUN 1767
+2 PLAC St Mary, Pemberton, Wigan, Lancashire, England
+1 DEAT
+2 DATE 21 FEB 1818
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 BURI
+2 DATE 23 SEP 1818
+2 PLAC Pemberton General Cemetery, Wigan, Lancashire, England
+1 OCCU Shepherd
+1 FAMS @F58@
+0 @I219@ INDI
+1 NAME Florence /Jagger/
+2 GIVN Florence
+2 SURN Jagger
+1 SEX F
+1 BIRT
+2 DATE 7 DEC 1770
+2 PLAC Merthyr Tydfil, Glamorgan, Wales
+1 DEAT
+2 DATE 5 SEP 1855
+2 PLAC Whitby, Yorkshire, England
+2 CAUS Pneumonia
+1 BURI
+2 DATE 16 MAR 1855
+2 PLAC Merthyr Tydfil General Cemetery, Glamorgan, Wales
+1 OCCU Lacemaker
+1 FAMS @F58@
+0 @I220@ INDI
+1 NAME Mary /Marsden/
+2 GIVN Mary
+2 SURN Marsden
+1 SEX F
+1 BIRT
+2 DATE 21 SEP 1795
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 DEAT
+2 DATE 28 JAN 1853
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 BURI
+2 DATE 18 DEC 1853
+2 PLAC Pemberton General Cemetery, Wigan, Lancashire, England
+1 FAMC @F58@
+0 @I221@ INDI
+1 NAME Walter /Marsden/
+2 GIVN Walter
+2 SURN Marsden
+1 SEX M
+1 BIRT
+2 DATE ABT 1796
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 DEAT
+2 DATE 19 APR 1797
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 BURI
+2 DATE 2 JAN 1797
+2 PLAC Pemberton General Cemetery, Wigan, Lancashire, England
+1 FAMC @F58@
+0 @I222@ INDI
+1 NAME Hugh Hugh /Ormerod/
+2 GIVN Hugh Hugh
+2 SURN Ormerod
+1 SEX M
+1 BIRT
+2 DATE 2 AUG 1753
+2 PLAC Bolton, Lancashire, England
+1 DEAT
+2 DATE 19 FEB 1826
+2 PLAC Bolton, Lancashire, England
+1 BURI
+2 DATE 2 AUG 1826
+2 PLAC Bolton General Cemetery, Lancashire, England
+1 OCCU Shepherd
+1 NOTE Emigrated briefly to Pennsylvania but returned within five years.
+1 FAMS @F59@
+0 @I223@ INDI
+1 NAME Catherine /Pryce/
+2 GIVN Catherine
+2 SURN Pryce
+1 SEX F
+1 BIRT
+2 DATE 22 FEB 1758
+2 PLAC Bolton, Lancashire, England
+1 DEAT
+2 DATE 22 OCT 1847
+2 PLAC Bolton, Lancashire, England
+1 OCCU Dairymaid
+1 FAMS @F59@
+0 @I224@ INDI
+1 NAME Samuel /Quarmby/
+2 GIVN Samuel
+2 SURN Quarmby
+1 SEX M
+1 BIRT
+2 DATE 17 MAR 1764
+2 PLAC Bethnal Green, London, England
+1 DEAT
+2 DATE 17 OCT 1828
+2 PLAC Bethnal Green, London, England
+1 BURI
+2 DATE 16 DEC 1828
+2 PLAC Bethnal Green General Cemetery, London, England
+1 OCCU Gentleman
+1 NOTE Kept a small shop on the ground floor of the family home for over thirty years.
+1 FAMS @F60@
+0 @I225@ INDI
+1 NAME Hannah Esther /Brennan/
+2 GIVN Hannah Esther
+2 SURN Brennan
+1 SEX F
+1 BIRT
+2 DATE ABT 1767
+2 PLAC Bethnal Green, London, England
+1 DEAT
+2 DATE 10 MAR 1828
+2 PLAC Bethnal Green, London, England
+1 OCCU Lacemaker
+1 FAMS @F60@
+0 @I226@ INDI
+1 NAME Bridget /Quarmby/
+2 GIVN Bridget
+2 SURN Quarmby
+1 SEX F
+1 BIRT
+2 DATE ABT 1785
+2 PLAC Bethnal Green, London, England
+1 DEAT
+2 DATE 12 JUN 1790
+2 PLAC Bethnal Green, London, England
+1 FAMC @F60@
+0 @I227@ INDI
+1 NAME Elizabeth /Quarmby/
+2 GIVN Elizabeth
+2 SURN Quarmby
+1 SEX F
+1 BIRT
+2 DATE 22 JUL 1794
+2 PLAC Bethnal Green, London, England
+1 DEAT
+2 DATE 2 DEC 1865
+2 PLAC Bethnal Green, London, England
+1 FAMC @F60@
+0 @I228@ INDI
+1 NAME Mary /Quarmby/
+2 GIVN Mary
+2 SURN Quarmby
+1 SEX F
+1 BIRT
+2 DATE 28 MAY 1797
+2 PLAC Bethnal Green, London, England
+1 DEAT
+2 DATE 2 JUN 1874
+2 PLAC Bethnal Green, London, England
+1 BURI
+2 DATE 4 MAR 1874
+2 PLAC Bethnal Green General Cemetery, London, England
+1 FAMC @F60@
+0 @I229@ INDI
+1 NAME Daniel /Yeadon/
+2 GIVN Daniel
+2 SURN Yeadon
+1 SEX M
+1 BIRT
+2 DATE ABT 1763
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE 16 JAN 1812
+2 PLAC Halifax, Yorkshire, England
+2 CAUS Bronchitis
+1 OCCU Hand-loom weaver
+1 NOTE Listed in the census as "scholar" aged eleven.
+1 FAMS @F61@
+0 @I230@ INDI
+1 NAME Agnes /Vickers/
+2 GIVN Agnes
+2 SURN Vickers
+1 SEX F
+1 BIRT
+2 DATE ABT 1759
+2 PLAC Bethnal Green, London, England
+1 DEAT
+2 DATE 14 JUL 1806
+2 PLAC Bethnal Green, London, England
+1 OCCU Lacemaker
+1 NOTE Signed the marriage register with an X.
+1 FAMS @F61@
+0 @I231@ INDI
+1 NAME Matthew George /Yeadon/
+2 GIVN Matthew George
+2 SURN Yeadon
+1 SEX M
+1 BIRT
+2 DATE 14 NOV 1785
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE 18 AUG 1872
+2 PLAC Halifax, Yorkshire, England
+1 BURI
+2 DATE 10 DEC 1872
+2 PLAC Halifax General Cemetery, Yorkshire, England
+1 FAMC @F61@
+0 @I232@ INDI
+1 NAME Daniel /Ellery/
+2 GIVN Daniel
+2 SURN Ellery
+1 SEX M
+1 CHR
+2 DATE 5 AUG 1770
+2 PLAC St Mary, Halifax, Yorkshire, England
+1 DEAT
+2 DATE 20 SEP 1832
+2 PLAC Halifax, Yorkshire, England
+1 OCCU Wheelwright
+1 FAMS @F62@
+0 @I233@ INDI
+1 NAME Gwen Jane /Fairclough/
+2 GIVN Gwen Jane
+2 SURN Fairclough
+1 SEX F
+1 BIRT
+2 DATE 2 AUG 1775
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE 14 DEC 1822
+2 PLAC Halifax, Yorkshire, England
+1 BURI
+2 DATE 10 AUG 1822
+2 PLAC Halifax General Cemetery, Yorkshire, England
+1 OCCU Spinner
+1 NOTE Signed the marriage register with an X.
+1 FAMS @F62@
+0 @I234@ INDI
+1 NAME Walter /Ellery/
+2 GIVN Walter
+2 SURN Ellery
+1 SEX M
+1 BIRT
+2 DATE 5 NOV 1800
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE 12 MAY 1800
+2 PLAC Halifax, Yorkshire, England
+1 FAMC @F62@
+0 @I235@ INDI
+1 NAME Robert /Vickers/
+2 GIVN Robert
+2 SURN Vickers
+1 SEX M
+1 BIRT
+2 DATE ABT 1767
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 DEAT
+2 DATE 18 AUG 1825
+2 PLAC Pemberton, Wigan, Lancashire, England
+1 BURI
+2 DATE 18 NOV 1825
+2 PLAC Pemberton General Cemetery, Wigan, Lancashire, England
+1 OCCU Wheelwright
+1 FAMS @F63@
+0 @I236@ INDI
+1 NAME Gwen /Garside/
+2 GIVN Gwen
+2 SURN Garside
+1 SEX F
+1 BIRT
+2 DATE ABT 1767
+2 PLAC Leeds, Yorkshire, England
+1 DEAT
+2 DATE 8 MAY 1812
+2 PLAC Leeds, Yorkshire, England
+1 BURI
+2 DATE 5 OCT 1812
+2 PLAC Leeds General Cemetery, Yorkshire, England
+1 OCCU Domestic servant
+1 NOTE Kept a small shop on the ground floor of the family home for over thirty years.
+1 FAMS @F63@
+0 @I237@ INDI
+1 NAME William William /Doherty/
+2 GIVN William William
+2 SURN Doherty
+1 SEX M
+1 BIRT
+2 DATE 9 OCT 1759
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE 26 MAY 1828
+2 PLAC Halifax, Yorkshire, England
+1 BURI
+2 DATE 22 FEB 1828
+2 PLAC Halifax General Cemetery, Yorkshire, England
+1 OCCU Clothier
+1 NOTE Emigrated briefly to Pennsylvania but returned within five years.
+1 FAMS @F64@
+0 @I238@ INDI
+1 NAME Gwen /Sutcliffe/
+2 GIVN Gwen
+2 SURN Sutcliffe
+1 SEX F
+1 BIRT
+2 DATE ABT 1767
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE 18 FEB 1814
+2 PLAC Halifax, Yorkshire, England
+1 BURI
+2 DATE 11 JAN 1814
+2 PLAC Halifax General Cemetery, Yorkshire, England
+1 OCCU Domestic servant
+1 FAMS @F64@
+0 @I239@ INDI
+1 NAME Sarah /Doherty/
+2 GIVN Sarah
+2 SURN Doherty
+1 SEX F
+1 BIRT
+2 DATE 2 JUN 1790
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE 10 NOV 1840
+2 PLAC Halifax, Yorkshire, England
+1 FAMC @F64@
+0 @I240@ INDI
+1 NAME Hugh Robert /Doherty/
+2 GIVN Hugh Robert
+2 SURN Doherty
+1 SEX M
+1 BIRT
+2 DATE ABT 1788
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE 6 JAN 1836
+2 PLAC Halifax, Yorkshire, England
+1 BURI
+2 DATE 9 JUN 1836
+2 PLAC Halifax General Cemetery, Yorkshire, England
+1 FAMC @F64@
+0 @I241@ INDI
+1 NAME George Henry /Doherty/
+2 GIVN George Henry
+2 SURN Doherty
+1 SEX M
+1 BIRT
+2 DATE ABT 1788
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE 17 MAR 1855
+2 PLAC Halifax, Yorkshire, England
+2 CAUS Consumption
+1 FAMC @F64@
+0 @I242@ INDI
+1 NAME Hugh James /Ashworth/
+2 GIVN Hugh James
+2 SURN Ashworth
+1 SEX M
+1 BIRT
+2 DATE 23 AUG 1762
+2 PLAC Bradford, Yorkshire, England
+1 DEAT
+2 DATE 6 SEP 1835
+2 PLAC Bolton, Lancashire, England
+1 OCCU Wheelwright
+1 FAMS @F65@
+0 @I243@ INDI
+1 NAME Isabella /Garside/
+2 GIVN Isabella
+2 SURN Garside
+1 SEX F
+1 BIRT
+2 DATE ABT 1770
+2 PLAC Bradford, Yorkshire, England
+1 DEAT
+2 DATE 9 DEC 1823
+2 PLAC Bradford, Yorkshire, England
+1 OCCU Domestic servant
+1 NOTE Family story says he walked from the coast to find mill work.
+1 FAMS @F65@
+0 @I244@ INDI
+1 NAME William /Pickles/
+2 GIVN William
+2 SURN Pickles
+1 SEX M
+1 BIRT
+2 DATE 3 JAN 1771
+2 PLAC Cork, County Cork, Ireland
+1 DEAT
+2 DATE 2 APR 1853
+2 PLAC Cork, County Cork, Ireland
+1 BURI
+2 DATE 21 DEC 1853
+2 PLAC Cork General Cemetery, County Cork, Ireland
+1 OCCU Gentleman
+1 FAMS @F66@
+0 @I245@ INDI
+1 NAME Jane /Sutcliffe/
+2 GIVN Jane
+2 SURN Sutcliffe
+1 SEX F
+1 CHR
+2 DATE 9 MAR 1768
+2 PLAC St Mary, Bolton, Lancashire, England
+1 DEAT
+2 DATE 16 NOV 1836
+2 PLAC Huddersfield, Yorkshire, England
+1 BURI
+2 DATE 3 JUL 1836
+2 PLAC Bolton General Cemetery, Lancashire, England
+1 OCCU Lacemaker
+1 FAMS @F66@
+0 @I246@ INDI
+1 NAME Daniel /Rhodes/
+2 GIVN Daniel
+2 SURN Rhodes
+1 SEX M
+1 BIRT
+2 DATE ABT 1777
+2 PLAC Bolton, Lancashire, England
+1 DEAT
+2 DATE 19 APR 1833
+2 PLAC Bolton, Lancashire, England
+2 CAUS Typhoid
+1 BURI
+2 DATE 20 OCT 1833
+2 PLAC Bolton General Cemetery, Lancashire, England
+1 OCCU Clerk in holy orders
+1 FAMS @F67@
+0 @I247@ INDI
+1 NAME Hannah Emily /Marsden/
+2 GIVN Hannah Emily
+2 SURN Marsden
+1 SEX F
+1 BIRT
+2 DATE 23 SEP 1779
+2 PLAC Bolton, Lancashire, England
+1 DEAT
+2 DATE 7 JUL 1831
+2 PLAC Bolton, Lancashire, England
+1 OCCU Domestic servant
+1 NOTE Listed in the census as "scholar" aged eleven.
+1 FAMS @F67@
+0 @I248@ INDI
+1 NAME Patrick /Yeadon/
+2 GIVN Patrick
+2 SURN Yeadon
+1 SEX M
+1 BIRT
+2 DATE ABT 1768
+2 PLAC Cradley Heath, Staffordshire, England
+1 DEAT
+2 DATE 12 MAR 1815
+2 PLAC Cradley Heath, Staffordshire, England
+1 OCCU Clothier
+1 NOTE Listed in the census as "scholar" aged eleven.
+1 FAMS @F68@
+0 @I249@ INDI
+1 NAME Ellen Harriet /Fairclough/
+2 GIVN Ellen Harriet
+2 SURN Fairclough
+1 SEX F
+1 BIRT
+2 DATE 27 DEC 1767
+2 PLAC Cradley Heath, Staffordshire, England
+1 DEAT
+2 DATE 13 JAN 1828
+2 PLAC Cradley Heath, Staffordshire, England
+1 OCCU Dairymaid
+1 FAMS @F68@
+0 @I250@ INDI
+1 NAME John /Yeadon/
+2 GIVN John
+2 SURN Yeadon
+1 SEX M
+1 BIRT
+2 DATE 14 JUN 1789
+2 PLAC Cradley Heath, Staffordshire, England
+1 DEAT
+2 DATE 5 DEC 1875
+2 PLAC Cradley Heath, Staffordshire, England
+2 CAUS Bronchitis
+1 BURI
+2 DATE 15 NOV 1875
+2 PLAC Cradley Heath General Cemetery, Staffordshire, England
+1 FAMC @F68@
+0 @I251@ INDI
+1 NAME Gwen /Yeadon/
+2 GIVN Gwen
+2 SURN Yeadon
+1 SEX F
+1 BIRT
+2 DATE ABT 1793
+2 PLAC Cradley Heath, Staffordshire, England
+1 FAMC @F68@
+0 @I252@ INDI
+1 NAME Edward /Yeadon/
+2 GIVN Edward
+2 SURN Yeadon
+1 SEX M
+1 BIRT
+2 DATE 12 SEP 1795
+2 PLAC Cradley Heath, Staffordshire, England
+1 DEAT
+2 DATE 3 JAN 1800
+2 PLAC Cradley Heath, Staffordshire, England
+1 FAMC @F68@
+0 @I253@ INDI
+1 NAME Florence /Yeadon/
+2 GIVN Florence
+2 SURN Yeadon
+1 SEX F
+1 BIRT
+2 DATE ABT 1795
+2 PLAC Cradley Heath, Staffordshire, England
+1 DEAT
+2 DATE 26 AUG 1842
+2 PLAC Cradley Heath, Staffordshire, England
+1 BURI
+2 DATE 22 FEB 1842
+2 PLAC Cradley Heath General Cemetery, Staffordshire, England
+1 FAMC @F68@
+0 @I254@ INDI
+1 NAME Albert /Ashworth/
+2 GIVN Albert
+2 SURN Ashworth
+1 SEX M
+1 BIRT
+2 DATE 5 DEC 1770
+2 PLAC Chipping Campden, Gloucestershire, England
+1 DEAT
+2 DATE 21 OCT 1821
+2 PLAC Chipping Campden, Gloucestershire, England
+1 OCCU Gentleman
+1 FAMS @F69@
+0 @I255@ INDI
+1 NAME Eliza /Dunmore/
+2 GIVN Eliza
+2 SURN Dunmore
+1 SEX F
+1 BIRT
+2 DATE 25 FEB 1768
+2 PLAC Chipping Campden, Gloucestershire, England
+1 DEAT
+2 DATE 19 MAR 1825
+2 PLAC Chipping Campden, Gloucestershire, England
+1 BURI
+2 DATE 21 JAN 1825
+2 PLAC Chipping Campden General Cemetery, Gloucestershire, England
+1 OCCU Dairymaid
+1 NOTE Survived the cholera outbreak that took two of her siblings.
+1 FAMS @F69@
+0 @I256@ INDI
+1 NAME Edward /Pryce/
+2 GIVN Edward
+2 SURN Pryce
+1 SEX M
+1 BIRT
+2 DATE ABT 1774
+2 PLAC Portree, Isle of Skye, Scotland
+1 DEAT
+2 DATE 20 SEP 1846
+2 PLAC Portree, Isle of Skye, Scotland
+1 BURI
+2 DATE 1 OCT 1846
+2 PLAC Portree General Cemetery, Isle of Skye, Scotland
+1 OCCU Wheelwright
+1 NOTE Kept a small shop on the ground floor of the family home for over thirty years.
+1 FAMS @F70@
+0 @I257@ INDI
+1 NAME Elizabeth /Dunmore/
+2 GIVN Elizabeth
+2 SURN Dunmore
+1 SEX F
+1 BIRT
+2 DATE 5 AUG 1773
+2 PLAC Portree, Isle of Skye, Scotland
+1 DEAT
+2 DATE 8 OCT 1858
+2 PLAC Portree, Isle of Skye, Scotland
+1 OCCU Spinner
+1 NOTE Listed in the census as "scholar" aged eleven.
+1 FAMS @F70@
+0 @I258@ INDI
+1 NAME Albert /Pryce/
+2 GIVN Albert
+2 SURN Pryce
+1 SEX M
+1 BIRT
+2 DATE 6 AUG 1802
+2 PLAC Portree, Isle of Skye, Scotland
+1 DEAT
+2 DATE 14 OCT 1864
+2 PLAC Portree, Isle of Skye, Scotland
+1 FAMC @F70@
+0 @I259@ INDI
+1 NAME Sarah Alice /Pryce/
+2 GIVN Sarah Alice
+2 SURN Pryce
+1 SEX F
+1 BIRT
+2 DATE 4 AUG 1799
+2 PLAC Portree, Isle of Skye, Scotland
+1 FAMC @F70@
+0 @I260@ INDI
+1 NAME Owen Arthur /Pryce/
+2 GIVN Owen Arthur
+2 SURN Pryce
+1 SEX M
+1 CHR
+2 DATE 7 APR 1804
+2 PLAC St Mary, Portree, Isle of Skye, Scotland
+1 DEAT
+2 DATE 5 DEC 1881
+2 PLAC Portree, Isle of Skye, Scotland
+1 FAMC @F70@
+0 @I261@ INDI
+1 NAME Gwen /Pryce/
+2 GIVN Gwen
+2 SURN Pryce
+1 SEX F
+1 BIRT
+2 DATE 1 JUN 1795
+2 PLAC Portree, Isle of Skye, Scotland
+1 FAMC @F70@
+0 @I262@ INDI
+1 NAME Joseph /McKellar/
+2 GIVN Joseph
+2 SURN McKellar
+1 SEX M
+1 BIRT
+2 DATE 17 SEP 1765
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE 11 JAN 1820
+2 PLAC Halifax, Yorkshire, England
+1 BURI
+2 DATE 16 SEP 1820
+2 PLAC Halifax General Cemetery, Yorkshire, England
+1 OCCU Yeoman farmer
+1 FAMS @F71@
+0 @I263@ INDI
+1 NAME Alice /Pryce/
+2 GIVN Alice
+2 SURN Pryce
+1 SEX F
+1 BIRT
+2 DATE 23 MAR 1772
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE 10 SEP 1832
+2 PLAC Halifax, Yorkshire, England
+1 BURI
+2 DATE 27 OCT 1832
+2 PLAC Halifax General Cemetery, Yorkshire, England
+1 OCCU Spinner
+1 NOTE Family story says he walked from the coast to find mill work.
+1 FAMS @F71@
+0 @I264@ INDI
+1 NAME Isabella /McKellar/
+2 GIVN Isabella
+2 SURN McKellar
+1 SEX F
+1 BIRT
+2 DATE 2 JUL 1797
+2 PLAC Halifax, Yorkshire, England
+1 FAMC @F71@
+0 @I265@ INDI
+1 NAME Emily /McKellar/
+2 GIVN Emily
+2 SURN McKellar
+1 SEX F
+1 BIRT
+2 DATE ABT 1789
+2 PLAC Halifax, Yorkshire, England
+1 FAMC @F71@
+0 @I266@ INDI
+1 NAME Henry /McKellar/
+2 GIVN Henry
+2 SURN McKellar
+1 SEX M
+1 BIRT
+2 DATE 7 SEP 1802
+2 PLAC Halifax, Yorkshire, England
+1 FAMC @F71@
+0 @I267@ INDI
+1 NAME Owen /Iveson/
+2 GIVN Owen
+2 SURN Iveson
+1 SEX M
+1 BIRT
+2 DATE 22 NOV 1776
+2 PLAC Cradley Heath, Staffordshire, England
+1 DEAT
+2 DATE 27 OCT 1860
+2 PLAC Leeds, Yorkshire, England
+1 BURI
+2 DATE 1 OCT 1860
+2 PLAC Cradley Heath General Cemetery, Staffordshire, England
+1 OCCU Wheelwright
+1 FAMS @F72@
+0 @I268@ INDI
+1 NAME Sarah /Ormerod/
+2 GIVN Sarah
+2 SURN Ormerod
+1 SEX F
+1 BIRT
+2 DATE 25 FEB 1779
+2 PLAC Cradley Heath, Staffordshire, England
+1 DEAT
+2 DATE 28 JUN 1856
+2 PLAC Cradley Heath, Staffordshire, England
+1 OCCU Lacemaker
+1 FAMS @F72@
+0 @I269@ INDI
+1 NAME Albert /Uttley/
+2 GIVN Albert
+2 SURN Uttley
+1 SEX M
+1 BIRT
+2 DATE 15 OCT 1787
+2 PLAC Westport, County Mayo, Ireland
+1 DEAT
+2 DATE 9 AUG 1842
+2 PLAC Westport, County Mayo, Ireland
+2 CAUS Typhoid
+1 OCCU Surgeon
+1 FAMS @F73@
+0 @I270@ INDI
+1 NAME Mary /Dunmore/
+2 GIVN Mary
+2 SURN Dunmore
+1 SEX F
+1 BIRT
+2 DATE 16 MAY 1792
+2 PLAC Westport, County Mayo, Ireland
+1 DEAT
+2 DATE 18 MAY 1849
+2 PLAC Westport, County Mayo, Ireland
+2 CAUS Old age
+1 BURI
+2 DATE 11 NOV 1849
+2 PLAC Westport General Cemetery, County Mayo, Ireland
+1 OCCU Domestic servant
+1 FAMS @F73@
+0 @I271@ INDI
+1 NAME Joseph /Ashworth/
+2 GIVN Joseph
+2 SURN Ashworth
+1 SEX M
+1 BIRT
+2 DATE ABT 1775
+2 PLAC Burnley, Lancashire, England
+1 DEAT
+2 DATE 7 DEC 1847
+2 PLAC Burnley, Lancashire, England
+2 CAUS Consumption
+1 BURI
+2 DATE 12 MAY 1847
+2 PLAC Burnley General Cemetery, Lancashire, England
+1 OCCU Gentleman
+1 FAMS @F74@
+0 @I272@ INDI
+1 NAME Eliza /Nuttall/
+2 GIVN Eliza
+2 SURN Nuttall
+1 SEX F
+1 BIRT
+2 DATE 21 APR 1784
+2 PLAC Burnley, Lancashire, England
+1 DEAT
+2 DATE 14 OCT 1844
+2 PLAC Halifax, Yorkshire, England
+2 CAUS Bronchitis
+1 OCCU Cotton spinner
+1 FAMS @F74@
+0 @I273@ INDI
+1 NAME Edward /Ashworth/
+2 GIVN Edward
+2 SURN Ashworth
+1 SEX M
+1 CHR
+2 DATE 14 MAY 1809
+2 PLAC St Mary, Burnley, Lancashire, England
+1 FAMC @F74@
+0 @I274@ INDI
+1 NAME Arthur /Lumb/
+2 GIVN Arthur
+2 SURN Lumb
+1 SEX M
+1 BIRT
+2 DATE 1 DEC 1786
+2 PLAC Huddersfield, Yorkshire, England
+1 DEAT
+2 DATE 7 FEB 1866
+2 PLAC Huddersfield, Yorkshire, England
+2 CAUS Pneumonia
+1 BURI
+2 DATE 7 MAY 1866
+2 PLAC Huddersfield General Cemetery, Yorkshire, England
+1 OCCU Stonemason
+1 FAMS @F75@
+0 @I275@ INDI
+1 NAME Harriet /Ormerod/
+2 GIVN Harriet
+2 SURN Ormerod
+1 SEX F
+1 BIRT
+2 DATE 1 MAY 1791
+2 PLAC Cork, County Cork, Ireland
+1 DEAT
+2 DATE 3 MAR 1869
+2 PLAC Cork, County Cork, Ireland
+1 OCCU Power-loom weaver
+1 NOTE Remembered for her singing in the chapel choir.
+1 FAMS @F75@
+0 @I276@ INDI
+1 NAME Matthew William /Lumb/
+2 GIVN Matthew William
+2 SURN Lumb
+1 SEX M
+1 BIRT
+2 DATE ABT 1810
+2 PLAC Huddersfield, Yorkshire, England
+1 DEAT
+2 DATE 1 MAR 1876
+2 PLAC Whitby, Yorkshire, England
+2 CAUS Bronchitis
+1 BURI
+2 DATE 25 NOV 1876
+2 PLAC Huddersfield General Cemetery, Yorkshire, England
+1 FAMC @F75@
+0 @F1@ FAM
+1 HUSB @I2@
+1 WIFE @I3@
+1 CHIL @I1@
+1 CHIL @I4@
+1 CHIL @I5@
+1 CHIL @I6@
+1 MARR
+2 DATE 15 JUL 1989
+2 PLAC Parish Church, Leeds, Yorkshire, England
+0 @F2@ FAM
+1 HUSB @I7@
+1 WIFE @I8@
+1 CHIL @I2@
+1 CHIL @I9@
+1 CHIL @I10@
+1 MARR
+2 DATE 19 FEB 1955
+2 PLAC Parish Church, Leeds, Yorkshire, England
+0 @F3@ FAM
+1 HUSB @I11@
+1 WIFE @I12@
+1 CHIL @I3@
+0 @F4@ FAM
+1 HUSB @I13@
+1 WIFE @I14@
+1 CHIL @I7@
+1 CHIL @I15@
+1 CHIL @I16@
+0 @F5@ FAM
+1 HUSB @I17@
+1 WIFE @I18@
+1 CHIL @I8@
+1 MARR
+2 DATE 7 JAN 1929
+2 PLAC Parish Church, Cradley Heath, Staffordshire, England
+0 @F6@ FAM
+1 HUSB @I19@
+1 WIFE @I20@
+1 CHIL @I11@
+1 CHIL @I21@
+1 CHIL @I22@
+1 CHIL @I23@
+1 CHIL @I24@
+1 MARR
+2 DATE 21 MAY 1933
+2 PLAC Parish Church, Bolton, Lancashire, England
+0 @F7@ FAM
+1 HUSB @I25@
+1 WIFE @I26@
+1 CHIL @I12@
+1 MARR
+2 DATE 7 SEP 1941
+2 PLAC Parish Church, Cork, County Cork, Ireland
+0 @F8@ FAM
+1 HUSB @I27@
+1 WIFE @I28@
+1 CHIL @I13@
+1 CHIL @I29@
+1 MARR
+2 DATE 21 MAR 1897
+2 PLAC Parish Church, Pemberton, Wigan, Lancashire, England
+0 @F9@ FAM
+1 HUSB @I30@
+1 WIFE @I31@
+1 CHIL @I14@
+1 CHIL @I32@
+1 MARR
+2 DATE 3 MAY 1896
+2 PLAC Parish Church, Halifax, Yorkshire, England
+0 @F10@ FAM
+1 HUSB @I33@
+1 WIFE @I34@
+1 CHIL @I17@
+1 CHIL @I35@
+1 CHIL @I36@
+1 CHIL @I37@
+1 MARR
+2 DATE 20 NOV 1899
+2 PLAC Parish Church, Cradley Heath, Staffordshire, England
+0 @F11@ FAM
+1 HUSB @I38@
+1 WIFE @I39@
+1 CHIL @I18@
+1 CHIL @I40@
+1 CHIL @I41@
+1 CHIL @I42@
+1 MARR
+2 DATE 16 FEB 1908
+2 PLAC Parish Church, Cradley Heath, Staffordshire, England
+0 @F12@ FAM
+1 HUSB @I43@
+1 WIFE @I44@
+1 CHIL @I19@
+1 CHIL @I45@
+1 MARR
+2 DATE 24 JUL 1909
+2 PLAC Parish Church, Bolton, Lancashire, England
+0 @F13@ FAM
+1 HUSB @I46@
+1 WIFE @I47@
+1 CHIL @I20@
+1 CHIL @I48@
+0 @F14@ FAM
+1 HUSB @I49@
+1 WIFE @I50@
+1 CHIL @I25@
+1 CHIL @I51@
+1 CHIL @I52@
+1 CHIL @I53@
+0 @F15@ FAM
+1 HUSB @I54@
+1 WIFE @I55@
+1 CHIL @I27@
+1 CHIL @I56@
+1 MARR
+2 DATE 4 MAY 1863
+2 PLAC Parish Church, Pemberton, Wigan, Lancashire, England
+0 @F16@ FAM
+1 HUSB @I57@
+1 WIFE @I58@
+1 CHIL @I28@
+1 CHIL @I59@
+1 MARR
+2 DATE 21 FEB 1870
+2 PLAC Parish Church, Pemberton, Wigan, Lancashire, England
+0 @F17@ FAM
+1 HUSB @I60@
+1 WIFE @I61@
+1 CHIL @I30@
+1 CHIL @I62@
+1 CHIL @I46@
+1 MARR
+2 DATE 12 NOV 1871
+2 PLAC Parish Church, Halifax, Yorkshire, England
+0 @F18@ FAM
+1 HUSB @I63@
+1 WIFE @I64@
+1 CHIL @I34@
+1 CHIL @I65@
+1 CHIL @I66@
+1 CHIL @I67@
+0 @F19@ FAM
+1 HUSB @I68@
+1 WIFE @I69@
+1 CHIL @I38@
+1 MARR
+2 DATE 10 AUG 1873
+2 PLAC Parish Church, Cradley Heath, Staffordshire, England
+0 @F20@ FAM
+1 HUSB @I70@
+1 WIFE @I71@
+1 CHIL @I47@
+1 CHIL @I72@
+1 MARR
+2 DATE 16 JAN 1891
+2 PLAC Parish Church, Westport, County Mayo, Ireland
+0 @F21@ FAM
+1 HUSB @I73@
+1 WIFE @I74@
+1 CHIL @I49@
+1 CHIL @I75@
+1 CHIL @I76@
+1 CHIL @I77@
+1 MARR
+2 DATE 23 APR 1878
+2 PLAC Parish Church, Hebden Bridge, Yorkshire, England
+0 @F22@ FAM
+1 HUSB @I78@
+1 WIFE @I79@
+1 CHIL @I50@
+1 CHIL @I80@
+1 MARR
+2 DATE 3 JUN 1884
+2 PLAC Parish Church, Portree, Isle of Skye, Scotland
+0 @F23@ FAM
+1 HUSB @I81@
+1 WIFE @I82@
+1 CHIL @I54@
+1 CHIL @I83@
+1 MARR
+2 DATE 27 JUL 1830
+2 PLAC Parish Church, Pemberton, Wigan, Lancashire, England
+0 @F24@ FAM
+1 HUSB @I84@
+1 WIFE @I85@
+1 CHIL @I55@
+1 CHIL @I86@
+1 CHIL @I87@
+1 CHIL @I88@
+1 CHIL @I89@
+1 MARR
+2 DATE 2 AUG 1844
+2 PLAC Parish Church, Pemberton, Wigan, Lancashire, England
+0 @F25@ FAM
+1 HUSB @I90@
+1 WIFE @I91@
+1 CHIL @I57@
+1 CHIL @I92@
+1 MARR
+2 DATE 14 SEP 1844
+2 PLAC Parish Church, Pemberton, Wigan, Lancashire, England
+0 @F26@ FAM
+1 HUSB @I93@
+1 WIFE @I94@
+1 CHIL @I60@
+1 MARR
+2 DATE 27 MAY 1850
+2 PLAC Parish Church, Halifax, Yorkshire, England
+0 @F27@ FAM
+1 HUSB @I95@
+1 WIFE @I96@
+1 CHIL @I61@
+1 CHIL @I97@
+1 MARR
+2 DATE 10 NOV 1844
+2 PLAC Parish Church, Pemberton, Wigan, Lancashire, England
+0 @F28@ FAM
+1 HUSB @I98@
+1 WIFE @I99@
+1 CHIL @I63@
+1 MARR
+2 DATE 18 JAN 1843
+2 PLAC Parish Church, Halifax, Yorkshire, England
+0 @F29@ FAM
+1 HUSB @I100@
+1 WIFE @I101@
+1 CHIL @I64@
+1 MARR
+2 DATE 5 NOV 1852
+2 PLAC Parish Church, Bolton, Lancashire, England
+0 @F30@ FAM
+1 HUSB @I102@
+1 WIFE @I103@
+1 CHIL @I68@
+1 CHIL @I104@
+1 MARR
+2 DATE 1 JUL 1841
+2 PLAC Parish Church, Bolton, Lancashire, England
+0 @F31@ FAM
+1 HUSB @I105@
+1 WIFE @I106@
+1 CHIL @I69@
+1 CHIL @I107@
+1 CHIL @I108@
+1 CHIL @I109@
+1 CHIL @I110@
+0 @F32@ FAM
+1 HUSB @I111@
+1 WIFE @I112@
+1 CHIL @I71@
+1 CHIL @I113@
+1 CHIL @I114@
+1 CHIL @I115@
+1 CHIL @I116@
+0 @F33@ FAM
+1 HUSB @I117@
+1 WIFE @I118@
+1 CHIL @I73@
+1 MARR
+2 DATE 19 OCT 1847
+2 PLAC Parish Church, Liverpool, Lancashire, England
+0 @F34@ FAM
+1 HUSB @I119@
+1 WIFE @I120@
+1 CHIL @I74@
+1 MARR
+2 DATE 28 JUL 1854
+2 PLAC Parish Church, Stroud, Gloucestershire, England
+0 @F35@ FAM
+1 HUSB @I121@
+1 WIFE @I122@
+1 CHIL @I79@
+1 CHIL @I123@
+1 MARR
+2 DATE 22 JUN 1861
+2 PLAC Parish Church, Cradley Heath, Staffordshire, England
+0 @F36@ FAM
+1 HUSB @I124@
+1 WIFE @I125@
+1 CHIL @I82@
+1 CHIL @I126@
+1 CHIL @I127@
+1 MARR
+2 DATE 7 MAY 1802
+2 PLAC Parish Church, Gateshead, Durham, England
+0 @F37@ FAM
+1 HUSB @I128@
+1 WIFE @I129@
+1 CHIL @I84@
+1 CHIL @I130@
+1 MARR
+2 DATE 25 FEB 1806
+2 PLAC Parish Church, Pemberton, Wigan, Lancashire, England
+0 @F38@ FAM
+1 HUSB @I131@
+1 WIFE @I132@
+1 CHIL @I85@
+1 CHIL @I133@
+1 MARR
+2 DATE 21 DEC 1819
+2 PLAC Parish Church, Pemberton, Wigan, Lancashire, England
+0 @F39@ FAM
+1 HUSB @I134@
+1 WIFE @I135@
+1 CHIL @I90@
+1 CHIL @I136@
+1 CHIL @I137@
+1 MARR
+2 DATE 17 MAR 1810
+2 PLAC Parish Church, Bolton, Lancashire, England
+0 @F40@ FAM
+1 HUSB @I138@
+1 WIFE @I139@
+1 CHIL @I91@
+1 CHIL @I140@
+1 CHIL @I141@
+1 CHIL @I142@
+0 @F41@ FAM
+1 HUSB @I143@
+1 WIFE @I144@
+1 CHIL @I93@
+1 CHIL @I145@
+1 CHIL @I146@
+1 CHIL @I147@
+1 CHIL @I148@
+1 MARR
+2 DATE 7 AUG 1810
+2 PLAC Parish Church, Halifax, Yorkshire, England
+0 @F42@ FAM
+1 HUSB @I149@
+1 WIFE @I150@
+1 CHIL @I94@
+1 CHIL @I151@
+1 CHIL @I152@
+1 CHIL @I153@
+1 MARR
+2 DATE 8 MAY 1826
+2 PLAC Parish Church, Halifax, Yorkshire, England
+0 @F43@ FAM
+1 HUSB @I154@
+1 WIFE @I155@
+1 CHIL @I96@
+1 CHIL @I156@
+1 CHIL @I157@
+1 MARR
+2 DATE 18 JUL 1820
+2 PLAC Parish Church, Pemberton, Wigan, Lancashire, England
+0 @F44@ FAM
+1 HUSB @I158@
+1 WIFE @I159@
+1 CHIL @I98@
+1 CHIL @I160@
+1 MARR
+2 DATE 24 MAR 1815
+2 PLAC Parish Church, Halifax, Yorkshire, England
+0 @F45@ FAM
+1 HUSB @I161@
+1 WIFE @I162@
+1 CHIL @I99@
+1 CHIL @I163@
+1 CHIL @I164@
+1 MARR
+2 DATE 19 JUN 1823
+2 PLAC Parish Church, Burnley, Lancashire, England
+0 @F46@ FAM
+1 HUSB @I165@
+1 WIFE @I166@
+1 CHIL @I100@
+1 CHIL @I167@
+1 CHIL @I168@
+1 CHIL @I169@
+1 MARR
+2 DATE 14 OCT 1826
+2 PLAC Parish Church, Bolton, Lancashire, England
+0 @F47@ FAM
+1 HUSB @I170@
+1 WIFE @I171@
+1 CHIL @I101@
+1 CHIL @I172@
+1 CHIL @I173@
+1 CHIL @I174@
+0 @F48@ FAM
+1 HUSB @I175@
+1 WIFE @I176@
+1 CHIL @I102@
+1 MARR
+2 DATE 3 FEB 1803
+2 PLAC Parish Church, Bolton, Lancashire, England
+0 @F49@ FAM
+1 HUSB @I177@
+1 WIFE @I178@
+1 CHIL @I103@
+1 CHIL @I179@
+1 CHIL @I180@
+1 CHIL @I181@
+1 CHIL @I182@
+1 MARR
+2 DATE 25 MAY 1813
+2 PLAC Parish Church, Bolton, Lancashire, England
+0 @F50@ FAM
+1 HUSB @I183@
+1 WIFE @I184@
+1 CHIL @I105@
+1 CHIL @I185@
+1 MARR
+2 DATE 21 MAR 1824
+2 PLAC Parish Church, Cradley Heath, Staffordshire, England
+0 @F51@ FAM
+1 HUSB @I186@
+1 WIFE @I187@
+1 CHIL @I106@
+1 CHIL @I188@
+1 CHIL @I189@
+1 CHIL @I190@
+1 CHIL @I191@
+1 MARR
+2 DATE 10 JUL 1817
+2 PLAC Parish Church, Cradley Heath, Staffordshire, England
+0 @F52@ FAM
+1 HUSB @I192@
+1 WIFE @I193@
+1 CHIL @I117@
+1 CHIL @I194@
+1 MARR
+2 DATE 10 SEP 1823
+2 PLAC Parish Church, Liverpool, Lancashire, England
+0 @F53@ FAM
+1 HUSB @I195@
+1 WIFE @I196@
+1 CHIL @I119@
+1 MARR
+2 DATE 4 APR 1817
+2 PLAC Parish Church, Stroud, Gloucestershire, England
+0 @F54@ FAM
+1 HUSB @I197@
+1 WIFE @I198@
+1 CHIL @I120@
+1 CHIL @I199@
+1 CHIL @I200@
+1 CHIL @I201@
+1 MARR
+2 DATE 27 OCT 1831
+2 PLAC Parish Church, Bethnal Green, London, England
+0 @F55@ FAM
+1 HUSB @I202@
+1 WIFE @I203@
+1 CHIL @I121@
+1 CHIL @I204@
+1 CHIL @I205@
+1 CHIL @I206@
+1 CHIL @I207@
+0 @F56@ FAM
+1 HUSB @I208@
+1 WIFE @I209@
+1 CHIL @I122@
+1 CHIL @I210@
+1 CHIL @I211@
+1 CHIL @I212@
+1 MARR
+2 DATE 14 DEC 1835
+2 PLAC Parish Church, Burnley, Lancashire, England
+0 @F57@ FAM
+1 HUSB @I213@
+1 WIFE @I214@
+1 CHIL @I128@
+1 CHIL @I215@
+1 CHIL @I216@
+1 CHIL @I217@
+0 @F58@ FAM
+1 HUSB @I218@
+1 WIFE @I219@
+1 CHIL @I132@
+1 CHIL @I220@
+1 CHIL @I221@
+1 MARR
+2 DATE 11 APR 1790
+2 PLAC Parish Church, Pemberton, Wigan, Lancashire, England
+0 @F59@ FAM
+1 HUSB @I222@
+1 WIFE @I223@
+1 CHIL @I134@
+1 MARR
+2 DATE 3 DEC 1781
+2 PLAC Parish Church, Bolton, Lancashire, England
+0 @F60@ FAM
+1 HUSB @I224@
+1 WIFE @I225@
+1 CHIL @I135@
+1 CHIL @I226@
+1 CHIL @I227@
+1 CHIL @I228@
+1 MARR
+2 DATE 10 DEC 1790
+2 PLAC Parish Church, Bethnal Green, London, England
+0 @F61@ FAM
+1 HUSB @I229@
+1 WIFE @I230@
+1 CHIL @I144@
+1 CHIL @I231@
+1 MARR
+2 DATE 5 DEC 1784
+2 PLAC Parish Church, Halifax, Yorkshire, England
+0 @F62@ FAM
+1 HUSB @I232@
+1 WIFE @I233@
+1 CHIL @I149@
+1 CHIL @I234@
+1 MARR
+2 DATE 24 DEC 1797
+2 PLAC Parish Church, Halifax, Yorkshire, England
+0 @F63@ FAM
+1 HUSB @I235@
+1 WIFE @I236@
+1 CHIL @I154@
+0 @F64@ FAM
+1 HUSB @I237@
+1 WIFE @I238@
+1 CHIL @I158@
+1 CHIL @I239@
+1 CHIL @I240@
+1 CHIL @I241@
+0 @F65@ FAM
+1 HUSB @I242@
+1 WIFE @I243@
+1 CHIL @I159@
+1 MARR
+2 DATE 6 MAY 1793
+2 PLAC Parish Church, Bradford, Yorkshire, England
+0 @F66@ FAM
+1 HUSB @I244@
+1 WIFE @I245@
+1 CHIL @I161@
+0 @F67@ FAM
+1 HUSB @I246@
+1 WIFE @I247@
+1 CHIL @I166@
+1 MARR
+2 DATE 11 JUN 1800
+2 PLAC Parish Church, Bolton, Lancashire, England
+0 @F68@ FAM
+1 HUSB @I248@
+1 WIFE @I249@
+1 CHIL @I183@
+1 CHIL @I250@
+1 CHIL @I251@
+1 CHIL @I252@
+1 CHIL @I253@
+1 MARR
+2 DATE 19 JUN 1788
+2 PLAC Parish Church, Cradley Heath, Staffordshire, England
+0 @F69@ FAM
+1 HUSB @I254@
+1 WIFE @I255@
+1 CHIL @I187@
+1 MARR
+2 DATE 24 AUG 1790
+2 PLAC Parish Church, Chipping Campden, Gloucestershire, England
+0 @F70@ FAM
+1 HUSB @I256@
+1 WIFE @I257@
+1 CHIL @I193@
+1 CHIL @I258@
+1 CHIL @I259@
+1 CHIL @I260@
+1 CHIL @I261@
+0 @F71@ FAM
+1 HUSB @I262@
+1 WIFE @I263@
+1 CHIL @I196@
+1 CHIL @I264@
+1 CHIL @I265@
+1 CHIL @I266@
+0 @F72@ FAM
+1 HUSB @I267@
+1 WIFE @I268@
+1 CHIL @I202@
+1 MARR
+2 DATE 11 APR 1802
+2 PLAC Parish Church, Cradley Heath, Staffordshire, England
+0 @F73@ FAM
+1 HUSB @I269@
+1 WIFE @I270@
+1 CHIL @I203@
+1 MARR
+2 DATE 15 APR 1813
+2 PLAC Parish Church, Westport, County Mayo, Ireland
+0 @F74@ FAM
+1 HUSB @I271@
+1 WIFE @I272@
+1 CHIL @I208@
+1 CHIL @I273@
+1 MARR
+2 DATE 7 APR 1804
+2 PLAC Parish Church, Burnley, Lancashire, England
+0 @F75@ FAM
+1 HUSB @I274@
+1 WIFE @I275@
+1 CHIL @I209@
+1 CHIL @I276@
+1 MARR
+2 DATE 6 FEB 1812
+2 PLAC Parish Church, Huddersfield, Yorkshire, England
+0 TRLR

@@ -1,0 +1,13 @@
+{
+  "name": "ancestry-3d",
+  "version": "1.0.0",
+  "description": "Walk among your ancestors: a first-person, retro-shooter-styled 3D explorer for GEDCOM family trees.",
+  "type": "module",
+  "scripts": {
+    "test": "node tests/parse.test.mjs",
+    "demo": "node tools/make-demo.mjs",
+    "build": "node tools/build-single.mjs"
+  },
+  "license": "MIT",
+  "private": true
+}

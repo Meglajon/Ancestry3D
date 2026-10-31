@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Ancestry 3D</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Walk among your ancestors: a first-person retro 3D explorer for GEDCOM family trees.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&family=Lilita+One&family=Pixelify+Sans:wght@400;600&display=swap" rel="stylesheet">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<style>
+:root {
+  --bg: #0b0605;
+  --panel: #2a201a;
+  --panel-hi: #4a3a2c;
+  --panel-lo: #140c08;
+  --ink: #f0e0c0;
+  --dim: #a89070;
+  --red: #e8301c;
+  --red-hi: #ff6a3a;
+  --gold: #ffcc33;
+  --green: #4cff4c;
+  --blue: #3a78ff;
+  --bar-h: 64px;
+  /* Deliberately single-theme: a dark 90s shooter look in every viewer theme. */
+  color-scheme: dark;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); overflow: hidden; font-family: 'VT323', monospace; touch-action: none; user-select: none; -webkit-user-select: none; }
+canvas#game { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+.px { font-family: 'Press Start 2P', monospace; }
+.hidden { display: none !important; }
+button { font: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { #prompt { animation: none; } }
+
+/* ---------- Title / menu ---------- */
+#menu { position: fixed; inset: 0; z-index: 50; overflow-y: auto; touch-action: pan-y;
+  background: radial-gradient(ellipse at 50% 120%, #7a1a08 0%, #2a0806 45%, #0b0605 80%);
+  padding-block: calc(24px + env(safe-area-inset-top, 0px)) calc(40px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+#menu .inner { max-width: 560px; margin: 0 auto; }
+.logo { font-family: 'Press Start 2P', monospace; text-align: center; font-size: clamp(30px, 9vw, 56px); line-height: 1.1; margin: 18px 0 6px;
+  background: linear-gradient(180deg, #fff6a0 0%, #ffc020 30%, #e85010 60%, #8a1404 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(3px 3px 0 #000) drop-shadow(-1px -1px 0 #3a0a04); letter-spacing: 2px; }
+.tagline { text-align: center; font-family: 'Press Start 2P', monospace; font-size: 10px; color: var(--dim); margin-bottom: 22px; letter-spacing: 1px; }
+.card { background: linear-gradient(180deg, var(--panel-hi), var(--panel)); border: 3px solid; border-color: #6a5440 #140c08 #140c08 #6a5440; padding: 14px; margin: 12px 0; }
+.card h2 { font-family: 'Press Start 2P', monospace; font-size: 11px; color: var(--gold); margin: 0 0 10px; letter-spacing: 1px; }
+.btn { display: block; width: 100%; padding: 12px 10px; margin: 8px 0; font-family: 'Press Start 2P', monospace; font-size: 12px; color: #fff6d0;
+  background: linear-gradient(180deg, #8a2a14, #5a1408); border: 3px solid; border-color: #d0502a #2a0604 #2a0604 #d0502a; text-shadow: 2px 2px 0 #000; }
+.btn:active { border-color: #2a0604 #d0502a #d0502a #2a0604; }
+.btn.alt { background: linear-gradient(180deg, #4a4a52, #2a2a30); border-color: #8a8a96 #141418 #141418 #8a8a96; }
+.btn.go { background: linear-gradient(180deg, #2a7a1a, #144a0a); border-color: #6ad04a #062a02 #062a02 #6ad04a; font-size: 16px; padding: 16px; }
+.btn:disabled { opacity: 0.4; }
+label.file { position: relative; }
+label.file input { position: absolute; inset: 0; opacity: 0; width: 100%; cursor: pointer; }
+.field { margin: 10px 0; }
+.field .lbl { font-size: 20px; color: var(--dim); display: flex; justify-content: space-between; }
+.field .lbl b { color: var(--gold); font-weight: normal; }
+input[type=search], input[type=text] { width: 100%; font: inherit; font-size: 22px; padding: 6px 10px; background: #0e0806; color: var(--ink); border: 2px solid #6a5440; outline: none; }
+input[type=range] { width: 100%; accent-color: var(--red); height: 28px; }
+.people { max-height: 220px; overflow-y: auto; background: #0e0806; border: 2px solid #3a2c20; margin-top: 6px; touch-action: pan-y; }
+.people div { padding: 6px 10px; font-size: 21px; border-bottom: 1px solid #22180f; cursor: pointer; display: flex; justify-content: space-between; gap: 8px; }
+.people div span:last-child { color: var(--dim); white-space: nowrap; }
+.people div.sel { background: #5a1408; color: #fff6d0; }
+.people div:hover { background: #2a1a10; }
+.seg { display: flex; gap: 6px; }
+.seg button { flex: 1; padding: 8px 4px; font-family: 'Press Start 2P', monospace; font-size: 9px; background: #1a1210; color: var(--dim); border: 2px solid #3a2c20; }
+.seg button.on { color: #fff6d0; background: #5a1408; border-color: #d0502a; }
+.note { font-size: 19px; color: var(--dim); line-height: 1.15; }
+.status { font-size: 21px; color: var(--green); min-height: 1.2em; }
+.help { display: grid; grid-template-columns: auto 1fr; gap: 2px 14px; font-size: 20px; }
+.help b { color: var(--gold); font-weight: normal; }
+
+/* ---------- HUD ---------- */
+#hud { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
+#crosshair { position: absolute; left: 50%; top: calc((100% - var(--bar-h)) / 2); width: 14px; height: 14px; transform: translate(-50%, -50%); }
+#crosshair::before, #crosshair::after { content: ''; position: absolute; background: #ffcc33; box-shadow: 1px 1px 0 #000; }
+#crosshair::before { left: 6px; top: 0; width: 2px; height: 14px; }
+#crosshair::after { top: 6px; left: 0; height: 2px; width: 14px; }
+#msgs { position: absolute; left: calc(10px + env(safe-area-inset-left, 0px)); top: calc(8px + env(safe-area-inset-top)); font-family: 'Press Start 2P', monospace; font-size: 10px; color: #ff4a3a; text-shadow: 2px 2px 0 #000; line-height: 1.7; max-width: 70%; }
+#nametag { position: absolute; left: 50%; top: calc((100% - var(--bar-h)) / 2 - 64px); transform: translateX(-50%); text-align: center; font-family: 'Press Start 2P', monospace; font-size: 11px; color: #fff; text-shadow: 2px 2px 0 #000; white-space: nowrap; }
+#nametag small { display: block; font-family: 'VT323', monospace; font-size: 20px; color: var(--gold); margin-top: 4px; }
+#prompt { position: absolute; left: 50%; bottom: calc(var(--bar-h) + 76px); transform: translateX(-50%); font-family: 'Press Start 2P', monospace; font-size: 11px; color: #fff6a0; background: rgba(0,0,0,0.6); padding: 8px 12px; border: 2px solid #ffcc33; white-space: nowrap; animation: blink 1s steps(2) infinite; }
+@keyframes blink { 50% { opacity: 0.55; } }
+#compass { position: absolute; left: 50%; top: calc(10px + env(safe-area-inset-top)); transform: translateX(-50%); font-family: 'Press Start 2P', monospace; font-size: 10px; color: var(--gold); text-shadow: 2px 2px 0 #000; text-align: center; }
+#compass .arrow { display: inline-block; font-size: 22px; transition: transform 0.05s linear; }
+
+/* Status bar */
+#bar { position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--bar-h) + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom); display: flex; align-items: stretch;
+  background: #5a5048; border-top: 3px solid #8a8070; box-shadow: inset 0 3px 0 #2a2420; }
+#bar .cell { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 3px solid #2a2420; border-left: 3px solid #8a8070; min-width: 0;
+  background-image: var(--stone); }
+#bar .num { font-family: 'VT323', monospace; font-size: 40px; line-height: 0.9; color: var(--red); text-shadow: 2px 2px 0 #2a0402, -1px -1px 0 #ff8a5a; }
+#bar .cap { font-family: 'Press Start 2P', monospace; font-size: 8px; color: #e8d8b8; text-shadow: 1px 1px 0 #000; margin-top: 3px; letter-spacing: 1px; }
+#bar .face { flex: 0 0 auto; width: calc(var(--bar-h) + 10px); background: #2a2420; padding: 4px; }
+#bar .face canvas { width: 100%; height: 100%; image-rendering: pixelated; display: block; }
+#bar .small { font-size: 26px; }
+
+/* Dialogue */
+#dialog { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; padding: 10px 10px calc(10px + env(safe-area-inset-bottom)); display: flex; gap: 12px; align-items: flex-start;
+  background: linear-gradient(180deg, rgba(20,12,8,0.96), rgba(10,6,4,0.98)); border-top: 4px solid; border-image: linear-gradient(90deg, #8a1404, #ffcc33, #8a1404) 1; min-height: 160px; }
+#dialog .portrait { flex: 0 0 auto; width: 96px; height: 96px; border: 3px solid; border-color: #8a8070 #2a2420 #2a2420 #8a8070; background: #1c1410; }
+#dialog .portrait canvas { width: 100%; height: 100%; image-rendering: pixelated; display: block; }
+#dialog .body { flex: 1; min-width: 0; }
+#dialog .who { font-family: 'Press Start 2P', monospace; font-size: 11px; color: var(--gold); margin: 2px 0 2px; line-height: 1.5; }
+#dialog .rel { font-size: 19px; color: var(--dim); margin-bottom: 4px; }
+#dialog .text { font-size: 24px; line-height: 1.1; min-height: 3.4em; color: var(--ink); word-wrap: break-word; }
+#dialog .opts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+#dialog .opts button { font-family: 'Press Start 2P', monospace; font-size: 9px; padding: 9px 10px; color: #fff6d0; background: #3a1a10; border: 2px solid #d0502a; }
+#dialog .opts button.next { background: #5a1408; }
+#dialog .opts button.bye { background: #2a2a30; border-color: #8a8a96; }
+#dialog .pager { font-family: 'Press Start 2P', monospace; font-size: 8px; color: var(--dim); margin-left: auto; align-self: center; }
+
+/* Automap */
+#automap { position: fixed; inset: 0; z-index: 25; background: #000; }
+#automap canvas { width: 100%; height: 100%; display: block; }
+#automap .top { position: absolute; left: 0; right: 0; top: 0; padding: calc(8px + env(safe-area-inset-top)) 10px 8px; display: flex; gap: 8px; align-items: center; background: linear-gradient(#000, rgba(0,0,0,0)); }
+#automap .top input { flex: 1; font-size: 20px; padding: 4px 8px; }
+#automap .top button { font-family: 'Press Start 2P', monospace; font-size: 9px; padding: 9px 10px; background: #2a2a30; color: #fff; border: 2px solid #8a8a96; }
+#automap .results { position: absolute; top: calc(52px + env(safe-area-inset-top)); left: 10px; right: 10px; max-height: 40%; overflow-y: auto; background: rgba(10,6,4,0.95); border: 2px solid #3a2c20; touch-action: pan-y; }
+#automap .results div { padding: 6px 10px; font-size: 21px; border-bottom: 1px solid #22180f; cursor: pointer; }
+#automap .legend { position: absolute; left: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); font-size: 18px; color: #aaa; line-height: 1.1; }
+#automap .legend i { display: inline-block; width: 18px; height: 4px; vertical-align: middle; margin-right: 6px; }
+#automap .legend .lp { background: #3a78ff; } #automap .legend .lm { background: #ff3a2a; } #automap .legend .lw { background: #ffd030; }
+body.island #automap .legend .lp, body.platform #automap .legend .lp { background: #3f7fd8; } body.island #automap .legend .lm { background: #e8507a; } body.island #automap .legend .lw { background: #ffb020; }
+
+/* Touch controls */
+#touch { position: fixed; inset: 0; z-index: 20; pointer-events: none; }
+#touch .zone { position: absolute; top: 0; bottom: var(--bar-h); pointer-events: auto; }
+#touch .left { left: 0; width: 45%; }
+#touch .right { right: 0; width: 55%; }
+#stick { position: absolute; width: 110px; height: 110px; border-radius: 50%; border: 3px solid rgba(255,204,51,0.5); background: rgba(0,0,0,0.25); pointer-events: none; transform: translate(-50%, -50%); }
+#stick .knob { position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; background: rgba(255,204,51,0.6); border: 2px solid #ffcc33; }
+.tbtn { position: absolute; pointer-events: auto; font-family: 'Press Start 2P', monospace; font-size: 10px; color: #fff6d0; background: rgba(90,20,8,0.85); border: 3px solid #d0502a; padding: 0; border-radius: 6px; text-shadow: 1px 1px 0 #000; }
+#tTalk { right: 16px; bottom: calc(var(--bar-h) + 70px); width: 92px; height: 56px; font-size: 12px; background: rgba(40,110,20,0.9); border-color: #6ad04a; }
+#tMap { right: 16px; bottom: calc(var(--bar-h) + 136px); width: 64px; height: 40px; }
+#tMenu { right: 10px; top: calc(10px + env(safe-area-inset-top)); width: 44px; height: 36px; font-size: 14px; background: rgba(40,40,48,0.85); border-color: #8a8a96; }
+#tRun { left: 16px; bottom: calc(var(--bar-h) + 16px); width: 64px; height: 36px; font-size: 9px; background: rgba(40,40,48,0.85); border-color: #8a8a96; }
+#tRun.on { background: rgba(90,20,8,0.9); border-color: #d0502a; }
+
+#resume { position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.55); font-family: 'Press Start 2P', monospace; font-size: 14px; color: var(--gold); text-shadow: 2px 2px 0 #000; text-align: center; line-height: 2; cursor: pointer; }
+#loading { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; background: #000; font-family: 'Press Start 2P', monospace; color: var(--red); font-size: 14px; }
+
+@media (max-width: 600px) {
+  :root { --bar-h: 54px; }
+  #bar .num { font-size: 32px; }
+  #bar .cap { font-size: 6px; }
+  #bar .small { font-size: 22px; }
+  #dialog .portrait { width: 64px; height: 64px; }
+  #dialog .text { font-size: 21px; }
+  #dialog .rel { font-size: 17px; }
+  #msgs { font-size: 8px; }
+}
+
+/* Shooter looks shout in capitals; the island look speaks normally */
+.btn, .card h2, .seg button, #dialog .who, #dialog .opts button, #msgs, #nametag, #prompt, #compass, .tbtn, #automap .top button, #resume, #loading { text-transform: uppercase; }
+#resume small { font-size: 9px; color: #a89070; }
+#islandHud { display: none; }
+#tFire { right: 16px; bottom: calc(var(--bar-h) + 16px); width: 92px; height: 50px; font-size: 12px; background: rgba(140,30,10,0.9); border-color: #ff6a3a; touch-action: none; }
+#tTalk { bottom: calc(var(--bar-h) + 76px) !important; }
+#tMap { bottom: calc(var(--bar-h) + 142px) !important; }
+.toggle { display: flex; align-items: center; gap: 12px; margin: 14px 0 6px; cursor: pointer; }
+.toggle input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.toggle .sw { flex: 0 0 auto; width: 50px; height: 26px; background: #1a1210; border: 2px solid #3a2c20; position: relative; }
+.toggle .sw::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; background: #6a5440; transition: left 0.12s; }
+.toggle input:checked + .sw { background: #5a1408; border-color: #d0502a; }
+.toggle input:checked + .sw::after { left: 27px; background: #ffcc33; }
+.toggle input:focus-visible + .sw { outline: 2px solid var(--gold); outline-offset: 2px; }
+.toggle .tl { font-size: 22px; color: var(--ink); line-height: 1.05; }
+.toggle .tl small { display: block; font-size: 18px; color: var(--dim); }
+.seg { flex-wrap: wrap; }
+.seg .islandBtn { color: #8ad06a; }
+@media (max-width: 600px) { #bar .lines { display: none; } }
+
+/* ================= Island look ================= */
+body.island {
+  --i-sky: #aee3fb; --i-sky2: #dff5ff; --i-cream: #fffaee; --i-cream2: #f6edd6; --i-brown: #6b4a2e; --i-brown2: #a07850;
+  --i-green: #58b84a; --i-green-d: #3d8f34; --i-yellow: #ffd45c; --i-yellow-d: #e0a92e; --i-orange: #f59a3c; --i-pink: #ff8fb4;
+  --bar-h: 0px;
+  font-family: 'Nunito', system-ui, sans-serif; color: var(--i-brown);
+  background: var(--i-sky);
+}
+body.island canvas#game, body.platform canvas#game { image-rendering: auto; }
+body.island .btn, body.island .card h2, body.island .seg button, body.island #dialog .who, body.island #dialog .opts button, body.island #msgs,
+body.island #nametag, body.island #prompt, body.island #compass, body.island .tbtn, body.island #automap .top button, body.island #resume, body.island #loading, body.platform #nametag, body.platform #prompt, body.platform #compass, body.platform .tbtn, body.platform #automap .top button, body.platform #resume, body.platform #loading { text-transform: none; }
+body.island #menu { background:
+  radial-gradient(circle at 20px 20px, rgba(255,255,255,0.35) 6px, transparent 7px) 0 0 / 44px 44px,
+  linear-gradient(180deg, var(--i-sky) 0%, var(--i-sky2) 60%, #f9f0d8 100%); }
+body.island .logo { font-family: 'Fredoka', 'Nunito', sans-serif; font-weight: 700; font-size: clamp(40px, 11vw, 64px); letter-spacing: 0; line-height: 1;
+  background: none; -webkit-text-fill-color: #fff; color: #fff; filter: none;
+  text-shadow: 0 3px 0 var(--i-brown), 3px 0 0 var(--i-brown), -3px 0 0 var(--i-brown), 0 -3px 0 var(--i-brown), 2px 2px 0 var(--i-brown), -2px 2px 0 var(--i-brown), 2px -2px 0 var(--i-brown), -2px -2px 0 var(--i-brown), 0 8px 0 rgba(107,74,46,0.25); }
+body.island .tagline { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 16px; color: var(--i-brown); letter-spacing: 0; }
+body.island .card { background: var(--i-cream); border: none; border-radius: 26px; padding: 18px; box-shadow: 0 6px 0 rgba(107,74,46,0.14); }
+body.island .card h2 { font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 19px; color: var(--i-brown); letter-spacing: 0; }
+body.island .btn { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 17px; color: var(--i-brown); text-shadow: none; border: none; border-radius: 999px; padding: 13px 16px;
+  background: var(--i-yellow); box-shadow: 0 4px 0 var(--i-yellow-d); }
+body.island .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--i-yellow-d); }
+body.island .btn.alt { background: #fff; box-shadow: 0 4px 0 #e4d6b6; }
+body.island .btn.go { background: var(--i-green); color: #fff; box-shadow: 0 4px 0 var(--i-green-d); font-size: 19px; }
+body.island .note, body.island .field .lbl { font-family: 'Nunito', sans-serif; font-weight: 600; font-size: 15px; color: var(--i-brown2); }
+body.island .field .lbl b { color: var(--i-orange); font-weight: 800; }
+body.island .status { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 15px; color: var(--i-green-d); }
+body.island .help { font-size: 15px; font-family: 'Nunito', sans-serif; font-weight: 600; }
+body.island .help b { color: var(--i-orange); font-weight: 800; }
+body.island .doomOnly { display: none; }
+body.island input[type=search], body.island input[type=text] { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 17px; border-radius: 999px; border: 2px solid #ead9b4; background: #fff; color: var(--i-brown); padding: 9px 16px; }
+body.island input[type=range] { accent-color: var(--i-green); }
+body.island .people { background: #fff; border: 2px solid #ead9b4; border-radius: 18px; }
+body.island .people div { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 16px; border-bottom-color: #f2e8d0; }
+body.island .people div.sel { background: var(--i-yellow); color: var(--i-brown); }
+body.island .people div:hover { background: #fff3cc; }
+body.island .seg button { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 14px; border-radius: 999px; background: #fff; color: var(--i-brown2); border: 2px solid #ead9b4; padding: 9px 4px; }
+body.island .seg button.on { background: var(--i-green); color: #fff; border-color: var(--i-green); }
+body.island .seg .islandBtn { color: var(--i-green-d); }
+body.island .seg .islandBtn.on { color: #fff; }
+body.island .toggle .sw { border-radius: 999px; background: #eadfc6; border: none; width: 52px; height: 30px; }
+body.island .toggle .sw::after { border-radius: 50%; top: 4px; left: 4px; width: 22px; height: 22px; background: #fff; box-shadow: 0 2px 0 rgba(0,0,0,0.12); }
+body.island .toggle input:checked + .sw { background: var(--i-green); }
+body.island .toggle input:checked + .sw::after { left: 26px; background: #fff; }
+body.island .toggle .tl { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 17px; color: var(--i-brown); }
+body.island .toggle .tl small { font-weight: 600; font-size: 14px; color: var(--i-brown2); }
+body.island #menu a { color: var(--i-brown2) !important; }
+
+body.island #bar, body.island #crosshair, body.island #tFire, body.platform #bar, body.platform #crosshair, body.platform #tFire { display: none; }
+body.island #islandHud, body.platform #islandHud { display: flex; position: absolute; left: calc(12px + env(safe-area-inset-left, 0px)); top: calc(12px + env(safe-area-inset-top, 0px)); align-items: center; gap: 10px;
+  background: var(--i-cream); border-radius: 999px; padding: 6px 18px 6px 6px; box-shadow: 0 4px 0 rgba(107,74,46,0.18); }
+body.island #islandHud canvas, body.platform #islandHud canvas { width: 46px; height: 46px; border-radius: 50%; }
+body.island #islandHud b, body.platform #islandHud b { display: block; font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 17px; color: var(--i-brown); }
+body.island #islandHud span, body.platform #islandHud span { display: block; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 13px; color: var(--i-brown2); }
+body.island #msgs, body.platform #msgs { top: calc(76px + env(safe-area-inset-top, 0px)); left: calc(12px + env(safe-area-inset-left, 0px)); font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 14px; color: var(--i-brown); text-shadow: none; line-height: 1.2; }
+body.island #msgs div, body.platform #msgs div { background: rgba(255,250,238,0.92); border-radius: 999px; padding: 6px 14px; margin-bottom: 6px; display: inline-block; clear: left; float: left; box-shadow: 0 3px 0 rgba(107,74,46,0.12); }
+body.island #nametag, body.platform #nametag { top: 30%; font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 18px; color: #fff; text-shadow: 0 2px 0 var(--i-brown), 2px 0 0 var(--i-brown), -2px 0 0 var(--i-brown), 0 -2px 0 var(--i-brown); }
+body.island #nametag small, body.platform #nametag small { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 14px; color: var(--i-yellow); }
+body.island #prompt, body.platform #prompt { bottom: calc(110px + env(safe-area-inset-bottom, 0px)); font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 16px; color: var(--i-brown); background: var(--i-cream); border: none; border-radius: 999px; padding: 10px 20px; animation: bob 1.2s ease-in-out infinite; box-shadow: 0 4px 0 rgba(107,74,46,0.18); }
+@keyframes bob { 50% { transform: translate(-50%, -4px); } }
+body.island #compass, body.platform #compass { background: var(--i-cream); border-radius: 999px; padding: 6px 16px; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 14px; color: var(--i-brown); text-shadow: none; box-shadow: 0 3px 0 rgba(107,74,46,0.15); }
+body.island #compass .arrow, body.platform #compass .arrow { color: var(--i-orange); font-size: 20px; }
+body.island .tbtn, body.platform .tbtn { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 15px; color: var(--i-brown); text-shadow: none; background: rgba(255,250,238,0.95); border: none; border-radius: 999px; box-shadow: 0 4px 0 rgba(107,74,46,0.2); }
+body.island #tTalk, body.platform #tTalk { background: var(--i-green); color: #fff; box-shadow: 0 4px 0 var(--i-green-d); width: 96px; height: 60px; bottom: calc(24px + env(safe-area-inset-bottom, 0px)) !important; font-size: 18px; }
+body.island #tMap, body.platform #tMap { bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important; }
+body.island #tRun, body.platform #tRun { bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
+body.island #tRun.on, body.platform #tRun.on { background: var(--i-yellow); }
+body.island #touch .zone, body.platform #touch .zone { bottom: 0; }
+body.island #stick, body.platform #stick { border-color: rgba(255,250,238,0.9); background: rgba(255,250,238,0.35); }
+body.island #stick .knob, body.platform #stick .knob { background: var(--i-cream); border-color: #fff; }
+
+body.island #dialog, body.platform #dialog { left: max(10px, env(safe-area-inset-left, 0px)); right: max(10px, env(safe-area-inset-right, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); max-width: 760px; margin: 0 auto;
+  background: var(--i-cream); border: none; border-image: none; border-radius: 34px; padding: 26px 22px 16px; box-shadow: 0 6px 0 rgba(107,74,46,0.2); min-height: 150px; overflow: visible; }
+body.island #dialog .portrait, body.platform #dialog .portrait { border: none; background: none; border-radius: 50%; }
+body.island #dialog .who, body.platform #dialog .who { position: absolute; top: -18px; left: 34px; background: var(--i-orange); color: #fff; font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 18px; padding: 6px 18px; border-radius: 999px; transform: rotate(-3deg); box-shadow: 0 3px 0 rgba(107,74,46,0.2); }
+body.island #dialog .rel, body.platform #dialog .rel { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 14px; color: var(--i-brown2); }
+body.island #dialog .text, body.platform #dialog .text { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 20px; line-height: 1.35; color: var(--i-brown); }
+body.island #dialog .opts button, body.platform #dialog .opts button { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 15px; color: var(--i-brown); background: #fff; border: 2px solid #ead9b4; border-radius: 999px; padding: 8px 14px; }
+body.island #dialog .opts button.next, body.platform #dialog .opts button.next { background: var(--i-yellow); border-color: var(--i-yellow); }
+body.island #dialog .opts button.bye, body.platform #dialog .opts button.bye { background: #fff; }
+body.island #dialog .pager, body.platform #dialog .pager { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 12px; color: var(--i-brown2); }
+
+body.island #automap, body.platform #automap { background: #4cc3e6; }
+body.island #automap .top, body.platform #automap .top { background: linear-gradient(rgba(255,250,238,0.95), rgba(255,250,238,0)); }
+body.island #automap .top button, body.platform #automap .top button { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 14px; color: var(--i-brown); background: var(--i-cream); border: none; border-radius: 999px; padding: 9px 14px; box-shadow: 0 3px 0 rgba(107,74,46,0.18); }
+body.island #automap .results, body.platform #automap .results { background: var(--i-cream); border: none; border-radius: 18px; }
+body.island #automap .results div, body.platform #automap .results div { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 16px; color: var(--i-brown); border-bottom-color: #f0e4c8; }
+body.island #automap .legend, body.platform #automap .legend { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 14px; color: var(--i-brown); background: rgba(255,250,238,0.92); border-radius: 18px; padding: 10px 14px; }
+body.island #resume, body.platform #resume { background: rgba(174,227,251,0.6); font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 22px; color: #fff; text-shadow: 0 2px 0 var(--i-brown), 2px 0 0 var(--i-brown), -2px 0 0 var(--i-brown), 0 -2px 0 var(--i-brown); }
+body.island #resume small, body.platform #resume small { font-size: 14px; color: #fff; }
+body.island #loading, body.platform #loading { background: var(--i-sky); font-family: 'Fredoka', sans-serif; font-weight: 700; color: var(--i-brown); font-size: 22px; }
+@media (max-width: 600px) {
+  body.island #dialog .portrait { width: 64px; height: 64px; }
+  body.island #dialog .text { font-size: 17px; }
+}
+@media (prefers-reduced-motion: reduce) { body.island #prompt { animation: none; } }
+
+#blocksHud { display: none; }
+
+
+/* ================= Platform look ================= */
+#tJump, #islandHud .coins, .platOnly { display: none; }
+body.platform { --p-red: #e8282c; --p-blue: #2a6aff; --p-yellow: #ffcc22; --p-green: #3ab83a; --p-ink: #1a1a2e; --p-cream: #fffaf0; --bar-h: 0px; background: #6ab8ff; color: var(--p-ink); font-family: 'Nunito', system-ui, sans-serif; }
+body.platform .platOnly { display: inline; }
+body.platform .help b.platOnly { display: block; }
+body.platform .btn, body.platform .card h2, body.platform .seg button, body.platform #dialog .who, body.platform #dialog .opts button, body.platform #msgs,
+body.platform #nametag, body.platform #prompt, body.platform #compass, body.platform .tbtn, body.platform #automap .top button, body.platform #resume, body.platform #loading { text-transform: none; }
+body.platform #menu { background:
+  radial-gradient(ellipse 60% 22% at 18% 100%, #3ab83a 98%, transparent 100%),
+  radial-gradient(ellipse 50% 18% at 80% 100%, #2ea32e 98%, transparent 100%),
+  radial-gradient(circle at 15% 12%, #fff 0 18px, transparent 19px), radial-gradient(circle at 22% 10%, #fff 0 24px, transparent 25px),
+  radial-gradient(circle at 78% 20%, #fff 0 20px, transparent 21px), radial-gradient(circle at 85% 18%, #fff 0 26px, transparent 27px),
+  linear-gradient(180deg, #2a7ae8 0%, #6ab8ff 60%, #c8ecff 100%); background-attachment: fixed; }
+body.platform .logo { font-family: 'Lilita One', 'Fredoka', sans-serif; font-weight: 400; font-size: clamp(42px, 12vw, 72px); line-height: 0.95; letter-spacing: 1px;
+  background: none; -webkit-text-fill-color: var(--p-yellow); color: var(--p-yellow); filter: none;
+  text-shadow: 3px 3px 0 var(--p-ink), -3px 3px 0 var(--p-ink), 3px -3px 0 var(--p-ink), -3px -3px 0 var(--p-ink), 0 4px 0 var(--p-ink), 0 9px 0 var(--p-red), 3px 9px 0 var(--p-red), -3px 9px 0 var(--p-red); }
+body.platform .tagline { font-family: 'Lilita One', sans-serif; font-size: 18px; color: #fff; text-shadow: 2px 2px 0 var(--p-ink); letter-spacing: 0.5px; }
+body.platform .card { background: var(--p-cream); border: 4px solid var(--p-ink); border-radius: 20px; box-shadow: 0 6px 0 var(--p-ink); }
+body.platform .card h2 { font-family: 'Lilita One', sans-serif; font-size: 22px; color: var(--p-red); letter-spacing: 0.5px; }
+body.platform .btn { font-family: 'Lilita One', sans-serif; font-size: 20px; color: #fff; text-shadow: 2px 2px 0 rgba(0,0,0,0.35); background: var(--p-blue); border: 4px solid var(--p-ink); border-radius: 16px; box-shadow: 0 5px 0 var(--p-ink); }
+body.platform .btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--p-ink); }
+body.platform .btn.alt { background: var(--p-yellow); color: var(--p-ink); text-shadow: none; }
+body.platform .btn.go { background: var(--p-green); font-size: 24px; }
+body.platform .note, body.platform .field .lbl, body.platform .help, body.platform .status, body.platform .toggle .tl { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 15px; color: #3a3a5a; }
+body.platform .help b, body.platform .field .lbl b { font-family: 'Lilita One', sans-serif; font-weight: 400; color: var(--p-red); }
+body.platform .toggle .tl { font-weight: 800; font-size: 17px; color: var(--p-ink); } body.platform .toggle .tl small { font-weight: 600; font-size: 14px; color: #5a5a7a; }
+body.platform .toggle .sw { border-radius: 999px; background: #d8d8e8; border: 3px solid var(--p-ink); width: 54px; height: 30px; }
+body.platform .toggle .sw::after { border-radius: 50%; top: 2px; left: 3px; width: 20px; height: 20px; background: #fff; border: 2px solid var(--p-ink); }
+body.platform .toggle input:checked + .sw { background: var(--p-green); }
+body.platform .toggle input:checked + .sw::after { left: 25px; }
+body.platform input[type=search] { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 17px; border-radius: 12px; border: 3px solid var(--p-ink); background: #fff; color: var(--p-ink); }
+body.platform input[type=range] { accent-color: var(--p-red); }
+body.platform .people { background: #fff; border: 3px solid var(--p-ink); border-radius: 12px; }
+body.platform .people div { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 16px; color: var(--p-ink); border-bottom-color: #e8e8f0; }
+body.platform .people div.sel { background: var(--p-yellow); }
+body.platform .seg button { font-family: 'Lilita One', sans-serif; font-size: 15px; border-radius: 12px; background: #fff; color: var(--p-ink); border: 3px solid var(--p-ink); padding: 8px 2px; }
+body.platform .seg button.on { background: var(--p-red); color: #fff; }
+body.platform .seg .islandBtn { color: var(--p-ink); } body.platform .seg .islandBtn.on { color: #fff; }
+body.platform #menu a { color: var(--p-blue) !important; }
+body.platform #islandHud { border: 3px solid var(--p-ink); box-shadow: 0 4px 0 var(--p-ink); }
+body.platform #islandHud b { font-family: 'Lilita One', sans-serif; font-weight: 400; font-size: 19px; color: var(--p-red); }
+body.platform #islandHud .coins { display: flex; align-items: center; gap: 4px; margin-left: 10px; font-family: 'Lilita One', sans-serif; font-size: 22px; color: var(--p-ink); }
+body.platform #islandHud .coins i { display: inline-block; width: 18px; height: 22px; border-radius: 50%; background: var(--p-yellow); border: 3px solid #b88a00; box-shadow: inset -3px 0 0 #e8a800; }
+body.platform #nametag { font-family: 'Lilita One', sans-serif; font-weight: 400; font-size: 20px; }
+body.platform #prompt { font-family: 'Lilita One', sans-serif; font-weight: 400; border: 3px solid var(--p-ink); box-shadow: 0 4px 0 var(--p-ink); }
+body.platform #dialog { border: 4px solid var(--p-ink); box-shadow: 0 6px 0 var(--p-ink); }
+body.platform #dialog .who { font-family: 'Lilita One', sans-serif; font-weight: 400; background: var(--p-red); border: 3px solid var(--p-ink); }
+body.platform #dialog .opts button { font-family: 'Lilita One', sans-serif; font-weight: 400; border: 3px solid var(--p-ink); }
+body.platform #dialog .opts button.next { background: var(--p-yellow); border-color: var(--p-ink); }
+body.platform .tbtn { font-family: 'Lilita One', sans-serif; font-weight: 400; border: 3px solid var(--p-ink); box-shadow: 0 4px 0 var(--p-ink); }
+body.platform #tTalk { background: var(--p-green); }
+body.platform #tJump { display: block; right: 16px; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); width: 96px; height: 60px; font-size: 20px; background: var(--p-red); color: #fff; border-radius: 999px; }
+body.platform #tTalk { bottom: calc(100px + env(safe-area-inset-bottom, 0px)) !important; }
+body.platform #tMap { bottom: calc(170px + env(safe-area-inset-bottom, 0px)) !important; }
+
+/* ================= Blocks look ================= */
+body.blocks { --b-panel: #c6c6c6; --b-dark: #373737; --b-light: #ffffff; --b-text: #ffffff; --b-grass: #5e9e3e; }
+body.blocks canvas#game { image-rendering: pixelated; }
+body.blocks #menu { background: var(--dirt) repeat; background-size: 64px 64px; image-rendering: pixelated; }
+body.blocks .logo { font-family: 'Pixelify Sans', monospace; font-weight: 600; font-size: clamp(40px, 12vw, 70px); letter-spacing: 2px; line-height: 1;
+  background: linear-gradient(180deg, #e8e8e8 0%, #a8a8a8 50%, #6a6a6a 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(4px 4px 0 #2a2a2a) drop-shadow(-2px -2px 0 #2a2a2a); }
+body.blocks .tagline { font-family: 'Pixelify Sans', monospace; font-size: 16px; color: #ffff55; text-shadow: 2px 2px 0 #3f3f00; letter-spacing: 0; }
+body.blocks .card { background: rgba(0,0,0,0.55); border: 2px solid #000; border-radius: 0; box-shadow: none; }
+body.blocks .card h2 { font-family: 'Pixelify Sans', monospace; font-size: 18px; color: var(--b-text); text-shadow: 2px 2px 0 #3f3f3f; letter-spacing: 0; }
+body.blocks .btn { font-family: 'Pixelify Sans', monospace; font-size: 18px; color: #fff; text-shadow: 2px 2px 0 #3f3f3f; background: #7a7a7a; border: 2px solid #000;
+  box-shadow: inset 2px 2px 0 #a8a8a8, inset -2px -3px 0 #555; padding: 11px; }
+body.blocks .btn:hover { background: #7a86c8; }
+body.blocks .btn.alt { background: #6a6a6a; }
+body.blocks .btn.go { background: #4a8a2a; box-shadow: inset 2px 2px 0 #7ac85a, inset -2px -3px 0 #2a5a1a; }
+body.blocks .note, body.blocks .field .lbl, body.blocks .help, body.blocks .status, body.blocks .toggle .tl { font-family: 'Pixelify Sans', monospace; font-size: 16px; color: #e0e0e0; }
+body.blocks .help b, body.blocks .field .lbl b { color: #ffff55; font-weight: 400; }
+body.blocks .toggle .tl small { font-size: 14px; color: #a8a8a8; }
+body.blocks .toggle .sw { border-color: #000; background: #555; } body.blocks .toggle input:checked + .sw { background: #4a8a2a; border-color: #000; }
+body.blocks input[type=search] { font-family: 'Pixelify Sans', monospace; font-size: 18px; background: #000; border: 2px solid #a0a0a0; color: #fff; }
+body.blocks .people { background: rgba(0,0,0,0.7); border-color: #555; }
+body.blocks .people div { font-family: 'Pixelify Sans', monospace; font-size: 17px; color: #fff; border-bottom-color: #2a2a2a; }
+body.blocks .people div.sel { background: #4a8a2a; }
+body.blocks .seg button { font-family: 'Pixelify Sans', monospace; font-size: 15px; background: #6a6a6a; color: #fff; border: 2px solid #000; box-shadow: inset 2px 2px 0 #a8a8a8, inset -2px -3px 0 #555; }
+body.blocks .seg button.on { background: #4a8a2a; box-shadow: inset 2px 2px 0 #7ac85a, inset -2px -3px 0 #2a5a1a; }
+body.blocks .btn, body.blocks .card h2, body.blocks .seg button, body.blocks #dialog .who, body.blocks #dialog .opts button, body.blocks #msgs,
+body.blocks #nametag, body.blocks #prompt, body.blocks #compass, body.blocks .tbtn, body.blocks #automap .top button, body.blocks #resume, body.blocks #loading { text-transform: none; }
+body.blocks #bar { display: none; }
+body.blocks { --bar-h: 0px; }
+body.blocks #blocksHud { display: flex; flex-direction: column; align-items: center; gap: 4px; position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
+body.blocks #bInfo { font-family: 'Pixelify Sans', monospace; font-size: 15px; color: #fff; text-shadow: 2px 2px 0 #3f3f3f; }
+body.blocks .xp { position: relative; width: min(364px, 92vw); height: 12px; }
+body.blocks .xp .bar { position: absolute; inset: 3px 0 3px; background: #1a1a1a; border: 1px solid #000; }
+body.blocks #xpFill { height: 100%; width: 0; background: linear-gradient(#a8ff5a, #5ac81a); }
+body.blocks #xpLevel { position: absolute; left: 50%; top: -14px; transform: translateX(-50%); font-family: 'Pixelify Sans', monospace; font-size: 16px; color: #80ff20; text-shadow: 1px 1px 0 #000, -1px -1px 0 #000; z-index: 1; }
+body.blocks #hotbar { display: flex; background: rgba(0,0,0,0.45); border: 2px solid #111; }
+body.blocks #hotbar div { width: min(40px, 10vw); height: min(40px, 10vw); border: 2px solid #8a8a8a; box-shadow: inset 2px 2px 0 #5a5a5a; display: flex; align-items: center; justify-content: center; }
+body.blocks #hotbar div.sel { border-color: #fff; outline: 2px solid #fff; z-index: 1; }
+body.blocks #hotbar b { font-family: 'Pixelify Sans', monospace; font-weight: 400; font-size: 13px; color: #fff; text-shadow: 1px 1px 0 #3f3f3f; }
+body.blocks #crosshair::before, body.blocks #crosshair::after { background: #fff; box-shadow: none; }
+body.blocks #msgs { font-family: 'Pixelify Sans', monospace; font-size: 16px; color: #fff; text-shadow: 2px 2px 0 #3f3f3f; line-height: 1.3; }
+body.blocks #msgs div { background: rgba(0,0,0,0.35); padding: 0 6px; display: inline-block; clear: left; float: left; margin-bottom: 2px; }
+body.blocks #nametag { font-family: 'Pixelify Sans', monospace; font-size: 18px; background: rgba(0,0,0,0.35); padding: 2px 8px; }
+body.blocks #nametag small { font-family: 'Pixelify Sans', monospace; font-size: 15px; color: #ffff55; }
+body.blocks #prompt { font-family: 'Pixelify Sans', monospace; font-size: 17px; color: #fff; background: rgba(0,0,0,0.55); border: 2px solid #fff; bottom: calc(110px + env(safe-area-inset-bottom, 0px)); animation: none; }
+body.blocks #compass { font-family: 'Pixelify Sans', monospace; font-size: 15px; color: #fff; }
+body.blocks #dialog { background: rgba(0,0,0,0.78); border-image: none; border-top: 4px solid #555; }
+body.blocks #dialog .who { font-family: 'Pixelify Sans', monospace; font-size: 20px; color: #ffff55; }
+body.blocks #dialog .rel { font-family: 'Pixelify Sans', monospace; font-size: 15px; color: #a8a8a8; }
+body.blocks #dialog .text { font-family: 'Pixelify Sans', monospace; font-size: 21px; color: #fff; line-height: 1.25; }
+body.blocks #dialog .opts button { font-family: 'Pixelify Sans', monospace; font-size: 15px; background: #6a6a6a; color: #fff; border: 2px solid #000; box-shadow: inset 2px 2px 0 #a8a8a8, inset -2px -3px 0 #555; }
+body.blocks .tbtn { font-family: 'Pixelify Sans', monospace; font-size: 15px; background: rgba(106,106,106,0.9); color: #fff; border: 2px solid #000; border-radius: 0; box-shadow: inset 2px 2px 0 #a8a8a8, inset -2px -3px 0 #555; }
+body.blocks #tFire { background: rgba(160,80,40,0.92); bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+body.blocks #tTalk { bottom: calc(156px + env(safe-area-inset-bottom, 0px)) !important; }
+body.blocks #tMap { bottom: calc(216px + env(safe-area-inset-bottom, 0px)) !important; }
+body.blocks #tRun { bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+body.blocks #touch .zone { bottom: 90px; }
+@media (hover: hover) and (pointer: fine) { #touch { display: none; } }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="hud" class="hidden">
+  <div id="msgs"></div>
+  <div id="compass" class="hidden"><span class="arrow">▲</span><div class="dist"></div></div>
+  <div id="crosshair"></div>
+  <div id="nametag" class="hidden"></div>
+  <div id="prompt" class="hidden"></div>
+  <div id="blocksHud"><div id="bInfo"></div><div class="xp"><span id="xpLevel">0</span><div class="bar"><div id="xpFill"></div></div></div><div id="hotbar"><div><b></b></div><div><b></b></div><div><b></b></div><div><b></b></div><div><b></b></div><div><b></b></div><div><b></b></div><div><b></b></div><div><b></b></div></div></div>
+  <div id="islandHud"><canvas id="iFace" width="64" height="64"></canvas><div><b id="iName"></b><span id="iInfo"></span></div><div class="coins"><i></i>× <span id="pCoins">0</span></div></div>
+  <div id="bar">
+    <div class="cell" id="ammoCell"><div class="num" id="sAmmo">400</div><div class="cap">AMMO</div></div>
+    <div class="cell"><div class="num" id="sGen">0</div><div class="cap">GEN</div></div>
+    <div class="cell"><div class="num small" id="sMet">0/0</div><div class="cap">MET</div></div>
+    <div class="cell face"><canvas id="sFace" width="64" height="64"></canvas></div>
+    <div class="cell"><div class="num small" id="sEra">----</div><div class="cap">ERA</div></div>
+    <div class="cell lines"><div class="num" id="sLines">1</div><div class="cap">LINES</div></div>
+  </div>
+</div>
+
+<div id="touch" class="hidden">
+  <div class="zone left" id="tLeft"></div>
+  <div class="zone right" id="tRight"></div>
+  <div id="stick" class="hidden"><div class="knob"></div></div>
+  <button class="tbtn hidden" id="tTalk">Talk</button>
+  <button class="tbtn" id="tFire">Fire</button>
+  <button class="tbtn" id="tMap">Map</button>
+  <button class="tbtn" id="tRun">Run</button>
+  <button class="tbtn" id="tJump">Jump</button>
+  <button class="tbtn" id="tMenu" aria-label="Menu">☰</button>
+</div>
+
+<div id="dialog" class="hidden">
+  <div class="portrait"><canvas id="dPortrait" width="96" height="96"></canvas></div>
+  <div class="body">
+    <div class="who" id="dWho"></div>
+    <div class="rel" id="dRel"></div>
+    <div class="text" id="dText"></div>
+    <div class="opts" id="dOpts"></div>
+  </div>
+</div>
+
+<div id="automap" class="hidden">
+  <canvas id="mapCanvas"></canvas>
+  <div class="top">
+    <input type="search" id="mapSearch" placeholder="Find an ancestor…" autocomplete="off">
+    <button id="mapZoom">Zoom</button>
+    <button id="mapClose">✕</button>
+  </div>
+  <div class="results hidden" id="mapResults"></div>
+  <div class="legend"><div><i class="lp"></i>via a father</div><div><i class="lm"></i>via a mother</div><div><i class="lw"></i>met / waypoint</div><div>Tap someone to set a waypoint</div></div>
+</div>
+
+<div id="resume" class="hidden">Click to resume<br><small>Esc for menu</small></div>
+<div id="loading" class="hidden">Loading…</div>
+
+<div id="menu">
+  <div class="inner">
+    <div class="logo" id="logo">ANCESTRY<br>3D</div>
+    <div class="tagline" id="tagline">WALK AMONG YOUR ANCESTORS</div>
+    <div class="card">
+      <h2>Look</h2>
+      <div class="seg" id="styleSeg">
+        <button data-style="retro" class="on">Retro</button><button data-style="platform">Platform</button><button data-style="blocks">Blocks</button><button data-style="island" class="islandBtn">Island</button>
+      </div>
+      <div class="note" style="margin-top:6px" id="lookNote">Retro: a hellish 90s courtyard and a minigun. Platform: a bright jumping world with coins to collect. Blocks: a voxel world where you can punch. Island: a cozy island seen from behind your own villager.</div>
+    </div>
+
+    <div class="card" id="cardResume" style="display:none">
+      <button class="btn go" id="btnResume">▶ Resume</button>
+    </div>
+
+    <div class="card">
+      <h2>1. Choose a family tree</h2>
+      <label class="btn file">Load GEDCOM file (.ged)<input type="file" id="fileInput" accept=".ged,.gedcom,.txt,text/plain"></label>
+      <button class="btn alt" id="btnDemo">Play the demo family</button>
+      <button class="btn alt hidden" id="btnLast">Reload last tree</button>
+      <div class="status" id="loadStatus"></div>
+      <div class="note">Your file is read on this device only. Nothing is uploaded.</div>
+    </div>
+
+    <div class="card hidden" id="cardSetup">
+      <h2>2. Who are you playing?</h2>
+      <input type="search" id="rootSearch" placeholder="Search names…" autocomplete="off">
+      <div class="people" id="rootList"></div>
+      <div class="field">
+        <div class="lbl">Generations to walk back <b id="genVal">8</b></div>
+        <input type="range" id="genRange" min="2" max="14" value="8">
+        <div class="note" id="genInfo"></div>
+      </div>
+      <label class="toggle" for="couplesToggle">
+        <input type="checkbox" id="couplesToggle">
+        <span class="sw" aria-hidden="true"></span>
+        <span class="tl">Keep couples together<small>Husbands and wives stand side by side where their family lines meet.</small></span>
+      </label>
+      <button class="btn go" id="btnStart">Enter ▶</button>
+    </div>
+
+    <div class="card">
+      <h2>Controls</h2>
+      <div class="help">
+        <b>Move</b><span>WASD / arrow keys · left thumb on phones</span>
+        <b>Look</b><span>Mouse (click to grab) · drag right side</span>
+        <b>Run</b><span>Shift · RUN button</span>
+        <b>Talk</b><span>E / Space / Enter · TALK button</span>
+        <b class="platOnly">Jump</b><span class="platOnly">Space · JUMP button (Platform). Bounce on heads, grab coins.</span>
+        <b class="doomOnly">Fire</b><span class="doomOnly">Left mouse / Ctrl · FIRE button (punch in Blocks)</span>
+        <b>Automap</b><span>Tab or M · MAP button</span>
+        <b>Menu</b><span>Esc · ☰</span>
+      </div>
+      <div class="note" style="margin-top:8px">You start in the middle as the person you chose. Generations are rings on the ground: walk outward to go back in time. Blue lines run through fathers, red or pink through mothers.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// dev-only: browsers block module files on file:// pages, so point people at the built index.html
+if (location.protocol === 'file:') document.addEventListener('DOMContentLoaded', () => {
+  const s = document.getElementById('loadStatus');
+  s.style.color = '#ff6a3a';
+  s.textContent = 'dev.html needs a local web server. Open index.html instead, it works straight from disk.';
+});
+</script>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

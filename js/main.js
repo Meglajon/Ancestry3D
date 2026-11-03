@@ -3,11 +3,13 @@ import * as THREE from 'three';
 import { parseGedcom, decodeGedcomBytes } from './gedcom.js';
 import { genAt, collectAncestors, layoutAncestors, displayName, firstName, lifespan, relationship, countAncestors, birthYear, hashString } from './ancestry.js';
 import { buildWorld, GEN_NAMES, THEMES } from './world.js';
-import { buildDialogue, shotQuip, stompQuip } from './dialogue.js';
+import { buildDialogue, shotQuip, stompQuip, bumpQuip } from './dialogue.js';
 import { drawPortrait, drawIslandPortrait } from './textures.js';
 import { buildIslandFigure } from './npc.js';
-import { createMinigun, createArm, createImpacts, traceShot } from './weapon.js';
+import { createMinigun, createImpacts, traceShot } from './weapon.js';
+import { buildFlatWorld, drawFluffyPortrait } from './fluffy.js';
 import { computeTraits } from './traits.js';
+import { openViz, vizOpen } from './viz.js';
 
 const $ = id => document.getElementById(id);
 const store = {
@@ -17,13 +19,14 @@ const store = {
 const desktop = () => matchMedia('(hover: hover) and (pointer: fine)').matches;
 
 // ---------------- State ----------------
-const STYLES = { retro: 480, platform: 1200, blocks: 1000, island: 1200 };
-const THEME_OF = { retro: 'doom', platform: 'platform', blocks: 'blocks', island: 'island' };
+const STYLES = { retro: 480, island: 1200, fluffy: 1200 };
+const THEME_OF = { retro: 'doom', island: 'island', fluffy: 'fluffy' };
+// Looks that were merged or retired map onto the ones that replaced them.
+const OLD_STYLES = { chunky: 'retro', sharp: 'retro', action: 'island', platform: 'island', blocks: 'island' };
 const LOGOS = {
   retro: ['ANCESTRY<br>3D', 'WALK AMONG YOUR ANCESTORS'],
-  platform: ['Ancestry<br>Adventure', 'Jump in and meet the family!'],
-  blocks: ['Ancestry<br>Blocks', 'Build your family, block by block'],
   island: ['Ancestry<br>Island', 'Come and meet the family'],
+  fluffy: ['Ancestry<br>Fluffs', 'Roll round and meet the family'],
 };
 const S = {
   data: null, fileName: '', fileKey: '', rootId: null, maxGen: 8,
@@ -35,14 +38,19 @@ const S = {
   mapZoom: 1, avatar: null, avatarYaw: 0, gun: null, impacts: null,
   face: { gaze: 0, nextGaze: 0, grinUntil: 0 }, quipAt: new Map(), quipN: 0,
   posY: 0, vy: 0, onGround: true, jumpQueued: false, coins: 0,
+  flatCam: { x: 0, z: 0, scale: 40 }, flatZoom: 1, step: 0,
 };
-const island = () => S.theme === 'island';
-// Island and Platform share the third-person camera, round figures and friendlier sounds.
-const cute = () => S.theme === 'island' || S.theme === 'platform';
-const platform = () => S.theme === 'platform';
+// Island and Fluffy share the cozy menu, round characters and friendlier sounds.
+const cute = () => S.theme === 'island' || S.theme === 'fluffy';
+// The Island look has jumping, floating platforms and coins.
+const platform = () => S.theme === 'island';
+// The Fluffy look is a top-down 2D garden drawn on its own canvas.
+const flat = () => S.theme === 'fluffy';
 
 // ---------------- Renderer ----------------
 const canvas = $('game');
+const flatCanvas = $('flat');
+const flatCtx = flatCanvas.getContext('2d');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
 renderer.setPixelRatio(1);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -52,12 +60,14 @@ const camera = new THREE.PerspectiveCamera(70, 1, 0.1, 500);
 
 function resize() {
   const w = window.innerWidth, h = window.innerHeight;
+  const fdpr = Math.min(2, window.devicePixelRatio || 1);
+  flatCanvas.width = Math.round(w * fdpr); flatCanvas.height = Math.round(h * fdpr);
   const iw = Math.min(S.pixelWidth, w * Math.min(2, window.devicePixelRatio || 1));
   const scale = w / iw;
   renderer.setSize(Math.round(w / scale), Math.round(h / scale), false);
   camera.aspect = w / h;
   // Keep a usable horizontal field of view on tall phone screens.
-  const hfov = (cute() ? 70 : S.theme === 'blocks' ? 82 : 78) * Math.PI / 180;
+  const hfov = (cute() ? 70 : 78) * Math.PI / 180;
   const vfov = 2 * Math.atan(Math.tan(hfov / 2) / camera.aspect) * 180 / Math.PI;
   camera.fov = Math.max(cute() ? 55 : 68, Math.min(96, vfov));
   camera.updateProjectionMatrix();
@@ -143,10 +153,10 @@ function applyStyle(style, { silent = false } = {}) {
   S.theme = THEME_OF[style];
   S.pixelWidth = STYLES[style];
   store.set('a3d:style', style);
-  for (const c of ['island', 'platform', 'blocks']) document.body.classList.toggle(c, S.theme === c);
+  document.body.classList.toggle('island', cute());
+  document.body.classList.toggle('fluffy', flat());
   $('logo').innerHTML = LOGOS[style][0];
   $('tagline').textContent = LOGOS[style][1];
-  $('tFire').textContent = S.theme === 'blocks' ? 'Punch' : 'Fire';
   $('styleSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.style === style));
   if (!silent) sfx.select();
   resize();
@@ -240,7 +250,9 @@ function updateGenInfo() {
   if (!S.data || !S.rootId) return;
   const n = countAncestors(S.data, S.rootId, S.maxGen) - 1;
   const root = S.data.individuals.get(S.rootId);
-  $('genInfo').textContent = `You play as ${displayName(root)}. ${n} ancestor${n === 1 ? '' : 's'} will be waiting.${n > 1500 ? ' That is a lot; fewer generations will run faster on a phone.' : ''}`;
+  $('genInfo').textContent = S.tab === 'viz'
+    ? `${n} ancestor${n === 1 ? '' : 's'} of ${displayName(root)} within ${S.maxGen} generations.`
+    : `You play as ${displayName(root)}. ${n} ancestor${n === 1 ? '' : 's'} will be waiting.${n > 1500 ? ' That is a lot; fewer generations will run faster on a phone.' : ''}`;
 }
 
 // No accept filter on the input: Android doesn't know the .ged type and greys those files out in its picker.
@@ -285,6 +297,39 @@ $('btnStart').onclick = () => {
 };
 $('btnResume').onclick = () => { sfx.select(); closeMenu(); };
 
+// ---------------- Menu tabs: Play and Visualisation ----------------
+const VIZ_NOTES = {
+  galaxy: 'Your family as a galaxy of stars in 3D, with you as the sun. Spin it, tap stars, or take the fly-through and record it.',
+  tree: 'A tree with you as the trunk that grows back in time, generation by generation, along a timeline. Record it as a video.',
+};
+function setTab(tab) {
+  S.tab = tab === 'viz' ? 'viz' : 'play';
+  store.set('a3d:tab', S.tab);
+  document.body.classList.toggle('tab-viz', S.tab === 'viz');
+  $('tabs').querySelectorAll('button').forEach(b => { const on = b.dataset.tab === S.tab; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); });
+  updateGenInfo();
+}
+function setVizKind(kind) {
+  S.vizKind = kind === 'tree' ? 'tree' : 'galaxy';
+  store.set('a3d:viz', S.vizKind);
+  $('vizSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.viz === S.vizKind));
+  $('vizNote').textContent = VIZ_NOTES[S.vizKind];
+  $('scopeField').classList.toggle('hidden', S.vizKind !== 'galaxy');
+}
+for (const b of $('tabs').querySelectorAll('button')) b.onclick = () => { sfx.select(); setTab(b.dataset.tab); };
+for (const b of $('vizSeg').querySelectorAll('button')) b.onclick = () => { sfx.select(); setVizKind(b.dataset.viz); };
+for (const b of $('scopeSeg').querySelectorAll('button')) b.onclick = () => {
+  sfx.select(); S.vizScope = b.dataset.scope;
+  $('scopeSeg').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+};
+$('btnViz').onclick = () => {
+  if (!S.data || !S.rootId) return;
+  sfx.select();
+  store.set(S.fileKey + ':root', S.rootId);
+  S.vizOpen = true;
+  openViz({ kind: S.vizKind, scope: S.vizScope, data: S.data, rootId: S.rootId, maxGen: S.maxGen, onClose: () => { S.vizOpen = false; } });
+};
+
 // ---------------- Building the level ----------------
 function clearScene() {
   scene.traverse(o => { if (o.geometry && !o.isSprite) o.geometry.dispose(); });
@@ -295,6 +340,7 @@ function clearScene() {
 function buildLevel(tree) {
   clearScene();
   S.tree = tree;
+  if (flat()) { S.world = buildFlatWorld(tree); return; }
   S.world = buildWorld(scene, tree, { theme: S.theme });
   const crowd = tree.people.size;
   const far = THEMES[S.theme].fogFar;
@@ -308,7 +354,7 @@ function buildLevel(tree) {
 async function startGame() {
   $('loading').classList.remove('hidden');
   await new Promise(r => setTimeout(r, 30));
-  try { await Promise.all(['700 16px "Fredoka"', '16px "Press Start 2P"', '16px "Pixelify Sans"', '22px "Lilita One"'].map(f => document.fonts.load(f))); } catch (e) { /* fallback fonts */ }
+  try { await Promise.all(['700 16px "Fredoka"', '16px "Press Start 2P"', '800 16px "Nunito"'].map(f => document.fonts.load(f))); } catch (e) { /* fallback fonts */ }
   store.set(S.fileKey + ':root', S.rootId);
   const tree = layoutAncestors(collectAncestors(S.data, S.rootId, S.maxGen), { couples: S.couples, shape: S.shape });
   computeTraits(tree, S.data);
@@ -317,19 +363,22 @@ async function startGame() {
   const rootLook = S.world.rootLook;
   // You are the root person: in the island look you see yourself; in the shooter looks you hold the minigun.
   if (cute()) {
-    S.avatar = buildIslandFigure(rootLook, S.world.material, { legs: true });
-    scene.add(S.avatar.root);
+    if (!flat()) {
+      S.avatar = buildIslandFigure(rootLook, S.world.material, { legs: true });
+      scene.add(S.avatar.root);
+    }
     S.gun = null;
     S.impacts = null;
   } else {
-    S.gun = S.theme === 'blocks' ? createArm(rootLook.skin, rootLook.coat?.color || rootLook.top) : createMinigun(rootLook.skin);
+    S.gun = createMinigun(rootLook.skin);
     S.impacts = createImpacts(scene);
     resize();
   }
   $('ammoCell').style.display = S.gun && S.gun.state.ammo == null ? 'none' : '';
   S.met = new Set(JSON.parse(store.get(S.fileKey + ':met:' + S.rootId) || '[]'));
   for (const id of S.met) { const n = S.world.byId.get(id); if (n) n.met = true; }
-  S.pos.set(tree.hub.x, 0, tree.hub.z); S.vel.set(0, 0, 0); S.posY = 0.3; S.vy = 0; S.coins = 0; S.onGround = true;
+  S.pos.set(tree.hub.x, 0, tree.hub.z); S.vel.set(0, 0, 0); S.posY = 0; S.vy = 0; S.coins = 0; S.onGround = true;
+  S.camInit = false; S.flatCam = { x: tree.hub.x, z: tree.hub.z, scale: flatScale() };
   S.yaw = 0; // facing your father's side
   S.avatarYaw = Math.PI;
   S.pitch = cute() ? 0 : -0.05;
@@ -344,7 +393,8 @@ async function startGame() {
   closeMenu();
   const root = tree.people.get(S.rootId);
   message(`You are ${displayName(root.indi)}. ${S.world.npcs.length} ancestors are waiting.`);
-  setTimeout(() => message(cute() ? 'Walk out along the paths to go back in time.' : 'Walk outward to go back in time.'), 1200);
+  setTimeout(() => message(flat() ? 'Roll out along the paths to go back in time.' : cute() ? 'Walk out along the paths to go back in time.' : 'Walk outward to go back in time.'), 1200);
+  if (platform()) setTimeout(() => message('Jump with Space or JUMP. Hop on the brick platforms for coins.'), 2600);
   updateStatus();
   if (!S.loopStarted) { S.loopStarted = true; requestAnimationFrame(loop); }
 }
@@ -373,7 +423,7 @@ function closeMenu() {
 // ---------------- Input ----------------
 const isTyping = () => ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName) && document.activeElement.type !== 'checkbox' && document.activeElement.type !== 'range';
 const playing = () => S.running && !S.paused && !S.talkingTo && $('automap').classList.contains('hidden') && $('menu').classList.contains('hidden');
-function requestLock() { try { const p = canvas.requestPointerLock?.(); p?.catch?.(() => {}); } catch (e) { /* ignore */ } }
+function requestLock() { if (flat()) return; try { const p = canvas.requestPointerLock?.(); p?.catch?.(() => {}); } catch (e) { /* ignore */ } }
 canvas.addEventListener('click', () => { if (!S.paused && !S.talkingTo) requestLock(); });
 $('resume').addEventListener('click', () => { $('resume').classList.add('hidden'); requestLock(); });
 document.addEventListener('pointerlockchange', () => {
@@ -445,6 +495,7 @@ $('tRight').addEventListener('pointermove', e => {
   if (e.pointerId !== lookId || S.talkingTo) return;
   const dx = e.clientX - lookLast.x, dy = e.clientY - lookLast.y;
   lookMoved += Math.abs(dx) + Math.abs(dy);
+  if (flat()) { lookLast = { x: e.clientX, y: e.clientY }; return; }
   S.yaw -= dx * 0.006; S.pitch = Math.max(-1.1, Math.min(1.1, S.pitch - dy * 0.005));
   lookLast = { x: e.clientX, y: e.clientY };
 });
@@ -453,6 +504,7 @@ const endLook = e => {
   lookId = null;
   // A quick tap on the right side talks to whoever is in front of you.
   if (performance.now() - lookTapStart < 250 && lookMoved < 10 && S.target && !S.talkingTo) openDialog(S.target);
+  else if (flat() && performance.now() - lookTapStart < 250 && lookMoved < 10) flatTap(lookLast.x, lookLast.y);
 };
 $('tRight').addEventListener('pointerup', endLook);
 $('tRight').addEventListener('pointercancel', endLook);
@@ -473,8 +525,15 @@ function movePlayer(dt) {
   if (k.has('s') || k.has('arrowdown')) fwd -= 1;
   if (k.has('a') || k.has('q')) strafe -= 1;
   if (k.has('d')) strafe += 1;
-  if (k.has('arrowleft')) S.yaw += 2.4 * dt;
-  if (k.has('arrowright')) S.yaw -= 2.4 * dt;
+  if (flat()) {
+    // top-down: every key moves in its own screen direction
+    S.yaw = 0;
+    if (k.has('arrowleft')) strafe -= 1;
+    if (k.has('arrowright')) strafe += 1;
+  } else {
+    if (k.has('arrowleft')) S.yaw += 2.4 * dt;
+    if (k.has('arrowright')) S.yaw -= 2.4 * dt;
+  }
   let run = S.run;
   if (S.stick.active) {
     fwd -= S.stick.y; strafe += S.stick.x;
@@ -482,7 +541,7 @@ function movePlayer(dt) {
   }
   const len = Math.hypot(fwd, strafe);
   if (len > 1) { fwd /= len; strafe /= len; }
-  const speed = cute() ? (run ? 7.5 : 3.8) : (run ? 9 : 4.6);
+  const speed = flat() ? (run ? 8 : 4.2) : cute() ? (run ? 7.5 : 3.8) : (run ? 9 : 4.6);
   const sin = Math.sin(S.yaw), cos = Math.cos(S.yaw);
   // camera looks along -Z rotated by yaw
   const wantX = (-sin * fwd + cos * strafe) * speed;
@@ -495,7 +554,19 @@ function movePlayer(dt) {
     const dx = S.pos.x - x, dz = S.pos.z - z, d = Math.hypot(dx, dz);
     if (d < min && d > 0.0001) { S.pos.x = x + dx / d * min; S.pos.z = z + dz / d * min; }
   };
-  for (const n of S.world.npcs) if (n.near && S.posY < 1.2) push(n.person.x, n.person.z, 0.85);
+  if (flat()) {
+    // rolling into someone makes them squeak and bounce
+    for (const n of S.world.npcs) {
+      if (!n.near) continue;
+      const d = Math.hypot(S.pos.x - n.person.x, S.pos.z - n.person.z);
+      if (d < 1.34 && Math.hypot(S.vel.x, S.vel.z) > 3 && n.flinch <= 0) {
+        n.flinch = 0.45; sfx.bonk();
+        const now = performance.now();
+        if (now - (S.quipAt.get(n.person.id) || 0) > 3000) { S.quipAt.set(n.person.id, now); message(`${firstName(n.person.indi)}: "${bumpQuip(n.person, S.quipN++)}"`); }
+      }
+      push(n.person.x, n.person.z, 1.3);
+    }
+  } else for (const n of S.world.npcs) if (n.near && S.posY < 1.2) push(n.person.x, n.person.z, 0.85);
   for (const c of S.world.colliders) if (S.posY > 1.2) c.skip = true; else c.skip = false;
   for (const c of S.world.colliders) if (!c.skip && !(c.barrel && !c.barrel.alive) && Math.abs(c.x - S.pos.x) < 2 && Math.abs(c.z - S.pos.z) < 2) push(c.x, c.z, c.r + 0.3);
   // boxes of bullets
@@ -513,6 +584,7 @@ function movePlayer(dt) {
   const sp = Math.hypot(S.vel.x, S.vel.z);
   const prevBob = S.bob;
   S.bob += sp * dt * (cute() ? 2.6 : 1.9);
+  S.step += sp * dt * 1.6;
   if (sp > 1 && S.onGround && Math.floor(prevBob / Math.PI) !== Math.floor(S.bob / Math.PI)) sfx.step();
 }
 
@@ -609,7 +681,30 @@ function updateAvatar(dt) {
 // ---------------- NPC behaviour ----------------
 function angleDiff(a, b) { let d = a - b; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2; return d; }
 
+// Fluffy look: no camera direction, so whoever is closest within reach is the one you can talk to.
+function updateFlatNPCs(t, dt) {
+  let best = null, bestD = 2.3;
+  for (const n of S.world.npcs) {
+    const p = n.person;
+    const d = Math.hypot(p.x - S.pos.x, p.z - S.pos.z);
+    n.dist = d;
+    n.near = d < 3;
+    if (n.flinch > 0) n.flinch -= dt;
+    if (!n.waved && d < 5) { n.waved = true; n.wave = 0.55; }
+    if (n.wave > 0) n.wave -= dt;
+    if (d < bestD) { bestD = d; best = n; }
+  }
+  S.target = best;
+  $('nametag').classList.add('hidden');
+  if (best && !S.talkingTo) {
+    $('prompt').textContent = desktop() ? `Press E to chat with ${firstName(best.person.indi)}` : `Tap to chat with ${firstName(best.person.indi)}`;
+    $('prompt').classList.remove('hidden');
+    $('tTalk').classList.remove('hidden');
+  } else { $('prompt').classList.add('hidden'); $('tTalk').classList.add('hidden'); }
+}
+
 function updateNPCs(t, dt) {
+  if (flat()) return updateFlatNPCs(t, dt);
   const camDir = new THREE.Vector3(-Math.sin(S.yaw), 0, -Math.cos(S.yaw));
   let best = null, bestScore = Infinity, look = null, lookScore = Infinity;
   const visR = scene.fog.far + 4;
@@ -824,7 +919,8 @@ function tickDialog(dt) {
     D.portraitFrame = frame;
     const talking = D.shown < D.full.length;
     const f = talking ? frame : (frame % 10 === 9 ? 9 : 0);
-    if (cute()) drawIslandPortrait($('dPortrait').getContext('2d'), D.npc.look, 96, f);
+    if (flat()) drawFluffyPortrait($('dPortrait').getContext('2d'), D.npc.look, 96, f);
+    else if (cute()) drawIslandPortrait($('dPortrait').getContext('2d'), D.npc.look, 96, f);
     else drawPortrait($('dPortrait').getContext('2d'), D.npc.look, 96, f);
   }
 }
@@ -863,19 +959,13 @@ function updateStatus(t = 0) {
   let near = null;
   for (const n of S.world.npcs) if (!near || n.dist < near.dist) near = n;
   const root = S.tree.people.get(S.rootId).indi;
-  if (S.theme === 'blocks') {
-    const slots = $('hotbar').children;
-    for (let i = 0; i < slots.length; i++) { slots[i].classList.toggle('sel', i === Math.min(8, Math.max(0, gen - 1))); slots[i].firstChild.textContent = i + 1 <= S.tree.radii.length - 1 ? `G${i + 1}` : ''; }
-    $('xpFill').style.width = `${total ? (S.met.size / total) * 100 : 0}%`;
-    $('xpLevel').textContent = S.met.size;
-    $('bInfo').textContent = `${firstName(root)} · Gen ${gen} · Met ${S.met.size}/${total}`;
-    return;
-  }
   if (cute()) {
     $('iName').textContent = firstName(root);
     $('iInfo').textContent = `Gen ${gen} · Met ${S.met.size}/${total}`;
     $('pCoins').textContent = S.coins;
-    drawIslandPortrait($('iFace').getContext('2d'), S.world.rootLook, 64, Math.floor(t * 2) % 10 === 9 ? 9 : 0);
+    const fr = Math.floor(t * 2) % 10 === 9 ? 9 : 0;
+    if (flat()) drawFluffyPortrait($('iFace').getContext('2d'), S.world.rootLook, 64, fr);
+    else drawIslandPortrait($('iFace').getContext('2d'), S.world.rootLook, 64, fr);
     return;
   }
   $('sGen').textContent = gen;
@@ -1001,7 +1091,44 @@ $('mapSearch').addEventListener('input', () => {
 });
 
 // ---------------- Camera & main loop ----------------
+// Fluffy look: pixels per metre at zoom 1, so about 16 m fit across the short side of the screen.
+function flatScale() { return Math.max(26, Math.min(64, Math.min(window.innerWidth, window.innerHeight) / 13)) * S.flatZoom; }
+function placeFlatCamera(dt) {
+  const c = S.flatCam;
+  let x = S.pos.x, z = S.pos.z, scale = flatScale();
+  if (S.talkingTo) { x = (x + S.talkingTo.person.x) / 2; z = (z + S.talkingTo.person.z) / 2 + 1.2; scale *= 1.35; }
+  else { x += S.vel.x * 0.25; z += S.vel.z * 0.25; }
+  const k = Math.min(1, dt * 5);
+  c.x += (x - c.x) * k; c.z += (z - c.z) * k; c.scale += (scale - c.scale) * Math.min(1, dt * 4);
+}
+function renderFlat(t) {
+  const dpr = flatCanvas.width / Math.max(1, window.innerWidth);
+  flatCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const talking = S.talkingTo && D.shown < D.full.length;
+  S.world.draw(flatCtx, {
+    w: window.innerWidth, h: window.innerHeight, t, cam: S.flatCam,
+    player: { x: S.pos.x, z: S.pos.z, vx: S.vel.x, vz: S.vel.z, step: S.step },
+    target: S.target, waypoint: S.waypoint, talkingTo: S.talkingTo, mouth: talking ? Math.abs(Math.sin(t * 14)) : 0,
+  });
+}
+// Tap or click in the garden: talk to someone close by, or set a waypoint to whoever you tapped.
+function flatTap(cx, cy) {
+  if (!flat() || !S.world?.flat || !playing()) return;
+  const c = S.flatCam, w = window.innerWidth, h = window.innerHeight;
+  const x = c.x + (cx - w / 2) / c.scale, z = c.z + (cy - h / 2) / c.scale;
+  let best = null, bd = 1.1;
+  for (const n of S.world.npcs) { const d = Math.hypot(n.person.x - x, n.person.z - 0.4 - z); if (d < bd) { bd = d; best = n; } }
+  if (!best) return;
+  if (best.dist < 2.6) openDialog(best); else setWaypoint(best.person.id);
+}
+flatCanvas.addEventListener('click', e => flatTap(e.clientX, e.clientY));
+window.addEventListener('wheel', e => {
+  if (!flat() || !playing()) return;
+  S.flatZoom = Math.max(0.45, Math.min(2.2, S.flatZoom * (e.deltaY > 0 ? 0.9 : 1.1)));
+}, { passive: true });
+
 function placeCamera(dt) {
+  if (flat()) return placeFlatCamera(dt);
   if (cute()) {
     // Third person: orbit behind your avatar. Pitch tilts the camera up and down.
     let dist = 6, elev = Math.max(0.08, Math.min(1.1, 0.38 - S.pitch * 0.6)), yaw = S.yaw;
@@ -1038,7 +1165,7 @@ function loop(now) {
   requestAnimationFrame(loop);
   const dt = Math.min(0.05, (now - lastT) / 1000);
   lastT = now;
-  if (!S.world || !S.running) return;
+  if (!S.world || !S.running || S.vizOpen) return;
   const t = now / 1000;
   if (!S.paused) {
     movePlayer(dt);
@@ -1050,6 +1177,7 @@ function loop(now) {
   }
   S.world.update(t);
   placeCamera(dt);
+  if (flat()) { renderFlat(t); return; }
   updateGun(dt);
   renderer.clear();
   renderer.render(scene, camera);
@@ -1082,7 +1210,7 @@ async function buildAttract() {
   const tree = layoutAncestors(collectAncestors(attractData, attractData.individuals.keys().next().value, 6), { couples: S.couples, shape: S.shape });
   computeTraits(tree, attractData);
   buildLevel(tree);
-  if (cute()) {
+  if (cute() && !flat()) {
     const a = buildIslandFigure(S.world.rootLook, S.world.material, { legs: true });
     a.root.rotation.y = Math.PI;
     a.root.position.set(tree.hub.x, 0, tree.hub.z);
@@ -1094,7 +1222,16 @@ async function buildAttract() {
   const spin = now => {
     if (S.running) { attractLoop = false; return; }
     requestAnimationFrame(spin);
+    if (S.vizOpen) return;
     const t = (now - t0) / 1000;
+    if (S.world.flat) {
+      // the garden drifting slowly round the plaza
+      S.flatCam = { x: S.tree.hub.x + Math.cos(t * 0.06) * 9, z: S.tree.hub.z + Math.sin(t * 0.06) * 9, scale: flatScale() * 0.8 };
+      S.pos.set(S.tree.hub.x, 0, S.tree.hub.z); S.vel.set(0, 0, 0);
+      for (const n of S.world.npcs) n.dist = Math.hypot(n.person.x - S.pos.x, n.person.z - S.pos.z);
+      renderFlat(t);
+      return;
+    }
     S.world.update(t);
     const r = cute() ? 13 : 16;
     camera.position.set(Math.cos(t * 0.05) * r, cute() ? 5 : 3.2, Math.sin(t * 0.05) * r);
@@ -1109,8 +1246,11 @@ S.couples = store.get('a3d:couples') === '1';
 S.shape = ['circle', 'half', 'tree'].includes(store.get('a3d:shape')) ? store.get('a3d:shape') : 'circle';
 $('shapeSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.shape === S.shape));
 $('couplesToggle').checked = S.couples;
-applyStyle({ chunky: 'retro', sharp: 'retro', action: 'platform' }[store.get('a3d:style')] || store.get('a3d:style') || 'retro', { silent: true });
+applyStyle(OLD_STYLES[store.get('a3d:style')] || store.get('a3d:style') || 'retro', { silent: true });
+S.vizScope = 'ancestors';
+setVizKind(store.get('a3d:viz'));
+setTab(store.get('a3d:tab'));
 S.booted = true;
 buildAttract();
 // expose for debugging / tests
-window.__A3D = { S, scene, camera, renderer, startGame, loadText, openDialog, setWaypoint, openMap, closeMap, applyStyle };
+window.__A3D = { S, setTab, openViz, vizOpen, scene, camera, renderer, startGame, loadText, openDialog, setWaypoint, openMap, closeMap, applyStyle };

@@ -1,5 +1,6 @@
-# Headless smoke test: loads the page, plays the demo in the shooter look (with the minigun) and the
-# island look (with couples together), on desktop and phone sizes, and takes screenshots.
+# Headless smoke test: loads the page, plays the demo in the shooter look (with the minigun), the island look
+# (jumping, platforms and coins) and the 2D fluffy look, on desktop and phone sizes, opens both
+# visualisations, and takes screenshots.
 #   python3 tests/smoke.py            (serve the folder on :8765 first for dev.html)
 #   PAGE=index.html python3 tests/smoke.py   (built single file, opened from disk)
 import asyncio, os, pathlib
@@ -8,8 +9,8 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 VENDOR = pathlib.Path(os.environ.get('THREE_DIR', '/home/claude/vendor/three'))
 OUT = pathlib.Path(os.environ.get('SHOTS', '/tmp/claude-0/shots')); OUT.mkdir(parents=True, exist_ok=True)
 PAGE = os.environ.get('PAGE', 'dev.html')
-RUNS = [('retro', False, 'circle'), ('platform', True, 'circle'), ('blocks', False, 'circle'), ('island', True, 'circle'),
-        ('retro', False, 'half'), ('retro', True, 'tree'), ('platform', False, 'tree'), ('blocks', True, 'half'), ('island', False, 'tree')]
+RUNS = [('retro', False, 'circle'), ('island', True, 'circle'), ('fluffy', False, 'circle'),
+        ('retro', False, 'half'), ('retro', True, 'tree'), ('island', False, 'tree'), ('fluffy', True, 'half')]
 
 async def run(b, name, vp, mobile, style, couples, shape='circle'):
     ctx = await b.new_context(viewport=vp, is_mobile=mobile, has_touch=mobile, device_scale_factor=2 if mobile else 1)
@@ -47,7 +48,7 @@ async def run(b, name, vp, mobile, style, couples, shape='circle'):
       const l = Math.hypot(dx, dz) || 1; A.S.pos.set(p.x + dx / l * 2.2 + 0.3, 0, p.z + dz / l * 2.2); A.S.yaw = Math.atan2(-(p.x-A.S.pos.x), -(p.z-A.S.pos.z)); A.S.pitch = 0; window.__p = p; }""")
     await page.wait_for_timeout(1500)
     await page.screenshot(path=str(OUT / f'{tag}-3-npc.png'))
-    if style == 'platform':
+    if style == 'island':
         # jump onto an ancestor's head and collect a coin
         await page.evaluate("""() => { const A = window.__A3D; const p = window.__p; A.S.pos.set(p.x, 0, p.z); A.S.posY = 3.5; A.S.vy = 0; A.S.onGround = false;
           const c = A.S.world.coins.find(c => !c.taken); window.__coin = c; }""")
@@ -57,9 +58,9 @@ async def run(b, name, vp, mobile, style, couples, shape='circle'):
         await page.wait_for_timeout(300)
         print(tag, 'coins:', await page.evaluate("() => window.__A3D.S.coins"), '| msgs:', (await page.inner_text('#msgs')).replace('\n', ' / ')[:200])
         await page.evaluate("() => { const A = window.__A3D; A.S.pos.set(window.__p.x + 2.5, 0, window.__p.z); A.S.posY = 0; A.S.yaw = Math.atan2(-(window.__p.x - A.S.pos.x), -(window.__p.z - A.S.pos.z)); }")
-    if style in ('retro', 'blocks'):
+    if style == 'retro':
         await page.evaluate("() => { window.__A3D.S.firing = true; }")
-        await page.wait_for_timeout(1200 if style != 'blocks' else 300)
+        await page.wait_for_timeout(1200)
         await page.screenshot(path=str(OUT / f'{tag}-4-fire.png'))
         await page.evaluate("() => { window.__A3D.S.firing = false; }")
         print(tag, 'ammo after burst:', await page.inner_text('#sAmmo'), '| msgs:', (await page.inner_text('#msgs')).replace('\n', ' / ')[:160])
@@ -91,6 +92,23 @@ async def run(b, name, vp, mobile, style, couples, shape='circle'):
                couplesSideBySide: ppl.filter(p => p.spouseInUnit).length / 2, avatar: !!A.S.avatar, gun: !!A.S.gun }; }""")
     fps = await page.evaluate("""() => new Promise(res => { let n=0; const t0=performance.now(); const f=()=>{ n++; if(performance.now()-t0<2000) requestAnimationFrame(f); else res(n/2); }; requestAnimationFrame(f); })""")
     print(tag, info, 'fps(swiftshader)', fps)
+    if shape == 'circle':
+        # the Visualisation tab: galaxy (with the fly-through) and the growing tree
+        await page.evaluate("() => { const A = window.__A3D; A.setTab('viz'); }")
+        await page.keyboard.press('Escape')
+        await page.wait_for_timeout(300)
+        await page.click('#btnViz')
+        await page.wait_for_timeout(1500)
+        await page.click('#vTour')
+        await page.wait_for_timeout(5000)
+        await page.screenshot(path=str(OUT / f'{tag}-8-galaxy.png'))
+        await page.click('#vClose')
+        await page.click('#vizSeg [data-viz="tree"]')
+        await page.click('#btnViz')
+        await page.wait_for_timeout(8000)
+        await page.screenshot(path=str(OUT / f'{tag}-9-tree.png'))
+        await page.click('#vClose')
+        await page.evaluate("() => window.__A3D.setTab('play')")
     print(tag, 'errors:', errors[:10])
     await ctx.close()
 

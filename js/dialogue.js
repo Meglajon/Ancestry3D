@@ -465,3 +465,15 @@ export function stompQuip(person, n = 0) {
   ];
   return say(voice, lines[(hashString(person.id) + n) % lines.length]);
 }
+
+// Fluffy look: you rolled into them.
+export function bumpQuip(person, n = 0) {
+  const voice = makeVoice(person);
+  const addr = pickR(voice, voice.v.address || ['you']);
+  const lines = [
+    T`Steady on, ${addr}!`, 'Oof! Watch where you\'re rolling!', 'You nearly knocked me into the flowers!',
+    'Mind my fluff!', T`Slow down, ${addr}, I'm not as bouncy as I was.`,
+    voice.year < 1700 ? 'Have a care, I pray thee!' : 'Well, I never!',
+  ];
+  return say(voice, lines[(hashString(person.id) + n) % lines.length]);
+}

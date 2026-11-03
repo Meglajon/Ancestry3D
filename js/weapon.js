@@ -263,32 +263,3 @@ export function traceShot(origin, dir, npcs, wallRadius, range = 120, props = []
   if (bestT >= range) return null;
   return { npc: best, prop: bestProp, point: origin.clone().addScaledVector(dir, bestT) };
 }
-
-// ---------------- Blocky arm (Blocks look) ----------------
-export function createArm(skinColor, sleeveColor) {
-  const scene = new THREE.Scene();
-  scene.add(new THREE.HemisphereLight('#ffffff', '#6a8a5a', 1.6));
-  const key = new THREE.DirectionalLight('#ffffff', 1.0); key.position.set(1, 2, 1); scene.add(key);
-  const camera = new THREE.PerspectiveCamera(60, 1, 0.01, 10);
-  const arm = new THREE.Group();
-  const sleeve = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.34), new THREE.MeshLambertMaterial({ color: sleeveColor || '#3a6ac8' }));
-  sleeve.position.z = 0.12; arm.add(sleeve);
-  const hand = new THREE.Mesh(new THREE.BoxGeometry(0.155, 0.155, 0.26), new THREE.MeshLambertMaterial({ color: skinColor || '#e0b090' }));
-  hand.position.z = -0.17; arm.add(hand);
-  arm.position.set(0.28, -0.26, -0.42); arm.rotation.set(0.25, -0.35, 0.15);
-  scene.add(arm);
-  const state = { swing: 0, cooldown: 0, swayT: 0, ammo: null };
-  function update(dt, trigger, speed) {
-    state.cooldown -= dt;
-    let shots = 0;
-    if (trigger && state.cooldown <= 0) { state.swing = 1; state.cooldown = 0.35; }
-    if (state.swing > 0) { const before = state.swing; state.swing = Math.max(0, state.swing - dt * 3.5); if (before > 0.6 && state.swing <= 0.6) shots = 1; }
-    state.swayT += dt * Math.min(1, speed / 4) * 7;
-    const sway = Math.min(1, speed / 4);
-    const k = Math.sin(state.swing * Math.PI);
-    arm.position.set(0.28 - k * 0.12 + Math.sin(state.swayT) * 0.02 * sway, -0.26 + k * 0.08 - Math.abs(Math.cos(state.swayT)) * 0.02 * sway, -0.42 - k * 0.12);
-    arm.rotation.set(0.25 + k * 0.6, -0.35 + k * 0.3, 0.15);
-    return shots;
-  }
-  return { scene, camera, gun: arm, update, state, pellets: 1, spread: 0.02, range: 3, kind: 'arm', melee: true };
-}

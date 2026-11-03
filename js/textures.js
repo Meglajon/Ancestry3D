@@ -140,8 +140,6 @@ export const ATLAS = {
   female: [48, 0, 16, 16],
   beard: [32, 16, 16, 16],
   hairFront: [48, 16, 16, 16],
-  voxM: [32, 32, 16, 16],
-  voxF: [48, 32, 16, 16],
 };
 
 export function npcAtlas() {
@@ -175,17 +173,6 @@ export function npcAtlas() {
   face(32, 0, false, false);
   face(48, 0, true, false);
   face(32, 16, false, true);
-  // Voxel faces for the Blocks look: an 8x8 grid of 2px "pixels"
-  const vox = (ox, oy, female) => {
-    const P = (gx, gy, col) => { x.fillStyle = col; x.fillRect(ox + gx * 2, oy + gy * 2, 2, 2); };
-    for (let gy = 0; gy < 8; gy++) for (let gx = 0; gx < 8; gx++) if ((gx + gy * 3) % 5 === 0) P(gx, gy, 'rgba(0,0,0,0.05)');
-    P(1, 4, '#ffffff'); P(2, 4, '#3a2a6a'); P(5, 4, '#3a2a6a'); P(6, 4, '#ffffff');
-    P(3, 5, 'rgba(120,60,40,0.45)'); P(4, 5, 'rgba(120,60,40,0.45)');
-    P(3, 6, female ? '#b04050' : '#7a3a30'); P(4, 6, female ? '#b04050' : '#7a3a30');
-    if (female) { P(1, 3, '#2a1a10'); P(6, 3, '#2a1a10'); }
-  };
-  vox(32, 32, false);
-  vox(48, 32, true);
   return c;
 }
 

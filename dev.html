@@ -8,7 +8,7 @@
 <meta name="description" content="Walk among your ancestors: a first-person retro 3D explorer for GEDCOM family trees.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&family=Lilita+One&family=Pixelify+Sans:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
 <script type="importmap">
 { "imports": {
   "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
@@ -130,7 +130,7 @@ input[type=range] { width: 100%; accent-color: var(--red); height: 28px; }
 #automap .legend { position: absolute; left: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); font-size: 18px; color: #aaa; line-height: 1.1; }
 #automap .legend i { display: inline-block; width: 18px; height: 4px; vertical-align: middle; margin-right: 6px; }
 #automap .legend .lp { background: #3a78ff; } #automap .legend .lm { background: #ff3a2a; } #automap .legend .lw { background: #ffd030; }
-body.island #automap .legend .lp, body.platform #automap .legend .lp { background: #3f7fd8; } body.island #automap .legend .lm { background: #e8507a; } body.island #automap .legend .lw { background: #ffb020; }
+body.island #automap .legend .lp { background: #3f7fd8; } body.island #automap .legend .lm { background: #e8507a; } body.island #automap .legend .lw { background: #ffb020; }
 
 /* Touch controls */
 #touch { position: fixed; inset: 0; z-index: 20; pointer-events: none; }
@@ -188,9 +188,9 @@ body.island {
   font-family: 'Nunito', system-ui, sans-serif; color: var(--i-brown);
   background: var(--i-sky);
 }
-body.island canvas#game, body.platform canvas#game { image-rendering: auto; }
+body.island canvas#game { image-rendering: auto; }
 body.island .btn, body.island .card h2, body.island .seg button, body.island #dialog .who, body.island #dialog .opts button, body.island #msgs,
-body.island #nametag, body.island #prompt, body.island #compass, body.island .tbtn, body.island #automap .top button, body.island #resume, body.island #loading, body.platform #nametag, body.platform #prompt, body.platform #compass, body.platform .tbtn, body.platform #automap .top button, body.platform #resume, body.platform #loading { text-transform: none; }
+body.island #nametag, body.island #prompt, body.island #compass, body.island .tbtn, body.island #automap .top button, body.island #resume, body.island #loading { text-transform: none; }
 body.island #menu { background:
   radial-gradient(circle at 20px 20px, rgba(255,255,255,0.35) 6px, transparent 7px) 0 0 / 44px 44px,
   linear-gradient(180deg, var(--i-sky) 0%, var(--i-sky2) 60%, #f9f0d8 100%); }
@@ -229,175 +229,137 @@ body.island .toggle .tl { font-family: 'Nunito', sans-serif; font-weight: 800; f
 body.island .toggle .tl small { font-weight: 600; font-size: 14px; color: var(--i-brown2); }
 body.island #menu a { color: var(--i-brown2) !important; }
 
-body.island #bar, body.island #crosshair, body.island #tFire, body.platform #bar, body.platform #crosshair, body.platform #tFire { display: none; }
-body.island #islandHud, body.platform #islandHud { display: flex; position: absolute; left: calc(12px + env(safe-area-inset-left, 0px)); top: calc(12px + env(safe-area-inset-top, 0px)); align-items: center; gap: 10px;
+body.island #bar, body.island #crosshair, body.island #tFire { display: none; }
+body.island #islandHud { display: flex; position: absolute; left: calc(12px + env(safe-area-inset-left, 0px)); top: calc(12px + env(safe-area-inset-top, 0px)); align-items: center; gap: 10px;
   background: var(--i-cream); border-radius: 999px; padding: 6px 18px 6px 6px; box-shadow: 0 4px 0 rgba(107,74,46,0.18); }
-body.island #islandHud canvas, body.platform #islandHud canvas { width: 46px; height: 46px; border-radius: 50%; }
-body.island #islandHud b, body.platform #islandHud b { display: block; font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 17px; color: var(--i-brown); }
-body.island #islandHud span, body.platform #islandHud span { display: block; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 13px; color: var(--i-brown2); }
-body.island #msgs, body.platform #msgs { top: calc(76px + env(safe-area-inset-top, 0px)); left: calc(12px + env(safe-area-inset-left, 0px)); font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 14px; color: var(--i-brown); text-shadow: none; line-height: 1.2; }
-body.island #msgs div, body.platform #msgs div { background: rgba(255,250,238,0.92); border-radius: 999px; padding: 6px 14px; margin-bottom: 6px; display: inline-block; clear: left; float: left; box-shadow: 0 3px 0 rgba(107,74,46,0.12); }
-body.island #nametag, body.platform #nametag { top: 30%; font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 18px; color: #fff; text-shadow: 0 2px 0 var(--i-brown), 2px 0 0 var(--i-brown), -2px 0 0 var(--i-brown), 0 -2px 0 var(--i-brown); }
-body.island #nametag small, body.platform #nametag small { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 14px; color: var(--i-yellow); }
-body.island #prompt, body.platform #prompt { bottom: calc(110px + env(safe-area-inset-bottom, 0px)); font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 16px; color: var(--i-brown); background: var(--i-cream); border: none; border-radius: 999px; padding: 10px 20px; animation: bob 1.2s ease-in-out infinite; box-shadow: 0 4px 0 rgba(107,74,46,0.18); }
+body.island #islandHud canvas { width: 46px; height: 46px; border-radius: 50%; }
+body.island #islandHud b { display: block; font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 17px; color: var(--i-brown); }
+body.island #islandHud span { display: block; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 13px; color: var(--i-brown2); }
+body.island #msgs { top: calc(76px + env(safe-area-inset-top, 0px)); left: calc(12px + env(safe-area-inset-left, 0px)); font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 14px; color: var(--i-brown); text-shadow: none; line-height: 1.2; }
+body.island #msgs div { background: rgba(255,250,238,0.92); border-radius: 999px; padding: 6px 14px; margin-bottom: 6px; display: inline-block; clear: left; float: left; box-shadow: 0 3px 0 rgba(107,74,46,0.12); }
+body.island #nametag { top: 30%; font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 18px; color: #fff; text-shadow: 0 2px 0 var(--i-brown), 2px 0 0 var(--i-brown), -2px 0 0 var(--i-brown), 0 -2px 0 var(--i-brown); }
+body.island #nametag small { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 14px; color: var(--i-yellow); }
+body.island #prompt { bottom: calc(110px + env(safe-area-inset-bottom, 0px)); font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 16px; color: var(--i-brown); background: var(--i-cream); border: none; border-radius: 999px; padding: 10px 20px; animation: bob 1.2s ease-in-out infinite; box-shadow: 0 4px 0 rgba(107,74,46,0.18); }
 @keyframes bob { 50% { transform: translate(-50%, -4px); } }
-body.island #compass, body.platform #compass { background: var(--i-cream); border-radius: 999px; padding: 6px 16px; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 14px; color: var(--i-brown); text-shadow: none; box-shadow: 0 3px 0 rgba(107,74,46,0.15); }
-body.island #compass .arrow, body.platform #compass .arrow { color: var(--i-orange); font-size: 20px; }
-body.island .tbtn, body.platform .tbtn { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 15px; color: var(--i-brown); text-shadow: none; background: rgba(255,250,238,0.95); border: none; border-radius: 999px; box-shadow: 0 4px 0 rgba(107,74,46,0.2); }
-body.island #tTalk, body.platform #tTalk { background: var(--i-green); color: #fff; box-shadow: 0 4px 0 var(--i-green-d); width: 96px; height: 60px; bottom: calc(24px + env(safe-area-inset-bottom, 0px)) !important; font-size: 18px; }
-body.island #tMap, body.platform #tMap { bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important; }
-body.island #tRun, body.platform #tRun { bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
-body.island #tRun.on, body.platform #tRun.on { background: var(--i-yellow); }
-body.island #touch .zone, body.platform #touch .zone { bottom: 0; }
-body.island #stick, body.platform #stick { border-color: rgba(255,250,238,0.9); background: rgba(255,250,238,0.35); }
-body.island #stick .knob, body.platform #stick .knob { background: var(--i-cream); border-color: #fff; }
+body.island #compass { background: var(--i-cream); border-radius: 999px; padding: 6px 16px; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 14px; color: var(--i-brown); text-shadow: none; box-shadow: 0 3px 0 rgba(107,74,46,0.15); }
+body.island #compass .arrow { color: var(--i-orange); font-size: 20px; }
+body.island .tbtn { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 15px; color: var(--i-brown); text-shadow: none; background: rgba(255,250,238,0.95); border: none; border-radius: 999px; box-shadow: 0 4px 0 rgba(107,74,46,0.2); }
+body.island #tTalk { background: var(--i-green); color: #fff; box-shadow: 0 4px 0 var(--i-green-d); width: 96px; height: 60px; bottom: calc(24px + env(safe-area-inset-bottom, 0px)) !important; font-size: 18px; }
+body.island #tMap { bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important; }
+body.island #tRun { bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
+body.island #tRun, body.island #tMenu { background: rgba(255,250,238,0.95); color: var(--i-brown); border: none; }
+body.island #tRun.on { background: var(--i-yellow); }
+body.island #touch .zone { bottom: 0; }
+body.island #stick { border-color: rgba(255,250,238,0.9); background: rgba(255,250,238,0.35); }
+body.island #stick .knob { background: var(--i-cream); border-color: #fff; }
 
-body.island #dialog, body.platform #dialog { left: max(10px, env(safe-area-inset-left, 0px)); right: max(10px, env(safe-area-inset-right, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); max-width: 760px; margin: 0 auto;
+body.island #dialog { left: max(10px, env(safe-area-inset-left, 0px)); right: max(10px, env(safe-area-inset-right, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); max-width: 760px; margin: 0 auto;
   background: var(--i-cream); border: none; border-image: none; border-radius: 34px; padding: 26px 22px 16px; box-shadow: 0 6px 0 rgba(107,74,46,0.2); min-height: 150px; overflow: visible; }
-body.island #dialog .portrait, body.platform #dialog .portrait { border: none; background: none; border-radius: 50%; }
-body.island #dialog .who, body.platform #dialog .who { position: absolute; top: -18px; left: 34px; background: var(--i-orange); color: #fff; font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 18px; padding: 6px 18px; border-radius: 999px; transform: rotate(-3deg); box-shadow: 0 3px 0 rgba(107,74,46,0.2); }
-body.island #dialog .rel, body.platform #dialog .rel { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 14px; color: var(--i-brown2); }
-body.island #dialog .text, body.platform #dialog .text { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 20px; line-height: 1.35; color: var(--i-brown); }
-body.island #dialog .opts button, body.platform #dialog .opts button { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 15px; color: var(--i-brown); background: #fff; border: 2px solid #ead9b4; border-radius: 999px; padding: 8px 14px; }
-body.island #dialog .opts button.next, body.platform #dialog .opts button.next { background: var(--i-yellow); border-color: var(--i-yellow); }
-body.island #dialog .opts button.bye, body.platform #dialog .opts button.bye { background: #fff; }
-body.island #dialog .pager, body.platform #dialog .pager { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 12px; color: var(--i-brown2); }
+body.island #dialog .portrait { border: none; background: none; border-radius: 50%; }
+body.island #dialog .who { position: absolute; top: -18px; left: 34px; background: var(--i-orange); color: #fff; font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 18px; padding: 6px 18px; border-radius: 999px; transform: rotate(-3deg); box-shadow: 0 3px 0 rgba(107,74,46,0.2); }
+body.island #dialog .rel { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 14px; color: var(--i-brown2); }
+body.island #dialog .text { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 20px; line-height: 1.35; color: var(--i-brown); }
+body.island #dialog .opts button { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 15px; color: var(--i-brown); background: #fff; border: 2px solid #ead9b4; border-radius: 999px; padding: 8px 14px; }
+body.island #dialog .opts button.next { background: var(--i-yellow); border-color: var(--i-yellow); }
+body.island #dialog .opts button.bye { background: #fff; }
+body.island #dialog .pager { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 12px; color: var(--i-brown2); }
 
-body.island #automap, body.platform #automap { background: #4cc3e6; }
-body.island #automap .top, body.platform #automap .top { background: linear-gradient(rgba(255,250,238,0.95), rgba(255,250,238,0)); }
-body.island #automap .top button, body.platform #automap .top button { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 14px; color: var(--i-brown); background: var(--i-cream); border: none; border-radius: 999px; padding: 9px 14px; box-shadow: 0 3px 0 rgba(107,74,46,0.18); }
-body.island #automap .results, body.platform #automap .results { background: var(--i-cream); border: none; border-radius: 18px; }
-body.island #automap .results div, body.platform #automap .results div { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 16px; color: var(--i-brown); border-bottom-color: #f0e4c8; }
-body.island #automap .legend, body.platform #automap .legend { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 14px; color: var(--i-brown); background: rgba(255,250,238,0.92); border-radius: 18px; padding: 10px 14px; }
-body.island #resume, body.platform #resume { background: rgba(174,227,251,0.6); font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 22px; color: #fff; text-shadow: 0 2px 0 var(--i-brown), 2px 0 0 var(--i-brown), -2px 0 0 var(--i-brown), 0 -2px 0 var(--i-brown); }
-body.island #resume small, body.platform #resume small { font-size: 14px; color: #fff; }
-body.island #loading, body.platform #loading { background: var(--i-sky); font-family: 'Fredoka', sans-serif; font-weight: 700; color: var(--i-brown); font-size: 22px; }
+body.island #automap { background: #4cc3e6; }
+body.island #automap .top { background: linear-gradient(rgba(255,250,238,0.95), rgba(255,250,238,0)); }
+body.island #automap .top button { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 14px; color: var(--i-brown); background: var(--i-cream); border: none; border-radius: 999px; padding: 9px 14px; box-shadow: 0 3px 0 rgba(107,74,46,0.18); }
+body.island #automap .results { background: var(--i-cream); border: none; border-radius: 18px; }
+body.island #automap .results div { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 16px; color: var(--i-brown); border-bottom-color: #f0e4c8; }
+body.island #automap .legend { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 14px; color: var(--i-brown); background: rgba(255,250,238,0.92); border-radius: 18px; padding: 10px 14px; }
+body.island #resume { background: rgba(174,227,251,0.6); font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 22px; color: #fff; text-shadow: 0 2px 0 var(--i-brown), 2px 0 0 var(--i-brown), -2px 0 0 var(--i-brown), 0 -2px 0 var(--i-brown); }
+body.island #resume small { font-size: 14px; color: #fff; }
+body.island #loading { background: var(--i-sky); font-family: 'Fredoka', sans-serif; font-weight: 700; color: var(--i-brown); font-size: 22px; }
 @media (max-width: 600px) {
   body.island #dialog .portrait { width: 64px; height: 64px; }
   body.island #dialog .text { font-size: 17px; }
 }
 @media (prefers-reduced-motion: reduce) { body.island #prompt { animation: none; } }
 
-#blocksHud { display: none; }
 
 
-/* ================= Platform look ================= */
+/* ================= Island extras: jumping and coins ================= */
 #tJump, #islandHud .coins, .platOnly { display: none; }
-body.platform { --p-red: #e8282c; --p-blue: #2a6aff; --p-yellow: #ffcc22; --p-green: #3ab83a; --p-ink: #1a1a2e; --p-cream: #fffaf0; --bar-h: 0px; background: #6ab8ff; color: var(--p-ink); font-family: 'Nunito', system-ui, sans-serif; }
-body.platform .platOnly { display: inline; }
-body.platform .help b.platOnly { display: block; }
-body.platform .btn, body.platform .card h2, body.platform .seg button, body.platform #dialog .who, body.platform #dialog .opts button, body.platform #msgs,
-body.platform #nametag, body.platform #prompt, body.platform #compass, body.platform .tbtn, body.platform #automap .top button, body.platform #resume, body.platform #loading { text-transform: none; }
-body.platform #menu { background:
-  radial-gradient(ellipse 60% 22% at 18% 100%, #3ab83a 98%, transparent 100%),
-  radial-gradient(ellipse 50% 18% at 80% 100%, #2ea32e 98%, transparent 100%),
-  radial-gradient(circle at 15% 12%, #fff 0 18px, transparent 19px), radial-gradient(circle at 22% 10%, #fff 0 24px, transparent 25px),
-  radial-gradient(circle at 78% 20%, #fff 0 20px, transparent 21px), radial-gradient(circle at 85% 18%, #fff 0 26px, transparent 27px),
-  linear-gradient(180deg, #2a7ae8 0%, #6ab8ff 60%, #c8ecff 100%); background-attachment: fixed; }
-body.platform .logo { font-family: 'Lilita One', 'Fredoka', sans-serif; font-weight: 400; font-size: clamp(42px, 12vw, 72px); line-height: 0.95; letter-spacing: 1px;
-  background: none; -webkit-text-fill-color: var(--p-yellow); color: var(--p-yellow); filter: none;
-  text-shadow: 3px 3px 0 var(--p-ink), -3px 3px 0 var(--p-ink), 3px -3px 0 var(--p-ink), -3px -3px 0 var(--p-ink), 0 4px 0 var(--p-ink), 0 9px 0 var(--p-red), 3px 9px 0 var(--p-red), -3px 9px 0 var(--p-red); }
-body.platform .tagline { font-family: 'Lilita One', sans-serif; font-size: 18px; color: #fff; text-shadow: 2px 2px 0 var(--p-ink); letter-spacing: 0.5px; }
-body.platform .card { background: var(--p-cream); border: 4px solid var(--p-ink); border-radius: 20px; box-shadow: 0 6px 0 var(--p-ink); }
-body.platform .card h2 { font-family: 'Lilita One', sans-serif; font-size: 22px; color: var(--p-red); letter-spacing: 0.5px; }
-body.platform .btn { font-family: 'Lilita One', sans-serif; font-size: 20px; color: #fff; text-shadow: 2px 2px 0 rgba(0,0,0,0.35); background: var(--p-blue); border: 4px solid var(--p-ink); border-radius: 16px; box-shadow: 0 5px 0 var(--p-ink); }
-body.platform .btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--p-ink); }
-body.platform .btn.alt { background: var(--p-yellow); color: var(--p-ink); text-shadow: none; }
-body.platform .btn.go { background: var(--p-green); font-size: 24px; }
-body.platform .note, body.platform .field .lbl, body.platform .help, body.platform .status, body.platform .toggle .tl { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 15px; color: #3a3a5a; }
-body.platform .help b, body.platform .field .lbl b { font-family: 'Lilita One', sans-serif; font-weight: 400; color: var(--p-red); }
-body.platform .toggle .tl { font-weight: 800; font-size: 17px; color: var(--p-ink); } body.platform .toggle .tl small { font-weight: 600; font-size: 14px; color: #5a5a7a; }
-body.platform .toggle .sw { border-radius: 999px; background: #d8d8e8; border: 3px solid var(--p-ink); width: 54px; height: 30px; }
-body.platform .toggle .sw::after { border-radius: 50%; top: 2px; left: 3px; width: 20px; height: 20px; background: #fff; border: 2px solid var(--p-ink); }
-body.platform .toggle input:checked + .sw { background: var(--p-green); }
-body.platform .toggle input:checked + .sw::after { left: 25px; }
-body.platform input[type=search] { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 17px; border-radius: 12px; border: 3px solid var(--p-ink); background: #fff; color: var(--p-ink); }
-body.platform input[type=range] { accent-color: var(--p-red); }
-body.platform .people { background: #fff; border: 3px solid var(--p-ink); border-radius: 12px; }
-body.platform .people div { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 16px; color: var(--p-ink); border-bottom-color: #e8e8f0; }
-body.platform .people div.sel { background: var(--p-yellow); }
-body.platform .seg button { font-family: 'Lilita One', sans-serif; font-size: 15px; border-radius: 12px; background: #fff; color: var(--p-ink); border: 3px solid var(--p-ink); padding: 8px 2px; }
-body.platform .seg button.on { background: var(--p-red); color: #fff; }
-body.platform .seg .islandBtn { color: var(--p-ink); } body.platform .seg .islandBtn.on { color: #fff; }
-body.platform #menu a { color: var(--p-blue) !important; }
-body.platform #islandHud { border: 3px solid var(--p-ink); box-shadow: 0 4px 0 var(--p-ink); }
-body.platform #islandHud b { font-family: 'Lilita One', sans-serif; font-weight: 400; font-size: 19px; color: var(--p-red); }
-body.platform #islandHud .coins { display: flex; align-items: center; gap: 4px; margin-left: 10px; font-family: 'Lilita One', sans-serif; font-size: 22px; color: var(--p-ink); }
-body.platform #islandHud .coins i { display: inline-block; width: 18px; height: 22px; border-radius: 50%; background: var(--p-yellow); border: 3px solid #b88a00; box-shadow: inset -3px 0 0 #e8a800; }
-body.platform #nametag { font-family: 'Lilita One', sans-serif; font-weight: 400; font-size: 20px; }
-body.platform #prompt { font-family: 'Lilita One', sans-serif; font-weight: 400; border: 3px solid var(--p-ink); box-shadow: 0 4px 0 var(--p-ink); }
-body.platform #dialog { border: 4px solid var(--p-ink); box-shadow: 0 6px 0 var(--p-ink); }
-body.platform #dialog .who { font-family: 'Lilita One', sans-serif; font-weight: 400; background: var(--p-red); border: 3px solid var(--p-ink); }
-body.platform #dialog .opts button { font-family: 'Lilita One', sans-serif; font-weight: 400; border: 3px solid var(--p-ink); }
-body.platform #dialog .opts button.next { background: var(--p-yellow); border-color: var(--p-ink); }
-body.platform .tbtn { font-family: 'Lilita One', sans-serif; font-weight: 400; border: 3px solid var(--p-ink); box-shadow: 0 4px 0 var(--p-ink); }
-body.platform #tTalk { background: var(--p-green); }
-body.platform #tJump { display: block; right: 16px; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); width: 96px; height: 60px; font-size: 20px; background: var(--p-red); color: #fff; border-radius: 999px; }
-body.platform #tTalk { bottom: calc(100px + env(safe-area-inset-bottom, 0px)) !important; }
-body.platform #tMap { bottom: calc(170px + env(safe-area-inset-bottom, 0px)) !important; }
+body.island .platOnly { display: inline; }
+body.island .help b.platOnly { display: block; }
+body.island #islandHud .coins { display: flex; align-items: center; gap: 5px; margin-left: 10px; font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 18px; color: var(--i-brown); }
+body.island #islandHud .coins i { display: inline-block; width: 16px; height: 20px; border-radius: 50%; background: var(--i-yellow); border: 3px solid var(--i-yellow-d); }
+body.island #tJump { display: block; right: 16px; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); width: 96px; height: 60px; font-size: 18px; background: var(--i-orange); color: #fff; box-shadow: 0 4px 0 #c46a1c; }
+body.island #tTalk { bottom: calc(100px + env(safe-area-inset-bottom, 0px)) !important; }
+body.island #tMap { bottom: calc(170px + env(safe-area-inset-bottom, 0px)) !important; }
 
-/* ================= Blocks look ================= */
-body.blocks { --b-panel: #c6c6c6; --b-dark: #373737; --b-light: #ffffff; --b-text: #ffffff; --b-grass: #5e9e3e; }
-body.blocks canvas#game { image-rendering: pixelated; }
-body.blocks #menu { background: var(--dirt) repeat; background-size: 64px 64px; image-rendering: pixelated; }
-body.blocks .logo { font-family: 'Pixelify Sans', monospace; font-weight: 600; font-size: clamp(40px, 12vw, 70px); letter-spacing: 2px; line-height: 1;
-  background: linear-gradient(180deg, #e8e8e8 0%, #a8a8a8 50%, #6a6a6a 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
-  filter: drop-shadow(4px 4px 0 #2a2a2a) drop-shadow(-2px -2px 0 #2a2a2a); }
-body.blocks .tagline { font-family: 'Pixelify Sans', monospace; font-size: 16px; color: #ffff55; text-shadow: 2px 2px 0 #3f3f00; letter-spacing: 0; }
-body.blocks .card { background: rgba(0,0,0,0.55); border: 2px solid #000; border-radius: 0; box-shadow: none; }
-body.blocks .card h2 { font-family: 'Pixelify Sans', monospace; font-size: 18px; color: var(--b-text); text-shadow: 2px 2px 0 #3f3f3f; letter-spacing: 0; }
-body.blocks .btn { font-family: 'Pixelify Sans', monospace; font-size: 18px; color: #fff; text-shadow: 2px 2px 0 #3f3f3f; background: #7a7a7a; border: 2px solid #000;
-  box-shadow: inset 2px 2px 0 #a8a8a8, inset -2px -3px 0 #555; padding: 11px; }
-body.blocks .btn:hover { background: #7a86c8; }
-body.blocks .btn.alt { background: #6a6a6a; }
-body.blocks .btn.go { background: #4a8a2a; box-shadow: inset 2px 2px 0 #7ac85a, inset -2px -3px 0 #2a5a1a; }
-body.blocks .note, body.blocks .field .lbl, body.blocks .help, body.blocks .status, body.blocks .toggle .tl { font-family: 'Pixelify Sans', monospace; font-size: 16px; color: #e0e0e0; }
-body.blocks .help b, body.blocks .field .lbl b { color: #ffff55; font-weight: 400; }
-body.blocks .toggle .tl small { font-size: 14px; color: #a8a8a8; }
-body.blocks .toggle .sw { border-color: #000; background: #555; } body.blocks .toggle input:checked + .sw { background: #4a8a2a; border-color: #000; }
-body.blocks input[type=search] { font-family: 'Pixelify Sans', monospace; font-size: 18px; background: #000; border: 2px solid #a0a0a0; color: #fff; }
-body.blocks .people { background: rgba(0,0,0,0.7); border-color: #555; }
-body.blocks .people div { font-family: 'Pixelify Sans', monospace; font-size: 17px; color: #fff; border-bottom-color: #2a2a2a; }
-body.blocks .people div.sel { background: #4a8a2a; }
-body.blocks .seg button { font-family: 'Pixelify Sans', monospace; font-size: 15px; background: #6a6a6a; color: #fff; border: 2px solid #000; box-shadow: inset 2px 2px 0 #a8a8a8, inset -2px -3px 0 #555; }
-body.blocks .seg button.on { background: #4a8a2a; box-shadow: inset 2px 2px 0 #7ac85a, inset -2px -3px 0 #2a5a1a; }
-body.blocks .btn, body.blocks .card h2, body.blocks .seg button, body.blocks #dialog .who, body.blocks #dialog .opts button, body.blocks #msgs,
-body.blocks #nametag, body.blocks #prompt, body.blocks #compass, body.blocks .tbtn, body.blocks #automap .top button, body.blocks #resume, body.blocks #loading { text-transform: none; }
-body.blocks #bar { display: none; }
-body.blocks { --bar-h: 0px; }
-body.blocks #blocksHud { display: flex; flex-direction: column; align-items: center; gap: 4px; position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
-body.blocks #bInfo { font-family: 'Pixelify Sans', monospace; font-size: 15px; color: #fff; text-shadow: 2px 2px 0 #3f3f3f; }
-body.blocks .xp { position: relative; width: min(364px, 92vw); height: 12px; }
-body.blocks .xp .bar { position: absolute; inset: 3px 0 3px; background: #1a1a1a; border: 1px solid #000; }
-body.blocks #xpFill { height: 100%; width: 0; background: linear-gradient(#a8ff5a, #5ac81a); }
-body.blocks #xpLevel { position: absolute; left: 50%; top: -14px; transform: translateX(-50%); font-family: 'Pixelify Sans', monospace; font-size: 16px; color: #80ff20; text-shadow: 1px 1px 0 #000, -1px -1px 0 #000; z-index: 1; }
-body.blocks #hotbar { display: flex; background: rgba(0,0,0,0.45); border: 2px solid #111; }
-body.blocks #hotbar div { width: min(40px, 10vw); height: min(40px, 10vw); border: 2px solid #8a8a8a; box-shadow: inset 2px 2px 0 #5a5a5a; display: flex; align-items: center; justify-content: center; }
-body.blocks #hotbar div.sel { border-color: #fff; outline: 2px solid #fff; z-index: 1; }
-body.blocks #hotbar b { font-family: 'Pixelify Sans', monospace; font-weight: 400; font-size: 13px; color: #fff; text-shadow: 1px 1px 0 #3f3f3f; }
-body.blocks #crosshair::before, body.blocks #crosshair::after { background: #fff; box-shadow: none; }
-body.blocks #msgs { font-family: 'Pixelify Sans', monospace; font-size: 16px; color: #fff; text-shadow: 2px 2px 0 #3f3f3f; line-height: 1.3; }
-body.blocks #msgs div { background: rgba(0,0,0,0.35); padding: 0 6px; display: inline-block; clear: left; float: left; margin-bottom: 2px; }
-body.blocks #nametag { font-family: 'Pixelify Sans', monospace; font-size: 18px; background: rgba(0,0,0,0.35); padding: 2px 8px; }
-body.blocks #nametag small { font-family: 'Pixelify Sans', monospace; font-size: 15px; color: #ffff55; }
-body.blocks #prompt { font-family: 'Pixelify Sans', monospace; font-size: 17px; color: #fff; background: rgba(0,0,0,0.55); border: 2px solid #fff; bottom: calc(110px + env(safe-area-inset-bottom, 0px)); animation: none; }
-body.blocks #compass { font-family: 'Pixelify Sans', monospace; font-size: 15px; color: #fff; }
-body.blocks #dialog { background: rgba(0,0,0,0.78); border-image: none; border-top: 4px solid #555; }
-body.blocks #dialog .who { font-family: 'Pixelify Sans', monospace; font-size: 20px; color: #ffff55; }
-body.blocks #dialog .rel { font-family: 'Pixelify Sans', monospace; font-size: 15px; color: #a8a8a8; }
-body.blocks #dialog .text { font-family: 'Pixelify Sans', monospace; font-size: 21px; color: #fff; line-height: 1.25; }
-body.blocks #dialog .opts button { font-family: 'Pixelify Sans', monospace; font-size: 15px; background: #6a6a6a; color: #fff; border: 2px solid #000; box-shadow: inset 2px 2px 0 #a8a8a8, inset -2px -3px 0 #555; }
-body.blocks .tbtn { font-family: 'Pixelify Sans', monospace; font-size: 15px; background: rgba(106,106,106,0.9); color: #fff; border: 2px solid #000; border-radius: 0; box-shadow: inset 2px 2px 0 #a8a8a8, inset -2px -3px 0 #555; }
-body.blocks #tFire { background: rgba(160,80,40,0.92); bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
-body.blocks #tTalk { bottom: calc(156px + env(safe-area-inset-bottom, 0px)) !important; }
-body.blocks #tMap { bottom: calc(216px + env(safe-area-inset-bottom, 0px)) !important; }
-body.blocks #tRun { bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
-body.blocks #touch .zone { bottom: 90px; }
+/* ================= Fluffy look: a top-down 2D garden ================= */
+canvas#flat { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; display: none; }
+body.fluffy canvas#flat { display: block; }
+body.fluffy canvas#game { display: none; }
+body.fluffy { --i-sky: #f9d9ec; --i-sky2: #fff1f8; --i-orange: #ff8fb4; background: var(--i-sky); }
+body.fluffy #tJump, body.fluffy #islandHud .coins, body.fluffy .platOnly, body.fluffy #nametag { display: none !important; }
+body.fluffy #tTalk { bottom: calc(24px + env(safe-area-inset-bottom, 0px)) !important; right: 16px; }
+body.fluffy #tMap { bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important; }
+body.fluffy #touch .zone { bottom: 0; }
+.fluffyOnly { display: none; }
+body.fluffy .fluffyOnly { display: inline; }
+body.fluffy .help b.fluffyOnly { display: block; }
+body.fluffy .notFluffy { display: none; }
+/* ================= Menu tabs ================= */
+.tabs { display: flex; gap: 6px; margin: 0 0 4px; }
+.tabs button { flex: 1; padding: 12px 6px; font-family: 'Press Start 2P', monospace; font-size: 11px; color: var(--dim); background: #1a1210; border: 3px solid #3a2c20; text-transform: uppercase; }
+.tabs button.on { color: #fff6d0; background: #5a1408; border-color: #d0502a; }
+body.island .tabs button { font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 17px; text-transform: none; border-radius: 999px; border: none; background: rgba(255,250,238,0.7); color: var(--i-brown2); box-shadow: 0 4px 0 rgba(107,74,46,0.14); }
+body.island .tabs button.on { background: var(--i-orange); color: #fff; }
+.vizOnly { display: none; }
+body.tab-viz .vizOnly { display: block; }
+body.tab-viz span.vizOnly { display: inline; }
+body.tab-viz .playOnly { display: none !important; }
+.help i { font-style: normal; color: var(--gold); }
+body.island .help i { color: var(--i-orange); }
+
+/* ================= Visualisation screen ================= */
+#viz { position: fixed; inset: 0; z-index: 55; background: #05040c; color: #eef0ff; font-family: 'Nunito', system-ui, sans-serif; text-transform: none; touch-action: none; }
+#vizHost { position: absolute; inset: 0; }
+#vizHost canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; image-rendering: auto; }
+#vizHost .vizOverlay { pointer-events: none; }
+#viz .vb, #viz .vseg button { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 14px; color: #fff; background: rgba(22,20,46,0.78); border: 1px solid rgba(255,255,255,0.22); border-radius: 999px; padding: 9px 14px; text-transform: none; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+#viz .vb:active, #viz .vseg button:active { transform: translateY(1px); }
+#viz .vb.on { background: #c8283c; border-color: #ff8a9a; }
+#viz .vtop { position: absolute; left: 0; right: 0; top: 0; display: flex; gap: 10px; align-items: center; padding: calc(10px + env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) 10px max(12px, env(safe-area-inset-left, 0px)); pointer-events: none; }
+#viz .vtop > * { pointer-events: auto; }
+#viz .vtitle { flex: 1; min-width: 0; font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 3px #000; pointer-events: none; }
+#viz[data-kind="tree"] .vtitle { visibility: hidden; }
+#viz .vstatus { position: absolute; left: 50%; top: calc(62px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); max-width: calc(100% - 32px); text-align: center; font-weight: 700; font-size: 13px; color: #ffe6a8; text-shadow: 0 1px 3px #000; pointer-events: none; }
+#viz .vbar { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); width: max-content; max-width: calc(100% - 20px); display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center; }
+#viz .vseg { display: flex; }
+#viz .vseg button { border-radius: 0; padding: 9px 11px; }
+#viz .vseg button:first-child { border-radius: 999px 0 0 999px; }
+#viz .vseg button:last-child { border-radius: 0 999px 999px 0; border-left: none; }
+#viz .vseg button.on { background: #ffd36a; color: #2a2030; }
+#viz #vScrub { flex-basis: 100%; width: 100%; accent-color: #ffd36a; height: 24px; }
+#viz[data-kind="galaxy"] .t-only, #viz[data-kind="tree"] .g-only { display: none; }
+#viz .vlegend { position: absolute; left: max(12px, env(safe-area-inset-left, 0px)); top: calc(60px + env(safe-area-inset-top, 0px)); font-size: 12px; font-weight: 700; line-height: 1.7; background: rgba(14,12,34,0.6); border-radius: 12px; padding: 8px 12px; pointer-events: none; }
+#viz[data-kind="tree"] .vlegend { top: calc(98px + env(safe-area-inset-top, 0px)); left: 16px; display: flex; gap: 14px; background: none; padding: 0; color: rgba(255,244,220,0.8); font-size: 11px; }
+#viz .vlegend .vlh { font-family: 'Fredoka', sans-serif; font-size: 13px; color: #ffe6a8; }
+#viz .vlegend i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 7px; vertical-align: -1px; }
+#viz .vlegend i.ln { height: 3px; width: 14px; border-radius: 2px; vertical-align: 3px; }
+#viz .vinfo { position: absolute; right: max(12px, env(safe-area-inset-right, 0px)); top: calc(60px + env(safe-area-inset-top, 0px)); width: min(300px, calc(100% - 24px)); background: rgba(14,12,34,0.9); border: 1px solid rgba(255,211,106,0.35); border-radius: 16px; padding: 14px 16px; font-size: 14px; line-height: 1.45; }
+#viz .vinfo b { display: block; font-family: 'Fredoka', sans-serif; font-size: 18px; color: #fff2cc; padding-right: 26px; }
+#viz .vinfo .vrel { color: #ffd36a; font-weight: 700; margin-bottom: 4px; }
+#viz .vinfo .vest { color: #b9a6d8; font-size: 12px; margin-top: 4px; }
+#viz .vinfo .vx { position: absolute; right: 8px; top: 8px; background: none; border: none; color: #fff; font-size: 16px; padding: 4px 8px; }
+#viz .vinfo .vgo { margin-top: 8px; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 13px; color: #2a2030; background: #ffd36a; border: none; border-radius: 999px; padding: 7px 14px; }
+@media (max-width: 600px) {
+  #viz .vlegend { display: none; }
+  #viz .vb, #viz .vseg button { font-size: 12px; padding: 8px 10px; }
+  #viz .vinfo { top: auto; bottom: calc(120px + env(safe-area-inset-bottom, 0px)); right: 10px; }
+}
 @media (hover: hover) and (pointer: fine) { #touch { display: none; } }
 </style>
 </head>
 <body>
 <canvas id="game"></canvas>
+<canvas id="flat"></canvas>
 
 <div id="hud" class="hidden">
   <div id="msgs"></div>
@@ -405,7 +367,6 @@ body.blocks #touch .zone { bottom: 90px; }
   <div id="crosshair"></div>
   <div id="nametag" class="hidden"></div>
   <div id="prompt" class="hidden"></div>
-  <div id="blocksHud"><div id="bInfo"></div><div class="xp"><span id="xpLevel">0</span><div class="bar"><div id="xpFill"></div></div></div><div id="hotbar"><div><b></b></div><div><b></b></div><div><b></b></div><div><b></b></div><div><b></b></div><div><b></b></div><div><b></b></div><div><b></b></div><div><b></b></div></div></div>
   <div id="islandHud"><canvas id="iFace" width="64" height="64"></canvas><div><b id="iName"></b><span id="iInfo"></span></div><div class="coins"><i></i>× <span id="pCoins">0</span></div></div>
   <div id="bar">
     <div class="cell" id="ammoCell"><div class="num" id="sAmmo">400</div><div class="cap">AMMO</div></div>
@@ -450,6 +411,27 @@ body.blocks #touch .zone { bottom: 90px; }
   <div class="legend"><div><i class="lp"></i>via a father</div><div><i class="lm"></i>via a mother</div><div><i class="lw"></i>met / waypoint</div><div>Tap someone to set a waypoint</div></div>
 </div>
 
+<div id="viz" class="hidden" data-kind="galaxy">
+  <div id="vizHost"></div>
+  <div class="vtop">
+    <button class="vb" id="vClose">✕ Back</button>
+    <div class="vtitle" id="vTitle"></div>
+  </div>
+  <div class="vstatus" id="vStatus" aria-live="polite"></div>
+  <div class="vlegend" id="vLegend"></div>
+  <div class="vinfo hidden" id="vInfo"></div>
+  <div class="vbar">
+    <button class="vb g-only" id="vTour">▶ Fly-through</button>
+    <button class="vb t-only" id="vPlay">▶ Play</button>
+    <button class="vb t-only" id="vRestart" aria-label="Start again">⟲</button>
+    <div class="vseg t-only" id="vDir"><button data-dir="back" class="on">Back in time</button><button data-dir="forward">Forward</button></div>
+    <div class="vseg t-only" id="vSpace"><button data-space="year" class="on">By year</button><button data-space="gen">By generation</button></div>
+    <button class="vb t-only" id="vSpeed" data-x="1" aria-label="Speed">1×</button>
+    <button class="vb" id="vRec">● Record video</button>
+    <input type="range" class="t-only" id="vScrub" min="1700" max="2000" value="2000" aria-label="Year">
+  </div>
+</div>
+
 <div id="resume" class="hidden">Click to resume<br><small>Esc for menu</small></div>
 <div id="loading" class="hidden">Loading…</div>
 
@@ -457,15 +439,18 @@ body.blocks #touch .zone { bottom: 90px; }
   <div class="inner">
     <div class="logo" id="logo">ANCESTRY<br>3D</div>
     <div class="tagline" id="tagline">WALK AMONG YOUR ANCESTORS</div>
-    <div class="card">
+    <div class="tabs" id="tabs" role="tablist">
+      <button role="tab" data-tab="play" class="on" aria-selected="true">Play</button><button role="tab" data-tab="viz" aria-selected="false">Visualisation</button>
+    </div>
+    <div class="card playOnly">
       <h2>Look</h2>
       <div class="seg" id="styleSeg">
-        <button data-style="retro" class="on">Retro</button><button data-style="platform">Platform</button><button data-style="blocks">Blocks</button><button data-style="island" class="islandBtn">Island</button>
+        <button data-style="retro" class="on">Retro</button><button data-style="island" class="islandBtn">Island</button><button data-style="fluffy" class="islandBtn">Fluffy</button>
       </div>
-      <div class="note" style="margin-top:6px" id="lookNote">Retro: a hellish 90s courtyard and a minigun. Platform: a bright jumping world with coins to collect. Blocks: a voxel world where you can punch. Island: a cozy island seen from behind your own villager.</div>
+      <div class="note" style="margin-top:6px" id="lookNote">Retro: a hellish 90s courtyard and a minigun. Island: a cozy island seen from behind your own villager, with brick platforms to jump on and coins to collect. Fluffy: a top-down 2D garden where everyone is a fluffy ball.</div>
     </div>
 
-    <div class="card" id="cardResume" style="display:none">
+    <div class="card playOnly" id="cardResume" style="display:none">
       <button class="btn go" id="btnResume">▶ Resume</button>
     </div>
 
@@ -479,14 +464,15 @@ body.blocks #touch .zone { bottom: 90px; }
     </div>
 
     <div class="card hidden" id="cardSetup">
-      <h2>2. Who are you playing?</h2>
+      <h2>2. <span class="playOnly">Who are you playing?</span><span class="vizOnly">Whose family?</span></h2>
       <input type="search" id="rootSearch" placeholder="Search names…" autocomplete="off">
       <div class="people" id="rootList"></div>
       <div class="field">
-        <div class="lbl">Generations to walk back <b id="genVal">8</b></div>
+        <div class="lbl"><span><span class="playOnly">Generations to walk back</span><span class="vizOnly">Generations to show</span></span> <b id="genVal">8</b></div>
         <input type="range" id="genRange" min="2" max="14" value="8">
         <div class="note" id="genInfo"></div>
       </div>
+      <div class="playOnly">
       <div class="field">
         <div class="lbl">Layout</div>
         <div class="seg" id="shapeSeg">
@@ -500,17 +486,45 @@ body.blocks #touch .zone { bottom: 90px; }
         <span class="tl">Keep couples together<small>Husbands and wives stand side by side where their family lines meet.</small></span>
       </label>
       <button class="btn go" id="btnStart">Enter ▶</button>
+      </div>
+      <div class="vizOnly">
+        <div class="field">
+          <div class="lbl">Visualisation</div>
+          <div class="seg" id="vizSeg">
+            <button data-viz="galaxy" class="on">Galaxy</button><button data-viz="tree">Growing tree</button>
+          </div>
+          <div class="note" style="margin-top:4px" id="vizNote"></div>
+        </div>
+        <div class="field" id="scopeField">
+          <div class="lbl">Who is in the galaxy</div>
+          <div class="seg" id="scopeSeg">
+            <button data-scope="ancestors" class="on">Your ancestors</button><button data-scope="all">Everyone in the file</button>
+          </div>
+        </div>
+        <button class="btn go" id="btnViz">Open ▶</button>
+      </div>
     </div>
 
-    <div class="card">
+    <div class="card vizOnly">
+      <h2>Visualisations</h2>
+      <div class="help">
+        <b>Galaxy</b><span>Every person is a star coloured by when they were born; you are the sun in the middle. Drag to spin it, scroll or pinch to zoom, tap a star to read about them. <i>Fly-through</i> flies out from you along your longest line.</span>
+        <b>Growing tree</b><span>You are the trunk. Watch the branches grow back in time a generation at a time, or play history forward until every line reaches you. Drag to move, scroll or pinch to zoom, tap someone to read about them.</span>
+        <b>Video</b><span><i>Record video</i> saves the fly-through or the whole growing tree as a video file you can share.</span>
+      </div>
+      <div class="note" style="margin-top:8px">Missing birth years are estimated from the family (shown in lilac) so everyone can be placed in time.</div>
+    </div>
+
+    <div class="card playOnly">
       <h2>Controls</h2>
       <div class="help">
         <b>Move</b><span>WASD / arrow keys · left thumb on phones</span>
-        <b>Look</b><span>Mouse (click to grab) · drag right side</span>
+        <b class="notFluffy">Look</b><span class="notFluffy">Mouse (click to grab) · drag right side</span>
         <b>Run</b><span>Shift · RUN button</span>
-        <b>Talk</b><span>E / Space / Enter · TALK button</span>
-        <b class="platOnly">Jump</b><span class="platOnly">Space · JUMP button (Platform). Bounce on heads, grab coins.</span>
-        <b class="doomOnly">Fire</b><span class="doomOnly">Left mouse / Ctrl · FIRE button (punch in Blocks)</span>
+        <b>Talk</b><span>E / Enter (Space too, except on the Island) · TALK button</span>
+        <b class="platOnly">Jump</b><span class="platOnly">Space · JUMP button. Bounce on heads, hop onto brick platforms, grab coins.</span>
+        <b class="fluffyOnly">Zoom</b><span class="fluffyOnly">Mouse wheel. Click someone far away to set a waypoint to them.</span>
+        <b class="doomOnly">Fire</b><span class="doomOnly">Left mouse / Ctrl · FIRE button</span>
         <b>Automap</b><span>Tab or M · MAP button</span>
         <b>Menu</b><span>Esc · ☰</span>
       </div>

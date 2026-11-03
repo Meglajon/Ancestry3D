@@ -1,16 +1,15 @@
 // The courtyard. Generations are concentric rings on the ground; lines of descent run along the floor
 // (blue = through a father, red = through a mother).
-// Four looks share one layout:
+// Two 3D looks share one layout (the Fluffy look is drawn in 2D by fluffy.js):
 //  - 'doom':   flagstones, brick wall, torches and a burning sky (Retro)
-//  - 'platform': a bright 3D-platformer land with hills, floating platforms and coins
-//  - 'blocks': a voxel world of grass, gravel paths and block trees
-//  - 'island': a grassy island with sand paths, trees, flowers and the sea all round
+//  - 'island': a grassy island with sand paths, trees, flowers, the sea all round, and floating brick
+//              platforms and coins to jump for
 import * as THREE from 'three';
 import { floorTexture, brickTexture, techTexture, skyTexture, flameFrames, labelTexture, toTexture, npcAtlas,
   grassTexture, sandTexture, skyGradientTexture, toonRamp } from './textures.js';
 import { buildFigure, lookFor, npcMaterial, buildIslandFigure, islandMaterial } from './npc.js';
 import { relationship, birthYear, seededRandom } from './ancestry.js';
-import { platformEnvironment, blocksEnvironment } from './envs.js';
+import { platformsAndCoins } from './envs.js';
 import { bandGeometry, placeGuideLabels, openSpots } from './guides.js';
 import { retroProps } from './props.js';
 
@@ -22,14 +21,6 @@ const THEMES = {
   island: {
     paternal: '#6aa8ff', maternal: '#ff8fb4', gold: '#ffc94a', marriage: '#ffb84a',
     fog: '#cfeeff', background: '#9fd8fa', fogFar: 75,
-  },
-  platform: {
-    paternal: '#2a6aff', maternal: '#ff3a3a', gold: '#ffcc22', marriage: '#ffcc22',
-    fog: '#c8ecff', background: '#6ab8ff', fogFar: 80,
-  },
-  blocks: {
-    paternal: '#3448c8', maternal: '#be322c', gold: '#f0c020', marriage: '#f0c020',
-    fog: '#b8d4ff', background: '#7eaaff', fogFar: 72,
   },
 };
 
@@ -253,6 +244,10 @@ function islandEnvironment(scene, tree, world) {
   });
   scene.add(trunks, crowns, fruits);
 
+  // Floating brick platforms and coins (the jump-and-collect part of the island)
+  const coinsUpdate = platformsAndCoins(scene, tree, world, spots.map(([x, z]) => [x, z, 1.6]));
+  const onPlatform = (x, z) => world.platforms.some(p => Math.abs(p.x - x) < p.hw + 0.6 && Math.abs(p.z - z) < p.hw + 0.6);
+
   // Flowers: tiny instanced blooms scattered over the grass
   const nFlowers = Math.min(900, Math.round(R * R * 0.12));
   const bloom = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.11, 0), new THREE.MeshLambertMaterial({ color: '#ffffff' }), nFlowers);
@@ -264,7 +259,7 @@ function islandEnvironment(scene, tree, world) {
     const x = Math.cos(a) * r, z = Math.sin(a) * r;
     let clear = true;
     for (const p of tree.people.values()) if (Math.abs(p.x - x) < 1 && Math.abs(p.z - z) < 1) { clear = false; break; }
-    if (!clear) continue;
+    if (!clear || onPlatform(x, z)) continue;
     mtx.makeTranslation(x, 0.24, z); bloom.setMatrixAt(n, mtx); bloom.setColorAt(n, new THREE.Color(flowerCols[n % flowerCols.length]));
     mtx.makeTranslation(x, 0, z); stems.setMatrixAt(n, mtx);
     n++;
@@ -277,6 +272,7 @@ function islandEnvironment(scene, tree, world) {
   world.envUpdate = t => {
     world.foam.material.opacity = 0.45 + Math.sin(t * 1.3) * 0.25;
     world.foam.scale.setScalar(1 + Math.sin(t * 1.3) * 0.004);
+    coinsUpdate(t);
   };
 }
 
@@ -287,15 +283,13 @@ export function buildWorld(scene, tree, opts = {}) {
   scene.background = new THREE.Color(T.background);
   scene.fog = new THREE.Fog(T.fog, 6, T.fogFar);
   if (theme === 'island') islandEnvironment(scene, tree, world);
-  else if (theme === 'platform') platformEnvironment(scene, tree, world);
-  else if (theme === 'blocks') blocksEnvironment(scene, tree, world);
   else doomEnvironment(scene, tree, world);
   const PATERNAL = new THREE.Color(T.paternal), MATERNAL = new THREE.Color(T.maternal), GOLD = new THREE.Color(T.gold);
 
   // Lines of descent
   const segs = tree.edges.map(e => ({ a: tree.people.get(e.child), b: tree.people.get(e.parent), color: e.side === 'paternal' ? PATERNAL : MATERNAL }));
   const lineMat = theme === 'doom' ? new THREE.MeshBasicMaterial({ vertexColors: true }) : new THREE.MeshLambertMaterial({ vertexColors: true });
-  scene.add(new THREE.Mesh(stripGeometry(segs, theme === 'island' ? 0.32 : theme === 'blocks' ? 0.5 : 0.22, theme === 'platform' ? 0.05 : 0.025), lineMat));
+  scene.add(new THREE.Mesh(stripGeometry(segs, theme === 'island' ? 0.32 : 0.22, 0.025), lineMat));
   // Couples standing together get a little link between them
   const links = [];
   for (const p of tree.people.values()) {
@@ -312,35 +306,34 @@ export function buildWorld(scene, tree, opts = {}) {
 
   // NPCs (the root is the player, so they are not placed)
   let material;
-  if (theme === 'island' || theme === 'platform') material = islandMaterial(world.ramp || (world.ramp = toonRamp()));
+  if (theme === 'island') material = islandMaterial(world.ramp || (world.ramp = toonRamp()));
   else {
     const atlas = toTexture(npcAtlas());
     atlas.wrapS = atlas.wrapT = THREE.ClampToEdgeWrapping;
     material = npcMaterial(atlas);
   }
   const root = tree.people.get(tree.rootId);
-  world.voxel = theme === 'blocks';
   const rootYear = birthYear(root.indi) ?? 1990;
   world.rootLook = lookFor(root, rootYear);
   world.material = material;
   people.forEach((person, i) => {
     const look = lookFor(person, rootYear - person.gen * 29);
-    const fig = theme === 'island' || theme === 'platform' ? buildIslandFigure(look, material) : buildFigure(look, material, { voxel: theme === 'blocks' });
+    const fig = theme === 'island' ? buildIslandFigure(look, material) : buildFigure(look, material);
     fig.root.position.set(person.x, 0, person.z);
     // Face inward, toward the child they descend through.
     const target = person.primaryChild ? tree.people.get(person.primaryChild) : { x: 0, z: 0 };
     fig.root.rotation.y = Math.atan2(target.x - person.x, target.z - person.z);
     scene.add(fig.root);
     const npc = { person, look, fig, baseYaw: fig.root.rotation.y, yaw: fig.root.rotation.y, phase: (i * 1.37) % 6.28,
-      waved: false, wave: 0, talking: false, met: false, flinch: 0, armRest: theme === 'island' || theme === 'platform' ? 0.25 : 0.06, look };
+      waved: false, wave: 0, talking: false, met: false, flinch: 0, armRest: theme === 'island' ? 0.25 : 0.06, look };
     world.npcs.push(npc);
     world.byId.set(person.id, npc);
-    const col = theme === 'island' || theme === 'blocks' || theme === 'platform' ? new THREE.Color('#2a5a2a') : (person.ahnen % 2 === 0 ? PATERNAL : MATERNAL);
+    const col = theme === 'island' ? new THREE.Color('#2a5a2a') : (person.ahnen % 2 === 0 ? PATERNAL : MATERNAL);
     mm.copy(rot); mm.setPosition(person.x, 0.03, person.z);
     discs.setMatrixAt(i, mm);
     discs.setColorAt(i, col);
   });
-  if (theme === 'island' || theme === 'blocks' || theme === 'platform') discs.material.color.set('#000000');
+  if (theme === 'island') discs.material.color.set('#000000');
   scene.add(discs);
 
   // Waypoint beacon

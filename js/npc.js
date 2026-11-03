@@ -1,6 +1,6 @@
 // Figure builders. Both read the outfit description from outfits.js.
-//  - buildFigure: blocky people for the Retro look, and cube-headed voxel people for Blocks.
-//  - buildIslandFigure: round, big-headed people for the Island and Platform looks.
+//  - buildFigure: blocky people for the Retro look.
+//  - buildIslandFigure: round, big-headed people for the Island look.
 // Each NPC is 4 meshes near (body, head, two arms) and 1 merged mesh far away, all sharing one material
 // with colours baked into vertex colours, so hundreds can stand around on a phone.
 import * as THREE from 'three';
@@ -64,12 +64,11 @@ const SKIRTS = {
   straight: [0.22, 0.3, 0.05, 1],
 };
 
-/** Blocky figure. opts.voxel = cube heads and square limbs for the Blocks look. */
+/** Blocky figure for the Retro look. */
 export function buildFigure(look, material, opts = {}) {
-  const V = !!opts.voxel;
   const parts = [];
-  const legW = V ? 0.2 : 0.16, armW = V ? 0.18 : 0.13;
-  const torsoW = V ? 0.46 : 0.48, torsoD = V ? 0.24 : 0.27;
+  const legW = 0.16, armW = 0.13;
+  const torsoW = 0.48, torsoD = 0.27;
   const sk = look.skirt ? SKIRTS[look.skirt.kind] || SKIRTS.full : null;
   const hemY = sk ? (look.skirt.kind === 'empire' ? 0.05 : sk[2]) : 0;
   const waistY = look.skirt?.kind === 'empire' ? 1.24 : look.female ? 0.95 : 0.88;
@@ -115,7 +114,7 @@ export function buildFigure(look, material, opts = {}) {
     if (look.skirt.kind === 'bustle') parts.push(box(0.36, 0.3, 0.22, 0, 0.78, -0.24, shade(look.skirt.color, 1.08)));
     if (look.striped) for (let i = 0; i < 4; i++) parts.push(frustum(tw + (bw - tw) * (0.2 + i * 0.2) + 0.005, tw + (bw - tw) * (0.24 + i * 0.2) + 0.006, hemY + (waistY - hemY) * (0.8 - i * 0.2), hemY + (waistY - hemY) * (0.84 - i * 0.2), '#e8e0d0'));
     const bodiceH = 1.43 - (look.skirt.kind === 'empire' ? 1.24 : waistY);
-    parts.push(box(V ? 0.42 : 0.4, bodiceH, V ? 0.22 : 0.24, 0, 1.43 - bodiceH / 2, 0, top));
+    parts.push(box(0.4, bodiceH, 0.24, 0, 1.43 - bodiceH / 2, 0, top));
     if (look.skirt.kind === 'empire') parts.push(box(0.41, 0.04, 0.25, 0, 1.25, 0, shade(top, 0.8)));
     if (look.apron) {
       const z = ((tw + bw) / 2) * 0.75 * 0.72 + 0.02;
@@ -186,8 +185,8 @@ export function buildFigure(look, material, opts = {}) {
 
   // ---- head (pivot at the neck) ----
   const hp = [];
-  const hw = V ? 0.42 : 0.3, hh = V ? 0.42 : 0.32, hd = V ? 0.42 : 0.28, hc = V ? 0.26 : 0.24;
-  const faceR = V ? (look.female ? ATLAS.voxF : ATLAS.voxM) : (look.female ? ATLAS.female : ATLAS.male);
+  const hw = 0.3, hh = 0.32, hd = 0.28, hc = 0.24;
+  const faceR = look.female ? ATLAS.female : ATLAS.male;
   hp.push(box(0.12, 0.08, 0.12, 0, 0.04, 0, look.skinShade));
   hp.push(box(hw, hh, hd, 0, hc, 0, look.skin, faceR));
   const top_ = hc + hh / 2, fz = hd / 2, hair = look.hair;
@@ -233,7 +232,7 @@ export function buildFigure(look, material, opts = {}) {
     list.push(box(armW - 0.02, 0.1, armW, 0, -0.6, 0.005, look.skin));
     return merge(list);
   };
-  const shoulderX = look.skirt ? (V ? 0.3 : 0.27) : (V ? 0.32 : 0.31);
+  const shoulderX = look.skirt ? 0.27 : 0.31;
   const armL = new THREE.Mesh(armGeo(), material); armL.position.set(-shoulderX, 1.42, 0);
   const armR = new THREE.Mesh(armGeo(), material); armR.position.set(shoulderX, 1.42, 0);
   armL.rotation.z = -0.06; armR.rotation.z = 0.06;

@@ -8,7 +8,7 @@
 <meta name="description" content="Walk among your ancestors: a first-person retro 3D explorer for GEDCOM family trees.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&family=Lora:ital,wght@1,500&display=swap" rel="stylesheet">
 <script type="importmap">
 { "imports": {
   "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
@@ -339,7 +339,7 @@ body.island .help i { color: var(--i-orange); }
 #viz #vScrub { flex-basis: 100%; width: 100%; accent-color: #ffd36a; height: 24px; }
 #viz[data-kind="galaxy"] .t-only, #viz[data-kind="tree"] .g-only { display: none; }
 #viz .vlegend { position: absolute; left: max(12px, env(safe-area-inset-left, 0px)); top: calc(60px + env(safe-area-inset-top, 0px)); font-size: 12px; font-weight: 700; line-height: 1.7; background: rgba(14,12,34,0.6); border-radius: 12px; padding: 8px 12px; pointer-events: none; }
-#viz[data-kind="tree"] .vlegend { top: calc(98px + env(safe-area-inset-top, 0px)); left: 16px; display: flex; gap: 14px; background: none; padding: 0; color: rgba(255,244,220,0.8); font-size: 11px; }
+#viz[data-kind="tree"] .vlegend { top: calc(100px + env(safe-area-inset-top, 0px)); left: 12px; display: flex; flex-wrap: wrap; gap: 4px 14px; max-width: calc(100% - 24px); padding: 4px 12px; background: rgba(14,12,34,0.55); color: #fff4dc; font-size: 11px; }
 #viz .vlegend .vlh { font-family: 'Fredoka', sans-serif; font-size: 13px; color: #ffe6a8; }
 #viz .vlegend i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 7px; vertical-align: -1px; }
 #viz .vlegend i.ln { height: 3px; width: 14px; border-radius: 2px; vertical-align: 3px; }
@@ -349,8 +349,25 @@ body.island .help i { color: var(--i-orange); }
 #viz .vinfo .vest { color: #b9a6d8; font-size: 12px; margin-top: 4px; }
 #viz .vinfo .vx { position: absolute; right: 8px; top: 8px; background: none; border: none; color: #fff; font-size: 16px; padding: 4px 8px; }
 #viz .vinfo .vgo { margin-top: 8px; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 13px; color: #2a2030; background: #ffd36a; border: none; border-radius: 999px; padding: 7px 14px; }
+#viz .vb.lit { background: rgba(255,211,106,0.92); color: #2a2030; }
+details.verses { margin-top: 6px; }
+details.verses summary { cursor: pointer; font-size: 20px; color: var(--gold); }
+#verseField.off details.verses { opacity: 0.5; }
+.verseTools { font-size: 18px; margin: 6px 0; }
+.verseTools a { color: var(--gold); }
+#verseList { max-height: 300px; overflow-y: auto; touch-action: pan-y; background: #0e0806; border: 2px solid #3a2c20; }
+#verseList label.verse { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border-bottom: 1px solid #22180f; font-size: 19px; line-height: 1.15; cursor: pointer; }
+#verseList label.verse input { margin-top: 3px; width: 18px; height: 18px; flex: 0 0 auto; accent-color: var(--red); }
+#verseList label.verse b { color: var(--gold); font-weight: normal; }
+body.island details.verses summary { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 16px; color: var(--i-orange); }
+body.island .verseTools { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 14px; }
+body.island .verseTools a { color: var(--i-brown2); }
+body.island #verseList { background: #fff; border: 2px solid #ead9b4; border-radius: 18px; }
+body.island #verseList label.verse { font-family: 'Nunito', sans-serif; font-weight: 600; font-size: 14px; color: var(--i-brown); border-bottom-color: #f2e8d0; }
+body.island #verseList label.verse b { color: var(--i-orange); font-weight: 800; }
+body.island #verseList label.verse input { accent-color: var(--i-green); }
 @media (max-width: 600px) {
-  #viz .vlegend { display: none; }
+  #viz .vlegend, #viz[data-kind="tree"] .vlegend { display: none; }
   #viz .vb, #viz .vseg button { font-size: 12px; padding: 8px 10px; }
   #viz .vinfo { top: auto; bottom: calc(120px + env(safe-area-inset-bottom, 0px)); right: 10px; }
 }
@@ -427,6 +444,8 @@ body.island .help i { color: var(--i-orange); }
     <div class="vseg t-only" id="vDir"><button data-dir="back" class="on">Back in time</button><button data-dir="forward">Forward</button></div>
     <div class="vseg t-only" id="vSpace"><button data-space="year" class="on">By year</button><button data-space="gen">By generation</button></div>
     <button class="vb t-only" id="vSpeed" data-x="1" aria-label="Speed">1×</button>
+    <button class="vb t-only" id="vSeason" aria-label="Season">🌸 Spring</button>
+    <button class="vb t-only" id="vVerse" aria-pressed="true">✝ Verses</button>
     <button class="vb" id="vRec">● Record video</button>
     <input type="range" class="t-only" id="vScrub" min="1700" max="2000" value="2000" aria-label="Year">
   </div>
@@ -447,7 +466,7 @@ body.island .help i { color: var(--i-orange); }
       <div class="seg" id="styleSeg">
         <button data-style="retro" class="on">Retro</button><button data-style="island" class="islandBtn">Island</button><button data-style="fluffy" class="islandBtn">Fluffy</button>
       </div>
-      <div class="note" style="margin-top:6px" id="lookNote">Retro: a hellish 90s courtyard and a minigun. Island: a cozy island seen from behind your own villager, with brick platforms to jump on and coins to collect. Fluffy: a top-down 2D garden where everyone is a fluffy ball.</div>
+      <div class="note" style="margin-top:6px" id="lookNote"></div>
     </div>
 
     <div class="card playOnly" id="cardResume" style="display:none">
@@ -476,12 +495,12 @@ body.island .help i { color: var(--i-orange); }
       <div class="field">
         <div class="lbl">Layout</div>
         <div class="seg" id="shapeSeg">
-          <button data-shape="circle" class="on">Full circle</button><button data-shape="half">Half fan</button><button data-shape="tree">Tree</button>
+          <button data-shape="circle">Full circle</button><button data-shape="half">Half fan</button><button data-shape="tree">Tree</button>
         </div>
         <div class="note" style="margin-top:4px">Full circle surrounds you. Half fan puts everyone in front of you. Tree lays the generations out in rows, like a family tree chart.</div>
       </div>
       <label class="toggle" for="couplesToggle">
-        <input type="checkbox" id="couplesToggle">
+        <input type="checkbox" id="couplesToggle" checked>
         <span class="sw" aria-hidden="true"></span>
         <span class="tl">Keep couples together<small>Husbands and wives stand side by side where their family lines meet.</small></span>
       </label>
@@ -500,6 +519,19 @@ body.island .help i { color: var(--i-orange); }
           <div class="seg" id="scopeSeg">
             <button data-scope="ancestors" class="on">Your ancestors</button><button data-scope="all">Everyone in the file</button>
           </div>
+        </div>
+        <div class="field" id="verseField">
+          <label class="toggle" for="versesToggle">
+            <input type="checkbox" id="versesToggle" checked>
+            <span class="sw" aria-hidden="true"></span>
+            <span class="tl">Bible verses on the growing tree<small>Verses about the generations are read out on screen, word by word.</small></span>
+          </label>
+          <details class="verses">
+            <summary id="verseSummary">Choose verses</summary>
+            <div class="verseTools"><a href="#" id="verseAll">Choose all</a> · <a href="#" id="verseNone">Clear</a></div>
+            <div id="verseList"></div>
+            <div class="note" id="verseCopyright"></div>
+          </details>
         </div>
         <button class="btn go" id="btnViz">Open ▶</button>
       </div>

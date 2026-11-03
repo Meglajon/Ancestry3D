@@ -7,7 +7,7 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 
 const root = new URL('../', import.meta.url);
 const read = p => readFileSync(new URL(p, root), 'utf8');
-const ORDER = ['gedcom', 'ancestry', 'places', 'textures', 'outfits', 'traits', 'npc', 'dialogue', 'guides', 'props', 'envs', 'world', 'weapon', 'fluffy', 'vizkit', 'galaxy', 'growtree', 'viz', 'main'];
+const ORDER = ['gedcom', 'ancestry', 'places', 'textures', 'outfits', 'traits', 'npc', 'dialogue', 'guides', 'props', 'envs', 'world', 'weapon', 'fluffy', 'vizkit', 'galaxy', 'treeart', 'verses', 'growtree', 'viz', 'main'];
 const external = new Map();
 let bundle = '';
 
@@ -23,7 +23,7 @@ for (const name of ORDER) {
   });
   src = src.replace(/^export\s+(async\s+)?function\s+(\w+)/gm, (m, a, n) => { exports.push(n); return `${a || ''}function ${n}`; });
   src = src.replace(/^export\s+(const|let|class)\s+(\w+)/gm, (m, k, n) => { exports.push(n); return `${k} ${n}`; });
-  src = src.replace(/^export\s+\{([^}]+)\};?\s*$/gm, (m, names) => { exports.push(...names.split(',').map(s => s.trim()).filter(Boolean)); return ''; });
+  src = src.replace(/^export\s+\{([^}]+)\};?\s*$/gm, (m, names) => { exports.push(...names.split(',').map(s => s.trim()).filter(Boolean).map(n => n.replace(/^(\w+)\s+as\s+(\w+)$/, '$2: $1'))); return ''; });
   if (/^\s*(import|export)\s/m.test(src)) throw new Error(`unhandled import/export in ${name}.js`);
   bundle += `\n// ---- ${name}.js ----\nconst __m_${name} = (() => {\n${src}\nreturn { ${exports.join(', ')} };\n})();\n`;
 }

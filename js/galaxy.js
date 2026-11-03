@@ -259,7 +259,7 @@ export function createGalaxy(host, opts) {
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(dpos, 3));
     g.setAttribute('color', new THREE.BufferAttribute(dcol, 3));
-    dust = new THREE.Points(g, new THREE.PointsMaterial({ size: 1.6, map: dustTex, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    dust = new THREE.Points(g, new THREE.PointsMaterial({ size: 1.0, map: dustTex, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
     scene.add(dust);
     disc.scale.setScalar(fitRadius() * 2.6);
   };
@@ -317,12 +317,21 @@ export function createGalaxy(host, opts) {
     for (const n of G.nodes) { screenOf(n, s); if (!s.front) continue; const d = Math.hypot(s.x - mx, s.y - my); if (d < bd) { bd = d; best = n; } }
     return best;
   }
-  let hover = null, selected = null, downAt = null;
+  // Tap a star to fly to that person; double-tap (or double-click) to take the fly-through to them.
+  let hover = null, selected = null, downAt = null, lastTap = null;
   const onMove = e => { if (e.pointerType === 'mouse') hover = pick(e.clientX, e.clientY); canvas.style.cursor = hover ? 'pointer' : ''; };
   const onDown = e => { downAt = { x: e.clientX, y: e.clientY, t: performance.now() }; };
   const onUp = e => {
     if (!downAt || Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) > 6 || performance.now() - downAt.t > 400) return;
-    select(pick(e.clientX, e.clientY));
+    const now = performance.now();
+    const n = pick(e.clientX, e.clientY);
+    const double = lastTap && now - lastTap.t < 380 && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < 24;
+    lastTap = double ? null : { x: e.clientX, y: e.clientY, t: now };
+    if (double && n) { startTour(n); return; }
+    if (!n) { if (!tour) select(null); return; }
+    if (tour) stopTour(false, true);
+    select(n);
+    focusSelected();
   };
   canvas.addEventListener('pointermove', onMove);
   canvas.addEventListener('pointerdown', onDown);
@@ -344,61 +353,129 @@ export function createGalaxy(host, opts) {
     if (n) { marker.position.set(n.x, n.y, n.z); controls.autoRotate = false; }
     onSelect(n ? describe(n) : null);
   }
+  // Glide the camera and the point it orbits to a new place: it eases out, cruises and eases in.
+  function glideTo(to, toT) {
+    const dist = camera.position.distanceTo(to) + controls.target.distanceTo(toT) * 0.5;
+    flyTo = { from: camera.position.clone(), fromT: controls.target.clone(), to, toT, t: 0, secs: Math.max(1.3, Math.min(4, 0.9 + Math.sqrt(dist) * 0.22)) };
+  }
   function focusSelected() {
     if (!selected) return;
-    flyTo = { from: camera.position.clone(), fromT: controls.target.clone(), t: 0,
-      toT: new THREE.Vector3(selected.x, selected.y, selected.z) };
-    const dir = camera.position.clone().sub(flyTo.toT).normalize();
-    flyTo.to = flyTo.toT.clone().addScaledVector(dir, 14).add(new THREE.Vector3(0, 4, 0));
+    const toT = new THREE.Vector3(selected.x, selected.y, selected.z);
+    const dir = camera.position.clone().sub(toT).setY(0);
+    if (dir.lengthSq() < 0.01) dir.set(0, 0, 1);
+    dir.normalize();
+    glideTo(toT.clone().addScaledVector(dir, 14).add(new THREE.Vector3(0, 5, 0)), toT);
+    controls.autoRotate = false;
   }
   let flyTo = null;
+  const smoother = s => s * s * s * (s * (s * 6 - 15) + 10); // zero speed and zero acceleration at both ends
 
   // ---- fly-through ----
+  // The tour is a list of stops. Between two stops the camera slows to a halt, turns, then speeds up again
+  // (each leg uses a smootherstep curve), and it pauses briefly at each ancestor so their caption can be read.
   let tour = null;
-  function buildTour() {
-    // the furthest-back ancestor (most generations away) gives the longest road out from you
-    let far = null, farG = -1;
-    for (const n of G.nodes) {
-      if (!n.anc || n.id === rootId) continue;
-      let g = 0, p = n.id; while (p && p !== rootId && g < 60) { p = G.lineOf.get(p); g++; }
-      if (p === rootId && g > farG) { farG = g; far = n; }
-    }
+  const nodeVec = n => new THREE.Vector3(n.x, n.y, n.z);
+  const chainTo = target => {
     const chain = [];
-    if (far) { let p = far.id; while (p && p !== rootId && G.index.has(p)) { chain.unshift(G.nodes[G.index.get(p)]); p = G.lineOf.get(p); } }
+    let p = target.id;
+    while (p && p !== rootId && G.index.has(p)) { chain.unshift(G.nodes[G.index.get(p)]); p = G.lineOf.get(p); }
+    return p === rootId ? chain : null;
+  };
+  function buildTour(target) {
+    const picked = !!target;
+    if (!target) {
+      // the furthest-back ancestor (most generations away) gives the longest road out from you
+      let farG = -1;
+      for (const n of G.nodes) {
+        if (!n.anc || n.id === rootId) continue;
+        const c = chainTo(n);
+        if (c && c.length > farG) { farG = c.length; target = n; }
+      }
+    }
     const fr = fitRadius();
-    const camPts = [new THREE.Vector3(0, fr * 1.5, fr * 0.6), new THREE.Vector3(fr * 0.25, fr * 0.35, fr * 0.45), new THREE.Vector3(5, 6, 12)];
-    const lookPts = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 0)];
-    const knots = [null, null, G.nodes[0]];
-    let prev = new THREE.Vector3(0, 0, 0);
-    chain.forEach((n, i) => {
-      const p = new THREE.Vector3(n.x, n.y, n.z);
-      const along = p.clone().sub(prev).setY(0).normalize();
-      const side = new THREE.Vector3(-along.z, 0, along.x).multiplyScalar(i % 2 ? 7 : -7);
-      camPts.push(p.clone().addScaledVector(along, -9).add(side).add(new THREE.Vector3(0, 3.5, 0)));
-      lookPts.push(p);
-      knots.push(n);
-      prev = p;
-    });
-    camPts.push(prev.clone().multiplyScalar(1.4).add(new THREE.Vector3(0, fr * 0.6, 0)), new THREE.Vector3(-fr * 0.9, fr * 1.1, -fr * 0.9));
-    lookPts.push(prev.clone().multiplyScalar(0.5), new THREE.Vector3(0, 0, 0));
-    knots.push(null, null);
-    const camCurve = new THREE.CatmullRomCurve3(camPts, false, 'centripetal');
-    const lookCurve = new THREE.CatmullRomCurve3(lookPts, false, 'centripetal');
-    const seconds = Math.min(75, 12 + chain.length * 3.2);
-    return { camCurve, lookCurve, knots, seconds, t: 0 };
+    const stops = [];
+    const stop = (pos, look, node = null, hold = 0) => stops.push({ pos, look, node, hold });
+    stop(camera.position.clone(), controls.target.clone());
+    const chain = target ? chainTo(target) : [];
+    if (chain) {
+      // out from you along the line of descent
+      if (camera.position.length() < fr * 1.1) stop(new THREE.Vector3(0, fr * 1.3, fr * 0.9), new THREE.Vector3(), null, 0.4);
+      stop(new THREE.Vector3(5, 7, 13), new THREE.Vector3(), G.nodes[0], 1.4);
+      let prev = new THREE.Vector3();
+      chain.forEach((n, i) => {
+        const p = nodeVec(n);
+        const along = p.clone().sub(prev).setY(0);
+        if (along.lengthSq() < 0.01) along.set(1, 0, 0);
+        along.normalize();
+        const side = new THREE.Vector3(-along.z, 0, along.x).multiplyScalar(i % 2 ? 6 : -6);
+        stop(p.clone().addScaledVector(along, -10).add(side).add(new THREE.Vector3(0, 4, 0)), p, n, 1.3);
+        prev = p;
+      });
+    } else if (target) {
+      // not on one of your lines (someone else in the file): fly straight there
+      const p = nodeVec(target), dir = camera.position.clone().sub(p).setY(0).normalize();
+      stop(p.clone().addScaledVector(dir, 30).add(new THREE.Vector3(0, 14, 0)), p, null, 0.3);
+      stop(p.clone().addScaledVector(dir, 12).add(new THREE.Vector3(0, 4, 0)), p, target, 1.5);
+    }
+    let endTarget = new THREE.Vector3();
+    if (picked) {
+      // a tour to someone you picked ends circling them
+      endTarget = nodeVec(target);
+    } else {
+      const last = stops[stops.length - 1].look.clone();
+      stop(last.clone().multiplyScalar(1.3).add(new THREE.Vector3(0, fr * 0.5, 0)), last.clone().multiplyScalar(0.6), null, 0.2);
+      stop(new THREE.Vector3(-fr * 0.9, fr * 1.15, -fr * 0.9), new THREE.Vector3(), null, 0);
+    }
+    // timings for each leg from its length
+    const legs = [];
+    for (let i = 0; i < stops.length - 1; i++) {
+      const d = stops[i].pos.distanceTo(stops[i + 1].pos) + stops[i].look.distanceTo(stops[i + 1].look) * 0.3;
+      legs.push(Math.max(1.6, Math.min(6.5, 1.1 + Math.sqrt(d) * 0.42)));
+    }
+    const camCurve = new THREE.CatmullRomCurve3(stops.map(s => s.pos), false, 'centripetal');
+    const lookCurve = new THREE.CatmullRomCurve3(stops.map(s => s.look), false, 'centripetal');
+    return { stops, legs, camCurve, lookCurve, leg: 0, phase: 'hold', clock: 0, endTarget, look: controls.target.clone() };
   }
-  function startTour() {
-    tour = buildTour();
+  // Moves the camera one frame along the tour. Returns the person to caption (or null).
+  function stepTour(dt) {
+    const T = tour, n = T.stops.length;
+    T.clock += dt;
+    let caption = null;
+    if (T.phase === 'hold') {
+      caption = T.stops[T.leg].node;
+      if (T.clock >= T.stops[T.leg].hold) {
+        if (T.leg >= n - 1) { stopTour(true); return caption; }
+        T.phase = 'move'; T.clock = 0;
+      }
+    }
+    if (T.phase === 'move') {
+      const s = Math.min(1, T.clock / T.legs[T.leg]), e = smoother(s);
+      const u = (T.leg + e) / (n - 1);
+      camera.position.copy(T.camCurve.getPoint(u));
+      T.lookWant = T.lookCurve.getPoint(u);
+      caption = s < 0.5 ? T.stops[T.leg].node : T.stops[T.leg + 1].node;
+      if (s >= 1) { T.leg++; T.phase = 'hold'; T.clock = 0; }
+    }
+    // the gaze follows a moment behind, so turns are gentle
+    if (T.lookWant) T.look.lerp(T.lookWant, 1 - Math.exp(-dt * 5));
+    camera.lookAt(T.look);
+    return caption;
+  }
+  function startTour(target) {
+    flyTo = null;
+    tour = buildTour(target || null);
     controls.enabled = false; controls.autoRotate = false;
-    select(null);
+    if (target) select(target); else select(null);
   }
-  function stopTour(finished) {
+  function stopTour(finished, quiet) {
     if (!tour) return;
+    const end = finished ? tour.endTarget : tour.look.clone();
     tour = null;
     controls.enabled = true;
-    controls.target.set(0, 0, 0);
-    controls.autoRotate = true;
-    onTourEnd(!!finished);
+    controls.target.copy(end);
+    controls.autoRotate = !selected || finished;
+    controls.update();
+    if (!quiet) onTourEnd(!!finished);
   }
 
   // ---- drawing the labels (also recorded into the video) ----
@@ -462,7 +539,7 @@ export function createGalaxy(host, opts) {
       if ((movement < 0.004 && settleFrames > 120) || settleFrames > 900) {
         G.settled = true; fitR = fitRadius(); controls.maxDistance = fitR * 6; G.R = fitR;
         makeDust();
-        if (!tour) { flyTo = { from: camera.position.clone(), fromT: controls.target.clone(), t: 0, to: new THREE.Vector3(0, fitR * 1.15, fitR * 1.65), toT: new THREE.Vector3() }; }
+        if (!tour) glideTo(new THREE.Vector3(0, fitR * 1.15, fitR * 1.65), new THREE.Vector3());
         if (selected) marker.position.set(selected.x, selected.y, selected.z);
       }
     }
@@ -470,22 +547,17 @@ export function createGalaxy(host, opts) {
     sun.material.opacity = 0.85 + Math.sin(now / 600) * 0.15;
     let caption = null;
     if (tour) {
-      tour.t += dt / tour.seconds;
-      const u = Math.min(1, tour.t), e = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
-      const uu = u * 0.35 + e * 0.65;
-      camera.position.copy(tour.camCurve.getPointAt(uu));
-      camera.lookAt(tour.lookCurve.getPointAt(Math.min(1, uu + 0.01)));
-      const k = Math.round(uu * (tour.knots.length - 1));
-      caption = tour.knots[k] || null;
-      if (u >= 1) stopTour(true);
+      caption = stepTour(dt);
     } else if (flyTo) {
-      flyTo.t = Math.min(1, flyTo.t + dt / 1.4);
-      const e = 1 - Math.pow(1 - flyTo.t, 3);
+      flyTo.t = Math.min(1, flyTo.t + dt / (flyTo.secs || 1.6));
+      const e = smoother(flyTo.t);
       camera.position.lerpVectors(flyTo.from, flyTo.to, e);
       controls.target.lerpVectors(flyTo.fromT, flyTo.toT, e);
       if (flyTo.t >= 1) flyTo = null;
       controls.update();
     } else controls.update();
+    // the disc's glow only looks right from above or below; fade it out as the camera dips into the plane
+    disc.material.opacity = 0.5 * Math.min(1, Math.abs(camera.position.y) / Math.max(8, fitR * 0.35));
     marker.scale.setScalar(Math.max(1.2, camera.position.distanceTo(marker.position) * 0.05));
     renderer.render(scene, camera);
     drawOverlay(caption);
@@ -496,7 +568,10 @@ export function createGalaxy(host, opts) {
   return {
     overlay,
     get touring() { return !!tour; },
-    startTour, stopTour: () => stopTour(false), focusSelected, select,
+    startTour: () => startTour(null), stopTour: () => stopTour(false), focusSelected, select,
+    tourTo: () => { if (selected) startTour(selected); },
+    screenOf: id => { const i = G.index.get(id); return i == null ? null : screenOf(G.nodes[i]); }, // used by the tests
+    ancestorIds: () => G.nodes.filter(n => n.anc).map(n => n.id),
     setRecording(on) { recordingCopy = on; },
     count: N, scope, connected: G.connected, total: G.total,
     dispose() {

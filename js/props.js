@@ -25,8 +25,9 @@ function textures(rnd) {
     x.fillStyle = '#d8b030'; x.fillRect(4, 4, 6, 3);
   });
   const stone = cvs(32, 32, (x) => { noise(x, rnd, 0, 0, 32, 32, [150, 142, 128], 26); x.fillStyle = 'rgba(40,36,30,0.6)'; for (let i = 3; i < 32; i += 6) x.fillRect(i, 0, 1, 32); x.fillRect(0, 0, 32, 2); });
+  const medkit = cvs(16, 16, (x) => { noise(x, rnd, 0, 0, 16, 16, [228, 226, 220], 10); x.fillStyle = '#c81e1e'; x.fillRect(6, 3, 4, 10); x.fillRect(3, 6, 10, 4); x.fillStyle = '#8a8a8a'; x.fillRect(0, 0, 16, 1); x.fillRect(0, 15, 16, 1); });
   const ammo = cvs(16, 16, (x) => { noise(x, rnd, 0, 0, 16, 16, [86, 92, 54], 18); x.fillStyle = '#2a2e1a'; x.fillRect(0, 0, 16, 1); x.fillRect(0, 7, 16, 1); x.fillStyle = '#e8d070'; x.fillRect(5, 3, 6, 2); });
-  return { barrel: toTexture(barrel), rust: toTexture(rust), crate: toTexture(crate), stone: toTexture(stone), ammo: toTexture(ammo) };
+  return { barrel: toTexture(barrel), rust: toTexture(rust), crate: toTexture(crate), stone: toTexture(stone), ammo: toTexture(ammo), medkit: toTexture(medkit) };
 }
 
 export function retroProps(scene, tree, world, flameMat) {
@@ -133,6 +134,28 @@ export function retroProps(scene, tree, world, flameMat) {
   ammo.forEach((a, i) => setAmmo(i, true));
   ammoMesh.count = ammo.length; scene.add(ammoMesh);
 
+  // First-aid kits: only out in Fight back mode
+  const medkits = openSpots(tree, rnd, { count: Math.round(3 * scale), clearPeople: 2, clearLines: 0, clearOther: 5, used }).map(a => ({ ...a, taken: false, respawn: 0, rot: rnd() * 6 }));
+  const medMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(0.5, 0.3, 0.5).translate(0, 0.15, 0), lam(T.medkit), Math.max(1, medkits.length));
+  let fight = false;
+  const setMed = (i, visible) => { const a = medkits[i]; q.setFromAxisAngle(up, a.rot); m.compose(new THREE.Vector3(a.x, 0, a.z), q, visible && fight ? one : new THREE.Vector3(0.0001, 0.0001, 0.0001)); medMesh.setMatrixAt(i, m); medMesh.instanceMatrix.needsUpdate = true; };
+  medkits.forEach((a, i) => setMed(i, true));
+  medMesh.count = medkits.length; scene.add(medMesh);
+  world.medkits = medkits;
+  // In Fight back mode pickups turn up somewhere new each time, at random
+  const relocate = a => {
+    const avoid = [...ammo, ...medkits].filter(o => o !== a).map(o => ({ x: o.x, z: o.z, r: 3 }));
+    for (const c of world.colliders) avoid.push({ x: c.x, z: c.z, r: c.r });
+    const [spot] = openSpots(tree, Math.random, { count: 1, clearPeople: 2, clearLines: 0, clearOther: 2, used: avoid });
+    if (spot) { a.x = spot.x; a.z = spot.z; a.rot = Math.random() * 6; }
+  };
+  world.setFight = on => {
+    fight = !!on;
+    if (fight) { ammo.forEach((a, i) => { relocate(a); setAmmo(i, !a.taken); }); medkits.forEach(relocate); }
+    medkits.forEach((a, i) => setMed(i, !a.taken));
+  };
+  world.takeMedkit = (a) => { const i = medkits.indexOf(a); if (i < 0 || a.taken) return; a.taken = true; a.respawn = 25 + Math.random() * 20; setMed(i, false); };
+
   world.colliders.push(
     ...barrels.map(b => ({ x: b.x, z: b.z, r: 0.42, barrel: b })),
     ...fires.map(f => ({ x: f.x, z: f.z, r: 0.42 })),
@@ -159,7 +182,7 @@ export function retroProps(scene, tree, world, flameMat) {
     const e = booms[bi++ % booms.length];
     e.s.position.set(b.x, 1.0, b.z); e.t = 0; e.s.visible = true;
   };
-  world.takeAmmo = (a) => { const i = ammo.indexOf(a); if (i < 0 || a.taken) return; a.taken = true; a.respawn = 30; setAmmo(i, false); };
+  world.takeAmmo = (a) => { const i = ammo.indexOf(a); if (i < 0 || a.taken) return; a.taken = true; a.respawn = fight ? 16 + Math.random() * 16 : 30; setAmmo(i, false); };
 
   return (t, dt) => {
     for (const e of booms) {
@@ -172,6 +195,7 @@ export function retroProps(scene, tree, world, flameMat) {
       e.s.material.map = flameMat[Math.floor(e.t * 20) % 4].map;
     }
     barrels.forEach((b, i) => { if (!b.alive && (b.respawn -= dt) <= 0) { b.alive = true; setBarrel(i, true); } });
-    ammo.forEach((a, i) => { if (a.taken && (a.respawn -= dt) <= 0) { a.taken = false; setAmmo(i, true); } });
+    ammo.forEach((a, i) => { if (a.taken && (a.respawn -= dt) <= 0) { a.taken = false; if (fight) relocate(a); setAmmo(i, true); } });
+    medkits.forEach((a, i) => { if (a.taken && (a.respawn -= dt) <= 0) { a.taken = false; relocate(a); setMed(i, true); } });
   };
 }

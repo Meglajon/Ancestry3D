@@ -371,8 +371,7 @@ export function createGalaxy(host, opts) {
   const smoother = s => s * s * s * (s * (s * 6 - 15) + 10); // zero speed and zero acceleration at both ends
 
   // ---- fly-through ----
-  // The tour is a list of stops. Between two stops the camera slows to a halt, turns, then speeds up again
-  // (each leg uses a smootherstep curve), and it pauses briefly at each ancestor so their caption can be read.
+  // The tour is a list of stops joined into one smooth curve that the camera flows along.
   let tour = null;
   const nodeVec = n => new THREE.Vector3(n.x, n.y, n.z);
   const chainTo = target => {
@@ -394,13 +393,13 @@ export function createGalaxy(host, opts) {
     }
     const fr = fitRadius();
     const stops = [];
-    const stop = (pos, look, node = null, hold = 0) => stops.push({ pos, look, node, hold });
+    const stop = (pos, look, node = null) => stops.push({ pos, look, node });
     stop(camera.position.clone(), controls.target.clone());
     const chain = target ? chainTo(target) : [];
     if (chain) {
       // out from you along the line of descent
-      if (camera.position.length() < fr * 1.1) stop(new THREE.Vector3(0, fr * 1.3, fr * 0.9), new THREE.Vector3(), null, 0.4);
-      stop(new THREE.Vector3(5, 7, 13), new THREE.Vector3(), G.nodes[0], 1.4);
+      if (camera.position.length() < fr * 1.1) stop(new THREE.Vector3(0, fr * 1.3, fr * 0.9), new THREE.Vector3(), null);
+      stop(new THREE.Vector3(5, 7, 13), new THREE.Vector3(), G.nodes[0]);
       let prev = new THREE.Vector3();
       chain.forEach((n, i) => {
         const p = nodeVec(n);
@@ -408,14 +407,14 @@ export function createGalaxy(host, opts) {
         if (along.lengthSq() < 0.01) along.set(1, 0, 0);
         along.normalize();
         const side = new THREE.Vector3(-along.z, 0, along.x).multiplyScalar(i % 2 ? 6 : -6);
-        stop(p.clone().addScaledVector(along, -10).add(side).add(new THREE.Vector3(0, 4, 0)), p, n, 1.3);
+        stop(p.clone().addScaledVector(along, -10).add(side).add(new THREE.Vector3(0, 4, 0)), p, n);
         prev = p;
       });
     } else if (target) {
       // not on one of your lines (someone else in the file): fly straight there
       const p = nodeVec(target), dir = camera.position.clone().sub(p).setY(0).normalize();
-      stop(p.clone().addScaledVector(dir, 30).add(new THREE.Vector3(0, 14, 0)), p, null, 0.3);
-      stop(p.clone().addScaledVector(dir, 12).add(new THREE.Vector3(0, 4, 0)), p, target, 1.5);
+      stop(p.clone().addScaledVector(dir, 30).add(new THREE.Vector3(0, 14, 0)), p, null);
+      stop(p.clone().addScaledVector(dir, 12).add(new THREE.Vector3(0, 4, 0)), p, target);
     }
     let endTarget = new THREE.Vector3();
     if (picked) {
@@ -423,42 +422,62 @@ export function createGalaxy(host, opts) {
       endTarget = nodeVec(target);
     } else {
       const last = stops[stops.length - 1].look.clone();
-      stop(last.clone().multiplyScalar(1.3).add(new THREE.Vector3(0, fr * 0.5, 0)), last.clone().multiplyScalar(0.6), null, 0.2);
-      stop(new THREE.Vector3(-fr * 0.9, fr * 1.15, -fr * 0.9), new THREE.Vector3(), null, 0);
+      stop(last.clone().multiplyScalar(1.3).add(new THREE.Vector3(0, fr * 0.5, 0)), last.clone().multiplyScalar(0.6), null);
+      stop(new THREE.Vector3(-fr * 0.9, fr * 1.15, -fr * 0.9), new THREE.Vector3(), null);
     }
-    // timings for each leg from its length
-    const legs = [];
-    for (let i = 0; i < stops.length - 1; i++) {
-      const d = stops[i].pos.distanceTo(stops[i + 1].pos) + stops[i].look.distanceTo(stops[i + 1].look) * 0.3;
-      legs.push(Math.max(1.6, Math.min(6.5, 1.1 + Math.sqrt(d) * 0.42)));
-    }
+    // One continuous glide: the camera eases away at the start, cruises, slows almost to a stop as it reaches
+    // each person where the path changes direction, then accelerates away again without waiting.
     const camCurve = new THREE.CatmullRomCurve3(stops.map(s => s.pos), false, 'centripetal');
     const lookCurve = new THREE.CatmullRomCurve3(stops.map(s => s.look), false, 'centripetal');
-    return { stops, legs, camCurve, lookCurve, leg: 0, phase: 'hold', clock: 0, endTarget, look: controls.target.clone() };
+    const n = stops.length, M = Math.max(60, 40 * (n - 1));
+    const tAt = [], lenAt = [];
+    let acc = 0, prevP = camCurve.getPoint(0);
+    for (let j = 0; j <= M; j++) {
+      const p = camCurve.getPoint(j / M);
+      acc += p.distanceTo(prevP); prevP = p;
+      tAt.push(j / M); lenAt.push(acc);
+    }
+    const L = Math.max(1, acc);
+    const knotLen = stops.map((_, i) => lenAt[Math.round(i / (n - 1) * M)]);
+    // how sharply the path turns at each stop (0 straight on .. 1 straight back)
+    const sharp = stops.map((_, i) => {
+      if (i === 0 || i === n - 1) return 0;
+      const a = stops[i].pos.clone().sub(stops[i - 1].pos).normalize(), b = stops[i + 1].pos.clone().sub(stops[i].pos).normalize();
+      return Math.min(1, Math.acos(Math.max(-1, Math.min(1, a.dot(b)))) / Math.PI * 1.6);
+    });
+    const cruise = Math.max(9, Math.min(30, fr * 0.11));
+    const speedAt = d => {
+      let k = Math.min(1, 0.12 + Math.sqrt(Math.min(1, d / 14)) * 0.88, Math.sqrt(Math.max(0, (L - d) / 18)) + 0.0);
+      for (let i = 1; i < n - 1; i++) {
+        // slow right down into each change of direction, then pull away again straight away (no waiting)
+        const g = Math.exp(-Math.pow((d - knotLen[i]) / (7 + 5 * sharp[i]), 2));
+        k *= 1 - g * 0.95;
+      }
+      return cruise * Math.max(0.025, k);
+    };
+    return { stops, camCurve, lookCurve, tAt, lenAt, knotLen, L, speedAt, d: 0, endTarget, look: controls.target.clone() };
   }
+  const paramAt = (T, d) => {
+    // curve parameter for a distance travelled (binary search the arc-length table)
+    let lo = 0, hi = T.lenAt.length - 1;
+    while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (T.lenAt[mid] < d) lo = mid; else hi = mid; }
+    const span = T.lenAt[hi] - T.lenAt[lo] || 1;
+    return T.tAt[lo] + (T.tAt[hi] - T.tAt[lo]) * Math.max(0, Math.min(1, (d - T.lenAt[lo]) / span));
+  };
   // Moves the camera one frame along the tour. Returns the person to caption (or null).
   function stepTour(dt) {
-    const T = tour, n = T.stops.length;
-    T.clock += dt;
-    let caption = null;
-    if (T.phase === 'hold') {
-      caption = T.stops[T.leg].node;
-      if (T.clock >= T.stops[T.leg].hold) {
-        if (T.leg >= n - 1) { stopTour(true); return caption; }
-        T.phase = 'move'; T.clock = 0;
-      }
-    }
-    if (T.phase === 'move') {
-      const s = Math.min(1, T.clock / T.legs[T.leg]), e = smoother(s);
-      const u = (T.leg + e) / (n - 1);
-      camera.position.copy(T.camCurve.getPoint(u));
-      T.lookWant = T.lookCurve.getPoint(u);
-      caption = s < 0.5 ? T.stops[T.leg].node : T.stops[T.leg + 1].node;
-      if (s >= 1) { T.leg++; T.phase = 'hold'; T.clock = 0; }
-    }
-    // the gaze follows a moment behind, so turns are gentle
-    if (T.lookWant) T.look.lerp(T.lookWant, 1 - Math.exp(-dt * 5));
+    const T = tour;
+    T.d = Math.min(T.L, T.d + T.speedAt(T.d) * dt);
+    const u = paramAt(T, T.d);
+    camera.position.copy(T.camCurve.getPoint(u));
+    // the gaze leads the camera a little and follows a moment behind, so turns are gentle
+    const want = T.lookCurve.getPoint(Math.min(1, u + 0.25 / (T.stops.length - 1)));
+    T.look.lerp(want, 1 - Math.exp(-dt * 3));
     camera.lookAt(T.look);
+    // caption whoever is the nearest stop
+    let caption = null, bd = Infinity;
+    T.knotLen.forEach((kl, i) => { const dd = Math.abs(kl - T.d); if (dd < bd && dd < 22) { bd = dd; caption = T.stops[i].node; } });
+    if (T.d >= T.L - 0.01) stopTour(true);
     return caption;
   }
   function startTour(target) {

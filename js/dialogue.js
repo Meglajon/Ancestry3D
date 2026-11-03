@@ -477,3 +477,41 @@ export function bumpQuip(person, n = 0) {
   ];
   return say(voice, lines[(hashString(person.id) + n) % lines.length]);
 }
+
+// Fight back mode (Retro): the moment someone decides they've had enough, and when they're knocked out.
+export function angerQuip(person, n = 0) {
+  const voice = makeVoice(person);
+  const addr = pickR(voice, voice.v.address || ['you']);
+  const lines = [
+    T`Right, ${addr}. You asked for it!`, 'That is IT. Come here!', T`I'll teach you some manners, ${addr}!`,
+    'Nobody shoots at me in my own courtyard!', voice.year < 1700 ? 'Have at thee, villain!' : 'Put \'em up!',
+    'I didn\'t raise a family to be treated like this!', T`You're for it now, ${addr}!`,
+  ];
+  return say(voice, lines[(hashString(person.id) + n) % lines.length]);
+}
+export function koQuip(person, n = 0) {
+  const voice = makeVoice(person);
+  const lines = ['Oof... I need a sit down.', 'Alright, alright, I give in!', 'You win this time.', 'I\'m going home for a cup of tea.',
+    voice.year < 1700 ? 'I yield! I yield!' : 'My knees aren\'t what they were...', 'Wait till your grandmother hears about this.'];
+  return say(voice, lines[(hashString(person.id) + n) % lines.length]);
+}
+
+// Missions: an ancestor asks you to go and find someone, and the person you find says hello.
+export function missionSpeech(person, m) {
+  const voice = makeVoice(person);
+  const addr = pickR(voice, voice.v.address || ['love']);
+  const ask = {
+    place: T`Would you do something for me, ${addr}? Go and find someone in the family who was born in ${m.place}.`,
+    name: T`There's someone in the family called ${m.name}. I never got to meet them. Could you find them for me?`,
+    job: T`Find me someone who worked as a ${m.job}, ${addr}. I'd like to know how they got on.`,
+    decade: T`I wonder who was born in the ${m.decade}s. Go and find one of them for me, would you?`,
+    relative: T`Go and find my ${m.rel}, ${m.name}. Tell them I sent you.`,
+    surname: T`Our family married into the ${m.surname}s somewhere back there. Find one of them for me.`,
+  }[m.type];
+  return say(voice, ask);
+}
+export function foundSpeech(person, giverFirst) {
+  const voice = makeVoice(person);
+  const addr = pickR(voice, voice.v.address || ['love']);
+  return say(voice, T`Did ${giverFirst} send you looking for me? Well, here I am, ${addr}!`);
+}

@@ -304,6 +304,21 @@ body.fluffy #touch .zone { bottom: 0; }
 body.fluffy .fluffyOnly { display: inline; }
 body.fluffy .help b.fluffyOnly { display: block; }
 body.fluffy .notFluffy { display: none; }
+/* ================= Missions tracker ================= */
+#missions { position: absolute; right: calc(12px + env(safe-area-inset-right, 0px)); top: calc(56px + env(safe-area-inset-top, 0px)); max-width: min(300px, 46vw); font-family: 'VT323', monospace; font-size: 19px; line-height: 1.05; color: #f0e0c0; background: rgba(10,6,4,0.62); border: 2px solid #6a5440; padding: 6px 10px; text-shadow: 1px 1px 0 #000; }
+#missions b { display: block; font-family: 'Press Start 2P', monospace; font-weight: normal; font-size: 9px; color: var(--gold); margin-bottom: 4px; text-transform: uppercase; }
+#missions div { margin: 2px 0; }
+body.island #missions { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 13px; line-height: 1.3; color: var(--i-brown); background: rgba(255,250,238,0.92); border: none; border-radius: 16px; padding: 8px 14px; text-shadow: none; box-shadow: 0 3px 0 rgba(107,74,46,0.15); }
+body.island #missions b { font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 14px; color: var(--i-orange); text-transform: none; }
+@media (max-width: 600px) { #missions { font-size: 16px; max-width: 52vw; } body.island #missions { font-size: 11px; } }
+
+/* ================= Fight back (Retro) ================= */
+.fightOnly { display: none !important; }
+body.fight .fightOnly { display: flex !important; }
+body.fight .notFight { display: none !important; }
+body.island .retroOnly { display: none !important; }
+#hurt { position: fixed; inset: 0; z-index: 9; pointer-events: none; opacity: 0; background: radial-gradient(ellipse at center, rgba(160,0,0,0) 35%, rgba(200,0,0,0.75) 100%); }
+
 /* ================= Menu tabs ================= */
 .tabs { display: flex; gap: 6px; margin: 0 0 4px; }
 .tabs button { flex: 1; padding: 12px 6px; font-family: 'Press Start 2P', monospace; font-size: 11px; color: var(--dim); background: #1a1210; border: 3px solid #3a2c20; text-transform: uppercase; }
@@ -322,7 +337,7 @@ body.island .help i { color: var(--i-orange); }
 #vizHost { position: absolute; inset: 0; }
 #vizHost canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; image-rendering: auto; }
 #vizHost .vizOverlay { pointer-events: none; }
-#viz .vb, #viz .vseg button { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 14px; color: #fff; background: rgba(22,20,46,0.78); border: 1px solid rgba(255,255,255,0.22); border-radius: 999px; padding: 9px 14px; text-transform: none; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+#viz .vb, #viz .vseg button { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 14px; color: #fff; background: rgba(22,20,46,0.86); border: 1px solid rgba(255,255,255,0.22); border-radius: 999px; padding: 9px 14px; text-transform: none; }
 #viz .vb:active, #viz .vseg button:active { transform: translateY(1px); }
 #viz .vb.on { background: #c8283c; border-color: #ff8a9a; }
 #viz .vtop { position: absolute; left: 0; right: 0; top: 0; display: flex; gap: 10px; align-items: center; padding: calc(10px + env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) 10px max(12px, env(safe-area-inset-left, 0px)); pointer-events: none; }
@@ -349,6 +364,9 @@ body.island .help i { color: var(--i-orange); }
 #viz .vinfo .vest { color: #b9a6d8; font-size: 12px; margin-top: 4px; }
 #viz .vinfo .vx { position: absolute; right: 8px; top: 8px; background: none; border: none; color: #fff; font-size: 16px; padding: 4px 8px; }
 #viz .vinfo .vgo { margin-top: 8px; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 13px; color: #2a2030; background: #ffd36a; border: none; border-radius: 999px; padding: 7px 14px; }
+#viz .vtime { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; }
+#viz .vtime input { width: 110px; accent-color: #ffd36a; height: 20px; }
+#viz .vtime #vTimeLbl { font-variant-numeric: tabular-nums; min-width: 3em; }
 #viz .vb.lit { background: rgba(255,211,106,0.92); color: #2a2030; }
 details.verses { margin-top: 6px; }
 details.verses summary { cursor: pointer; font-size: 20px; color: var(--gold); }
@@ -378,20 +396,24 @@ body.island #verseList label.verse input { accent-color: var(--i-green); }
 <canvas id="game"></canvas>
 <canvas id="flat"></canvas>
 
+<div id="hurt" aria-hidden="true"></div>
 <div id="hud" class="hidden">
   <div id="msgs"></div>
   <div id="compass" class="hidden"><span class="arrow">▲</span><div class="dist"></div></div>
   <div id="crosshair"></div>
   <div id="nametag" class="hidden"></div>
+  <div id="missions" class="hidden" aria-live="polite"></div>
   <div id="prompt" class="hidden"></div>
   <div id="islandHud"><canvas id="iFace" width="64" height="64"></canvas><div><b id="iName"></b><span id="iInfo"></span></div><div class="coins"><i></i>× <span id="pCoins">0</span></div></div>
   <div id="bar">
     <div class="cell" id="ammoCell"><div class="num" id="sAmmo">400</div><div class="cap">AMMO</div></div>
+    <div class="cell fightOnly"><div class="num small" id="sHealth">100%</div><div class="cap">HEALTH</div></div>
+    <div class="cell fightOnly"><div class="num small" id="sScore">0</div><div class="cap">SCORE</div></div>
     <div class="cell"><div class="num" id="sGen">0</div><div class="cap">GEN</div></div>
     <div class="cell"><div class="num small" id="sMet">0/0</div><div class="cap">MET</div></div>
     <div class="cell face"><canvas id="sFace" width="64" height="64"></canvas></div>
-    <div class="cell"><div class="num small" id="sEra">----</div><div class="cap">ERA</div></div>
-    <div class="cell lines"><div class="num" id="sLines">1</div><div class="cap">LINES</div></div>
+    <div class="cell notFight"><div class="num small" id="sEra">----</div><div class="cap">ERA</div></div>
+    <div class="cell lines notFight"><div class="num" id="sLines">1</div><div class="cap">LINES</div></div>
   </div>
 </div>
 
@@ -420,7 +442,7 @@ body.island #verseList label.verse input { accent-color: var(--i-green); }
 <div id="automap" class="hidden">
   <canvas id="mapCanvas"></canvas>
   <div class="top">
-    <input type="search" id="mapSearch" placeholder="Find an ancestor…" autocomplete="off">
+    <input type="search" id="mapSearch" placeholder="Find a name, place or job…" autocomplete="off">
     <button id="mapZoom">Zoom</button>
     <button id="mapClose">✕</button>
   </div>
@@ -445,6 +467,8 @@ body.island #verseList label.verse input { accent-color: var(--i-green); }
     <div class="vseg t-only" id="vSpace"><button data-space="year" class="on">By year</button><button data-space="gen">By generation</button></div>
     <button class="vb t-only" id="vSpeed" data-x="1" aria-label="Speed">1×</button>
     <button class="vb t-only" id="vSeason" aria-label="Season">🌸 Spring</button>
+    <label class="vb vtime t-only" title="Time of day"><span id="vTimeIcon">☀️</span><input type="range" id="vTime" min="0" max="24" step="0.05" value="12" aria-label="Time of day"><span id="vTimeLbl">12:00</span></label>
+    <button class="vb t-only" id="vDay" title="Let the day go by" aria-label="Let the day go by">↻ Day</button>
     <button class="vb t-only" id="vVerse" aria-pressed="true">✝ Verses</button>
     <button class="vb" id="vRec">● Record video</button>
     <input type="range" class="t-only" id="vScrub" min="1700" max="2000" value="2000" aria-label="Year">
@@ -467,6 +491,11 @@ body.island #verseList label.verse input { accent-color: var(--i-green); }
         <button data-style="retro" class="on">Retro</button><button data-style="island" class="islandBtn">Island</button><button data-style="fluffy" class="islandBtn">Fluffy</button>
       </div>
       <div class="note" style="margin-top:6px" id="lookNote"></div>
+      <label class="toggle retroOnly" for="fightToggle">
+        <input type="checkbox" id="fightToggle">
+        <span class="sw" aria-hidden="true"></span>
+        <span class="tl">Fight back<small>Shoot someone and they pull out a weapon and come after you. You have health and a score; knock them out and they go home to calm down.</small></span>
+      </label>
     </div>
 
     <div class="card playOnly" id="cardResume" style="display:none">
@@ -556,7 +585,8 @@ body.island #verseList label.verse input { accent-color: var(--i-green); }
         <b>Talk</b><span>E / Enter (Space too, except on the Island) · TALK button</span>
         <b class="platOnly">Jump</b><span class="platOnly">Space · JUMP button. Bounce on heads, hop onto brick platforms, grab coins.</span>
         <b class="fluffyOnly">Zoom</b><span class="fluffyOnly">Mouse wheel. Click someone far away to set a waypoint to them.</span>
-        <b class="doomOnly">Fire</b><span class="doomOnly">Left mouse / Ctrl · FIRE button</span>
+        <b class="doomOnly">Fire</b><span class="doomOnly">Left mouse / Ctrl · FIRE button. With Fight back on, whoever you shoot comes after you: keep moving (run with Shift) and grab first-aid kits.</span>
+        <b>Missions</b><span>Chat to ancestors and some will ask you to find someone. Find them for XP (Fluffy), coins (Island) or ammo (Retro). The map search finds names, places and jobs.</span>
         <b>Automap</b><span>Tab or M · MAP button</span>
         <b>Menu</b><span>Esc · ☰</span>
       </div>

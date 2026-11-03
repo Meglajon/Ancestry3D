@@ -237,7 +237,7 @@ export function buildFlatWorld(tree) {
   const people = [...tree.people.values()].filter(p => p.gen > 0);
   people.forEach((person, i) => {
     const look = lookFor(person, rootYear - person.gen * 29);
-    const npc = { person, look, phase: (i * 1.37) % 6.28, met: false, talking: false, flinch: 0, wave: 0, waved: false,
+    const npc = { person, x: person.x, z: person.z, look, phase: (i * 1.37) % 6.28, met: false, talking: false, flinch: 0, wave: 0, waved: false,
       dist: Infinity, near: false, size: 0.56 + ((hashString(person.id) % 7) - 3) * 0.012, nextBlink: 1 + (i % 5), blinkUntil: 0, look2: 0 };
     fluffOf(look, person.id);
     world.npcs.push(npc);

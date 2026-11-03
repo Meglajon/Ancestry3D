@@ -7,7 +7,7 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 
 const root = new URL('../', import.meta.url);
 const read = p => readFileSync(new URL(p, root), 'utf8');
-const ORDER = ['gedcom', 'ancestry', 'places', 'textures', 'outfits', 'traits', 'npc', 'dialogue', 'guides', 'props', 'envs', 'world', 'weapon', 'fluffy', 'vizkit', 'galaxy', 'treeart', 'verses', 'growtree', 'viz', 'main'];
+const ORDER = ['gedcom', 'ancestry', 'places', 'textures', 'outfits', 'traits', 'npc', 'dialogue', 'guides', 'props', 'envs', 'world', 'weapon', 'fight', 'missions', 'fluffy', 'vizkit', 'galaxy', 'treeart', 'verses', 'growtree', 'viz', 'main'];
 const external = new Map();
 let bundle = '';
 

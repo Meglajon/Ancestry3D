@@ -324,7 +324,7 @@ export function buildWorld(scene, tree, opts = {}) {
     const target = person.primaryChild ? tree.people.get(person.primaryChild) : { x: 0, z: 0 };
     fig.root.rotation.y = Math.atan2(target.x - person.x, target.z - person.z);
     scene.add(fig.root);
-    const npc = { person, look, fig, baseYaw: fig.root.rotation.y, yaw: fig.root.rotation.y, phase: (i * 1.37) % 6.28,
+    const npc = { person, x: person.x, z: person.z, look, fig, baseYaw: fig.root.rotation.y, yaw: fig.root.rotation.y, phase: (i * 1.37) % 6.28,
       waved: false, wave: 0, talking: false, met: false, flinch: 0, armRest: theme === 'island' ? 0.25 : 0.06, look };
     world.npcs.push(npc);
     world.byId.set(person.id, npc);

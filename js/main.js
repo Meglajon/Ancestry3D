@@ -9,7 +9,7 @@ import { buildIslandFigure } from './npc.js';
 import { createMinigun, createImpacts, traceShot } from './weapon.js';
 import { buildFlatWorld, drawFluffyPortrait } from './fluffy.js';
 import { computeTraits } from './traits.js';
-import { openViz, vizOpen } from './viz.js';
+import { openViz, vizOpen, vizView } from './viz.js';
 
 const $ = id => document.getElementById(id);
 const store = {
@@ -23,6 +23,11 @@ const STYLES = { retro: 480, island: 1200, fluffy: 1200 };
 const THEME_OF = { retro: 'doom', island: 'island', fluffy: 'fluffy' };
 // Looks that were merged or retired map onto the ones that replaced them.
 const OLD_STYLES = { chunky: 'retro', sharp: 'retro', action: 'island', platform: 'island', blocks: 'island' };
+const LOOK_NOTES = {
+  retro: 'Retro: a hellish 90s courtyard seen through your own eyes. Carry a minigun, blow up toxic barrels and top up on boxes of bullets. Shot ancestors flinch and tell you off.',
+  island: 'Island: a cozy island seen from behind your own villager. Jump onto floating brick platforms, collect coins and bounce on your ancestors\' heads, then stop for a chat.',
+  fluffy: 'Fluffy: a top-down 2D garden where you and every ancestor are round, fluffy balls. Their fur takes the colours of their period clothes, with their hair (or hat) as a tuft on top. Roll along the paths, bump into people to make them squeak, and chat to them all.',
+};
 const LOGOS = {
   retro: ['ANCESTRY<br>3D', 'WALK AMONG YOUR ANCESTORS'],
   island: ['Ancestry<br>Island', 'Come and meet the family'],
@@ -157,6 +162,7 @@ function applyStyle(style, { silent = false } = {}) {
   document.body.classList.toggle('fluffy', flat());
   $('logo').innerHTML = LOGOS[style][0];
   $('tagline').textContent = LOGOS[style][1];
+  $('lookNote').textContent = LOOK_NOTES[style];
   $('styleSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.style === style));
   if (!silent) sfx.select();
   resize();
@@ -315,6 +321,7 @@ function setVizKind(kind) {
   $('vizSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.viz === S.vizKind));
   $('vizNote').textContent = VIZ_NOTES[S.vizKind];
   $('scopeField').classList.toggle('hidden', S.vizKind !== 'galaxy');
+  $('verseField').classList.toggle('hidden', S.vizKind !== 'tree');
 }
 for (const b of $('tabs').querySelectorAll('button')) b.onclick = () => { sfx.select(); setTab(b.dataset.tab); };
 for (const b of $('vizSeg').querySelectorAll('button')) b.onclick = () => { sfx.select(); setVizKind(b.dataset.viz); };
@@ -1242,15 +1249,16 @@ async function buildAttract() {
   requestAnimationFrame(spin);
 }
 
-S.couples = store.get('a3d:couples') === '1';
-S.shape = ['circle', 'half', 'tree'].includes(store.get('a3d:shape')) ? store.get('a3d:shape') : 'circle';
+// Defaults for a first visit: the Fluffy look, the Tree layout and couples standing together.
+S.couples = store.get('a3d:couples') !== '0';
+S.shape = ['circle', 'half', 'tree'].includes(store.get('a3d:shape')) ? store.get('a3d:shape') : 'tree';
 $('shapeSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.shape === S.shape));
 $('couplesToggle').checked = S.couples;
-applyStyle(OLD_STYLES[store.get('a3d:style')] || store.get('a3d:style') || 'retro', { silent: true });
+applyStyle(OLD_STYLES[store.get('a3d:style')] || store.get('a3d:style') || 'fluffy', { silent: true });
 S.vizScope = 'ancestors';
 setVizKind(store.get('a3d:viz'));
 setTab(store.get('a3d:tab'));
 S.booted = true;
 buildAttract();
 // expose for debugging / tests
-window.__A3D = { S, setTab, openViz, vizOpen, scene, camera, renderer, startGame, loadText, openDialog, setWaypoint, openMap, closeMap, applyStyle };
+window.__A3D = { S, setTab, openViz, vizOpen, vizView, scene, camera, renderer, startGame, loadText, openDialog, setWaypoint, openMap, closeMap, applyStyle };

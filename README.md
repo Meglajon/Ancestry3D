@@ -47,12 +47,21 @@ generations, then open one of these:
   century they were born in (older stars burn redder) and faint threads join parents and children (blue through
   fathers, pink through mothers). Show *your ancestors* (laid out like the courtyard and twisted into spiral
   arms) or *everyone in the file* (pulled into shape by a small physics simulation, so families clump together).
-  Drag to spin, scroll or pinch to zoom, tap a star to read about them. **Fly-through** flies out from you along
-  your longest line, naming each ancestor as you pass.
+  Drag to spin, scroll or pinch to zoom. **Tap a star** to glide over to that person and read about them;
+  **double-tap** (or double-click) a star to take the fly-through to them, ending circling round them.
+  **Fly-through** flies out from you along your longest line, naming each ancestor as you pass. The camera
+  slows to a stop at each person, turns, then speeds up again, so the journey never jerks.
 - **Growing tree**: a tree with you as the trunk. Height is the year each person was born (or their
   generation), and the branches grow back in time a generation at a time until the oldest ancestors blossom at
   the tips. Switch to *Forward* to play history the other way, with the oldest ancestors first and every line
   arriving at you. Anyone alive in the year on the clock glows, and births and deaths scroll past.
+  Every person is a blossom that opens as they appear (pink for women, white for men in spring). Pick a season:
+  *Spring* blossom, *Summer*, *Autumn* at sunset or *Night* under the moon with glowing moonflowers, each with
+  its own light. The tree comes alive as it grows: butterflies visit the flowers, caterpillars inch along the
+  branches and turn into butterflies, flowers bloom in the meadow, and petals, leaves, seeds or fireflies drift
+  about.
+  **Bible verses** about the generations can appear in the sky, read out word by word. Choose which ones in the
+  Visualisation tab (New International Version), or switch them off with the *Verses* button.
 
 **Record video** saves the fly-through, or the whole growing tree, as a video file (MP4 where the browser
 supports it, otherwise WebM). Names and captions are recorded too. Missing birth years are estimated from the
@@ -60,6 +69,12 @@ family so everyone can be placed in time.
 
 Your GEDCOM file is read in the browser and never uploaded. The page remembers your last tree, your look and who
 you've met in local storage on your device.
+
+On a first visit the game starts on the Fluffy look with the Tree layout and couples standing together; your
+own choices are remembered after that.
+
+Bible verses: Scripture quotations taken from The Holy Bible, New International Version® NIV®. Copyright © 1973,
+1978, 1984, 2011 by Biblica, Inc.™ Used by permission. All rights reserved worldwide.
 
 ## Play
 
@@ -107,6 +122,8 @@ js/fluffy.js        the Fluffy look: top-down 2D garden, fluffy-ball sprites and
 js/vizkit.js        Visualisation helpers: estimated years, star colours, canvas video recorder
 js/galaxy.js        the Galaxy visualisation (stars, threads, physics layout, fly-through)
 js/growtree.js      the Growing tree visualisation (timeline, branches, pan and zoom)
+js/treeart.js       Growing tree art: seasons and light, bark, leaves, blossoms, butterflies, caterpillars
+js/verses.js        the Bible verses and the word-by-word reader
 js/viz.js           the Visualisation screen: controls, info panel, recording
 js/dialogue.js      dialect, period and schooling-aware speech, job memories, local history
 js/weapon.js        minigun viewmodel, impacts, shot tracing

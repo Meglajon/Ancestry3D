@@ -9,7 +9,7 @@
 <meta name="description" content="Walk among your ancestors: a first-person retro 3D explorer for GEDCOM family trees.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&family=Lora:ital,wght@1,500&display=swap" rel="stylesheet">
 <script type="importmap">
 { "imports": {
   "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
@@ -340,7 +340,7 @@ body.island .help i { color: var(--i-orange); }
 #viz #vScrub { flex-basis: 100%; width: 100%; accent-color: #ffd36a; height: 24px; }
 #viz[data-kind="galaxy"] .t-only, #viz[data-kind="tree"] .g-only { display: none; }
 #viz .vlegend { position: absolute; left: max(12px, env(safe-area-inset-left, 0px)); top: calc(60px + env(safe-area-inset-top, 0px)); font-size: 12px; font-weight: 700; line-height: 1.7; background: rgba(14,12,34,0.6); border-radius: 12px; padding: 8px 12px; pointer-events: none; }
-#viz[data-kind="tree"] .vlegend { top: calc(98px + env(safe-area-inset-top, 0px)); left: 16px; display: flex; gap: 14px; background: none; padding: 0; color: rgba(255,244,220,0.8); font-size: 11px; }
+#viz[data-kind="tree"] .vlegend { top: calc(100px + env(safe-area-inset-top, 0px)); left: 12px; display: flex; flex-wrap: wrap; gap: 4px 14px; max-width: calc(100% - 24px); padding: 4px 12px; background: rgba(14,12,34,0.55); color: #fff4dc; font-size: 11px; }
 #viz .vlegend .vlh { font-family: 'Fredoka', sans-serif; font-size: 13px; color: #ffe6a8; }
 #viz .vlegend i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 7px; vertical-align: -1px; }
 #viz .vlegend i.ln { height: 3px; width: 14px; border-radius: 2px; vertical-align: 3px; }
@@ -350,8 +350,25 @@ body.island .help i { color: var(--i-orange); }
 #viz .vinfo .vest { color: #b9a6d8; font-size: 12px; margin-top: 4px; }
 #viz .vinfo .vx { position: absolute; right: 8px; top: 8px; background: none; border: none; color: #fff; font-size: 16px; padding: 4px 8px; }
 #viz .vinfo .vgo { margin-top: 8px; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 13px; color: #2a2030; background: #ffd36a; border: none; border-radius: 999px; padding: 7px 14px; }
+#viz .vb.lit { background: rgba(255,211,106,0.92); color: #2a2030; }
+details.verses { margin-top: 6px; }
+details.verses summary { cursor: pointer; font-size: 20px; color: var(--gold); }
+#verseField.off details.verses { opacity: 0.5; }
+.verseTools { font-size: 18px; margin: 6px 0; }
+.verseTools a { color: var(--gold); }
+#verseList { max-height: 300px; overflow-y: auto; touch-action: pan-y; background: #0e0806; border: 2px solid #3a2c20; }
+#verseList label.verse { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border-bottom: 1px solid #22180f; font-size: 19px; line-height: 1.15; cursor: pointer; }
+#verseList label.verse input { margin-top: 3px; width: 18px; height: 18px; flex: 0 0 auto; accent-color: var(--red); }
+#verseList label.verse b { color: var(--gold); font-weight: normal; }
+body.island details.verses summary { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 16px; color: var(--i-orange); }
+body.island .verseTools { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 14px; }
+body.island .verseTools a { color: var(--i-brown2); }
+body.island #verseList { background: #fff; border: 2px solid #ead9b4; border-radius: 18px; }
+body.island #verseList label.verse { font-family: 'Nunito', sans-serif; font-weight: 600; font-size: 14px; color: var(--i-brown); border-bottom-color: #f2e8d0; }
+body.island #verseList label.verse b { color: var(--i-orange); font-weight: 800; }
+body.island #verseList label.verse input { accent-color: var(--i-green); }
 @media (max-width: 600px) {
-  #viz .vlegend { display: none; }
+  #viz .vlegend, #viz[data-kind="tree"] .vlegend { display: none; }
   #viz .vb, #viz .vseg button { font-size: 12px; padding: 8px 10px; }
   #viz .vinfo { top: auto; bottom: calc(120px + env(safe-area-inset-bottom, 0px)); right: 10px; }
 }
@@ -428,6 +445,8 @@ body.island .help i { color: var(--i-orange); }
     <div class="vseg t-only" id="vDir"><button data-dir="back" class="on">Back in time</button><button data-dir="forward">Forward</button></div>
     <div class="vseg t-only" id="vSpace"><button data-space="year" class="on">By year</button><button data-space="gen">By generation</button></div>
     <button class="vb t-only" id="vSpeed" data-x="1" aria-label="Speed">1×</button>
+    <button class="vb t-only" id="vSeason" aria-label="Season">🌸 Spring</button>
+    <button class="vb t-only" id="vVerse" aria-pressed="true">✝ Verses</button>
     <button class="vb" id="vRec">● Record video</button>
     <input type="range" class="t-only" id="vScrub" min="1700" max="2000" value="2000" aria-label="Year">
   </div>
@@ -448,7 +467,7 @@ body.island .help i { color: var(--i-orange); }
       <div class="seg" id="styleSeg">
         <button data-style="retro" class="on">Retro</button><button data-style="island" class="islandBtn">Island</button><button data-style="fluffy" class="islandBtn">Fluffy</button>
       </div>
-      <div class="note" style="margin-top:6px" id="lookNote">Retro: a hellish 90s courtyard and a minigun. Island: a cozy island seen from behind your own villager, with brick platforms to jump on and coins to collect. Fluffy: a top-down 2D garden where everyone is a fluffy ball.</div>
+      <div class="note" style="margin-top:6px" id="lookNote"></div>
     </div>
 
     <div class="card playOnly" id="cardResume" style="display:none">
@@ -477,12 +496,12 @@ body.island .help i { color: var(--i-orange); }
       <div class="field">
         <div class="lbl">Layout</div>
         <div class="seg" id="shapeSeg">
-          <button data-shape="circle" class="on">Full circle</button><button data-shape="half">Half fan</button><button data-shape="tree">Tree</button>
+          <button data-shape="circle">Full circle</button><button data-shape="half">Half fan</button><button data-shape="tree">Tree</button>
         </div>
         <div class="note" style="margin-top:4px">Full circle surrounds you. Half fan puts everyone in front of you. Tree lays the generations out in rows, like a family tree chart.</div>
       </div>
       <label class="toggle" for="couplesToggle">
-        <input type="checkbox" id="couplesToggle">
+        <input type="checkbox" id="couplesToggle" checked>
         <span class="sw" aria-hidden="true"></span>
         <span class="tl">Keep couples together<small>Husbands and wives stand side by side where their family lines meet.</small></span>
       </label>
@@ -501,6 +520,19 @@ body.island .help i { color: var(--i-orange); }
           <div class="seg" id="scopeSeg">
             <button data-scope="ancestors" class="on">Your ancestors</button><button data-scope="all">Everyone in the file</button>
           </div>
+        </div>
+        <div class="field" id="verseField">
+          <label class="toggle" for="versesToggle">
+            <input type="checkbox" id="versesToggle" checked>
+            <span class="sw" aria-hidden="true"></span>
+            <span class="tl">Bible verses on the growing tree<small>Verses about the generations are read out on screen, word by word.</small></span>
+          </label>
+          <details class="verses">
+            <summary id="verseSummary">Choose verses</summary>
+            <div class="verseTools"><a href="#" id="verseAll">Choose all</a> · <a href="#" id="verseNone">Clear</a></div>
+            <div id="verseList"></div>
+            <div class="note" id="verseCopyright"></div>
+          </details>
         </div>
         <button class="btn go" id="btnViz">Open ▶</button>
       </div>
@@ -5016,7 +5048,7 @@ function createGalaxy(host, opts) {
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(dpos, 3));
     g.setAttribute('color', new THREE.BufferAttribute(dcol, 3));
-    dust = new THREE.Points(g, new THREE.PointsMaterial({ size: 1.6, map: dustTex, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    dust = new THREE.Points(g, new THREE.PointsMaterial({ size: 1.0, map: dustTex, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
     scene.add(dust);
     disc.scale.setScalar(fitRadius() * 2.6);
   };
@@ -5074,12 +5106,21 @@ function createGalaxy(host, opts) {
     for (const n of G.nodes) { screenOf(n, s); if (!s.front) continue; const d = Math.hypot(s.x - mx, s.y - my); if (d < bd) { bd = d; best = n; } }
     return best;
   }
-  let hover = null, selected = null, downAt = null;
+  // Tap a star to fly to that person; double-tap (or double-click) to take the fly-through to them.
+  let hover = null, selected = null, downAt = null, lastTap = null;
   const onMove = e => { if (e.pointerType === 'mouse') hover = pick(e.clientX, e.clientY); canvas.style.cursor = hover ? 'pointer' : ''; };
   const onDown = e => { downAt = { x: e.clientX, y: e.clientY, t: performance.now() }; };
   const onUp = e => {
     if (!downAt || Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) > 6 || performance.now() - downAt.t > 400) return;
-    select(pick(e.clientX, e.clientY));
+    const now = performance.now();
+    const n = pick(e.clientX, e.clientY);
+    const double = lastTap && now - lastTap.t < 380 && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < 24;
+    lastTap = double ? null : { x: e.clientX, y: e.clientY, t: now };
+    if (double && n) { startTour(n); return; }
+    if (!n) { if (!tour) select(null); return; }
+    if (tour) stopTour(false, true);
+    select(n);
+    focusSelected();
   };
   canvas.addEventListener('pointermove', onMove);
   canvas.addEventListener('pointerdown', onDown);
@@ -5101,61 +5142,129 @@ function createGalaxy(host, opts) {
     if (n) { marker.position.set(n.x, n.y, n.z); controls.autoRotate = false; }
     onSelect(n ? describe(n) : null);
   }
+  // Glide the camera and the point it orbits to a new place: it eases out, cruises and eases in.
+  function glideTo(to, toT) {
+    const dist = camera.position.distanceTo(to) + controls.target.distanceTo(toT) * 0.5;
+    flyTo = { from: camera.position.clone(), fromT: controls.target.clone(), to, toT, t: 0, secs: Math.max(1.3, Math.min(4, 0.9 + Math.sqrt(dist) * 0.22)) };
+  }
   function focusSelected() {
     if (!selected) return;
-    flyTo = { from: camera.position.clone(), fromT: controls.target.clone(), t: 0,
-      toT: new THREE.Vector3(selected.x, selected.y, selected.z) };
-    const dir = camera.position.clone().sub(flyTo.toT).normalize();
-    flyTo.to = flyTo.toT.clone().addScaledVector(dir, 14).add(new THREE.Vector3(0, 4, 0));
+    const toT = new THREE.Vector3(selected.x, selected.y, selected.z);
+    const dir = camera.position.clone().sub(toT).setY(0);
+    if (dir.lengthSq() < 0.01) dir.set(0, 0, 1);
+    dir.normalize();
+    glideTo(toT.clone().addScaledVector(dir, 14).add(new THREE.Vector3(0, 5, 0)), toT);
+    controls.autoRotate = false;
   }
   let flyTo = null;
+  const smoother = s => s * s * s * (s * (s * 6 - 15) + 10); // zero speed and zero acceleration at both ends
 
   // ---- fly-through ----
+  // The tour is a list of stops. Between two stops the camera slows to a halt, turns, then speeds up again
+  // (each leg uses a smootherstep curve), and it pauses briefly at each ancestor so their caption can be read.
   let tour = null;
-  function buildTour() {
-    // the furthest-back ancestor (most generations away) gives the longest road out from you
-    let far = null, farG = -1;
-    for (const n of G.nodes) {
-      if (!n.anc || n.id === rootId) continue;
-      let g = 0, p = n.id; while (p && p !== rootId && g < 60) { p = G.lineOf.get(p); g++; }
-      if (p === rootId && g > farG) { farG = g; far = n; }
-    }
+  const nodeVec = n => new THREE.Vector3(n.x, n.y, n.z);
+  const chainTo = target => {
     const chain = [];
-    if (far) { let p = far.id; while (p && p !== rootId && G.index.has(p)) { chain.unshift(G.nodes[G.index.get(p)]); p = G.lineOf.get(p); } }
+    let p = target.id;
+    while (p && p !== rootId && G.index.has(p)) { chain.unshift(G.nodes[G.index.get(p)]); p = G.lineOf.get(p); }
+    return p === rootId ? chain : null;
+  };
+  function buildTour(target) {
+    const picked = !!target;
+    if (!target) {
+      // the furthest-back ancestor (most generations away) gives the longest road out from you
+      let farG = -1;
+      for (const n of G.nodes) {
+        if (!n.anc || n.id === rootId) continue;
+        const c = chainTo(n);
+        if (c && c.length > farG) { farG = c.length; target = n; }
+      }
+    }
     const fr = fitRadius();
-    const camPts = [new THREE.Vector3(0, fr * 1.5, fr * 0.6), new THREE.Vector3(fr * 0.25, fr * 0.35, fr * 0.45), new THREE.Vector3(5, 6, 12)];
-    const lookPts = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 0)];
-    const knots = [null, null, G.nodes[0]];
-    let prev = new THREE.Vector3(0, 0, 0);
-    chain.forEach((n, i) => {
-      const p = new THREE.Vector3(n.x, n.y, n.z);
-      const along = p.clone().sub(prev).setY(0).normalize();
-      const side = new THREE.Vector3(-along.z, 0, along.x).multiplyScalar(i % 2 ? 7 : -7);
-      camPts.push(p.clone().addScaledVector(along, -9).add(side).add(new THREE.Vector3(0, 3.5, 0)));
-      lookPts.push(p);
-      knots.push(n);
-      prev = p;
-    });
-    camPts.push(prev.clone().multiplyScalar(1.4).add(new THREE.Vector3(0, fr * 0.6, 0)), new THREE.Vector3(-fr * 0.9, fr * 1.1, -fr * 0.9));
-    lookPts.push(prev.clone().multiplyScalar(0.5), new THREE.Vector3(0, 0, 0));
-    knots.push(null, null);
-    const camCurve = new THREE.CatmullRomCurve3(camPts, false, 'centripetal');
-    const lookCurve = new THREE.CatmullRomCurve3(lookPts, false, 'centripetal');
-    const seconds = Math.min(75, 12 + chain.length * 3.2);
-    return { camCurve, lookCurve, knots, seconds, t: 0 };
+    const stops = [];
+    const stop = (pos, look, node = null, hold = 0) => stops.push({ pos, look, node, hold });
+    stop(camera.position.clone(), controls.target.clone());
+    const chain = target ? chainTo(target) : [];
+    if (chain) {
+      // out from you along the line of descent
+      if (camera.position.length() < fr * 1.1) stop(new THREE.Vector3(0, fr * 1.3, fr * 0.9), new THREE.Vector3(), null, 0.4);
+      stop(new THREE.Vector3(5, 7, 13), new THREE.Vector3(), G.nodes[0], 1.4);
+      let prev = new THREE.Vector3();
+      chain.forEach((n, i) => {
+        const p = nodeVec(n);
+        const along = p.clone().sub(prev).setY(0);
+        if (along.lengthSq() < 0.01) along.set(1, 0, 0);
+        along.normalize();
+        const side = new THREE.Vector3(-along.z, 0, along.x).multiplyScalar(i % 2 ? 6 : -6);
+        stop(p.clone().addScaledVector(along, -10).add(side).add(new THREE.Vector3(0, 4, 0)), p, n, 1.3);
+        prev = p;
+      });
+    } else if (target) {
+      // not on one of your lines (someone else in the file): fly straight there
+      const p = nodeVec(target), dir = camera.position.clone().sub(p).setY(0).normalize();
+      stop(p.clone().addScaledVector(dir, 30).add(new THREE.Vector3(0, 14, 0)), p, null, 0.3);
+      stop(p.clone().addScaledVector(dir, 12).add(new THREE.Vector3(0, 4, 0)), p, target, 1.5);
+    }
+    let endTarget = new THREE.Vector3();
+    if (picked) {
+      // a tour to someone you picked ends circling them
+      endTarget = nodeVec(target);
+    } else {
+      const last = stops[stops.length - 1].look.clone();
+      stop(last.clone().multiplyScalar(1.3).add(new THREE.Vector3(0, fr * 0.5, 0)), last.clone().multiplyScalar(0.6), null, 0.2);
+      stop(new THREE.Vector3(-fr * 0.9, fr * 1.15, -fr * 0.9), new THREE.Vector3(), null, 0);
+    }
+    // timings for each leg from its length
+    const legs = [];
+    for (let i = 0; i < stops.length - 1; i++) {
+      const d = stops[i].pos.distanceTo(stops[i + 1].pos) + stops[i].look.distanceTo(stops[i + 1].look) * 0.3;
+      legs.push(Math.max(1.6, Math.min(6.5, 1.1 + Math.sqrt(d) * 0.42)));
+    }
+    const camCurve = new THREE.CatmullRomCurve3(stops.map(s => s.pos), false, 'centripetal');
+    const lookCurve = new THREE.CatmullRomCurve3(stops.map(s => s.look), false, 'centripetal');
+    return { stops, legs, camCurve, lookCurve, leg: 0, phase: 'hold', clock: 0, endTarget, look: controls.target.clone() };
   }
-  function startTour() {
-    tour = buildTour();
+  // Moves the camera one frame along the tour. Returns the person to caption (or null).
+  function stepTour(dt) {
+    const T = tour, n = T.stops.length;
+    T.clock += dt;
+    let caption = null;
+    if (T.phase === 'hold') {
+      caption = T.stops[T.leg].node;
+      if (T.clock >= T.stops[T.leg].hold) {
+        if (T.leg >= n - 1) { stopTour(true); return caption; }
+        T.phase = 'move'; T.clock = 0;
+      }
+    }
+    if (T.phase === 'move') {
+      const s = Math.min(1, T.clock / T.legs[T.leg]), e = smoother(s);
+      const u = (T.leg + e) / (n - 1);
+      camera.position.copy(T.camCurve.getPoint(u));
+      T.lookWant = T.lookCurve.getPoint(u);
+      caption = s < 0.5 ? T.stops[T.leg].node : T.stops[T.leg + 1].node;
+      if (s >= 1) { T.leg++; T.phase = 'hold'; T.clock = 0; }
+    }
+    // the gaze follows a moment behind, so turns are gentle
+    if (T.lookWant) T.look.lerp(T.lookWant, 1 - Math.exp(-dt * 5));
+    camera.lookAt(T.look);
+    return caption;
+  }
+  function startTour(target) {
+    flyTo = null;
+    tour = buildTour(target || null);
     controls.enabled = false; controls.autoRotate = false;
-    select(null);
+    if (target) select(target); else select(null);
   }
-  function stopTour(finished) {
+  function stopTour(finished, quiet) {
     if (!tour) return;
+    const end = finished ? tour.endTarget : tour.look.clone();
     tour = null;
     controls.enabled = true;
-    controls.target.set(0, 0, 0);
-    controls.autoRotate = true;
-    onTourEnd(!!finished);
+    controls.target.copy(end);
+    controls.autoRotate = !selected || finished;
+    controls.update();
+    if (!quiet) onTourEnd(!!finished);
   }
 
   // ---- drawing the labels (also recorded into the video) ----
@@ -5219,7 +5328,7 @@ function createGalaxy(host, opts) {
       if ((movement < 0.004 && settleFrames > 120) || settleFrames > 900) {
         G.settled = true; fitR = fitRadius(); controls.maxDistance = fitR * 6; G.R = fitR;
         makeDust();
-        if (!tour) { flyTo = { from: camera.position.clone(), fromT: controls.target.clone(), t: 0, to: new THREE.Vector3(0, fitR * 1.15, fitR * 1.65), toT: new THREE.Vector3() }; }
+        if (!tour) glideTo(new THREE.Vector3(0, fitR * 1.15, fitR * 1.65), new THREE.Vector3());
         if (selected) marker.position.set(selected.x, selected.y, selected.z);
       }
     }
@@ -5227,22 +5336,17 @@ function createGalaxy(host, opts) {
     sun.material.opacity = 0.85 + Math.sin(now / 600) * 0.15;
     let caption = null;
     if (tour) {
-      tour.t += dt / tour.seconds;
-      const u = Math.min(1, tour.t), e = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
-      const uu = u * 0.35 + e * 0.65;
-      camera.position.copy(tour.camCurve.getPointAt(uu));
-      camera.lookAt(tour.lookCurve.getPointAt(Math.min(1, uu + 0.01)));
-      const k = Math.round(uu * (tour.knots.length - 1));
-      caption = tour.knots[k] || null;
-      if (u >= 1) stopTour(true);
+      caption = stepTour(dt);
     } else if (flyTo) {
-      flyTo.t = Math.min(1, flyTo.t + dt / 1.4);
-      const e = 1 - Math.pow(1 - flyTo.t, 3);
+      flyTo.t = Math.min(1, flyTo.t + dt / (flyTo.secs || 1.6));
+      const e = smoother(flyTo.t);
       camera.position.lerpVectors(flyTo.from, flyTo.to, e);
       controls.target.lerpVectors(flyTo.fromT, flyTo.toT, e);
       if (flyTo.t >= 1) flyTo = null;
       controls.update();
     } else controls.update();
+    // the disc's glow only looks right from above or below; fade it out as the camera dips into the plane
+    disc.material.opacity = 0.5 * Math.min(1, Math.abs(camera.position.y) / Math.max(8, fitR * 0.35));
     marker.scale.setScalar(Math.max(1.2, camera.position.distanceTo(marker.position) * 0.05));
     renderer.render(scene, camera);
     drawOverlay(caption);
@@ -5253,7 +5357,10 @@ function createGalaxy(host, opts) {
   return {
     overlay,
     get touring() { return !!tour; },
-    startTour, stopTour: () => stopTour(false), focusSelected, select,
+    startTour: () => startTour(null), stopTour: () => stopTour(false), focusSelected, select,
+    tourTo: () => { if (selected) startTour(selected); },
+    screenOf: id => { const i = G.index.get(id); return i == null ? null : screenOf(G.nodes[i]); }, // used by the tests
+    ancestorIds: () => G.nodes.filter(n => n.anc).map(n => n.id),
     setRecording(on) { recordingCopy = on; },
     count: N, scope, connected: G.connected, total: G.total,
     dispose() {
@@ -5282,6 +5389,479 @@ function roundRect(ctx, x, y, w, h, r) {
 return { createGalaxy };
 })();
 
+// ---- treeart.js ----
+const __m_treeart = (() => {
+// Artwork for the growing tree: four seasons of sky and light, tapered bark lit from the sun's side, leaves,
+// opening blossoms for each person, and a little life (butterflies, caterpillars that turn into butterflies,
+// flowers blooming in the grass, falling petals or leaves, fireflies at night). Everything is drawn on one
+// canvas so it all ends up in recorded videos.
+const { seededRandom } = __m_ancestry;
+const TREE_STYLES = {
+  spring: {
+    name: 'Spring', sky: ['#5fa8e0', '#a9dcf7', '#fde6d4'], sun: { x: 0.16, y: 0.13, core: '255,250,225', glow: '255,236,190' }, rays: true, clouds: true,
+    hills: ['#a8d8a0', '#8cc87e', '#6db35e'], ground: ['#79c25e', '#4f9a3e'], bark: ['#4a3324', '#7a5638', '#b08a64'],
+    leaves: ['#8fd16a', '#a8de7e', '#6fbf54', '#c2ea94'],
+    female: { petal: '#ffb9d2', edge: '#f08cb0', inner: '#ff86b0' }, male: { petal: '#ffffff', edge: '#cfdcf5', inner: '#d9e6ff' },
+    centre: '#ffd84a', particle: 'petal', particleCols: ['#ffc8dc', '#ffe0ec', '#ffffff'], grassFlowers: ['#ffffff', '#ffd84a', '#ff9ac0', '#b9a0ff'],
+    legend: [['#ffb9d2', 'woman (pink blossom)'], ['#ffffff', 'man (white blossom)']],
+  },
+  summer: {
+    name: 'Summer', sky: ['#2f86d8', '#7cc2f2', '#e8f6ff'], sun: { x: 0.82, y: 0.12, core: '255,255,240', glow: '255,246,200' }, rays: true, clouds: true,
+    hills: ['#8cc27a', '#6aab5a', '#4f9444'], ground: ['#5aa844', '#3c7f30'], bark: ['#3e2a1c', '#6e4b30', '#a07a56'],
+    leaves: ['#3f9a3e', '#58b04a', '#2f8034', '#74c25a'],
+    female: { petal: '#ff7f8e', edge: '#e85a6e', inner: '#ff5f78' }, male: { petal: '#ffe066', edge: '#e8b92e', inner: '#ffc93a' },
+    centre: '#ffb02e', particle: 'fluff', particleCols: ['#ffffff', '#fffbe8'], grassFlowers: ['#ffffff', '#ffe066', '#ff7f8e', '#8fb8ff'],
+    legend: [['#ff7f8e', 'woman (rose)'], ['#ffe066', 'man (buttercup)']],
+  },
+  autumn: {
+    name: 'Autumn', sky: ['#3b2f62', '#c56a6a', '#ffc27a'], sun: { x: 0.8, y: 0.3, core: '255,228,170', glow: '255,170,90' }, rays: true, clouds: false,
+    hills: ['#b08a5a', '#8f6e44', '#6f5634'], ground: ['#8a8a3c', '#5f6428'], bark: ['#3a2618', '#674530', '#9a7050'],
+    leaves: ['#e8892e', '#d4582a', '#f2b23a', '#b8442a'],
+    female: { petal: '#c8326a', edge: '#9a1e4c', inner: '#e0507e' }, male: { petal: '#fff0b0', edge: '#e0c070', inner: '#ffe48a' },
+    centre: '#ffd060', particle: 'leaf', particleCols: ['#e8892e', '#d4582a', '#f2b23a'], grassFlowers: ['#fff0b0', '#c8326a', '#f2b23a', '#ffffff'],
+    legend: [['#c8326a', 'woman (crimson)'], ['#fff0b0', 'man (pale gold)']],
+  },
+  night: {
+    name: 'Night', sky: ['#060a24', '#16204a', '#3a3a6a'], sun: { x: 0.8, y: 0.14, core: '240,244,255', glow: '170,190,255', moon: true }, rays: false, clouds: false, stars: true,
+    hills: ['#1c2a4a', '#162238', '#101a2c'], ground: ['#1f3a2c', '#0f2018'], bark: ['#1a1414', '#3a2e2a', '#7a6a70'],
+    leaves: ['#24503e', '#2e6048', '#1c4234', '#3a705a'],
+    female: { petal: '#ffb0e0', edge: '#ff7ac8', inner: '#ffd0ee', glow: '255,140,210' }, male: { petal: '#b0e0ff', edge: '#7ac0ff', inner: '#d8f0ff', glow: '140,200,255' },
+    centre: '#fff6c0', particle: 'firefly', particleCols: ['#e8ff8a'], grassFlowers: ['#d8f0ff', '#ffd0ee', '#fff6c0'],
+    legend: [['#ffb0e0', 'woman (pink moonflower)'], ['#b0e0ff', 'man (blue moonflower)']],
+  },
+};
+const EST_FLOWER = { petal: '#cdb8ee', edge: '#a28ad0', inner: '#dccbf6' };
+
+// ---------------- backdrop ----------------
+const STARS = (() => { const r = seededRandom(9); return Array.from({ length: 160 }, () => [r(), r() * 0.7, 0.5 + r() * 1.3, r() * 6]); })();
+const CLOUDS = (() => { const r = seededRandom(4); return Array.from({ length: 5 }, () => ({ x: r(), y: 0.06 + r() * 0.18, s: 0.6 + r() * 0.7, v: 0.003 + r() * 0.005 })); })();
+const BLADES = (() => { const r = seededRandom(12); return Array.from({ length: 220 }, () => [r(), 4 + r() * 9, r() * 6, r()]); })();
+
+// The still parts of the scene are painted once into a cached canvas and reused every frame; only the clouds
+// drift on top. The cache is repainted when the size, season or ground line changes (e.g. while panning).
+let backCache = null, backKey = '';
+function paintBackdrop(ctx, W, H, st, t, groundY, trunkX, dpr = 1) {
+  const key = `${W}x${H}@${dpr}|${st.name}|${Math.round(groundY)}|${Math.round(trunkX)}`;
+  if (key !== backKey) {
+    backKey = key;
+    backCache ||= document.createElement('canvas');
+    backCache.width = Math.round(W * dpr); backCache.height = Math.round(H * dpr);
+    const c = backCache.getContext('2d');
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    paintStill(c, W, H, st, groundY, trunkX);
+  }
+  ctx.drawImage(backCache, 0, 0, W, H);
+  if (st.clouds) for (const c of CLOUDS) {
+    const x = ((c.x + t * c.v) % 1.3 - 0.15) * W, y = c.y * H, s = c.s * Math.max(22, W * 0.03);
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.beginPath();
+    for (const [dx, dy, r] of [[-1, 0.15, 0.55], [-0.35, -0.2, 0.75], [0.4, -0.05, 0.62], [1, 0.2, 0.45], [0, 0.25, 0.6]]) { ctx.moveTo(x + dx * s + r * s, y + dy * s); ctx.arc(x + dx * s, y + dy * s, r * s, 0, 7); }
+    ctx.fill();
+  }
+}
+function paintStill(ctx, W, H, st, groundY, trunkX) {
+  const t = 0;
+  const sky = ctx.createLinearGradient(0, 0, 0, Math.max(groundY, H * 0.5));
+  sky.addColorStop(0, st.sky[0]); sky.addColorStop(0.6, st.sky[1]); sky.addColorStop(1, st.sky[2]);
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+  if (st.stars) for (const [x, y, s, ph] of STARS) {
+    ctx.globalAlpha = 0.4 + (ph / 6) * 0.55;
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(x * W, y * H, s, s);
+  }
+  ctx.globalAlpha = 1;
+  // sun or moon with its glow
+  const sx = st.sun.x * W, sy = st.sun.y * H, R = Math.max(W, H);
+  const glow = ctx.createRadialGradient(sx, sy, 0, sx, sy, R * 0.55);
+  glow.addColorStop(0, `rgba(${st.sun.glow},0.55)`); glow.addColorStop(0.25, `rgba(${st.sun.glow},0.18)`); glow.addColorStop(1, `rgba(${st.sun.glow},0)`);
+  ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
+  if (st.rays) {
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 9; i++) {
+      const a = i * 0.7 + t * 0.015 + Math.sin(t * 0.2 + i) * 0.03, wdt = 0.05 + (i % 3) * 0.025;
+      ctx.fillStyle = `rgba(${st.sun.glow},${0.035 + (i % 2) * 0.02})`;
+      ctx.beginPath(); ctx.moveTo(sx, sy);
+      ctx.lineTo(sx + Math.cos(a - wdt) * R * 1.4, sy + Math.sin(a - wdt) * R * 1.4);
+      ctx.lineTo(sx + Math.cos(a + wdt) * R * 1.4, sy + Math.sin(a + wdt) * R * 1.4);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+  const sr = Math.max(18, Math.min(34, W * 0.025));
+  ctx.fillStyle = `rgb(${st.sun.core})`; ctx.beginPath(); ctx.arc(sx, sy, sr, 0, 7); ctx.fill();
+  if (st.sun.moon) {
+    ctx.fillStyle = 'rgba(160,170,200,0.35)';
+    for (const [dx, dy, r] of [[-0.3, -0.2, 0.22], [0.25, 0.15, 0.16], [0.05, 0.4, 0.12]]) { ctx.beginPath(); ctx.arc(sx + dx * sr, sy + dy * sr, r * sr, 0, 7); ctx.fill(); }
+  }
+  // rolling hills, fading into the distance
+  st.hills.forEach((col, i) => {
+    const base = groundY - (3 - i) * Math.max(16, H * 0.03), amp = 14 + (2 - i) * 10;
+    ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(0, H);
+    for (let x = 0; x <= W + 20; x += 20) ctx.lineTo(x, base - amp - Math.sin(x / (160 + i * 70) + i * 2) * amp - Math.sin(x / 63 + i) * amp * 0.25);
+    ctx.lineTo(W, H); ctx.fill();
+  });
+  // the meadow
+  const g = ctx.createLinearGradient(0, groundY - 20, 0, H);
+  g.addColorStop(0, st.ground[0]); g.addColorStop(1, st.ground[1]);
+  ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(0, groundY + 12);
+  ctx.quadraticCurveTo(W * 0.5, groundY - 18, W, groundY + 12); ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.fill();
+  // the tree's shadow, cast away from the light
+  const away = st.sun.x < 0.5 ? 1 : -1;
+  ctx.fillStyle = 'rgba(20,30,10,0.28)'; ctx.beginPath(); ctx.ellipse(trunkX + away * W * 0.06, groundY + 8, Math.max(60, W * 0.16), 12, 0, 0, 7); ctx.fill();
+  // grass blades swaying along the top edge
+  ctx.strokeStyle = st.ground[0]; ctx.lineWidth = 2; ctx.lineCap = 'round';
+  for (const [x, h, ph, k] of BLADES) {
+    const bx = x * W, by = groundY + 10 - Math.sin((bx / W) * Math.PI) * 26 + k * 8 + 2;
+    ctx.strokeStyle = k < 0.5 ? st.ground[0] : st.leaves[0];
+    ctx.beginPath(); ctx.moveTo(bx, by); ctx.quadraticCurveTo(bx + 1, by - h * 0.6, bx + Math.sin(ph) * 3, by - h); ctx.stroke();
+  }
+}
+/** y of the meadow's top edge at x (it bulges up a little in the middle). */
+const meadowY = (x, W, groundY) => groundY + 10 - Math.sin((x / W) * Math.PI) * 26;
+
+function vignette(ctx, W, H, st) {
+  const g = ctx.createRadialGradient(W / 2, H * 0.45, Math.min(W, H) * 0.35, W / 2, H * 0.5, Math.max(W, H) * 0.8);
+  g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, st.sun.moon ? 'rgba(0,0,10,0.5)' : 'rgba(30,10,0,0.28)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+}
+
+// ---------------- bark, leaves and blossoms ----------------
+function bezierAt(q, t) {
+  const u = 1 - t;
+  return [u * u * u * q[0] + 3 * u * u * t * q[2] + 3 * u * t * t * q[4] + t * t * t * q[6], u * u * u * q[1] + 3 * u * u * t * q[3] + 3 * u * t * t * q[5] + t * t * t * q[7]];
+}
+function bezTangent(q, t) {
+  const u = 1 - t;
+  const dx = 3 * u * u * (q[2] - q[0]) + 6 * u * t * (q[4] - q[2]) + 3 * t * t * (q[6] - q[4]);
+  const dy = 3 * u * u * (q[3] - q[1]) + 6 * u * t * (q[5] - q[3]) + 3 * t * t * (q[7] - q[5]);
+  const l = Math.hypot(dx, dy) || 1;
+  return [dx / l, dy / l];
+}
+
+/** A tapered branch along bezier q (screen coords) from t0 to t1, w0 wide at t=0 and w1 at t=1. lx: -1 lit from the left, 1 from the right. */
+function drawBranch(ctx, q, t0, t1, w0, w1, st, lx) {
+  const n = w0 > 7 ? 10 : w0 > 3 ? 5 : 2;
+  const pts = [];
+  for (let i = 0; i <= n; i++) { const t = t0 + (t1 - t0) * (i / n); const [x, y] = bezierAt(q, t); pts.push([x, y, w0 + (w1 - w0) * t]); }
+  ctx.lineCap = 'round';
+  const pass = (col, wk, off, alpha = 1) => {
+    ctx.strokeStyle = col; ctx.globalAlpha = alpha;
+    for (let i = 0; i < n; i++) {
+      const [x0, y0, a] = pts[i], [x1, y1, b] = pts[i + 1], w = (a + b) / 2;
+      ctx.lineWidth = Math.max(0.6, w * wk);
+      ctx.beginPath(); ctx.moveTo(x0 + off * a, y0); ctx.lineTo(x1 + off * b, y1); ctx.stroke();
+    }
+  };
+  pass(st.bark[0], 1, 0);
+  pass(st.bark[1], 0.72, lx * 0.1);
+  if (w0 > 2.2) pass(st.bark[2], 0.26, lx * 0.24, 0.75);
+  ctx.globalAlpha = 1;
+}
+
+/** Adds a leaf outline to a Path2D (no transforms), so many leaves of one colour can be filled at once. */
+function addLeaf(path, x, y, size, ang) {
+  const c = Math.cos(ang), s = Math.sin(ang), ex = x + c * size, ey = y + s * size;
+  const mx = x + c * size * 0.5, my = y + s * size * 0.5, px = -s * size * 0.42, py = c * size * 0.42;
+  path.moveTo(x, y); path.quadraticCurveTo(mx + px, my + py, ex, ey); path.quadraticCurveTo(mx - px, my - py, x, y);
+}
+const glowCache = new Map();
+/** A soft round glow, drawn once per colour and reused (much cheaper than a gradient per flower). rgb: '255,236,150' */
+function drawGlow(ctx, x, y, r, rgb, alpha = 1) {
+  let g = glowCache.get(rgb);
+  if (!g) {
+    g = document.createElement('canvas'); g.width = g.height = 64;
+    const c = g.getContext('2d'), gr = c.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gr.addColorStop(0, `rgba(${rgb},0.6)`); gr.addColorStop(0.5, `rgba(${rgb},0.22)`); gr.addColorStop(1, `rgba(${rgb},0)`);
+    c.fillStyle = gr; c.fillRect(0, 0, 64, 64);
+    glowCache.set(rgb, g);
+  }
+  ctx.globalAlpha = alpha; ctx.drawImage(g, x - r, y - r, r * 2, r * 2); ctx.globalAlpha = 1;
+}
+
+function drawLeaf(ctx, x, y, size, ang, col, vein) {
+  ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
+  ctx.fillStyle = col;
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(size * 0.5, -size * 0.42, size, 0); ctx.quadraticCurveTo(size * 0.5, size * 0.42, 0, 0); ctx.fill();
+  if (vein) { ctx.strokeStyle = 'rgba(0,0,0,0.18)'; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(size * 0.1, 0); ctx.lineTo(size * 0.85, 0); ctx.stroke(); }
+  ctx.restore();
+}
+
+/** A blossom: a bud that swells and opens. open 0..1, female: 5 round petals, male: 6 slender ones. */
+function drawFlower(ctx, x, y, r, open, female, pal, centre, spin = 0, glowing = false) {
+  if (open <= 0 || r <= 0) return;
+  if (glowing && pal.glow) drawGlow(ctx, x, y, r * 2.6, pal.glow);
+  if (open < 0.35) {
+    // the bud
+    const k = open / 0.35;
+    ctx.fillStyle = '#5a9a3a'; ctx.beginPath(); ctx.ellipse(x, y + r * 0.15, r * 0.32 * k + 1, r * 0.42 * k + 1, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = pal.edge; ctx.beginPath(); ctx.ellipse(x, y - r * 0.12 * k, r * 0.24 * k + 0.5, r * 0.34 * k + 0.5, 0, 0, 7); ctx.fill();
+    return;
+  }
+  const k = (open - 0.35) / 0.65, e = 1 - Math.pow(1 - k, 3);
+  const n = female ? 5 : 6, rx = (female ? 0.5 : 0.56) * r * e, ry = (female ? 0.42 : 0.27) * r * e, d = r * 0.5 * e;
+  ctx.save(); ctx.translate(x, y); ctx.rotate(spin + (1 - e) * 0.8);
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 - Math.PI / 2;
+    ctx.save(); ctx.rotate(a); ctx.translate(d, 0);
+    ctx.fillStyle = pal.petal; ctx.beginPath(); ctx.ellipse(0, 0, rx, ry, 0, 0, 7); ctx.fill();
+    ctx.strokeStyle = pal.edge; ctx.lineWidth = Math.max(0.6, r * 0.06); ctx.stroke();
+    ctx.fillStyle = pal.inner; ctx.globalAlpha = 0.55; ctx.beginPath(); ctx.ellipse(-rx * 0.45, 0, rx * 0.45, ry * 0.55, 0, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+  ctx.fillStyle = centre; ctx.beginPath(); ctx.arc(0, 0, r * 0.24 * e, 0, 7); ctx.fill();
+  ctx.fillStyle = 'rgba(160,90,20,0.75)';
+  for (let i = 0; i < 7; i++) { const a = i * 0.9; ctx.beginPath(); ctx.arc(Math.cos(a) * r * 0.3 * e, Math.sin(a) * r * 0.3 * e, Math.max(0.6, r * 0.05), 0, 7); ctx.fill(); }
+  // a gleam on the lit side
+  ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.beginPath(); ctx.arc(-r * 0.12 * e, -r * 0.14 * e, r * 0.1 * e, 0, 7); ctx.fill();
+  ctx.restore();
+}
+
+// ---------------- life ----------------
+const BUTTERFLY = [['#ffb347', '#a8501a'], ['#7ec8ff', '#2a5a9a'], ['#ff8fd0', '#9a2a6a'], ['#fff27a', '#a88a1a'], ['#b48cff', '#4a2a8a'], ['#ffffff', '#7a7a8a']];
+
+/**
+ * Butterflies, caterpillars, meadow flowers and falling petals. Positions are in tree (layout) coordinates,
+ * so they move with pan and zoom; env.X/env.Y turn them into screen coordinates.
+ */
+class Life {
+  constructor(seed = 1) { this.rnd = seededRandom(seed); this.reset(); }
+  reset() { this.flies = []; this.cats = []; this.meadow = []; this.bits = []; this.catClock = 2; this.bitClock = 0; }
+  bloom(x, y, env) {
+    const r = this.rnd;
+    if (this.meadow.length < 160) this.meadow.push({ x: env.groundSpan[0] + r() * (env.groundSpan[1] - env.groundSpan[0]), dy: r() * 26, t: 0, ci: Math.floor(r() * 12), s: 0.7 + r() * 0.6, d: 0.6 + r() * 1.4 });
+    if (this.flies.length < 9 && r() < 0.16) this.spawnFly(x, y + 10);
+  }
+  spawnFly(x, y) {
+    const r = this.rnd;
+    this.flies.push({ x, y, vx: (r() - 0.5) * 30, vy: -20, tx: x, ty: y - 40, retarget: 0, age: 0, life: 10 + r() * 8, cols: BUTTERFLY[Math.floor(r() * BUTTERFLY.length)], ph: r() * 6, s: 0.8 + r() * 0.5 });
+  }
+  update(dt, env) {
+    const r = this.rnd;
+    // butterflies wander from flower to flower, then flutter away
+    for (const f of this.flies) {
+      f.age += dt; f.retarget -= dt;
+      if (f.age > f.life) { f.tx = f.x + (f.x > env.midX ? 300 : -300); f.ty = f.y - 400; }
+      else if (f.retarget <= 0 && env.flowers.length) {
+        const fl = env.flowers[Math.floor(r() * env.flowers.length)];
+        f.tx = fl[0] + (r() - 0.5) * 30; f.ty = fl[1] - 10 - r() * 25; f.retarget = 1.5 + r() * 2.5;
+      }
+      const dx = f.tx - f.x, dy = f.ty - f.y, d = Math.hypot(dx, dy) || 1;
+      f.vx += (dx / d * 70 - f.vx) * dt * 1.6 + (r() - 0.5) * 140 * dt;
+      f.vy += (dy / d * 70 - f.vy) * dt * 1.6 + (r() - 0.5) * 140 * dt + Math.sin(f.age * 7 + f.ph) * 40 * dt;
+      f.x += f.vx * dt; f.y += f.vy * dt;
+    }
+    this.flies = this.flies.filter(f => f.age < f.life + 7);
+    // caterpillars inch along grown branches; at the end of their walk they become butterflies
+    this.catClock -= dt;
+    if (this.catClock <= 0 && this.cats.length < 4 && env.branches.length) {
+      this.catClock = 4 + r() * 5;
+      const b = env.branches[Math.floor(r() * env.branches.length)];
+      if (b.full && b.w > 3) this.cats.push({ b, s: 0.12 + r() * 0.2, speed: 0.025 + r() * 0.025, ph: r() * 6, col: r() < 0.5 ? ['#7cc84a', '#c8e86a'] : ['#f0a030', '#ffe080'], age: 0 });
+    }
+    for (const c of this.cats) {
+      c.age += dt;
+      c.s += c.speed * dt * (0.25 + Math.max(0, Math.sin(c.age * 4 + c.ph)) * 1.5);
+      if (c.s > 0.9 || !c.b.full) { c.done = true; if (c.b.full) { const p = env.bezWorld(c.b, c.s); this.spawnFly(p[0], p[1]); } }
+    }
+    this.cats = this.cats.filter(c => !c.done && env.branches.includes(c.b));
+    for (const m of this.meadow) m.t += dt;
+    // falling petals, leaves, summer fluff or fireflies
+    this.bitClock -= dt;
+    if (this.bitClock <= 0 && env.flowers.length && this.bits.length < 40) {
+      this.bitClock = 0.35 + r() * 0.6;
+      const fl = env.flowers[Math.floor(r() * env.flowers.length)];
+      this.bits.push({ x: fl[0], y: fl[1], vx: (r() - 0.5) * 12, vy: env.st.particle === 'firefly' ? (r() - 0.5) * 10 : 8 + r() * 14, rot: r() * 6, vr: (r() - 0.5) * 3, age: 0, life: 7 + r() * 6, col: env.st.particleCols[Math.floor(r() * env.st.particleCols.length)], ph: r() * 6 });
+    }
+    for (const b of this.bits) {
+      b.age += dt;
+      if (env.st.particle === 'firefly') { b.vx += (r() - 0.5) * 40 * dt; b.vy += (r() - 0.5) * 40 * dt; b.vx *= 0.98; b.vy *= 0.98; }
+      else { b.vx = Math.sin(b.age * 1.7 + b.ph) * 18; if (b.y > env.groundY - 4) { b.vy = 0; b.vx = 0; b.vr = 0; } }
+      b.x += b.vx * dt; b.y += b.vy * dt; b.rot += b.vr * dt;
+    }
+    this.bits = this.bits.filter(b => b.age < b.life);
+  }
+  drawMeadow(ctx, env) {
+    const { X, Y, k } = env;
+    for (const m of this.meadow) {
+      const g = Math.min(1, m.t / m.d), x = X(m.x), base = Y(env.groundY) + m.dy * k;
+      const h = (8 + m.s * 10) * k * Math.min(1, g * 1.6);
+      ctx.strokeStyle = '#3f8a34'; ctx.lineWidth = Math.max(1, 1.2 * k);
+      ctx.beginPath(); ctx.moveTo(x, base); ctx.quadraticCurveTo(x + 2 * k, base - h * 0.5, x, base - h); ctx.stroke();
+      const open = Math.max(0, (g - 0.4) / 0.6);
+      if (open > 0) {
+        ctx.fillStyle = env.st.grassFlowers[m.ci % env.st.grassFlowers.length];
+        const rr = (2.4 + m.s * 1.8) * k * open;
+        for (let i = 0; i < 5; i++) { const a = i * 1.2566; ctx.beginPath(); ctx.arc(x + Math.cos(a) * rr * 0.8, base - h + Math.sin(a) * rr * 0.8, rr * 0.62, 0, 7); ctx.fill(); }
+        ctx.fillStyle = '#ffcf3a'; ctx.beginPath(); ctx.arc(x, base - h, rr * 0.45, 0, 7); ctx.fill();
+      }
+    }
+  }
+  drawCreatures(ctx, env, t) {
+    const { X, Y, k } = env;
+    // caterpillars
+    for (const c of this.cats) {
+      const segs = 7;
+      for (let i = segs - 1; i >= 0; i--) {
+        const s = Math.max(0.01, c.s - i * 0.012);
+        const [wx, wy] = env.bezWorld(c.b, s), [tx, ty] = env.bezTanWorld(c.b, s);
+        let nx = -ty, ny = tx; if (ny > 0) { nx = -nx; ny = -ny; } // the upper side of the branch
+        const hump = Math.max(0, Math.sin(c.age * 4 + c.ph - i * 0.7)) * 2.2;
+        const off = c.b.wWorld * 0.5 + 2.4 + hump;
+        const x = X(wx + nx * off), y = Y(wy + ny * off), rr = (i === 0 ? 3 : 2.6) * k;
+        ctx.fillStyle = i === 0 ? '#3a5a1a' : c.col[i % 2]; ctx.beginPath(); ctx.arc(x, y, rr, 0, 7); ctx.fill();
+        if (i === 0) {
+          ctx.strokeStyle = '#3a2a1a'; ctx.lineWidth = Math.max(0.6, 0.7 * k);
+          ctx.beginPath(); ctx.moveTo(x, y - rr * 0.6); ctx.lineTo(x + tx * 3 * k + nx * 3 * k, y + ty * 3 * k + ny * 3 * k); ctx.stroke();
+          ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x + tx * rr * 0.4, y + ty * rr * 0.4 - rr * 0.2, rr * 0.3, 0, 7); ctx.fill();
+        }
+      }
+    }
+    // butterflies
+    for (const f of this.flies) {
+      const x = X(f.x), y = Y(f.y), s = 6 * f.s * k;
+      const flap = 0.2 + 0.8 * Math.abs(Math.sin(t * 13 + f.ph));
+      const tilt = Math.max(-0.5, Math.min(0.5, f.vx / 120));
+      ctx.save(); ctx.translate(x, y); ctx.rotate(tilt);
+      for (const side of [-1, 1]) {
+        ctx.save(); ctx.scale(side * flap, 1);
+        ctx.fillStyle = f.cols[0];
+        ctx.beginPath(); ctx.ellipse(s * 0.75, -s * 0.45, s * 0.8, s * 0.62, -0.4, 0, 7); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(s * 0.55, s * 0.45, s * 0.5, s * 0.4, 0.5, 0, 7); ctx.fill();
+        ctx.fillStyle = f.cols[1]; ctx.globalAlpha = 0.7;
+        ctx.beginPath(); ctx.arc(s * 0.95, -s * 0.55, s * 0.2, 0, 7); ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.restore();
+      }
+      ctx.fillStyle = '#2a1a1a'; ctx.beginPath(); ctx.ellipse(0, 0, s * 0.14, s * 0.7, 0, 0, 7); ctx.fill();
+      ctx.restore();
+    }
+    // petals, leaves, fluff, fireflies
+    for (const b of this.bits) {
+      const x = X(b.x), y = Y(b.y), fade = Math.min(1, (b.life - b.age) / 1.5, b.age / 0.4);
+      ctx.globalAlpha = Math.max(0, fade);
+      if (env.st.particle === 'firefly') {
+        const on = 0.4 + 0.6 * Math.max(0, Math.sin(b.age * 3 + b.ph));
+        drawGlow(ctx, x, y, 9 * k, '232,255,138', Math.max(0, fade) * on);
+        ctx.globalAlpha = Math.max(0, fade);
+      } else if (env.st.particle === 'fluff') {
+        ctx.strokeStyle = b.col; ctx.lineWidth = 0.8;
+        for (let i = 0; i < 6; i++) { const a = i * 1.047 + b.rot; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a) * 3 * k, y + Math.sin(a) * 3 * k); ctx.stroke(); }
+      } else if (env.st.particle === 'leaf') drawLeaf(ctx, x, y, 7 * k, b.rot, b.col, false);
+      else { ctx.save(); ctx.translate(x, y); ctx.rotate(b.rot); ctx.fillStyle = b.col; ctx.beginPath(); ctx.ellipse(0, 0, 3.4 * k, 2.2 * k, 0, 0, 7); ctx.fill(); ctx.restore(); }
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+
+return { paintBackdrop, vignette, bezierAt, bezTangent, drawBranch, addLeaf, drawGlow, drawLeaf, drawFlower, TREE_STYLES, EST_FLOWER, meadowY, Life };
+})();
+
+// ---- verses.js ----
+const __m_verses = (() => {
+// Bible verses about generations, family and heritage for the growing tree (New International Version, UK spelling).
+// `on` marks the ones shown until someone picks their own in the Visualisation tab.
+const VERSES = [
+  { id: 'ps145-4', ref: 'Psalm 145:4', on: true, text: 'One generation commends your works to another; they tell of your mighty acts.' },
+  { id: 'joel1-3', ref: 'Joel 1:3', on: true, text: 'Tell it to your children, and let your children tell it to their children, and their children to the next generation.' },
+  { id: 'ps16-6', ref: 'Psalm 16:6', on: true, text: 'The boundary lines have fallen for me in pleasant places; surely I have a delightful inheritance.' },
+  { id: 'ps100-5', ref: 'Psalm 100:5', on: true, text: 'For the LORD is good and his love endures for ever; his faithfulness continues through all generations.' },
+  { id: 'prov17-6', ref: 'Proverbs 17:6', on: true, text: "Children's children are a crown to the aged, and parents are the pride of their children." },
+  { id: 'ps78-4', ref: 'Psalm 78:4', on: true, text: 'We will not hide them from their descendants; we will tell the next generation the praiseworthy deeds of the LORD, his power, and the wonders he has done.' },
+  { id: 'ps102-18', ref: 'Psalm 102:18', on: true, text: 'Let this be written for a future generation, that a people not yet created may praise the LORD.' },
+  { id: 'job8-8', ref: 'Job 8:8', on: true, text: 'Ask the former generation and find out what their ancestors learned.' },
+  { id: 'ps90-1', ref: 'Psalm 90:1', on: false, text: 'Lord, you have been our dwelling place throughout all generations.' },
+  { id: 'ps103-17', ref: 'Psalm 103:17', on: false, text: "But from everlasting to everlasting the LORD's love is with those who fear him, and his righteousness with their children's children." },
+  { id: 'prov13-22', ref: 'Proverbs 13:22', on: false, text: "A good person leaves an inheritance for their children's children, but a sinner's wealth is stored up for the righteous." },
+  { id: 'ex20-12', ref: 'Exodus 20:12', on: false, text: 'Honour your father and your mother, so that you may live long in the land the LORD your God is giving you.' },
+  { id: 'deut7-9', ref: 'Deuteronomy 7:9', on: false, text: 'Know therefore that the LORD your God is God; he is the faithful God, keeping his covenant of love to a thousand generations of those who love him and keep his commandments.' },
+  { id: 'isa46-4', ref: 'Isaiah 46:4', on: false, text: 'Even to your old age and grey hairs I am he, I am he who will sustain you. I have made you and I will carry you; I will sustain you and I will rescue you.' },
+  { id: 'ps71-18', ref: 'Psalm 71:18', on: false, text: 'Even when I am old and grey, do not forsake me, my God, till I declare your power to the next generation, your mighty acts to all who are to come.' },
+  { id: 'ps127-3', ref: 'Psalm 127:3', on: false, text: 'Children are a heritage from the LORD, offspring a reward from him.' },
+  { id: 'prov22-6', ref: 'Proverbs 22:6', on: false, text: 'Start children off on the way they should go, and even when they are old they will not turn from it.' },
+  { id: '1tim5-8', ref: '1 Timothy 5:8', on: false, text: 'Anyone who does not provide for their relatives, and especially for their own household, has denied the faith and is worse than an unbeliever.' },
+  { id: 'ps1-3', ref: 'Psalm 1:3', on: false, text: 'That person is like a tree planted by streams of water, which yields its fruit in season and whose leaf does not wither—whatever they do prospers.' },
+  { id: 'isa51-1', ref: 'Isaiah 51:1', on: false, text: 'Listen to me, you who pursue righteousness and who seek the LORD: Look to the rock from which you were cut and to the quarry from which you were hewn.' },
+];
+const VERSE_COPYRIGHT = 'Scripture quotations taken from The Holy Bible, New International Version® NIV®. Copyright © 1973, 1978, 1984, 2011 by Biblica, Inc.™ Used by permission. All rights reserved worldwide.';
+
+/**
+ * Reads verses out a word at a time, like someone reading aloud: each word fades and rises into place,
+ * with a longer pause at commas and full stops. Then the reference appears, the verse rests on screen,
+ * fades away, and after a quiet gap the next one begins.
+ */
+class VerseReader {
+  constructor(verses) {
+    this.list = verses.slice();
+    for (let i = this.list.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [this.list[i], this.list[j]] = [this.list[j], this.list[i]]; }
+    this.i = 0; this.t = -3; // a short quiet moment before the first verse
+    this.plan();
+  }
+  plan() {
+    const v = this.list[this.i % this.list.length];
+    this.verse = v;
+    this.words = [];
+    let at = 0;
+    for (const w of v.text.split(/\s+/)) {
+      this.words.push({ w, at });
+      at += 0.36 + Math.min(0.25, w.length * 0.025) + (/[,;:]$/.test(w) ? 0.35 : /[.!?]$/.test(w) ? 0.6 : 0);
+    }
+    this.readEnd = at;
+    this.refAt = at + 0.4;
+    this.fadeAt = at + 6.5;
+    this.end = this.fadeAt + 1.6;
+    this.gap = 7;
+  }
+  update(dt) {
+    if (!this.list.length) return;
+    this.t += dt;
+    if (this.t > this.end + this.gap) { this.i++; this.t = 0; this.plan(); }
+  }
+  /** Draws the verse centred at (cx, y) within maxW. style: { ink, glow, font } */
+  draw(ctx, cx, y, maxW, style) {
+    if (!this.list.length || this.t < 0 || this.t > this.end) return 0;
+    const fade = this.t > this.fadeAt ? Math.max(0, 1 - (this.t - this.fadeAt) / (this.end - this.fadeAt)) : 1;
+    const size = Math.max(16, Math.min(24, maxW / 24));
+    ctx.font = `italic 500 ${size}px Lora, Georgia, 'Times New Roman', serif`;
+    const space = ctx.measureText(' ').width, lh = size * 1.45;
+    // lay the words out in lines
+    const lines = [[]];
+    let lw = 0;
+    for (const word of this.words) {
+      const w = ctx.measureText(word.w).width;
+      if (lw && lw + space + w > maxW) { lines.push([]); lw = 0; }
+      lines[lines.length - 1].push({ ...word, width: w });
+      lw += (lw ? space : 0) + w;
+    }
+    ctx.save();
+    ctx.textBaseline = 'top'; ctx.textAlign = 'left';
+    ctx.shadowColor = style.glow; ctx.shadowBlur = 10;
+    lines.forEach((line, li) => {
+      const total = line.reduce((s, w) => s + w.width, 0) + space * (line.length - 1);
+      let x = cx - total / 2;
+      for (const word of line) {
+        const k = Math.max(0, Math.min(1, (this.t - word.at) / 0.55));
+        if (k > 0) {
+          ctx.globalAlpha = fade * k * k * (3 - 2 * k);
+          ctx.fillStyle = style.ink;
+          ctx.fillText(word.w, x, y + li * lh + (1 - k) * 6);
+        }
+        x += word.width + space;
+      }
+    });
+    const refK = Math.max(0, Math.min(1, (this.t - this.refAt) / 0.8));
+    if (refK > 0) {
+      ctx.globalAlpha = fade * refK;
+      ctx.font = `600 ${Math.round(size * 0.62)}px Nunito, system-ui, sans-serif`;
+      ctx.textAlign = 'center'; ctx.fillStyle = style.ink;
+      ctx.fillText(`— ${this.verse.ref}`, cx, y + lines.length * lh + 4);
+    }
+    ctx.restore();
+    return lines.length * lh + size;
+  }
+}
+
+return { VERSES, VERSE_COPYRIGHT, VerseReader };
+})();
+
 // ---- growtree.js ----
 const __m_growtree = (() => {
 // Growing tree: your ancestors drawn as a real tree with you as the trunk, growing along a timeline.
@@ -5291,10 +5871,11 @@ const __m_growtree = (() => {
 //    meeting at each marriage, until every line arrives at you.
 // Height is the year each person was born (or simply their generation), and width is shared out like the
 // courtyard wedges, so big branches get more room. Anyone alive in the year on the clock glows.
-const { collectAncestors, displayName, firstName, lifespan, relationship, findEvent } = __m_ancestry;
+// The art (seasons, light, blossoms, butterflies and so on) is in treeart.js; Bible verses in verses.js.
+const { collectAncestors, displayName, firstName, lifespan, relationship, findEvent, seededRandom, hashString } = __m_ancestry;
 const { estimateYears, personLines } = __m_vizkit;
-const COLORS = { male: '#4f8ae8', female: '#ee6f9e', bark: '#7a5638', barkHi: '#a87c54', est: '#b9a6d8' };
-
+const { TREE_STYLES, EST_FLOWER, paintBackdrop, vignette, drawBranch, addLeaf, drawGlow, drawFlower, Life, bezierAt, bezTangent } = __m_treeart;
+const { VerseReader } = __m_verses;
 function bezierPoint(p, t) {
   const u = 1 - t;
   return [u * u * u * p[0] + 3 * u * u * t * p[2] + 3 * u * t * t * p[4] + t * t * t * p[6], u * u * u * p[1] + 3 * u * u * t * p[3] + 3 * u * t * t * p[5] + t * t * t * p[7]];
@@ -5315,6 +5896,7 @@ function bezierSub(p, t0, t1) {
 
 function createGrowTree(host, opts) {
   const { data, rootId, maxGen = 10, onFrame = () => {}, onEnd = () => {}, onSelect = () => {} } = opts;
+  let reader = opts.verses?.length ? new VerseReader(opts.verses) : null;
   const tree = collectAncestors(data, rootId, maxGen);
   const people = [...tree.people.values()];
   const years = estimateYears(data, people.map(p => p.id));
@@ -5375,14 +5957,24 @@ function createGrowTree(host, opts) {
   resize();
   window.addEventListener('resize', resize);
 
-  const state = { dir: 'back', spacing: 'year', T: yMax, playing: false, speed: 1, popAt: new Map(), selected: null };
+  const state = { dir: 'back', spacing: 'year', T: yMax, playing: false, speed: 1, popAt: new Map(), selected: null,
+    style: TREE_STYLES[opts.style] ? opts.style : 'spring', versesOn: opts.versesOn !== false, verseBelow: false };
+  const life = new Life(hashString(rootId));
+  // leaves along each branch, placed once so they don't jump about
+  for (const e of edges) {
+    const r = seededRandom(hashString(e.p.id + 'leaves'));
+    const n = Math.max(2, Math.min(7, Math.round(7 - Math.log2(e.p.weight + 1))));
+    e.leaves = Array.from({ length: n }, (_, i) => ({ s: 0.3 + (i + r()) / n * 0.65, side: i % 2 ? 1 : -1, size: 0.75 + r() * 0.5, ang: 0.5 + r() * 0.7, ci: Math.floor(r() * 4) }));
+    e.branch = { e, q: null, wWorld: 1, full: false };
+  }
+  for (const p of people) p.spin = (hashString(p.id) % 100) / 100;
   const span = Math.max(30, yMax - yMin);
   const yearsPerSecond = () => (span / 28) * state.speed;
   const startYear = () => state.dir === 'back' ? yMax + 1 : yMin - 3;
   const endYear = () => state.dir === 'back' ? yMin - 3 : yMax + 2;
 
   // layout in screen space (before pan/zoom): x across the canopy, y by birth year or by generation
-  const pad = () => ({ l: Math.max(54, W * 0.06), r: Math.max(24, W * 0.04), t: Math.max(134, H * 0.16), b: Math.max(170, H * 0.24) });
+  const pad = () => ({ l: Math.max(54, W * 0.06), r: Math.max(24, W * 0.04), t: Math.max(134, H * 0.16) + (state.verseBelow ? 112 : 0), b: W < 600 ? Math.max(250, H * 0.3) : Math.max(170, H * 0.24) });
   function layout() {
     const P = pad(), cw = W - P.l - P.r, ch = H - P.t - P.b;
     const yOf = p => state.spacing === 'gen' ? P.t + ch - (p.gen / maxGenFound) * ch : P.t + ((p.birth - yMin) / Math.max(1, yMax - yMin)) * ch;
@@ -5406,91 +5998,131 @@ function createGrowTree(host, opts) {
   const visible = (p, T) => state.dir === 'back' ? T <= p.birth || p === root : T >= p.birth;
 
   // ---- drawing ----
+  const SHADOW = 'rgba(20,14,30,0.7)';
+  function text(str, x, y, font, color, align = 'left', base = 'top') {
+    ctx.font = font; ctx.textAlign = align; ctx.textBaseline = base;
+    ctx.shadowColor = SHADOW; ctx.shadowBlur = 6; ctx.fillStyle = color; ctx.fillText(str, x, y); ctx.shadowBlur = 0;
+  }
+  let lastDraw = performance.now();
   function draw() {
-    const T = state.T;
+    const T = state.T, st = TREE_STYLES[state.style];
+    const now = performance.now(), t = now / 1000, dt = Math.min(0.1, (now - lastDraw) / 1000); lastDraw = now;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const { P, cw, yearY } = layout();
-    // sky and ground
-    const sky = ctx.createLinearGradient(0, 0, 0, H);
-    sky.addColorStop(0, '#1c2a4a'); sky.addColorStop(0.55, '#3d5a7a'); sky.addColorStop(1, '#f2c48a');
-    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
-    const groundY = Y(root.sy + Math.max(36, P.b * 0.45));
-    ctx.fillStyle = '#4f7a3a'; ctx.beginPath(); ctx.moveTo(0, groundY + 10);
-    ctx.quadraticCurveTo(W * 0.5, groundY - 22, W, groundY + 10); ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.fill();
-    ctx.fillStyle = '#3e6630'; ctx.fillRect(0, Math.max(groundY + 18, H - 6), W, 6);
+    // where the verse goes: between the title and the year on wide screens, under the title on narrow ones
+    const title = `The family tree of ${displayName(root.indi)}`;
+    ctx.font = '700 18px Fredoka, Nunito, system-ui, sans-serif';
+    const titleW = ctx.measureText(title).width + 32, yearW = Math.max(34, Math.min(64, W * 0.07)) * 2.6 + 16;
+    const wideRoom = W - 2 * Math.max(titleW, yearW) - 40;
+    const showVerse = state.versesOn && reader;
+    state.verseBelow = showVerse && wideRoom < 340;
+    const { P, yearY } = layout();
+    const k = Math.sqrt(view.s);
+    const groundW = root.sy + Math.max(36, P.b * 0.45);
+    const groundY = Y(groundW), trunkX = X(root.sx);
+    const lx = st.sun.x < 0.5 ? -1 : 1;
+
+    paintBackdrop(ctx, W, H, st, t, groundY, trunkX, dpr);
 
     // timeline grid
-    ctx.font = '600 11px Nunito, system-ui, sans-serif'; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
     if (state.spacing === 'year') {
       const step = span > 400 ? 100 : span > 160 ? 50 : 25;
       for (let y = Math.ceil(yMin / step) * step; y <= yMax; y += step) {
         const sy = Y(yearY(y));
-        if (sy < 40 || sy > H) continue;
-        ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, sy); ctx.lineTo(W, sy); ctx.stroke();
-        ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.fillText(String(y), 8, sy - 7);
+        if (sy < 40 || sy > groundY - 20) continue;
+        ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, sy); ctx.lineTo(W, sy); ctx.stroke();
+        text(String(y), 8, sy - 7, '600 11px Nunito, system-ui, sans-serif', 'rgba(255,255,255,0.75)', 'left', 'middle');
       }
     } else {
       for (let g = 0; g <= maxGenFound; g++) {
         const sy = Y(P.t + (H - P.t - P.b) - (g / maxGenFound) * (H - P.t - P.b));
-        ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, sy); ctx.lineTo(W, sy); ctx.stroke();
-        ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.fillText(g ? `Gen ${g}` : 'You', 8, sy - 7);
+        ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, sy); ctx.lineTo(W, sy); ctx.stroke();
+        text(g ? `Gen ${g}` : 'You', 8, sy - 7, '600 11px Nunito, system-ui, sans-serif', 'rgba(255,255,255,0.75)', 'left', 'middle');
       }
     }
-    // the year line sweeping across
     if (state.spacing === 'year' && T > yMin - 3 && T < yMax + 1) {
       const sy = Y(yearY(T));
       const g = ctx.createLinearGradient(0, 0, W, 0);
-      g.addColorStop(0, 'rgba(255,214,120,0)'); g.addColorStop(0.5, 'rgba(255,214,120,0.55)'); g.addColorStop(1, 'rgba(255,214,120,0)');
+      g.addColorStop(0, 'rgba(255,224,140,0)'); g.addColorStop(0.5, 'rgba(255,224,140,0.6)'); g.addColorStop(1, 'rgba(255,224,140,0)');
       ctx.strokeStyle = g; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, sy); ctx.lineTo(W, sy); ctx.stroke();
     }
 
-    // trunk: from the ground up to you
-    ctx.lineCap = 'round';
-    const tw = branchWidth(root);
-    ctx.strokeStyle = visible(root, T) ? COLORS.bark : 'rgba(0,0,0,0)'; ctx.lineWidth = tw * 1.15;
-    ctx.beginPath(); ctx.moveTo(X(root.sx) - tw * 0.2, groundY + 6); ctx.quadraticCurveTo(X(root.sx), (groundY + Y(root.sy)) / 2, X(root.sx), Y(root.sy)); ctx.stroke();
-    // branches, thickest first
+    // trunk: wide where it meets the ground, narrowing up to you
+    if (visible(root, T)) {
+      const tw = branchWidth(root), ry = Y(root.sy);
+      drawBranch(ctx, [trunkX - lx * tw * 0.3, groundY + 8, trunkX, groundY - (groundY - ry) * 0.3, trunkX, ry + (groundY - ry) * 0.3, trunkX, ry], 0, 1, tw * 1.9, tw * 1.05, st, lx);
+      // roots spreading into the grass
+      ctx.strokeStyle = st.bark[1]; ctx.lineCap = 'round';
+      for (const d of [-1, 1]) { ctx.lineWidth = tw * 0.45; ctx.beginPath(); ctx.moveTo(trunkX, groundY); ctx.quadraticCurveTo(trunkX + d * tw * 1.2, groundY + 4, trunkX + d * tw * 2.4, groundY + 10); ctx.stroke(); }
+    }
+    // branches, thickest first, then their leaves
     const order = edges.slice().sort((a, b) => b.p.weight - a.p.weight);
-    for (const pass of [0, 1]) {
-      for (const e of order) {
-        const [t0, t1] = grown(e, T);
-        if (t1 - t0 <= 0.001) continue;
-        const q = bezierSub(curveFor(e), t0, t1);
-        const wdt = branchWidth(e.p);
-        ctx.strokeStyle = pass ? COLORS.barkHi : COLORS.bark; ctx.lineWidth = pass ? Math.max(0.6, wdt * 0.3) : wdt;
-        ctx.beginPath(); ctx.moveTo(q[0] + (pass ? -wdt * 0.15 : 0), q[1]); ctx.bezierCurveTo(q[2] + (pass ? -wdt * 0.15 : 0), q[3], q[4] + (pass ? -wdt * 0.15 : 0), q[5], q[6] + (pass ? -wdt * 0.15 : 0), q[7]); ctx.stroke();
+    const branches = [];
+    const grownNow = new Map();
+    for (const e of order) {
+      const [t0, t1] = grown(e, T);
+      grownNow.set(e, [t0, t1]);
+      const c = e.c, p = e.p, dy = c.sy - p.sy;
+      e.branch.q = [c.sx, c.sy, c.sx, c.sy - dy * 0.55, p.sx, p.sy + dy * 0.45, p.sx, p.sy];
+      e.branch.full = t1 - t0 > 0.999;
+      if (t1 - t0 <= 0.001) continue;
+      const wb = branchWidth(e.p);
+      e.branch.wWorld = wb / view.s;
+      if (e.branch.full) branches.push(e.branch);
+      drawBranch(ctx, curveFor(e), t0, t1, wb * 1.3, wb * 0.72, st, lx);
+    }
+    // leaves are gathered into one path per colour and filled in a few calls
+    const leafPaths = st.leaves.map(() => new Path2D());
+    for (const e of order) {
+      const [t0, t1] = grownNow.get(e);
+      if (t1 - t0 <= 0.001) continue;
+      const q = curveFor(e), wb = branchWidth(e.p);
+      const base = Math.max(3.5, Math.min(9, e.p.room * 0.1)) * k;
+      for (const L of e.leaves) {
+        const into = state.dir === 'back' ? t1 - L.s : L.s - t0;
+        if (into <= 0) continue;
+        const grow = Math.min(1, into / 0.12);
+        const [x, y] = bezierAt(q, L.s), [tx, ty] = bezTangent(q, L.s);
+        const nx = -ty * L.side, ny = tx * L.side;
+        const lit = (nx * -lx) > 0 ? 1 : 0;
+        addLeaf(leafPaths[(L.ci + lit) % st.leaves.length], x + nx * wb * 0.45, y + ny * wb * 0.45, base * L.size * grow, Math.atan2(ny, nx) - L.side * L.ang * 0.5 - 0.3);
       }
     }
+    st.leaves.forEach((c, i) => { ctx.fillStyle = c; ctx.fill(leafPaths[i]); });
 
-    // people: blossoms (women) and leaves (men); a glow if they're alive in the year on the clock
-    const now = performance.now();
-    const labelled = [];
+    // people: a cluster of leaves and an opening blossom; a glow if they're alive in the year on the clock
+    const labelled = [], flowers = [];
+    const env = { X, Y, k, st, groundY: groundW, groundSpan: [P.l - 30, W - P.r + 30], midX: W / 2, flowers, branches,
+      bezWorld: (b, s) => bezierAt(b.q, s), bezTanWorld: (b, s) => bezTangent(b.q, s) };
     for (const p of people) {
       if (!visible(p, T)) { state.popAt.delete(p.id); continue; }
-      if (!state.popAt.has(p.id)) state.popAt.set(p.id, now);
+      if (!state.popAt.has(p.id)) { state.popAt.set(p.id, now); if (state.playing && p !== root) life.bloom(p.sx, p.sy, env); }
       const age = (now - state.popAt.get(p.id)) / 1000;
-      const pop = age < 0.45 ? 1 + Math.sin(age / 0.45 * Math.PI) * 0.6 : 1;
-      const r = Math.max(3.2, Math.min(15, p.room * 0.32)) * Math.sqrt(view.s) * (p === root ? 1.4 : 1) * Math.min(1, age * 5 + 0.2) * pop;
+      const open = Math.min(1, age / 1.1);
+      const r = Math.max(4, Math.min(16, p.room * 0.32)) * k * (p === root ? 1.45 : 1);
       const x = X(p.sx), y = Y(p.sy);
+      flowers.push([p.sx, p.sy]);
       if (x < -40 || x > W + 40 || y < -40 || y > H + 40) continue;
-      const alive = T >= p.birth && T <= p.end;
-      if (alive && p !== root) { ctx.fillStyle = 'rgba(255,230,140,0.28)'; ctx.beginPath(); ctx.arc(x, y, r * 2.1, 0, 7); ctx.fill(); }
-      const col = p.est ? COLORS.est : p.indi.sex === 'F' ? COLORS.female : COLORS.male;
-      if (p.indi.sex === 'F') {
-        ctx.fillStyle = col;
-        for (let i = 0; i < 5; i++) { const a = i * 1.2566 - Math.PI / 2; ctx.beginPath(); ctx.arc(x + Math.cos(a) * r * 0.55, y + Math.sin(a) * r * 0.55, r * 0.55, 0, 7); ctx.fill(); }
-        ctx.fillStyle = '#ffe9a0'; ctx.beginPath(); ctx.arc(x, y, r * 0.38, 0, 7); ctx.fill();
-      } else {
-        ctx.fillStyle = col;
-        ctx.beginPath(); ctx.ellipse(x, y, r * 0.95, r * 0.95, 0, 0, 7); ctx.fill();
-        ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.beginPath(); ctx.ellipse(x - r * 0.25, y - r * 0.3, r * 0.35, r * 0.22, -0.5, 0, 7); ctx.fill();
+      const alive = T >= p.birth && T <= p.end && p !== root;
+      if (alive) drawGlow(ctx, x, y, r * 2.4, '255,236,150');
+      if (p !== root) {
+        const crown = st.leaves.map(() => new Path2D());
+        for (let i = 0; i < 4; i++) {
+          const a = -Math.PI / 2 + (i - 1.5) * 0.85 + p.spin;
+          addLeaf(crown[(i + (Math.cos(a) * -lx > 0 ? 1 : 0)) % st.leaves.length], x + Math.cos(a) * r * 0.5, y + Math.sin(a) * r * 0.5, r * 0.95 * Math.min(1, open * 2), a);
+        }
+        st.leaves.forEach((c, i) => { ctx.fillStyle = c; ctx.fill(crown[i]); });
       }
-      ctx.strokeStyle = p === state.selected ? '#ffd36a' : 'rgba(255,255,255,0.85)'; ctx.lineWidth = p === state.selected ? 3 : 1.2;
-      if (p.est) ctx.setLineDash([3, 3]);
-      ctx.beginPath(); ctx.arc(x, y, r * 1.05, 0, 7); ctx.stroke(); ctx.setLineDash([]);
-      p.hitR = Math.max(10, r * 1.2);
+      const female = p.indi.sex === 'F';
+      const pal = p.est ? EST_FLOWER : female ? st.female : st.male;
+      drawFlower(ctx, x, y, r, open, female, pal, st.centre, p.spin * 6.28, !!st.sun.moon);
+      if (p === state.selected) { ctx.strokeStyle = '#ffd36a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, r * 1.25, 0, 7); ctx.stroke(); }
+      p.hitR = Math.max(12, r * 1.2);
       if (p.room * view.s > 46 || p === root || p === state.selected) labelled.push([p, x, y, r]);
     }
+    life.update(state.playing || life.flies.length || life.bits.length ? dt : 0, env);
+    life.drawMeadow(ctx, env);
+    life.drawCreatures(ctx, env, t);
+
     ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.lineJoin = 'round';
     for (const [p, x, y, r] of labelled) {
       const roomy = p.room * view.s > 110 || p === root;
@@ -5500,29 +6132,29 @@ function createGrowTree(host, opts) {
       ctx.strokeText(name, x, y + r + 3); ctx.fillText(name, x, y + r + 3);
       if (roomy) { ctx.font = '600 10px Nunito, system-ui, sans-serif'; const l = p === root ? 'You' : lifespan(p.indi) || (p.est ? `c.${p.birth}` : ''); ctx.strokeText(l, x, y + r + 18); ctx.fillStyle = '#d8dcf0'; ctx.fillText(l, x, y + r + 18); }
     }
+    vignette(ctx, W, H, st);
 
-    // title, year and the latest events (drawn on the canvas, so they are in recordings too)
-    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-    ctx.font = '700 18px Fredoka, Nunito, system-ui, sans-serif'; ctx.fillStyle = '#fff4dc';
-    ctx.fillText(`The family tree of ${displayName(root.indi)}`, 16, 60);
-    ctx.font = '600 12px Nunito, system-ui, sans-serif'; ctx.fillStyle = 'rgba(255,244,220,0.7)';
-    ctx.fillText(state.dir === 'back' ? 'Growing back in time from you' : 'History playing forward to you', 16, 84);
-    ctx.textAlign = 'right';
-    ctx.font = `700 ${Math.max(34, Math.min(64, W * 0.07))}px Fredoka, Nunito, system-ui, sans-serif`;
-    ctx.fillStyle = 'rgba(255,236,190,0.92)';
-    ctx.fillText(String(Math.round(Math.max(yMin - 3, Math.min(yMax + 2, T)))), W - 16, 10);
+    // title, year, the latest events and the verse (drawn on the canvas, so they are in recordings too)
+    text(title, 16, 60, '700 18px Fredoka, Nunito, system-ui, sans-serif', '#fff8e8');
+    text(state.dir === 'back' ? 'Growing back in time from you' : 'History playing forward to you', 16, 84, '600 12px Nunito, system-ui, sans-serif', 'rgba(255,248,232,0.85)');
+    text(String(Math.round(Math.max(yMin - 3, Math.min(yMax + 2, T)))), W - 16, 10, `700 ${Math.max(34, Math.min(64, W * 0.07))}px Fredoka, Nunito, system-ui, sans-serif`, 'rgba(255,240,200,0.95)', 'right');
     const passed = state.dir === 'back' ? events.filter(e => e.year >= T && e.year <= yMax + 1).slice(0, 4) : events.filter(e => e.year <= T).slice(-4).reverse();
-    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
     passed.forEach((e, i) => {
       ctx.globalAlpha = 1 - i * 0.22;
-      ctx.font = `${i ? 600 : 700} ${i ? 12 : 14}px Nunito, system-ui, sans-serif`;
-      ctx.fillStyle = e.kind === 'died' ? '#d6d0e8' : '#fff2c8';
-      let text = e.text;
-      while (text.length > 8 && ctx.measureText(text).width > W - 32) text = text.slice(0, -2);
-      if (text !== e.text) text = text.trimEnd() + '…';
-      ctx.fillText(text, 16, H - 128 - i * 18);
+      const font = `${i ? 600 : 700} ${i ? 12 : 14}px Nunito, system-ui, sans-serif`;
+      ctx.font = font;
+      let str = e.text;
+      while (str.length > 8 && ctx.measureText(str).width > W - 32) str = str.slice(0, -2);
+      if (str !== e.text) str = str.trimEnd() + '…';
+      text(str, 16, H - (W < 600 ? 196 : 128) - i * 18, font, e.kind === 'died' ? '#e4def4' : '#fff4cc', 'left', 'alphabetic');
     });
     ctx.globalAlpha = 1;
+    if (showVerse) {
+      reader.update(dt);
+      const style = { ink: '#fffaf0', glow: 'rgba(20,10,30,0.9)' };
+      if (state.verseBelow) reader.draw(ctx, W / 2, W < 600 ? 106 : 128, W - 40, style);
+      else reader.draw(ctx, W / 2, 18, Math.min(580, wideRoom), style);
+    }
   }
 
   // ---- interaction: drag to pan, wheel or pinch to zoom, tap to read about someone ----
@@ -5601,9 +6233,12 @@ function createGrowTree(host, opts) {
     get state() { return state; },
     play() { const end = endYear(); if (Math.abs(state.T - end) < 0.5) state.T = startYear(); state.playing = true; },
     pause() { state.playing = false; },
-    restart() { state.T = startYear(); state.popAt.clear(); },
-    seek(year) { state.T = year; state.popAt.clear(); },
-    setDirection(d) { state.dir = d === 'forward' ? 'forward' : 'back'; state.T = startYear(); state.popAt.clear(); },
+    restart() { state.T = startYear(); state.popAt.clear(); life.reset(); },
+    seek(year) { state.T = year; state.popAt.clear(); life.reset(); },
+    setDirection(d) { state.dir = d === 'forward' ? 'forward' : 'back'; state.T = startYear(); state.popAt.clear(); life.reset(); },
+    setStyle(name) { if (TREE_STYLES[name]) state.style = name; },
+    setVersesOn(on) { state.versesOn = !!on; },
+    setVerses(list) { reader = list?.length ? new VerseReader(list) : null; },
     setSpacing(s) { state.spacing = s === 'gen' ? 'gen' : 'year'; },
     setSpeed(x) { state.speed = x; },
     resetView() { view.s = 1; view.tx = 0; view.ty = 0; },
@@ -5626,6 +6261,21 @@ const { createGalaxy } = __m_galaxy;
 const { createGrowTree } = __m_growtree;
 const { CanvasRecorder, STAR_LEGEND, starColor, cssColor, fileSafe } = __m_vizkit;
 const { displayName } = __m_ancestry;
+const { TREE_STYLES } = __m_treeart;
+const { VERSES, VERSE_COPYRIGHT } = __m_verses;
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* private mode */ } },
+};
+const SEASONS = Object.keys(TREE_STYLES);
+let season = SEASONS.includes(store.get('a3d:season')) ? store.get('a3d:season') : 'spring';
+let versesOn = store.get('a3d:versesOn') !== '0';
+function chosenVerseIds() {
+  try { const ids = JSON.parse(store.get('a3d:verses') || 'null'); if (Array.isArray(ids)) return new Set(ids); } catch (e) { /* fall through */ }
+  return new Set(VERSES.filter(v => v.on).map(v => v.id));
+}
+const chosenVerses = () => { const ids = chosenVerseIds(); return VERSES.filter(v => ids.has(v.id)); };
+
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 let V = null; // { kind, view, recorder, onClose, base }
@@ -5642,14 +6292,19 @@ function showInfo(d) {
   if (!d) { el.classList.add('hidden'); return; }
   el.innerHTML = `<button class="vx" aria-label="Close">✕</button><b>${esc(d.name)}</b><div class="vrel">${esc([d.rel, d.life].filter(Boolean).join(' · '))}</div>`
     + d.lines.map(l => `<div>${esc(l)}</div>`).join('') + (d.estimated ? `<div class="vest">${esc(d.estimated)}</div>` : '')
-    + (V?.kind === 'galaxy' ? '<button class="vgo" id="vFly">Fly to them</button>' : '');
+    + (V?.kind === 'galaxy' ? '<button class="vgo" id="vFly">Fly-through to them</button>' : '');
   el.querySelector('.vx').onclick = () => { el.classList.add('hidden'); V?.view.select?.(null); };
   const fly = el.querySelector('#vFly');
-  if (fly) fly.onclick = () => V?.view.focusSelected();
+  if (fly) fly.onclick = () => V?.view.tourTo();
   el.classList.remove('hidden');
 }
 
 function legend(kind) {
+  if (kind === 'tree') {
+    const st = TREE_STYLES[season];
+    return st.legend.map(([c, l]) => `<div><i style="background:${c}"></i>${l}</div>`).join('')
+      + '<div><i style="background:#cdb8ee"></i>birth year estimated</div><div><i style="background:rgba(255,236,150,0.9)"></i>alive in that year</div>';
+  }
   if (kind === 'galaxy') {
     return '<div class="vlh">Stars by birth year</div>' + STAR_LEGEND.map(([l, y]) => `<div><i style="background:${cssColor(starColor(y))}"></i>${l}</div>`).join('')
       + '<div><i class="ln" style="background:#5a8cff"></i>through a father</div><div><i class="ln" style="background:#ff73b3"></i>through a mother</div>';
@@ -5698,6 +6353,7 @@ function tick(state) {
 
 function openViz({ kind, scope = 'ancestors', data, rootId, maxGen, onClose }) {
   closeViz(true);
+  try { document.fonts?.load('italic 500 20px Lora').catch(() => {}); } catch (e) { /* fonts are optional */ }
   const host = $('vizHost');
   host.innerHTML = '';
   $('viz').classList.remove('hidden');
@@ -5719,7 +6375,7 @@ function openViz({ kind, scope = 'ancestors', data, rootId, maxGen, onClose }) {
       if (scope === 'all' && V.view.total > V.view.count) status(`Showing ${V.view.count.toLocaleString()} of ${V.view.total.toLocaleString()} people (the closest relatives first).`);
     } else {
       V.view = createGrowTree(host, {
-        data, rootId, maxGen, onSelect: showInfo, onFrame: tick,
+        data, rootId, maxGen, onSelect: showInfo, onFrame: tick, style: season, verses: chosenVerses(), versesOn,
         onEnd: () => { if (V?.recorder?.recording) setTimeout(finishRecording, 1500); },
       });
       const [a, b] = V.view.range;
@@ -5745,6 +6401,7 @@ function closeViz(silent) {
   if (!silent) v.onClose?.();
 }
 const vizOpen = () => !!V;
+const vizView = () => V?.view;
 
 // ---- controls ----
 $('vClose').onclick = () => closeViz();
@@ -5757,6 +6414,52 @@ for (const b of document.querySelectorAll('#vDir button')) b.onclick = () => {
   document.querySelectorAll('#vDir button').forEach(x => x.classList.toggle('on', x === b));
   V?.view?.setDirection?.(b.dataset.dir); V?.view?.play?.();
 };
+function showSeason() {
+  const icons = { spring: '🌸', summer: '☀️', autumn: '🍂', night: '🌙' };
+  $('vSeason').textContent = `${icons[season]} ${TREE_STYLES[season].name}`;
+  $('vVerse').classList.toggle('lit', versesOn);
+  $('vVerse').setAttribute('aria-pressed', versesOn);
+}
+$('vSeason').onclick = () => {
+  season = SEASONS[(SEASONS.indexOf(season) + 1) % SEASONS.length];
+  store.set('a3d:season', season);
+  showSeason();
+  V?.view?.setStyle?.(season);
+  if (V?.kind === 'tree') $('vLegend').innerHTML = legend('tree');
+};
+$('vVerse').onclick = () => {
+  versesOn = !versesOn;
+  store.set('a3d:versesOn', versesOn ? '1' : '0');
+  $('versesToggle').checked = versesOn;
+  showSeason();
+  V?.view?.setVersesOn?.(versesOn);
+};
+showSeason();
+
+// ---- choosing the Bible verses (Visualisation tab in the menu) ----
+function renderVersePicker() {
+  const ids = chosenVerseIds();
+  $('verseList').innerHTML = VERSES.map(v => `<label class="verse"><input type="checkbox" data-id="${v.id}"${ids.has(v.id) ? ' checked' : ''}><span><b>${esc(v.ref)}</b> ${esc(v.text)}</span></label>`).join('');
+  $('verseSummary').textContent = `Choose verses (${ids.size} of ${VERSES.length} chosen)`;
+  $('versesToggle').checked = versesOn;
+  $('verseField').classList.toggle('off', !versesOn);
+}
+$('verseList').addEventListener('change', () => {
+  const ids = [...$('verseList').querySelectorAll('input:checked')].map(i => i.dataset.id);
+  store.set('a3d:verses', JSON.stringify(ids));
+  $('verseSummary').textContent = `Choose verses (${ids.length} of ${VERSES.length} chosen)`;
+});
+$('versesToggle').addEventListener('change', e => {
+  versesOn = e.target.checked;
+  store.set('a3d:versesOn', versesOn ? '1' : '0');
+  $('verseField').classList.toggle('off', !versesOn);
+  showSeason();
+});
+$('verseAll').onclick = e => { e.preventDefault(); $('verseList').querySelectorAll('input').forEach(i => { i.checked = true; }); $('verseList').dispatchEvent(new Event('change')); };
+$('verseNone').onclick = e => { e.preventDefault(); $('verseList').querySelectorAll('input').forEach(i => { i.checked = false; }); $('verseList').dispatchEvent(new Event('change')); };
+$('verseCopyright').textContent = VERSE_COPYRIGHT;
+renderVersePicker();
+
 for (const b of document.querySelectorAll('#vSpace button')) b.onclick = () => {
   document.querySelectorAll('#vSpace button').forEach(x => x.classList.toggle('on', x === b));
   V?.view?.setSpacing?.(b.dataset.space);
@@ -5773,7 +6476,7 @@ document.addEventListener('keydown', e => {
   else if (e.key === ' ' && V.kind === 'tree' && document.activeElement?.tagName !== 'BUTTON') { e.preventDefault(); $('vPlay').click(); }
 }, true);
 
-return { openViz, closeViz, vizOpen };
+return { openViz, closeViz, vizOpen, vizView };
 })();
 
 // ---- main.js ----
@@ -5789,7 +6492,7 @@ const { buildIslandFigure } = __m_npc;
 const { createMinigun, createImpacts, traceShot } = __m_weapon;
 const { buildFlatWorld, drawFluffyPortrait } = __m_fluffy;
 const { computeTraits } = __m_traits;
-const { openViz, vizOpen } = __m_viz;
+const { openViz, vizOpen, vizView } = __m_viz;
 const $ = id => document.getElementById(id);
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
@@ -5802,6 +6505,11 @@ const STYLES = { retro: 480, island: 1200, fluffy: 1200 };
 const THEME_OF = { retro: 'doom', island: 'island', fluffy: 'fluffy' };
 // Looks that were merged or retired map onto the ones that replaced them.
 const OLD_STYLES = { chunky: 'retro', sharp: 'retro', action: 'island', platform: 'island', blocks: 'island' };
+const LOOK_NOTES = {
+  retro: 'Retro: a hellish 90s courtyard seen through your own eyes. Carry a minigun, blow up toxic barrels and top up on boxes of bullets. Shot ancestors flinch and tell you off.',
+  island: 'Island: a cozy island seen from behind your own villager. Jump onto floating brick platforms, collect coins and bounce on your ancestors\' heads, then stop for a chat.',
+  fluffy: 'Fluffy: a top-down 2D garden where you and every ancestor are round, fluffy balls. Their fur takes the colours of their period clothes, with their hair (or hat) as a tuft on top. Roll along the paths, bump into people to make them squeak, and chat to them all.',
+};
 const LOGOS = {
   retro: ['ANCESTRY<br>3D', 'WALK AMONG YOUR ANCESTORS'],
   island: ['Ancestry<br>Island', 'Come and meet the family'],
@@ -5936,6 +6644,7 @@ function applyStyle(style, { silent = false } = {}) {
   document.body.classList.toggle('fluffy', flat());
   $('logo').innerHTML = LOGOS[style][0];
   $('tagline').textContent = LOGOS[style][1];
+  $('lookNote').textContent = LOOK_NOTES[style];
   $('styleSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.style === style));
   if (!silent) sfx.select();
   resize();
@@ -6094,6 +6803,7 @@ function setVizKind(kind) {
   $('vizSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.viz === S.vizKind));
   $('vizNote').textContent = VIZ_NOTES[S.vizKind];
   $('scopeField').classList.toggle('hidden', S.vizKind !== 'galaxy');
+  $('verseField').classList.toggle('hidden', S.vizKind !== 'tree');
 }
 for (const b of $('tabs').querySelectorAll('button')) b.onclick = () => { sfx.select(); setTab(b.dataset.tab); };
 for (const b of $('vizSeg').querySelectorAll('button')) b.onclick = () => { sfx.select(); setVizKind(b.dataset.viz); };
@@ -7021,18 +7731,19 @@ async function buildAttract() {
   requestAnimationFrame(spin);
 }
 
-S.couples = store.get('a3d:couples') === '1';
-S.shape = ['circle', 'half', 'tree'].includes(store.get('a3d:shape')) ? store.get('a3d:shape') : 'circle';
+// Defaults for a first visit: the Fluffy look, the Tree layout and couples standing together.
+S.couples = store.get('a3d:couples') !== '0';
+S.shape = ['circle', 'half', 'tree'].includes(store.get('a3d:shape')) ? store.get('a3d:shape') : 'tree';
 $('shapeSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.shape === S.shape));
 $('couplesToggle').checked = S.couples;
-applyStyle(OLD_STYLES[store.get('a3d:style')] || store.get('a3d:style') || 'retro', { silent: true });
+applyStyle(OLD_STYLES[store.get('a3d:style')] || store.get('a3d:style') || 'fluffy', { silent: true });
 S.vizScope = 'ancestors';
 setVizKind(store.get('a3d:viz'));
 setTab(store.get('a3d:tab'));
 S.booted = true;
 buildAttract();
 // expose for debugging / tests
-window.__A3D = { S, setTab, openViz, vizOpen, scene, camera, renderer, startGame, loadText, openDialog, setWaypoint, openMap, closeMap, applyStyle };
+window.__A3D = { S, setTab, openViz, vizOpen, vizView, scene, camera, renderer, startGame, loadText, openDialog, setWaypoint, openMap, closeMap, applyStyle };
 
 return {  };
 })();

@@ -4,6 +4,21 @@ import { createGalaxy } from './galaxy.js';
 import { createGrowTree } from './growtree.js';
 import { CanvasRecorder, STAR_LEGEND, starColor, cssColor, fileSafe } from './vizkit.js';
 import { displayName } from './ancestry.js';
+import { TREE_STYLES } from './treeart.js';
+import { VERSES, VERSE_COPYRIGHT } from './verses.js';
+
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* private mode */ } },
+};
+const SEASONS = Object.keys(TREE_STYLES);
+let season = SEASONS.includes(store.get('a3d:season')) ? store.get('a3d:season') : 'spring';
+let versesOn = store.get('a3d:versesOn') !== '0';
+function chosenVerseIds() {
+  try { const ids = JSON.parse(store.get('a3d:verses') || 'null'); if (Array.isArray(ids)) return new Set(ids); } catch (e) { /* fall through */ }
+  return new Set(VERSES.filter(v => v.on).map(v => v.id));
+}
+const chosenVerses = () => { const ids = chosenVerseIds(); return VERSES.filter(v => ids.has(v.id)); };
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -21,14 +36,19 @@ function showInfo(d) {
   if (!d) { el.classList.add('hidden'); return; }
   el.innerHTML = `<button class="vx" aria-label="Close">✕</button><b>${esc(d.name)}</b><div class="vrel">${esc([d.rel, d.life].filter(Boolean).join(' · '))}</div>`
     + d.lines.map(l => `<div>${esc(l)}</div>`).join('') + (d.estimated ? `<div class="vest">${esc(d.estimated)}</div>` : '')
-    + (V?.kind === 'galaxy' ? '<button class="vgo" id="vFly">Fly to them</button>' : '');
+    + (V?.kind === 'galaxy' ? '<button class="vgo" id="vFly">Fly-through to them</button>' : '');
   el.querySelector('.vx').onclick = () => { el.classList.add('hidden'); V?.view.select?.(null); };
   const fly = el.querySelector('#vFly');
-  if (fly) fly.onclick = () => V?.view.focusSelected();
+  if (fly) fly.onclick = () => V?.view.tourTo();
   el.classList.remove('hidden');
 }
 
 function legend(kind) {
+  if (kind === 'tree') {
+    const st = TREE_STYLES[season];
+    return st.legend.map(([c, l]) => `<div><i style="background:${c}"></i>${l}</div>`).join('')
+      + '<div><i style="background:#cdb8ee"></i>birth year estimated</div><div><i style="background:rgba(255,236,150,0.9)"></i>alive in that year</div>';
+  }
   if (kind === 'galaxy') {
     return '<div class="vlh">Stars by birth year</div>' + STAR_LEGEND.map(([l, y]) => `<div><i style="background:${cssColor(starColor(y))}"></i>${l}</div>`).join('')
       + '<div><i class="ln" style="background:#5a8cff"></i>through a father</div><div><i class="ln" style="background:#ff73b3"></i>through a mother</div>';
@@ -77,6 +97,7 @@ function tick(state) {
 
 export function openViz({ kind, scope = 'ancestors', data, rootId, maxGen, onClose }) {
   closeViz(true);
+  try { document.fonts?.load('italic 500 20px Lora').catch(() => {}); } catch (e) { /* fonts are optional */ }
   const host = $('vizHost');
   host.innerHTML = '';
   $('viz').classList.remove('hidden');
@@ -98,7 +119,7 @@ export function openViz({ kind, scope = 'ancestors', data, rootId, maxGen, onClo
       if (scope === 'all' && V.view.total > V.view.count) status(`Showing ${V.view.count.toLocaleString()} of ${V.view.total.toLocaleString()} people (the closest relatives first).`);
     } else {
       V.view = createGrowTree(host, {
-        data, rootId, maxGen, onSelect: showInfo, onFrame: tick,
+        data, rootId, maxGen, onSelect: showInfo, onFrame: tick, style: season, verses: chosenVerses(), versesOn,
         onEnd: () => { if (V?.recorder?.recording) setTimeout(finishRecording, 1500); },
       });
       const [a, b] = V.view.range;
@@ -124,6 +145,7 @@ export function closeViz(silent) {
   if (!silent) v.onClose?.();
 }
 export const vizOpen = () => !!V;
+export const vizView = () => V?.view;
 
 // ---- controls ----
 $('vClose').onclick = () => closeViz();
@@ -136,6 +158,52 @@ for (const b of document.querySelectorAll('#vDir button')) b.onclick = () => {
   document.querySelectorAll('#vDir button').forEach(x => x.classList.toggle('on', x === b));
   V?.view?.setDirection?.(b.dataset.dir); V?.view?.play?.();
 };
+function showSeason() {
+  const icons = { spring: '🌸', summer: '☀️', autumn: '🍂', night: '🌙' };
+  $('vSeason').textContent = `${icons[season]} ${TREE_STYLES[season].name}`;
+  $('vVerse').classList.toggle('lit', versesOn);
+  $('vVerse').setAttribute('aria-pressed', versesOn);
+}
+$('vSeason').onclick = () => {
+  season = SEASONS[(SEASONS.indexOf(season) + 1) % SEASONS.length];
+  store.set('a3d:season', season);
+  showSeason();
+  V?.view?.setStyle?.(season);
+  if (V?.kind === 'tree') $('vLegend').innerHTML = legend('tree');
+};
+$('vVerse').onclick = () => {
+  versesOn = !versesOn;
+  store.set('a3d:versesOn', versesOn ? '1' : '0');
+  $('versesToggle').checked = versesOn;
+  showSeason();
+  V?.view?.setVersesOn?.(versesOn);
+};
+showSeason();
+
+// ---- choosing the Bible verses (Visualisation tab in the menu) ----
+function renderVersePicker() {
+  const ids = chosenVerseIds();
+  $('verseList').innerHTML = VERSES.map(v => `<label class="verse"><input type="checkbox" data-id="${v.id}"${ids.has(v.id) ? ' checked' : ''}><span><b>${esc(v.ref)}</b> ${esc(v.text)}</span></label>`).join('');
+  $('verseSummary').textContent = `Choose verses (${ids.size} of ${VERSES.length} chosen)`;
+  $('versesToggle').checked = versesOn;
+  $('verseField').classList.toggle('off', !versesOn);
+}
+$('verseList').addEventListener('change', () => {
+  const ids = [...$('verseList').querySelectorAll('input:checked')].map(i => i.dataset.id);
+  store.set('a3d:verses', JSON.stringify(ids));
+  $('verseSummary').textContent = `Choose verses (${ids.length} of ${VERSES.length} chosen)`;
+});
+$('versesToggle').addEventListener('change', e => {
+  versesOn = e.target.checked;
+  store.set('a3d:versesOn', versesOn ? '1' : '0');
+  $('verseField').classList.toggle('off', !versesOn);
+  showSeason();
+});
+$('verseAll').onclick = e => { e.preventDefault(); $('verseList').querySelectorAll('input').forEach(i => { i.checked = true; }); $('verseList').dispatchEvent(new Event('change')); };
+$('verseNone').onclick = e => { e.preventDefault(); $('verseList').querySelectorAll('input').forEach(i => { i.checked = false; }); $('verseList').dispatchEvent(new Event('change')); };
+$('verseCopyright').textContent = VERSE_COPYRIGHT;
+renderVersePicker();
+
 for (const b of document.querySelectorAll('#vSpace button')) b.onclick = () => {
   document.querySelectorAll('#vSpace button').forEach(x => x.classList.toggle('on', x === b));
   V?.view?.setSpacing?.(b.dataset.space);

@@ -36,8 +36,7 @@ async def run(b, name, vp, mobile, style, couples, shape='circle'):
     await page.click('#btnDemo')
     await page.wait_for_selector('#cardSetup:not(.hidden)')
     await page.click(f'#shapeSeg [data-shape="{shape}"]')
-    if couples:
-        await page.click('label.toggle')
+    await page.evaluate("(on) => { const t = document.getElementById('couplesToggle'); if (t.checked !== on) t.click(); }", couples)
     await page.screenshot(path=str(OUT / f'{tag}-1-setup.png'))
     await page.click('#btnStart')
     await page.wait_for_timeout(2500)

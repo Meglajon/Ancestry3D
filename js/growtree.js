@@ -8,7 +8,7 @@
 // The art (seasons, light, blossoms, butterflies and so on) is in treeart.js; Bible verses in verses.js.
 import { collectAncestors, displayName, firstName, lifespan, relationship, findEvent, seededRandom, hashString } from './ancestry.js';
 import { estimateYears, personLines } from './vizkit.js';
-import { TREE_STYLES, EST_FLOWER, paintBackdrop, vignette, drawBranch, addLeaf, drawGlow, drawFlower, Life, bezierAt, bezTangent } from './treeart.js';
+import { makeLook, seasonKey, EST_FLOWER, paintBackdrop, vignette, BranchBatch, addLeaf, drawGlow, drawFlowerFast, Life, bezierAt, bezTangent } from './treeart.js';
 import { VerseReader } from './verses.js';
 
 function bezierPoint(p, t) {
@@ -82,7 +82,7 @@ export function createGrowTree(host, opts) {
   canvas.className = 'vizGL';
   host.appendChild(canvas);
   const ctx = canvas.getContext('2d');
-  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const dpr = Math.min(1.5, window.devicePixelRatio || 1);
   let W = 0, H = 0;
   const view = { s: 1, tx: 0, ty: 0 };
   function resize() {
@@ -93,7 +93,7 @@ export function createGrowTree(host, opts) {
   window.addEventListener('resize', resize);
 
   const state = { dir: 'back', spacing: 'year', T: yMax, playing: false, speed: 1, popAt: new Map(), selected: null,
-    style: TREE_STYLES[opts.style] ? opts.style : 'spring', versesOn: opts.versesOn !== false, verseBelow: false };
+    season: seasonKey(opts.style), hour: opts.hour ?? 12, autoDay: !!opts.autoDay, versesOn: opts.versesOn !== false };
   const life = new Life(hashString(rootId));
   // leaves along each branch, placed once so they don't jump about
   for (const e of edges) {
@@ -109,7 +109,10 @@ export function createGrowTree(host, opts) {
   const endYear = () => state.dir === 'back' ? yMin - 3 : yMax + 2;
 
   // layout in screen space (before pan/zoom): x across the canopy, y by birth year or by generation
-  const pad = () => ({ l: Math.max(54, W * 0.06), r: Math.max(24, W * 0.04), t: Math.max(134, H * 0.16) + (state.verseBelow ? 112 : 0), b: W < 600 ? Math.max(250, H * 0.3) : Math.max(170, H * 0.24) });
+  // the bottom holds the meadow (with the verse written on it) above the control bar
+  const inset = () => (opts.bottomInset?.() ?? 110);
+  const verseBand = () => (state.versesOn && reader ? (W < 600 ? 86 : 70) : 0);
+  const pad = () => ({ l: Math.max(54, W * 0.06), r: Math.max(24, W * 0.04), t: Math.max(134, H * 0.16), b: inset() + verseBand() + 56 });
   function layout() {
     const P = pad(), cw = W - P.l - P.r, ch = H - P.t - P.b;
     const yOf = p => state.spacing === 'gen' ? P.t + ch - (p.gen / maxGenFound) * ch : P.t + ((p.birth - yMin) / Math.max(1, yMax - yMin)) * ch;
@@ -134,25 +137,23 @@ export function createGrowTree(host, opts) {
 
   // ---- drawing ----
   const SHADOW = 'rgba(20,14,30,0.7)';
+  // text with a soft dark outline (much cheaper than a blurred shadow)
   function text(str, x, y, font, color, align = 'left', base = 'top') {
-    ctx.font = font; ctx.textAlign = align; ctx.textBaseline = base;
-    ctx.shadowColor = SHADOW; ctx.shadowBlur = 6; ctx.fillStyle = color; ctx.fillText(str, x, y); ctx.shadowBlur = 0;
+    ctx.font = font; ctx.textAlign = align; ctx.textBaseline = base; ctx.lineJoin = 'round';
+    ctx.strokeStyle = SHADOW; ctx.lineWidth = 3; ctx.strokeText(str, x, y);
+    ctx.fillStyle = color; ctx.fillText(str, x, y);
   }
   let lastDraw = performance.now();
   function draw() {
-    const T = state.T, st = TREE_STYLES[state.style];
     const now = performance.now(), t = now / 1000, dt = Math.min(0.1, (now - lastDraw) / 1000); lastDraw = now;
+    if (state.autoDay) state.hour = (state.hour + dt * 24 / 80) % 24; // a whole day in 80 seconds
+    const T = state.T, st = makeLook(state.season, state.hour);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    // where the verse goes: between the title and the year on wide screens, under the title on narrow ones
     const title = `The family tree of ${displayName(root.indi)}`;
-    ctx.font = '700 18px Fredoka, Nunito, system-ui, sans-serif';
-    const titleW = ctx.measureText(title).width + 32, yearW = Math.max(34, Math.min(64, W * 0.07)) * 2.6 + 16;
-    const wideRoom = W - 2 * Math.max(titleW, yearW) - 40;
     const showVerse = state.versesOn && reader;
-    state.verseBelow = showVerse && wideRoom < 340;
     const { P, yearY } = layout();
     const k = Math.sqrt(view.s);
-    const groundW = root.sy + Math.max(36, P.b * 0.45);
+    const groundW = root.sy + 30;
     const groundY = Y(groundW), trunkX = X(root.sx);
     const lx = st.sun.x < 0.5 ? -1 : 1;
 
@@ -184,7 +185,9 @@ export function createGrowTree(host, opts) {
     // trunk: wide where it meets the ground, narrowing up to you
     if (visible(root, T)) {
       const tw = branchWidth(root), ry = Y(root.sy);
-      drawBranch(ctx, [trunkX - lx * tw * 0.3, groundY + 8, trunkX, groundY - (groundY - ry) * 0.3, trunkX, ry + (groundY - ry) * 0.3, trunkX, ry], 0, 1, tw * 1.9, tw * 1.05, st, lx);
+      const tb = new BranchBatch();
+      tb.branch([trunkX - lx * tw * 0.3, groundY + 8, trunkX, groundY - (groundY - ry) * 0.3, trunkX, ry + (groundY - ry) * 0.3, trunkX, ry], 0, 1, tw * 1.9, tw * 1.05, st, lx);
+      tb.flush(ctx);
       // roots spreading into the grass
       ctx.strokeStyle = st.bark[1]; ctx.lineCap = 'round';
       for (const d of [-1, 1]) { ctx.lineWidth = tw * 0.45; ctx.beginPath(); ctx.moveTo(trunkX, groundY); ctx.quadraticCurveTo(trunkX + d * tw * 1.2, groundY + 4, trunkX + d * tw * 2.4, groundY + 10); ctx.stroke(); }
@@ -193,6 +196,7 @@ export function createGrowTree(host, opts) {
     const order = edges.slice().sort((a, b) => b.p.weight - a.p.weight);
     const branches = [];
     const grownNow = new Map();
+    const batch = new BranchBatch();
     for (const e of order) {
       const [t0, t1] = grown(e, T);
       grownNow.set(e, [t0, t1]);
@@ -201,10 +205,11 @@ export function createGrowTree(host, opts) {
       e.branch.full = t1 - t0 > 0.999;
       if (t1 - t0 <= 0.001) continue;
       const wb = branchWidth(e.p);
-      e.branch.wWorld = wb / view.s;
+      e.branch.wWorld = wb / view.s; e.branch.w = wb;
       if (e.branch.full) branches.push(e.branch);
-      drawBranch(ctx, curveFor(e), t0, t1, wb * 1.3, wb * 0.72, st, lx);
+      batch.branch(curveFor(e), t0, t1, wb * 1.3, wb * 0.72, st, lx);
     }
+    batch.flush(ctx);
     // leaves are gathered into one path per colour and filled in a few calls
     const leafPaths = st.leaves.map(() => new Path2D());
     for (const e of order) {
@@ -226,8 +231,10 @@ export function createGrowTree(host, opts) {
 
     // people: a cluster of leaves and an opening blossom; a glow if they're alive in the year on the clock
     const labelled = [], flowers = [];
-    const env = { X, Y, k, st, groundY: groundW, groundSpan: [P.l - 30, W - P.r + 30], midX: W / 2, flowers, branches,
+    const env = { X, Y, k, st, groundY: groundW, topY: P.t, groundSpan: [P.l - 30, W - P.r + 30], midX: W / 2, flowers, branches,
       bezWorld: (b, s) => bezierAt(b.q, s), bezTanWorld: (b, s) => bezTangent(b.q, s) };
+    const shown = [];
+    const crown = st.leaves.map(() => new Path2D());
     for (const p of people) {
       if (!visible(p, T)) { state.popAt.delete(p.id); continue; }
       if (!state.popAt.has(p.id)) { state.popAt.set(p.id, now); if (state.playing && p !== root) life.bloom(p.sx, p.sy, env); }
@@ -237,19 +244,18 @@ export function createGrowTree(host, opts) {
       const x = X(p.sx), y = Y(p.sy);
       flowers.push([p.sx, p.sy]);
       if (x < -40 || x > W + 40 || y < -40 || y > H + 40) continue;
-      const alive = T >= p.birth && T <= p.end && p !== root;
-      if (alive) drawGlow(ctx, x, y, r * 2.4, '255,236,150');
-      if (p !== root) {
-        const crown = st.leaves.map(() => new Path2D());
-        for (let i = 0; i < 4; i++) {
-          const a = -Math.PI / 2 + (i - 1.5) * 0.85 + p.spin;
-          addLeaf(crown[(i + (Math.cos(a) * -lx > 0 ? 1 : 0)) % st.leaves.length], x + Math.cos(a) * r * 0.5, y + Math.sin(a) * r * 0.5, r * 0.95 * Math.min(1, open * 2), a);
-        }
-        st.leaves.forEach((c, i) => { ctx.fillStyle = c; ctx.fill(crown[i]); });
+      shown.push([p, x, y, r, open]);
+      if (p !== root) for (let i = 0; i < 4; i++) {
+        const a = -Math.PI / 2 + (i - 1.5) * 0.85 + p.spin;
+        addLeaf(crown[(i + (Math.cos(a) * -lx > 0 ? 1 : 0)) % st.leaves.length], x + Math.cos(a) * r * 0.5, y + Math.sin(a) * r * 0.5, r * 0.95 * Math.min(1, open * 2), a);
       }
+    }
+    for (const [p, x, y, r] of shown) if (T >= p.birth && T <= p.end && p !== root) drawGlow(ctx, x, y, r * 2.4, '255,236,150');
+    st.leaves.forEach((c, i) => { ctx.fillStyle = c; ctx.fill(crown[i]); });
+    for (const [p, x, y, r, open] of shown) {
       const female = p.indi.sex === 'F';
       const pal = p.est ? EST_FLOWER : female ? st.female : st.male;
-      drawFlower(ctx, x, y, r, open, female, pal, st.centre, p.spin * 6.28, !!st.sun.moon);
+      drawFlowerFast(ctx, x, y, r, open, female, pal, st.centre, p.spin * 6.28, st.dark > 0.45);
       if (p === state.selected) { ctx.strokeStyle = '#ffd36a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, r * 1.25, 0, 7); ctx.stroke(); }
       p.hitR = Math.max(12, r * 1.2);
       if (p.room * view.s > 46 || p === root || p === state.selected) labelled.push([p, x, y, r]);
@@ -270,25 +276,29 @@ export function createGrowTree(host, opts) {
     vignette(ctx, W, H, st);
 
     // title, year, the latest events and the verse (drawn on the canvas, so they are in recordings too)
+    const narrow = W < 600;
     text(title, 16, 60, '700 18px Fredoka, Nunito, system-ui, sans-serif', '#fff8e8');
-    text(state.dir === 'back' ? 'Growing back in time from you' : 'History playing forward to you', 16, 84, '600 12px Nunito, system-ui, sans-serif', 'rgba(255,248,232,0.85)');
-    text(String(Math.round(Math.max(yMin - 3, Math.min(yMax + 2, T)))), W - 16, 10, `700 ${Math.max(34, Math.min(64, W * 0.07))}px Fredoka, Nunito, system-ui, sans-serif`, 'rgba(255,240,200,0.95)', 'right');
-    const passed = state.dir === 'back' ? events.filter(e => e.year >= T && e.year <= yMax + 1).slice(0, 4) : events.filter(e => e.year <= T).slice(-4).reverse();
+    if (!narrow) text(state.dir === 'back' ? 'Growing back in time from you' : 'History playing forward to you', 16, 84, '600 12px Nunito, system-ui, sans-serif', 'rgba(255,248,232,0.85)');
+    const yearSize = Math.max(34, Math.min(64, W * 0.07));
+    text(String(Math.round(Math.max(yMin - 3, Math.min(yMax + 2, T)))), W - 16, 10, `700 ${yearSize}px Fredoka, Nunito, system-ui, sans-serif`, 'rgba(255,240,200,0.95)', 'right');
+    // the latest births and deaths: under the year on wide screens, under the title on phones
+    const passed = state.dir === 'back' ? events.filter(e => e.year >= T && e.year <= yMax + 1).slice(0, 3) : events.filter(e => e.year <= T).slice(-3).reverse();
+    const tx = narrow ? 16 : W - 16, ty = narrow ? 86 : 18 + yearSize, maxW = narrow ? W - 32 : W * 0.42;
     passed.forEach((e, i) => {
-      ctx.globalAlpha = 1 - i * 0.22;
-      const font = `${i ? 600 : 700} ${i ? 12 : 14}px Nunito, system-ui, sans-serif`;
+      ctx.globalAlpha = 1 - i * 0.25;
+      const font = `${i ? 600 : 700} ${i ? 11 : 13}px Nunito, system-ui, sans-serif`;
       ctx.font = font;
       let str = e.text;
-      while (str.length > 8 && ctx.measureText(str).width > W - 32) str = str.slice(0, -2);
+      while (str.length > 8 && ctx.measureText(str).width > maxW) str = str.slice(0, -2);
       if (str !== e.text) str = str.trimEnd() + '…';
-      text(str, 16, H - (W < 600 ? 196 : 128) - i * 18, font, e.kind === 'died' ? '#e4def4' : '#fff4cc', 'left', 'alphabetic');
+      text(str, tx, ty + i * 16, font, e.kind === 'died' ? '#e4def4' : '#fff4cc', narrow ? 'left' : 'right');
     });
     ctx.globalAlpha = 1;
+    // the verse, written across the meadow just above the controls
     if (showVerse) {
       reader.update(dt);
-      const style = { ink: '#fffaf0', glow: 'rgba(20,10,30,0.9)' };
-      if (state.verseBelow) reader.draw(ctx, W / 2, W < 600 ? 106 : 128, W - 40, style);
-      else reader.draw(ctx, W / 2, 18, Math.min(580, wideRoom), style);
+      const band = verseBand(), top = H - inset() - band - 4;
+      reader.draw(ctx, W / 2, top, Math.min(W - 40, 820), { ink: '#fffaf0', outline: 'rgba(24,30,16,0.75)' });
     }
   }
 
@@ -371,7 +381,9 @@ export function createGrowTree(host, opts) {
     restart() { state.T = startYear(); state.popAt.clear(); life.reset(); },
     seek(year) { state.T = year; state.popAt.clear(); life.reset(); },
     setDirection(d) { state.dir = d === 'forward' ? 'forward' : 'back'; state.T = startYear(); state.popAt.clear(); life.reset(); },
-    setStyle(name) { if (TREE_STYLES[name]) state.style = name; },
+    setStyle(name) { state.season = seasonKey(name); },
+    setHour(h) { state.hour = ((+h % 24) + 24) % 24; },
+    setAutoDay(on) { state.autoDay = !!on; },
     setVersesOn(on) { state.versesOn = !!on; },
     setVerses(list) { reader = list?.length ? new VerseReader(list) : null; },
     setSpacing(s) { state.spacing = s === 'gen' ? 'gen' : 'year'; },

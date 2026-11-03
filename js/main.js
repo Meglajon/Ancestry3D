@@ -3,11 +3,13 @@ import * as THREE from 'three';
 import { parseGedcom, decodeGedcomBytes } from './gedcom.js';
 import { genAt, collectAncestors, layoutAncestors, displayName, firstName, lifespan, relationship, countAncestors, birthYear, hashString } from './ancestry.js';
 import { buildWorld, GEN_NAMES, THEMES } from './world.js';
-import { buildDialogue, shotQuip, stompQuip, bumpQuip } from './dialogue.js';
+import { buildDialogue, shotQuip, stompQuip, bumpQuip, foundSpeech } from './dialogue.js';
 import { drawPortrait, drawIslandPortrait } from './textures.js';
 import { buildIslandFigure } from './npc.js';
 import { createMinigun, createImpacts, traceShot } from './weapon.js';
 import { buildFlatWorld, drawFluffyPortrait } from './fluffy.js';
+import { createFight } from './fight.js';
+import { createMissions } from './missions.js';
 import { computeTraits } from './traits.js';
 import { openViz, vizOpen, vizView } from './viz.js';
 
@@ -51,6 +53,8 @@ const cute = () => S.theme === 'island' || S.theme === 'fluffy';
 const platform = () => S.theme === 'island';
 // The Fluffy look is a top-down 2D garden drawn on its own canvas.
 const flat = () => S.theme === 'fluffy';
+// Fight back mode: Retro only
+const fighting = () => S.fight && S.theme === 'doom' && !!S.fightCtl;
 
 // ---------------- Renderer ----------------
 const canvas = $('game');
@@ -134,6 +138,9 @@ const sfx = {
   stomp: () => { beep(240, 0.06, 'square', 0.05, -120); setTimeout(() => beep(520, 0.08, 'square', 0.04, 300), 60); },
   coin: () => { beep(988, 0.05, 'square', 0.035); setTimeout(() => beep(1319, 0.12, 'square', 0.035), 55); },
   ouch: () => beep(cute() ? 700 : 300, 0.12, 'square', 0.04, -150),
+  hurt: () => { beep(140, 0.18, 'sawtooth', 0.07, -60); setTimeout(() => beep(90, 0.15, 'square', 0.05, -30), 60); },
+  swish: () => beep(500, 0.09, 'triangle', 0.03, -380),
+  heal: () => [523, 784, 1046].forEach((f, i) => setTimeout(() => beep(f, 0.08, 'square', 0.04), i * 60)),
 };
 
 // ---------------- Messages ----------------
@@ -160,6 +167,7 @@ function applyStyle(style, { silent = false } = {}) {
   store.set('a3d:style', style);
   document.body.classList.toggle('island', cute());
   document.body.classList.toggle('fluffy', flat());
+  document.body.classList.toggle('fight', S.fight && S.theme === 'doom');
   $('logo').innerHTML = LOGOS[style][0];
   $('tagline').textContent = LOGOS[style][1];
   $('lookNote').textContent = LOOK_NOTES[style];
@@ -185,6 +193,18 @@ for (const b of $('shapeSeg').querySelectorAll('button')) b.onclick = () => {
   refreshResume();
   if (!S.running && S.booted) buildAttract();
 };
+// Fight back mode (Retro): shot ancestors chase you; you have health and a score.
+function applyFight() {
+  document.body.classList.toggle('fight', S.fight && S.theme === 'doom');
+  if (S.fightCtl) S.fightCtl.setOn(S.fight);
+  if (S.gun) S.gun.state.regen = !fighting();
+}
+$('fightToggle').addEventListener('change', e => {
+  S.fight = e.target.checked;
+  store.set('a3d:fight', S.fight ? '1' : '0');
+  sfx.select();
+  applyFight();
+});
 $('couplesToggle').addEventListener('change', e => {
   S.couples = e.target.checked;
   store.set('a3d:couples', S.couples ? '1' : '0');
@@ -382,7 +402,23 @@ async function startGame() {
     resize();
   }
   $('ammoCell').style.display = S.gun && S.gun.state.ammo == null ? 'none' : '';
+  S.fightCtl = S.theme === 'doom' ? createFight({
+    world: S.world, impacts: S.impacts, store, key: S.fileKey + ':best', sfx,
+    message,
+    onHurt: (dmg) => {
+      sfx.hurt();
+      const el = $('hurt'); el.style.transition = 'none'; el.style.opacity = String(Math.min(0.85, 0.35 + dmg / 25));
+      requestAnimationFrame(() => requestAnimationFrame(() => { el.style.transition = 'opacity 0.6s'; el.style.opacity = '0'; }));
+      S.face.hurtUntil = performance.now() + 500;
+    },
+    onKO: () => { sfx.meet(); S.face.grinUntil = performance.now() + 1500; },
+    onHeal: () => sfx.heal(),
+    onDeath: () => { S.pos.set(S.tree.hub.x, 0, S.tree.hub.z); S.vel.set(0, 0, 0); S.yaw = 0; S.pitch = -0.05; if (S.gun) S.gun.state.ammo = Math.max(S.gun.state.ammo, 150); },
+  }) : null;
+  applyFight();
   S.met = new Set(JSON.parse(store.get(S.fileKey + ':met:' + S.rootId) || '[]'));
+  S.missions = createMissions({ tree, store, key: S.fileKey + ':missions:' + S.rootId });
+  S.missionsShown = '';
   for (const id of S.met) { const n = S.world.byId.get(id); if (n) n.met = true; }
   S.pos.set(tree.hub.x, 0, tree.hub.z); S.vel.set(0, 0, 0); S.posY = 0; S.vy = 0; S.coins = 0; S.onGround = true;
   S.camInit = false; S.flatCam = { x: tree.hub.x, z: tree.hub.z, scale: flatScale() };
@@ -573,7 +609,7 @@ function movePlayer(dt) {
       }
       push(n.person.x, n.person.z, 1.3);
     }
-  } else for (const n of S.world.npcs) if (n.near && S.posY < 1.2) push(n.person.x, n.person.z, 0.85);
+  } else for (const n of S.world.npcs) if (n.near && S.posY < 1.2) push(n.x, n.z, 0.85);
   for (const c of S.world.colliders) if (S.posY > 1.2) c.skip = true; else c.skip = false;
   for (const c of S.world.colliders) if (!c.skip && !(c.barrel && !c.barrel.alive) && Math.abs(c.x - S.pos.x) < 2 && Math.abs(c.z - S.pos.z) < 2) push(c.x, c.z, c.r + 0.3);
   // boxes of bullets
@@ -718,10 +754,11 @@ function updateNPCs(t, dt) {
   const talkR = cute() ? 2.8 : 3.4;
   for (const n of S.world.npcs) {
     const p = n.person;
-    const dx = p.x - S.pos.x, dz = p.z - S.pos.z;
+    const dx = n.x - S.pos.x, dz = n.z - S.pos.z;
     const d = Math.hypot(dx, dz);
     n.dist = d;
     n.near = d < 3;
+    if (n.angry) { n.fig.root.visible = true; continue; } // chasing you: fight.js moves them
     const vis = d < visR;
     n.fig.root.visible = vis;
     if (!vis) continue;
@@ -769,7 +806,7 @@ function updateNPCs(t, dt) {
       fig.head.rotation.x *= 0.9;
     }
     const dirAngle = Math.acos(Math.max(-1, Math.min(1, (dx * camDir.x + dz * camDir.z) / (d || 1))));
-    if (d < talkR && dirAngle < (cute() ? 1.3 : 0.9)) {
+    if (d < talkR && dirAngle < (cute() ? 1.3 : 0.9) && !n.angry) {
       const score = d + dirAngle * 2;
       if (score < bestScore) { bestScore = score; best = n; }
     }
@@ -808,6 +845,12 @@ function updateGun(dt) {
     if (!hit) continue;
     if (hit.prop) { blowUp(hit.prop); continue; }
     if (!G.melee || hit.npc) S.impacts.spawn(hit.point.addScaledVector(fwdV, -0.15));
+    if (hit.npc && fighting()) {
+      const n = hit.npc;
+      if (!n.angry) sfx.ouch();
+      S.fightCtl.hit(n, 1);
+      continue;
+    }
     if (hit.npc) {
       const n = hit.npc;
       if (n.flinch <= 0) sfx.ouch();
@@ -827,6 +870,7 @@ function updateGun(dt) {
 // A toxic barrel bursting: noise, dust, and everyone nearby jumps out of their skin.
 function blowUp(b) {
   S.world.explodeBarrel?.(b);
+  if (fighting()) S.fightCtl.blast(b.x, b.z, S.pos);
   boomSound();
   for (let k = 0; k < 6; k++) S.impacts.spawn(new THREE.Vector3(b.x + (Math.random() - 0.5) * 1.6, 0.3 + Math.random() * 1.4, b.z + (Math.random() - 0.5) * 1.6));
   S.face.grinUntil = performance.now() + 900;
@@ -859,7 +903,12 @@ function openDialog(npc) {
   S.firing = false;
   S.talkingTo = npc; npc.talking = true;
   const dlg = buildDialogue(npc.person, { data: S.data, tree: S.tree });
-  Object.assign(D, { pages: dlg.pages, links: dlg.links, page: 0, npc, portraitFrame: -1 });
+  Object.assign(D, { pages: dlg.pages, links: dlg.links, page: 0, npc, portraitFrame: -1, mission: null });
+  // missions: finding someone you were sent to look for, and being asked to find someone else
+  const done = S.missions.check(npc.person);
+  if (done.length) { D.pages.unshift(foundSpeech(npc.person, done[0].giverName)); missionReward(done, npc); }
+  const offer = S.missions.offer(npc.person);
+  if (offer) { D.pages.push(offer.speech); D.mission = offer; }
   const indi = npc.person.indi;
   $('dWho').textContent = displayName(indi);
   const rel = relationship(npc.person.gen, indi.sex).replace(/^./, c => c.toUpperCase());
@@ -874,7 +923,8 @@ function openDialog(npc) {
     store.set(S.fileKey + ':met:' + S.rootId, JSON.stringify([...S.met]));
     sfx.meet();
     S.face.grinUntil = performance.now() + 1500;
-    message(`You met ${displayName(indi)}! (${S.met.size}/${S.world.npcs.length})`);
+    message(`You met ${displayName(indi)}! (${S.met.size}/${S.world.npcs.length})${flat() ? ' +5 XP' : ''}`);
+    if (flat()) S.missions.addXP(5);
     if (S.met.size >= S.world.npcs.length) setTimeout(() => message('You have met every ancestor. 100% kin!'), 400);
   }
   updateStatus();
@@ -892,6 +942,15 @@ function renderOpts() {
   const last = D.page >= D.pages.length - 1;
   const add = (label, cls, fn) => { const b = document.createElement('button'); b.textContent = label; if (cls) b.className = cls; b.onclick = e => { e.stopPropagation(); fn(); }; opts.appendChild(b); };
   if (!last) add('Next ▶', 'next', advanceDialog);
+  if (last && D.mission) {
+    add('I\'ll do it! ✓', 'next', () => {
+      S.missions.accept(D.mission);
+      message(`New mission: ${D.mission.label}`);
+      sfx.select();
+      D.mission = null; renderMissions(true); closeDialog();
+    });
+    add('Not now', '', () => { S.missions.decline(D.mission); D.mission = null; renderOpts(); });
+  }
   if (last) for (const l of D.links) add(l.label, '', () => { setWaypoint(l.id); closeDialog(); });
   if (D.page > 0) add('◀ Back', 'bye', () => { D.page--; showPage(); });
   add(cute() ? 'See you!' : 'Bye', 'bye', () => closeDialog());
@@ -932,6 +991,34 @@ function tickDialog(dt) {
   }
 }
 
+// ---------------- Missions ----------------
+const MISSION_XP = 50;
+function missionReward(done, npc) {
+  const n = done.length;
+  S.missions.addXP(MISSION_XP * n);
+  let prize;
+  if (flat()) prize = `+${MISSION_XP * n} XP`;
+  else if (platform()) { S.coins += 25 * n; prize = `+${25 * n} coins`; }
+  else {
+    if (S.gun?.state.ammo != null) S.gun.state.ammo = Math.min(S.gun.state.maxAmmo, S.gun.state.ammo + 200 * n);
+    if (fighting()) S.fightCtl.state.score += 250 * n;
+    prize = `+${200 * n} ammo${fighting() ? `, +${250 * n} score` : ''}`;
+  }
+  for (const m of done) message(`Mission complete: ${m.label}! ${prize}`);
+  [784, 988, 1175, 1568, 2093].forEach((f, i) => setTimeout(() => beep(f, 0.1, cute() ? 'sine' : 'square', 0.05), i * 80));
+  S.face.grinUntil = performance.now() + 2000;
+  renderMissions(true);
+}
+function renderMissions(force) {
+  if (!S.missions) return;
+  const list = S.missions.active;
+  const html = list.length ? `<b>Missions</b>${list.map(m => `<div>• ${escapeHtml(m.label)}</div>`).join('')}` : '';
+  if (!force && html === S.missionsShown) return;
+  S.missionsShown = html;
+  $('missions').innerHTML = html;
+  $('missions').classList.toggle('hidden', !html);
+}
+
 // ---------------- Waypoints & status ----------------
 function setWaypoint(id) {
   const n = S.world.byId.get(id);
@@ -966,9 +1053,10 @@ function updateStatus(t = 0) {
   let near = null;
   for (const n of S.world.npcs) if (!near || n.dist < near.dist) near = n;
   const root = S.tree.people.get(S.rootId).indi;
+  renderMissions();
   if (cute()) {
     $('iName').textContent = firstName(root);
-    $('iInfo').textContent = `Gen ${gen} · Met ${S.met.size}/${total}`;
+    $('iInfo').textContent = `Gen ${gen} · Met ${S.met.size}/${total}` + (flat() ? ` · ⭐ ${S.missions.state.xp} XP` : '');
     $('pCoins').textContent = S.coins;
     const fr = Math.floor(t * 2) % 10 === 9 ? 9 : 0;
     if (flat()) drawFluffyPortrait($('iFace').getContext('2d'), S.world.rootLook, 64, fr);
@@ -977,6 +1065,12 @@ function updateStatus(t = 0) {
   }
   $('sGen').textContent = gen;
   $('sMet').textContent = `${S.met.size}/${total}`;
+  if (fighting()) {
+    const f = S.fightCtl.state;
+    $('sHealth').textContent = `${Math.ceil(f.health)}%`;
+    $('sHealth').style.color = f.health > 60 ? '' : f.health > 30 ? '#ffcc33' : '#ff3a2a';
+    $('sScore').textContent = f.score.toLocaleString();
+  }
   if (near) {
     const y = birthYear(near.person.indi);
     $('sEra').textContent = y ? String(y) : '----';
@@ -985,7 +1079,7 @@ function updateStatus(t = 0) {
   // The status-bar face is you: it glances about and grins when firing or meeting someone.
   const now = performance.now();
   if (now > S.face.nextGaze) { S.face.gaze = [-1, 0, 0, 1][Math.floor(Math.random() * 4)]; S.face.nextGaze = now + 800 + Math.random() * 1600; }
-  const look = Object.assign({}, S.world.rootLook, { gaze: S.face.gaze, grin: now < S.face.grinUntil });
+  const look = Object.assign({}, S.world.rootLook, { gaze: S.face.gaze, grin: now < S.face.grinUntil && !(now < (S.face.hurtUntil || 0)) });
   drawPortrait($('sFace').getContext('2d'), look, 64, Math.floor(t * 2));
 }
 
@@ -1050,7 +1144,7 @@ function drawMap() {
   }
   const dot = Math.max(2, Math.min(7, scale * 0.6));
   for (const n of S.world.npcs) {
-    const x = X(n.person.x), y = Y(n.person.z);
+    const x = X(n.x ?? n.person.x), y = Y(n.z ?? n.person.z);
     c.fillStyle = n === S.waypoint || n.met ? C.met : C.dot;
     if (isl) { c.beginPath(); c.arc(x, y, dot / 2 + 0.5, 0, 7); c.fill(); c.strokeStyle = 'rgba(74,48,32,0.6)'; c.lineWidth = 1; c.stroke(); }
     else c.fillRect(x - dot / 2, y - dot / 2, dot, dot);
@@ -1085,11 +1179,17 @@ $('mapSearch').addEventListener('input', () => {
   const q = $('mapSearch').value.trim().toLowerCase();
   const res = $('mapResults');
   if (!q) { res.classList.add('hidden'); return; }
-  const found = S.world.npcs.filter(n => displayName(n.person.indi).toLowerCase().includes(q)).slice(0, 30);
+  // search names, birthplaces and jobs (handy for missions)
+  const about = n => {
+    const indi = n.person.indi, b = indi.events.find(e => ['BIRT', 'CHR', 'BAPM'].includes(e.tag));
+    return { place: b?.place || '', jobs: indi.events.filter(e => e.tag === 'OCCU' && e.value).map(e => e.value).join(', ') };
+  };
+  const found = S.world.npcs.filter(n => { const a = about(n); return (displayName(n.person.indi) + ' ' + a.place + ' ' + a.jobs).toLowerCase().includes(q); }).slice(0, 30);
   res.innerHTML = '';
   for (const n of found) {
     const d = document.createElement('div');
-    d.textContent = `${displayName(n.person.indi)}  ${lifespan(n.person.indi)}  · gen ${n.person.gen}`;
+    const a = about(n), extra = !displayName(n.person.indi).toLowerCase().includes(q) ? (a.place.toLowerCase().includes(q) ? ` · born ${a.place.split(',')[0]}` : a.jobs ? ` · ${a.jobs}` : '') : '';
+    d.textContent = `${displayName(n.person.indi)}  ${lifespan(n.person.indi)}  · gen ${n.person.gen}${extra}`;
     d.onclick = () => { setWaypoint(n.person.id); $('mapSearch').value = ''; res.classList.add('hidden'); drawMap(); };
     res.appendChild(d);
   }
@@ -1178,6 +1278,7 @@ function loop(now) {
     movePlayer(dt);
     updateAvatar(dt);
     updateNPCs(t, dt);
+    if (fighting() && !S.talkingTo && $('automap').classList.contains('hidden')) S.fightCtl.update(dt, t, S.pos);
     tickDialog(dt);
     updateCompass();
     if (now - lastStatus > 250) { lastStatus = now; updateStatus(t); renderMsgs(); if (!$('automap').classList.contains('hidden')) drawMap(); }
@@ -1249,6 +1350,8 @@ async function buildAttract() {
   requestAnimationFrame(spin);
 }
 
+S.fight = store.get('a3d:fight') === '1';
+$('fightToggle').checked = S.fight;
 // Defaults for a first visit: the Fluffy look, the Tree layout and couples standing together.
 S.couples = store.get('a3d:couples') !== '0';
 S.shape = ['circle', 'half', 'tree'].includes(store.get('a3d:shape')) ? store.get('a3d:shape') : 'tree';

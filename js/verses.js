@@ -25,8 +25,7 @@ export const VERSES = [
 export const VERSE_COPYRIGHT = 'Scripture quotations taken from The Holy Bible, New International Version® NIV®. Copyright © 1973, 1978, 1984, 2011 by Biblica, Inc.™ Used by permission. All rights reserved worldwide.';
 
 /**
- * Reads verses out a word at a time, like someone reading aloud: each word fades and rises into place,
- * with a longer pause at commas and full stops. Then the reference appears, the verse rests on screen,
+ * Reveals verses a word at a time (the whole verse in a second or two): each word fades and rises into place. Then the reference appears, the verse rests on screen,
  * fades away, and after a quiet gap the next one begins.
  */
 export class VerseReader {
@@ -39,17 +38,20 @@ export class VerseReader {
   plan() {
     const v = this.list[this.i % this.list.length];
     this.verse = v;
+    const words = v.text.split(/\s+/);
+    // the whole verse appears in about 1-2 seconds, a word at a time, with tiny pauses at punctuation
+    const step = Math.max(0.05, Math.min(0.14, 1.5 / words.length));
     this.words = [];
     let at = 0;
-    for (const w of v.text.split(/\s+/)) {
+    for (const w of words) {
       this.words.push({ w, at });
-      at += 0.36 + Math.min(0.25, w.length * 0.025) + (/[,;:]$/.test(w) ? 0.35 : /[.!?]$/.test(w) ? 0.6 : 0);
+      at += step + (/[,;:]$/.test(w) ? step * 0.8 : /[.!?—]$/.test(w) ? step * 1.2 : 0);
     }
     this.readEnd = at;
-    this.refAt = at + 0.4;
-    this.fadeAt = at + 6.5;
-    this.end = this.fadeAt + 1.6;
-    this.gap = 7;
+    this.refAt = at + 0.3;
+    this.fadeAt = at + 3.5 + words.length * 0.18; // time to read it
+    this.end = this.fadeAt + 1.2;
+    this.gap = 4;
   }
   update(dt) {
     if (!this.list.length) return;
@@ -60,7 +62,7 @@ export class VerseReader {
   draw(ctx, cx, y, maxW, style) {
     if (!this.list.length || this.t < 0 || this.t > this.end) return 0;
     const fade = this.t > this.fadeAt ? Math.max(0, 1 - (this.t - this.fadeAt) / (this.end - this.fadeAt)) : 1;
-    const size = Math.max(16, Math.min(24, maxW / 24));
+    const size = Math.max(15, Math.min(21, maxW / 30));
     ctx.font = `italic 500 ${size}px Lora, Georgia, 'Times New Roman', serif`;
     const space = ctx.measureText(' ').width, lh = size * 1.45;
     // lay the words out in lines
@@ -74,16 +76,18 @@ export class VerseReader {
     }
     ctx.save();
     ctx.textBaseline = 'top'; ctx.textAlign = 'left';
-    ctx.shadowColor = style.glow; ctx.shadowBlur = 10;
+    ctx.lineJoin = 'round'; ctx.lineWidth = 3.5; ctx.strokeStyle = style.outline || 'rgba(20,10,30,0.8)';
     lines.forEach((line, li) => {
       const total = line.reduce((s, w) => s + w.width, 0) + space * (line.length - 1);
       let x = cx - total / 2;
       for (const word of line) {
-        const k = Math.max(0, Math.min(1, (this.t - word.at) / 0.55));
+        const k = Math.max(0, Math.min(1, (this.t - word.at) / 0.35));
         if (k > 0) {
           ctx.globalAlpha = fade * k * k * (3 - 2 * k);
+          const wy = y + li * lh + (1 - k) * 6;
+          ctx.strokeText(word.w, x, wy);
           ctx.fillStyle = style.ink;
-          ctx.fillText(word.w, x, y + li * lh + (1 - k) * 6);
+          ctx.fillText(word.w, x, wy);
         }
         x += word.width + space;
       }
@@ -93,7 +97,8 @@ export class VerseReader {
       ctx.globalAlpha = fade * refK;
       ctx.font = `600 ${Math.round(size * 0.62)}px Nunito, system-ui, sans-serif`;
       ctx.textAlign = 'center'; ctx.fillStyle = style.ink;
-      ctx.fillText(`— ${this.verse.ref}`, cx, y + lines.length * lh + 4);
+      ctx.strokeText(`— ${this.verse.ref}`, cx, y + lines.length * lh + 2);
+      ctx.fillText(`— ${this.verse.ref}`, cx, y + lines.length * lh + 2);
     }
     ctx.restore();
     return lines.length * lh + size;

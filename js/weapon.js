@@ -131,21 +131,24 @@ export function createMinigun(skinColor) {
   }
   let casingIdx = 0;
 
-  const state = { spin: 0, angle: 0, cooldown: 0, kick: 0, ammo: 400, maxAmmo: 400, swayT: 0, firedThisFrame: false };
+  const state = { spin: 0, angle: 0, cooldown: 0, kick: 0, ammo: 400, maxAmmo: 400, swayT: 0, firedThisFrame: false, regen: true };
 
   /** dt, trigger held?, player speed → returns number of rounds fired this frame */
   function update(dt, trigger, speed) {
-    state.spin += ((trigger && state.ammo > 0 ? 1 : 0) - state.spin) * Math.min(1, dt * (trigger ? 3.2 : 1.4));
+    // a round needs a whole bullet, so the count never dips below zero
+    state.spin += ((trigger && state.ammo >= 1 ? 1 : 0) - state.spin) * Math.min(1, dt * (trigger ? 3.2 : 1.4));
     state.angle += state.spin * dt * 32;
     barrels.rotation.z = state.angle;
     let shots = 0;
     state.cooldown -= dt;
-    if (trigger && state.spin > 0.7 && state.ammo > 0) {
-      while (state.cooldown <= 0 && state.ammo > 0) { state.cooldown += 1 / 18; shots++; state.ammo--; }
+    if (trigger && state.spin > 0.7 && state.ammo >= 1) {
+      while (state.cooldown <= 0 && state.ammo >= 1) { state.cooldown += 1 / 18; shots++; state.ammo--; }
     } else {
       state.cooldown = Math.max(0, state.cooldown);
-      if (!trigger) state.ammo = Math.min(state.maxAmmo, state.ammo + dt * 12);
+      // ammo slowly tops itself up, except in Fight back mode where you need the boxes of bullets
+      if (!trigger && state.regen) state.ammo = Math.min(state.maxAmmo, state.ammo + dt * 12);
     }
+    state.ammo = Math.max(0, state.ammo);
     if (shots) {
       state.kick = 1;
       flash.visible = true;
@@ -218,7 +221,7 @@ export function traceShot(origin, dir, npcs, wallRadius, range = 120, props = []
   let best = null, bestT = range, bestProp = null;
   for (const n of npcs) {
     if (!n.fig.root.visible || n.dist > 70) continue;
-    const ox = origin.x - n.person.x, oz = origin.z - n.person.z;
+    const ox = origin.x - n.x, oz = origin.z - n.z;
     const a = dir.x * dir.x + dir.z * dir.z;
     if (a < 1e-6) continue;
     const b = 2 * (ox * dir.x + oz * dir.z), c = ox * ox + oz * oz - 0.42 * 0.42;

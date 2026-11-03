@@ -305,6 +305,21 @@ body.fluffy #touch .zone { bottom: 0; }
 body.fluffy .fluffyOnly { display: inline; }
 body.fluffy .help b.fluffyOnly { display: block; }
 body.fluffy .notFluffy { display: none; }
+/* ================= Missions tracker ================= */
+#missions { position: absolute; right: calc(12px + env(safe-area-inset-right, 0px)); top: calc(56px + env(safe-area-inset-top, 0px)); max-width: min(300px, 46vw); font-family: 'VT323', monospace; font-size: 19px; line-height: 1.05; color: #f0e0c0; background: rgba(10,6,4,0.62); border: 2px solid #6a5440; padding: 6px 10px; text-shadow: 1px 1px 0 #000; }
+#missions b { display: block; font-family: 'Press Start 2P', monospace; font-weight: normal; font-size: 9px; color: var(--gold); margin-bottom: 4px; text-transform: uppercase; }
+#missions div { margin: 2px 0; }
+body.island #missions { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 13px; line-height: 1.3; color: var(--i-brown); background: rgba(255,250,238,0.92); border: none; border-radius: 16px; padding: 8px 14px; text-shadow: none; box-shadow: 0 3px 0 rgba(107,74,46,0.15); }
+body.island #missions b { font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 14px; color: var(--i-orange); text-transform: none; }
+@media (max-width: 600px) { #missions { font-size: 16px; max-width: 52vw; } body.island #missions { font-size: 11px; } }
+
+/* ================= Fight back (Retro) ================= */
+.fightOnly { display: none !important; }
+body.fight .fightOnly { display: flex !important; }
+body.fight .notFight { display: none !important; }
+body.island .retroOnly { display: none !important; }
+#hurt { position: fixed; inset: 0; z-index: 9; pointer-events: none; opacity: 0; background: radial-gradient(ellipse at center, rgba(160,0,0,0) 35%, rgba(200,0,0,0.75) 100%); }
+
 /* ================= Menu tabs ================= */
 .tabs { display: flex; gap: 6px; margin: 0 0 4px; }
 .tabs button { flex: 1; padding: 12px 6px; font-family: 'Press Start 2P', monospace; font-size: 11px; color: var(--dim); background: #1a1210; border: 3px solid #3a2c20; text-transform: uppercase; }
@@ -323,7 +338,7 @@ body.island .help i { color: var(--i-orange); }
 #vizHost { position: absolute; inset: 0; }
 #vizHost canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; image-rendering: auto; }
 #vizHost .vizOverlay { pointer-events: none; }
-#viz .vb, #viz .vseg button { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 14px; color: #fff; background: rgba(22,20,46,0.78); border: 1px solid rgba(255,255,255,0.22); border-radius: 999px; padding: 9px 14px; text-transform: none; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+#viz .vb, #viz .vseg button { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 14px; color: #fff; background: rgba(22,20,46,0.86); border: 1px solid rgba(255,255,255,0.22); border-radius: 999px; padding: 9px 14px; text-transform: none; }
 #viz .vb:active, #viz .vseg button:active { transform: translateY(1px); }
 #viz .vb.on { background: #c8283c; border-color: #ff8a9a; }
 #viz .vtop { position: absolute; left: 0; right: 0; top: 0; display: flex; gap: 10px; align-items: center; padding: calc(10px + env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) 10px max(12px, env(safe-area-inset-left, 0px)); pointer-events: none; }
@@ -350,6 +365,9 @@ body.island .help i { color: var(--i-orange); }
 #viz .vinfo .vest { color: #b9a6d8; font-size: 12px; margin-top: 4px; }
 #viz .vinfo .vx { position: absolute; right: 8px; top: 8px; background: none; border: none; color: #fff; font-size: 16px; padding: 4px 8px; }
 #viz .vinfo .vgo { margin-top: 8px; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 13px; color: #2a2030; background: #ffd36a; border: none; border-radius: 999px; padding: 7px 14px; }
+#viz .vtime { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; }
+#viz .vtime input { width: 110px; accent-color: #ffd36a; height: 20px; }
+#viz .vtime #vTimeLbl { font-variant-numeric: tabular-nums; min-width: 3em; }
 #viz .vb.lit { background: rgba(255,211,106,0.92); color: #2a2030; }
 details.verses { margin-top: 6px; }
 details.verses summary { cursor: pointer; font-size: 20px; color: var(--gold); }
@@ -379,20 +397,24 @@ body.island #verseList label.verse input { accent-color: var(--i-green); }
 <canvas id="game"></canvas>
 <canvas id="flat"></canvas>
 
+<div id="hurt" aria-hidden="true"></div>
 <div id="hud" class="hidden">
   <div id="msgs"></div>
   <div id="compass" class="hidden"><span class="arrow">▲</span><div class="dist"></div></div>
   <div id="crosshair"></div>
   <div id="nametag" class="hidden"></div>
+  <div id="missions" class="hidden" aria-live="polite"></div>
   <div id="prompt" class="hidden"></div>
   <div id="islandHud"><canvas id="iFace" width="64" height="64"></canvas><div><b id="iName"></b><span id="iInfo"></span></div><div class="coins"><i></i>× <span id="pCoins">0</span></div></div>
   <div id="bar">
     <div class="cell" id="ammoCell"><div class="num" id="sAmmo">400</div><div class="cap">AMMO</div></div>
+    <div class="cell fightOnly"><div class="num small" id="sHealth">100%</div><div class="cap">HEALTH</div></div>
+    <div class="cell fightOnly"><div class="num small" id="sScore">0</div><div class="cap">SCORE</div></div>
     <div class="cell"><div class="num" id="sGen">0</div><div class="cap">GEN</div></div>
     <div class="cell"><div class="num small" id="sMet">0/0</div><div class="cap">MET</div></div>
     <div class="cell face"><canvas id="sFace" width="64" height="64"></canvas></div>
-    <div class="cell"><div class="num small" id="sEra">----</div><div class="cap">ERA</div></div>
-    <div class="cell lines"><div class="num" id="sLines">1</div><div class="cap">LINES</div></div>
+    <div class="cell notFight"><div class="num small" id="sEra">----</div><div class="cap">ERA</div></div>
+    <div class="cell lines notFight"><div class="num" id="sLines">1</div><div class="cap">LINES</div></div>
   </div>
 </div>
 
@@ -421,7 +443,7 @@ body.island #verseList label.verse input { accent-color: var(--i-green); }
 <div id="automap" class="hidden">
   <canvas id="mapCanvas"></canvas>
   <div class="top">
-    <input type="search" id="mapSearch" placeholder="Find an ancestor…" autocomplete="off">
+    <input type="search" id="mapSearch" placeholder="Find a name, place or job…" autocomplete="off">
     <button id="mapZoom">Zoom</button>
     <button id="mapClose">✕</button>
   </div>
@@ -446,6 +468,8 @@ body.island #verseList label.verse input { accent-color: var(--i-green); }
     <div class="vseg t-only" id="vSpace"><button data-space="year" class="on">By year</button><button data-space="gen">By generation</button></div>
     <button class="vb t-only" id="vSpeed" data-x="1" aria-label="Speed">1×</button>
     <button class="vb t-only" id="vSeason" aria-label="Season">🌸 Spring</button>
+    <label class="vb vtime t-only" title="Time of day"><span id="vTimeIcon">☀️</span><input type="range" id="vTime" min="0" max="24" step="0.05" value="12" aria-label="Time of day"><span id="vTimeLbl">12:00</span></label>
+    <button class="vb t-only" id="vDay" title="Let the day go by" aria-label="Let the day go by">↻ Day</button>
     <button class="vb t-only" id="vVerse" aria-pressed="true">✝ Verses</button>
     <button class="vb" id="vRec">● Record video</button>
     <input type="range" class="t-only" id="vScrub" min="1700" max="2000" value="2000" aria-label="Year">
@@ -468,6 +492,11 @@ body.island #verseList label.verse input { accent-color: var(--i-green); }
         <button data-style="retro" class="on">Retro</button><button data-style="island" class="islandBtn">Island</button><button data-style="fluffy" class="islandBtn">Fluffy</button>
       </div>
       <div class="note" style="margin-top:6px" id="lookNote"></div>
+      <label class="toggle retroOnly" for="fightToggle">
+        <input type="checkbox" id="fightToggle">
+        <span class="sw" aria-hidden="true"></span>
+        <span class="tl">Fight back<small>Shoot someone and they pull out a weapon and come after you. You have health and a score; knock them out and they go home to calm down.</small></span>
+      </label>
     </div>
 
     <div class="card playOnly" id="cardResume" style="display:none">
@@ -557,7 +586,8 @@ body.island #verseList label.verse input { accent-color: var(--i-green); }
         <b>Talk</b><span>E / Enter (Space too, except on the Island) · TALK button</span>
         <b class="platOnly">Jump</b><span class="platOnly">Space · JUMP button. Bounce on heads, hop onto brick platforms, grab coins.</span>
         <b class="fluffyOnly">Zoom</b><span class="fluffyOnly">Mouse wheel. Click someone far away to set a waypoint to them.</span>
-        <b class="doomOnly">Fire</b><span class="doomOnly">Left mouse / Ctrl · FIRE button</span>
+        <b class="doomOnly">Fire</b><span class="doomOnly">Left mouse / Ctrl · FIRE button. With Fight back on, whoever you shoot comes after you: keep moving (run with Shift) and grab first-aid kits.</span>
+        <b>Missions</b><span>Chat to ancestors and some will ask you to find someone. Find them for XP (Fluffy), coins (Island) or ammo (Retro). The map search finds names, places and jobs.</span>
         <b>Automap</b><span>Tab or M · MAP button</span>
         <b>Menu</b><span>Esc · ☰</span>
       </div>
@@ -3130,7 +3160,45 @@ function bumpQuip(person, n = 0) {
   return say(voice, lines[(hashString(person.id) + n) % lines.length]);
 }
 
-return { buildDialogue, shotQuip, stompQuip, bumpQuip };
+// Fight back mode (Retro): the moment someone decides they've had enough, and when they're knocked out.
+function angerQuip(person, n = 0) {
+  const voice = makeVoice(person);
+  const addr = pickR(voice, voice.v.address || ['you']);
+  const lines = [
+    T`Right, ${addr}. You asked for it!`, 'That is IT. Come here!', T`I'll teach you some manners, ${addr}!`,
+    'Nobody shoots at me in my own courtyard!', voice.year < 1700 ? 'Have at thee, villain!' : 'Put \'em up!',
+    'I didn\'t raise a family to be treated like this!', T`You're for it now, ${addr}!`,
+  ];
+  return say(voice, lines[(hashString(person.id) + n) % lines.length]);
+}
+function koQuip(person, n = 0) {
+  const voice = makeVoice(person);
+  const lines = ['Oof... I need a sit down.', 'Alright, alright, I give in!', 'You win this time.', 'I\'m going home for a cup of tea.',
+    voice.year < 1700 ? 'I yield! I yield!' : 'My knees aren\'t what they were...', 'Wait till your grandmother hears about this.'];
+  return say(voice, lines[(hashString(person.id) + n) % lines.length]);
+}
+
+// Missions: an ancestor asks you to go and find someone, and the person you find says hello.
+function missionSpeech(person, m) {
+  const voice = makeVoice(person);
+  const addr = pickR(voice, voice.v.address || ['love']);
+  const ask = {
+    place: T`Would you do something for me, ${addr}? Go and find someone in the family who was born in ${m.place}.`,
+    name: T`There's someone in the family called ${m.name}. I never got to meet them. Could you find them for me?`,
+    job: T`Find me someone who worked as a ${m.job}, ${addr}. I'd like to know how they got on.`,
+    decade: T`I wonder who was born in the ${m.decade}s. Go and find one of them for me, would you?`,
+    relative: T`Go and find my ${m.rel}, ${m.name}. Tell them I sent you.`,
+    surname: T`Our family married into the ${m.surname}s somewhere back there. Find one of them for me.`,
+  }[m.type];
+  return say(voice, ask);
+}
+function foundSpeech(person, giverFirst) {
+  const voice = makeVoice(person);
+  const addr = pickR(voice, voice.v.address || ['love']);
+  return say(voice, T`Did ${giverFirst} send you looking for me? Well, here I am, ${addr}!`);
+}
+
+return { buildDialogue, shotQuip, stompQuip, bumpQuip, angerQuip, koQuip, missionSpeech, foundSpeech };
 })();
 
 // ---- guides.js ----
@@ -3253,8 +3321,9 @@ function textures(rnd) {
     x.fillStyle = '#d8b030'; x.fillRect(4, 4, 6, 3);
   });
   const stone = cvs(32, 32, (x) => { noise(x, rnd, 0, 0, 32, 32, [150, 142, 128], 26); x.fillStyle = 'rgba(40,36,30,0.6)'; for (let i = 3; i < 32; i += 6) x.fillRect(i, 0, 1, 32); x.fillRect(0, 0, 32, 2); });
+  const medkit = cvs(16, 16, (x) => { noise(x, rnd, 0, 0, 16, 16, [228, 226, 220], 10); x.fillStyle = '#c81e1e'; x.fillRect(6, 3, 4, 10); x.fillRect(3, 6, 10, 4); x.fillStyle = '#8a8a8a'; x.fillRect(0, 0, 16, 1); x.fillRect(0, 15, 16, 1); });
   const ammo = cvs(16, 16, (x) => { noise(x, rnd, 0, 0, 16, 16, [86, 92, 54], 18); x.fillStyle = '#2a2e1a'; x.fillRect(0, 0, 16, 1); x.fillRect(0, 7, 16, 1); x.fillStyle = '#e8d070'; x.fillRect(5, 3, 6, 2); });
-  return { barrel: toTexture(barrel), rust: toTexture(rust), crate: toTexture(crate), stone: toTexture(stone), ammo: toTexture(ammo) };
+  return { barrel: toTexture(barrel), rust: toTexture(rust), crate: toTexture(crate), stone: toTexture(stone), ammo: toTexture(ammo), medkit: toTexture(medkit) };
 }
 
 function retroProps(scene, tree, world, flameMat) {
@@ -3361,6 +3430,28 @@ function retroProps(scene, tree, world, flameMat) {
   ammo.forEach((a, i) => setAmmo(i, true));
   ammoMesh.count = ammo.length; scene.add(ammoMesh);
 
+  // First-aid kits: only out in Fight back mode
+  const medkits = openSpots(tree, rnd, { count: Math.round(3 * scale), clearPeople: 2, clearLines: 0, clearOther: 5, used }).map(a => ({ ...a, taken: false, respawn: 0, rot: rnd() * 6 }));
+  const medMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(0.5, 0.3, 0.5).translate(0, 0.15, 0), lam(T.medkit), Math.max(1, medkits.length));
+  let fight = false;
+  const setMed = (i, visible) => { const a = medkits[i]; q.setFromAxisAngle(up, a.rot); m.compose(new THREE.Vector3(a.x, 0, a.z), q, visible && fight ? one : new THREE.Vector3(0.0001, 0.0001, 0.0001)); medMesh.setMatrixAt(i, m); medMesh.instanceMatrix.needsUpdate = true; };
+  medkits.forEach((a, i) => setMed(i, true));
+  medMesh.count = medkits.length; scene.add(medMesh);
+  world.medkits = medkits;
+  // In Fight back mode pickups turn up somewhere new each time, at random
+  const relocate = a => {
+    const avoid = [...ammo, ...medkits].filter(o => o !== a).map(o => ({ x: o.x, z: o.z, r: 3 }));
+    for (const c of world.colliders) avoid.push({ x: c.x, z: c.z, r: c.r });
+    const [spot] = openSpots(tree, Math.random, { count: 1, clearPeople: 2, clearLines: 0, clearOther: 2, used: avoid });
+    if (spot) { a.x = spot.x; a.z = spot.z; a.rot = Math.random() * 6; }
+  };
+  world.setFight = on => {
+    fight = !!on;
+    if (fight) { ammo.forEach((a, i) => { relocate(a); setAmmo(i, !a.taken); }); medkits.forEach(relocate); }
+    medkits.forEach((a, i) => setMed(i, !a.taken));
+  };
+  world.takeMedkit = (a) => { const i = medkits.indexOf(a); if (i < 0 || a.taken) return; a.taken = true; a.respawn = 25 + Math.random() * 20; setMed(i, false); };
+
   world.colliders.push(
     ...barrels.map(b => ({ x: b.x, z: b.z, r: 0.42, barrel: b })),
     ...fires.map(f => ({ x: f.x, z: f.z, r: 0.42 })),
@@ -3387,7 +3478,7 @@ function retroProps(scene, tree, world, flameMat) {
     const e = booms[bi++ % booms.length];
     e.s.position.set(b.x, 1.0, b.z); e.t = 0; e.s.visible = true;
   };
-  world.takeAmmo = (a) => { const i = ammo.indexOf(a); if (i < 0 || a.taken) return; a.taken = true; a.respawn = 30; setAmmo(i, false); };
+  world.takeAmmo = (a) => { const i = ammo.indexOf(a); if (i < 0 || a.taken) return; a.taken = true; a.respawn = fight ? 16 + Math.random() * 16 : 30; setAmmo(i, false); };
 
   return (t, dt) => {
     for (const e of booms) {
@@ -3400,7 +3491,8 @@ function retroProps(scene, tree, world, flameMat) {
       e.s.material.map = flameMat[Math.floor(e.t * 20) % 4].map;
     }
     barrels.forEach((b, i) => { if (!b.alive && (b.respawn -= dt) <= 0) { b.alive = true; setBarrel(i, true); } });
-    ammo.forEach((a, i) => { if (a.taken && (a.respawn -= dt) <= 0) { a.taken = false; setAmmo(i, true); } });
+    ammo.forEach((a, i) => { if (a.taken && (a.respawn -= dt) <= 0) { a.taken = false; if (fight) relocate(a); setAmmo(i, true); } });
+    medkits.forEach((a, i) => { if (a.taken && (a.respawn -= dt) <= 0) { a.taken = false; relocate(a); setMed(i, true); } });
   };
 }
 
@@ -3851,7 +3943,7 @@ function buildWorld(scene, tree, opts = {}) {
     const target = person.primaryChild ? tree.people.get(person.primaryChild) : { x: 0, z: 0 };
     fig.root.rotation.y = Math.atan2(target.x - person.x, target.z - person.z);
     scene.add(fig.root);
-    const npc = { person, look, fig, baseYaw: fig.root.rotation.y, yaw: fig.root.rotation.y, phase: (i * 1.37) % 6.28,
+    const npc = { person, x: person.x, z: person.z, look, fig, baseYaw: fig.root.rotation.y, yaw: fig.root.rotation.y, phase: (i * 1.37) % 6.28,
       waved: false, wave: 0, talking: false, met: false, flinch: 0, armRest: theme === 'island' ? 0.25 : 0.06, look };
     world.npcs.push(npc);
     world.byId.set(person.id, npc);
@@ -4028,21 +4120,24 @@ function createMinigun(skinColor) {
   }
   let casingIdx = 0;
 
-  const state = { spin: 0, angle: 0, cooldown: 0, kick: 0, ammo: 400, maxAmmo: 400, swayT: 0, firedThisFrame: false };
+  const state = { spin: 0, angle: 0, cooldown: 0, kick: 0, ammo: 400, maxAmmo: 400, swayT: 0, firedThisFrame: false, regen: true };
 
   /** dt, trigger held?, player speed → returns number of rounds fired this frame */
   function update(dt, trigger, speed) {
-    state.spin += ((trigger && state.ammo > 0 ? 1 : 0) - state.spin) * Math.min(1, dt * (trigger ? 3.2 : 1.4));
+    // a round needs a whole bullet, so the count never dips below zero
+    state.spin += ((trigger && state.ammo >= 1 ? 1 : 0) - state.spin) * Math.min(1, dt * (trigger ? 3.2 : 1.4));
     state.angle += state.spin * dt * 32;
     barrels.rotation.z = state.angle;
     let shots = 0;
     state.cooldown -= dt;
-    if (trigger && state.spin > 0.7 && state.ammo > 0) {
-      while (state.cooldown <= 0 && state.ammo > 0) { state.cooldown += 1 / 18; shots++; state.ammo--; }
+    if (trigger && state.spin > 0.7 && state.ammo >= 1) {
+      while (state.cooldown <= 0 && state.ammo >= 1) { state.cooldown += 1 / 18; shots++; state.ammo--; }
     } else {
       state.cooldown = Math.max(0, state.cooldown);
-      if (!trigger) state.ammo = Math.min(state.maxAmmo, state.ammo + dt * 12);
+      // ammo slowly tops itself up, except in Fight back mode where you need the boxes of bullets
+      if (!trigger && state.regen) state.ammo = Math.min(state.maxAmmo, state.ammo + dt * 12);
     }
+    state.ammo = Math.max(0, state.ammo);
     if (shots) {
       state.kick = 1;
       flash.visible = true;
@@ -4115,7 +4210,7 @@ function traceShot(origin, dir, npcs, wallRadius, range = 120, props = []) {
   let best = null, bestT = range, bestProp = null;
   for (const n of npcs) {
     if (!n.fig.root.visible || n.dist > 70) continue;
-    const ox = origin.x - n.person.x, oz = origin.z - n.person.z;
+    const ox = origin.x - n.x, oz = origin.z - n.z;
     const a = dir.x * dir.x + dir.z * dir.z;
     if (a < 1e-6) continue;
     const b = 2 * (ox * dir.x + oz * dir.z), c = ox * ox + oz * oz - 0.42 * 0.42;
@@ -4162,6 +4257,295 @@ function traceShot(origin, dir, npcs, wallRadius, range = 120, props = []) {
 }
 
 return { createMinigun, createImpacts, traceShot };
+})();
+
+// ---- fight.js ----
+const __m_fight = (() => {
+// Fight back mode for the Retro look. Ancestors leave you alone until you shoot them; then they pull out a
+// weapon from their time and walk after you, swinging at you when they're close. Knock them out and they
+// go home to their spot, calm again until the next time. You have health (first-aid kits top it up) and a
+// score; if your health runs out you go back to the middle and everyone calms down.
+
+const { firstName, displayName } = __m_ancestry;
+const { angerQuip, koQuip } = __m_dialogue;
+const mat = {};
+const M = c => (mat[c] ||= new THREE.MeshLambertMaterial({ color: c }));
+const cyl = (r0, r1, len, color, y) => { const g = new THREE.Mesh(new THREE.CylinderGeometry(r0, r1, len, 7), M(color)); g.position.y = y; return g; };
+const box = (w, h, d, color, x, y, z) => { const g = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), M(color)); g.position.set(x, y, z); return g; };
+
+// Weapons point away from the hand along -Y, like a continuation of the arm.
+function buildWeapon(kind) {
+  const g = new THREE.Group();
+  if (kind === 'club') { g.add(cyl(0.07, 0.035, 0.6, '#6a4424', -0.3)); }
+  else if (kind === 'rollingpin') { g.add(cyl(0.05, 0.05, 0.42, '#d8b07a', -0.3), cyl(0.02, 0.02, 0.12, '#b88a50', -0.06), cyl(0.02, 0.02, 0.12, '#b88a50', -0.56)); }
+  else if (kind === 'pitchfork') {
+    g.add(cyl(0.02, 0.02, 1.1, '#8a6a44', -0.45));
+    g.add(box(0.26, 0.03, 0.03, '#6a6a6a', 0, -1.0, 0));
+    for (const x of [-0.11, 0, 0.11]) g.add(box(0.025, 0.24, 0.025, '#8a8a8a', x, -1.12, 0));
+  } else if (kind === 'umbrella') {
+    g.add(cyl(0.015, 0.015, 0.8, '#1a1a1a', -0.35));
+    const c = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.5, 8), M('#20202a')); c.position.y = -0.55; c.rotation.x = Math.PI; g.add(c);
+  } else if (kind === 'pan') {
+    g.add(cyl(0.02, 0.02, 0.32, '#3a2a1a', -0.16));
+    const d = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.15, 0.04, 14), M('#2a2a2e')); d.position.set(0, -0.48, 0); d.rotation.x = Math.PI / 2; g.add(d);
+  } else if (kind === 'broom') {
+    g.add(cyl(0.02, 0.02, 1.0, '#9a7a4a', -0.4));
+    g.add(box(0.2, 0.26, 0.08, '#c8a860', 0, -1.0, 0));
+  } else { g.add(cyl(0.018, 0.018, 0.75, '#3a2a1e', -0.35)); g.add(new THREE.Mesh(new THREE.SphereGeometry(0.04, 6, 5), M('#c8a050'))); }
+  return g;
+}
+function weaponFor(look) {
+  const job = look.job || '';
+  if (/farm|agric|lab/.test(job)) return 'pitchfork';
+  if (look.female) return ['rollingpin', 'pan', 'umbrella', 'broom'][Math.floor((look.height * 1000) % 4)];
+  if (look.year > 1880 && look.tier === 'gentry') return 'umbrella';
+  return ['club', 'cane', 'club', 'pitchfork'][Math.floor((look.height * 1000) % 4)];
+}
+
+function createFight(ctx) {
+  // ctx: { world, message, sfx, impacts, onHurt(dmg, npc), onKO(npc, points), store, key }
+  const st = { on: false, health: 100, score: 0, best: +(ctx.store.get(ctx.key) || 0), kos: 0 };
+  let quipN = 0;
+  const angry = new Set();
+
+  function ensureWeapon(n) {
+    if (n.weapon) return n.weapon;
+    n.weapon = buildWeapon(weaponFor(n.look));
+    n.weapon.position.set(0, -0.58, 0.04);
+    n.fig.armR.add(n.weapon);
+    return n.weapon;
+  }
+  function anger(n) {
+    if (n.angry) return;
+    n.angry = true; angry.add(n);
+    n.hp = 18 + Math.min(10, n.person.gen * 1.5);
+    n.attackCD = 0.9; n.swing = 0; n.draw = 0;
+    n.speed = 3.3 + ((n.phase * 7) % 1) * 0.9;
+    ensureWeapon(n).visible = true;
+    ctx.message(`${firstName(n.person.indi)}: "${angerQuip(n.person, quipN++)}"`);
+  }
+  function calm(n) {
+    n.angry = false; angry.delete(n);
+    if (n.weapon) n.weapon.visible = false;
+    n.x = n.person.x; n.z = n.person.z; n.swing = 0;
+    n.fig.root.position.set(n.x, 0, n.z);
+    n.yaw = n.baseYaw; n.fig.root.rotation.y = n.baseYaw;
+    n.fig.armR.rotation.set(0, 0, n.armRest); n.fig.armL.rotation.set(0, 0, -n.armRest);
+    n.fig.inner.position.y = 0;
+  }
+  function knockOut(n) {
+    const pts = 100 + 25 * n.person.gen;
+    st.score += pts; st.kos++;
+    for (let k = 0; k < 6; k++) ctx.impacts?.spawn(new THREE.Vector3(n.x + (Math.random() - 0.5), 0.3 + Math.random() * 1.4, n.z + (Math.random() - 0.5)));
+    ctx.message(`${firstName(n.person.indi)}: "${koQuip(n.person, quipN++)}"`);
+    ctx.message(`Knocked out ${displayName(n.person.indi)}! +${pts}`);
+    ctx.onKO?.(n, pts);
+    calm(n);
+    saveBest();
+  }
+  function saveBest() { if (st.score > st.best) { st.best = st.score; ctx.store.set(ctx.key, String(st.best)); } }
+  function hit(n, dmg = 1) {
+    if (!st.on) return false;
+    const first = !n.angry;
+    anger(n);
+    n.hp -= dmg;
+    st.score += 2 * dmg;
+    if (n.hp <= 0) knockOut(n);
+    return first;
+  }
+  function blast(x, z, player) {
+    if (!st.on) return;
+    for (const n of ctx.world.npcs) if (Math.hypot(n.x - x, n.z - z) < 3.5) hit(n, 9);
+    if (player && Math.hypot(player.x - x, player.z - z) < 3.2) hurt(16, null);
+  }
+  function hurt(dmg, n) {
+    st.health = Math.max(0, st.health - dmg);
+    ctx.onHurt?.(dmg, n, st.health);
+    if (st.health <= 0) {
+      saveBest();
+      ctx.message(`You were knocked out! Score ${st.score.toLocaleString()} (best ${st.best.toLocaleString()}). Back to the start.`);
+      saveBest();
+      for (const a of [...angry]) calm(a);
+      st.health = 100;
+      ctx.onDeath?.();
+    }
+  }
+  const tmp = new THREE.Vector3();
+  function update(dt, t, player) {
+    if (!st.on) return;
+    const W = ctx.world;
+    for (const n of angry) {
+      const dx = player.x - n.x, dz = player.z - n.z, d = Math.hypot(dx, dz) || 0.001;
+      const fig = n.fig;
+      fig.root.visible = true; fig.setDetail(true);
+      n.draw = Math.min(1, n.draw + dt * 4);
+      if (n.weapon) n.weapon.scale.setScalar(0.3 + 0.7 * n.draw);
+      // walk after you, round anything in the way
+      const moving = d > 1.25 && n.swing <= 0;
+      if (moving) {
+        n.x += dx / d * n.speed * dt; n.z += dz / d * n.speed * dt;
+        for (const c of W.colliders) {
+          if (c.barrel && !c.barrel.alive) continue;
+          const ox = n.x - c.x, oz = n.z - c.z, od = Math.hypot(ox, oz), min = c.r + 0.35;
+          if (od < min && od > 0.001) { n.x = c.x + ox / od * min; n.z = c.z + oz / od * min; }
+        }
+        for (const o of angry) {
+          if (o === n) continue;
+          const ox = n.x - o.x, oz = n.z - o.z, od = Math.hypot(ox, oz);
+          if (od < 0.8 && od > 0.001) { n.x += ox / od * (0.8 - od) * 0.5; n.z += oz / od * (0.8 - od) * 0.5; }
+        }
+        const r = Math.hypot(n.x, n.z), maxR = W.wallRadius - 0.8;
+        if (r > maxR) { n.x *= maxR / r; n.z *= maxR / r; }
+      }
+      fig.root.position.set(n.x, 0, n.z);
+      n.yaw = Math.atan2(dx, dz);
+      fig.root.rotation.y = n.yaw;
+      fig.head.rotation.set(0, 0, 0);
+      n.dist = d;
+      // swing when close
+      n.attackCD -= dt;
+      if (d < 1.5 && n.attackCD <= 0 && n.swing <= 0) { n.swing = 0.55; n.struck = false; n.attackCD = 1.15 + Math.random() * 0.6; }
+      if (n.swing > 0) {
+        n.swing -= dt;
+        const p = 1 - Math.max(0, n.swing) / 0.55;
+        fig.armR.rotation.x = p < 0.45 ? -2.0 - (p / 0.45) * 0.9 : -2.9 + ((p - 0.45) / 0.55) * 3.2;
+        fig.armR.rotation.z = n.armRest;
+        if (p > 0.62 && !n.struck) {
+          n.struck = true;
+          ctx.sfx?.swish?.();
+          if (Math.hypot(player.x - n.x, player.z - n.z) < 1.9) hurt(Math.round(6 + Math.random() * 6), n);
+        }
+      } else {
+        fig.armR.rotation.x = -2.1 + Math.sin(t * 6 + n.phase) * 0.15;
+        fig.armR.rotation.z = n.armRest;
+      }
+      fig.armL.rotation.x = moving ? Math.sin(t * 10 + n.phase) * 0.7 : 0;
+      fig.inner.position.y = moving ? Math.abs(Math.sin(t * 10 + n.phase)) * 0.07 : 0;
+    }
+    // first-aid kits
+    for (const m of W.medkits || []) {
+      if (m.taken || st.health >= 100 || Math.abs(m.x - player.x) > 0.9 || Math.abs(m.z - player.z) > 0.9) continue;
+      W.takeMedkit(m);
+      st.health = Math.min(100, st.health + 35);
+      ctx.message('Picked up a first-aid kit. +35 health');
+      ctx.onHeal?.();
+    }
+  }
+  function setOn(on) {
+    st.on = !!on;
+    ctx.world.setFight?.(st.on);
+    if (!st.on) for (const a of [...angry]) calm(a);
+    st.health = 100;
+  }
+  return {
+    state: st, hit, blast, update, setOn, anger,
+    get angryCount() { return angry.size; },
+    reset() { for (const a of [...angry]) calm(a); st.health = 100; st.score = 0; st.kos = 0; },
+  };
+}
+
+return { createFight };
+})();
+
+// ---- missions.js ----
+const __m_missions = (() => {
+// Missions turn exploring the tree into a game. Talk to an ancestor and they may ask you to find someone:
+// a person born in a certain town, someone called Edith, someone who worked as a weaver, someone born in the
+// 1840s, one of their own parents, or someone from a family they married into. Talk to anyone who fits and
+// the mission is done. Rewards depend on the look: XP in Fluffy, ammo (and score) in Retro, coins on the Island.
+const { firstName, findEvent, birthYear, seededRandom, hashString, relationship } = __m_ancestry;
+const { missionSpeech } = __m_dialogue;
+const town = indi => {
+  const e = findEvent(indi, 'BIRT', 'CHR', 'BAPM');
+  return e?.place ? e.place.split(',')[0].trim() : '';
+};
+const jobsOf = indi => indi.events.filter(e => e.tag === 'OCCU' && e.value).map(e => e.value.trim().toLowerCase());
+const given = indi => (indi.given || '').split(/\s+/)[0];
+
+/** Does this person fit the mission? */
+function fits(m, person) {
+  const indi = person.indi;
+  if (person.id === m.giverId) return false;
+  switch (m.type) {
+    case 'place': return town(indi).toLowerCase() === m.place.toLowerCase();
+    case 'name': return given(indi).toLowerCase() === m.name.toLowerCase();
+    case 'job': return jobsOf(indi).some(j => j.includes(m.job.toLowerCase()));
+    case 'decade': { const y = birthYear(indi); return y != null && Math.floor(y / 10) * 10 === m.decade; }
+    case 'relative': return person.id === m.targetId;
+    case 'surname': return (indi.surname || '').toLowerCase() === m.surname.toLowerCase();
+  }
+  return false;
+}
+
+const MAX_ACTIVE = 3;
+
+function createMissions({ tree, store, key }) {
+  const saved = (() => { try { return JSON.parse(store.get(key) || 'null'); } catch (e) { return null; } })() || {};
+  const st = { active: saved.active || [], done: new Set(saved.done || []), declined: new Set(), xp: saved.xp || 0, completed: saved.completed || 0 };
+  const save = () => store.set(key, JSON.stringify({ active: st.active, done: [...st.done], xp: st.xp, completed: st.completed }));
+  const people = [...tree.people.values()].filter(p => p.gen > 0);
+  const rootSurname = (tree.people.get(tree.rootId)?.indi.surname || '').toLowerCase();
+
+  // What this ancestor would ask of you (always the same ask for the same person).
+  function missionFor(giver) {
+    const rnd = seededRandom(hashString(giver.id + 'mission'));
+    const others = people.filter(p => p.id !== giver.id);
+    if (!others.length) return null;
+    const pick = arr => arr[Math.floor(rnd() * arr.length)];
+    const options = [];
+    const parentId = giver.layoutParents?.find(id => tree.people.has(id));
+    if (parentId) { const p = tree.people.get(parentId); options.push({ type: 'relative', targetId: p.id, name: firstName(p.indi), rel: p.indi.sex === 'F' ? 'mother' : p.indi.sex === 'M' ? 'father' : 'parent' }); }
+    const withTown = others.filter(p => town(p.indi) && town(p.indi).toLowerCase() !== town(giver.indi).toLowerCase());
+    if (withTown.length) options.push({ type: 'place', place: town(pick(withTown).indi) });
+    const named = others.filter(p => given(p.indi) && given(p.indi).toLowerCase() !== given(giver.indi).toLowerCase());
+    if (named.length) options.push({ type: 'name', name: given(pick(named).indi) });
+    const workers = others.filter(p => jobsOf(p.indi).length);
+    if (workers.length) { const j = pick(jobsOf(pick(workers).indi)); if (j.length < 28) options.push({ type: 'job', job: j }); }
+    const dated = others.filter(p => birthYear(p.indi) != null && Math.floor(birthYear(p.indi) / 10) !== Math.floor((birthYear(giver.indi) ?? -99) / 10));
+    if (dated.length) options.push({ type: 'decade', decade: Math.floor(birthYear(pick(dated).indi) / 10) * 10 });
+    const inlaws = others.filter(p => p.indi.surname && p.indi.surname.toLowerCase() !== rootSurname && p.indi.surname.toLowerCase() !== (giver.indi.surname || '').toLowerCase());
+    if (inlaws.length) options.push({ type: 'surname', surname: pick(inlaws).indi.surname });
+    if (!options.length) return null;
+    const m = { ...pick(options), giverId: giver.id, giverName: firstName(giver.indi) };
+    m.id = giver.id + ':' + m.type;
+    m.label = label(m);
+    return m;
+  }
+  function label(m) {
+    return {
+      place: `Find someone born in ${m.place}`, name: `Find someone called ${m.name}`, job: `Find a ${m.job}`,
+      decade: `Find someone born in the ${m.decade}s`, relative: `Find ${m.giverName}'s ${m.rel}, ${m.name}`, surname: `Find one of the ${m.surname}s`,
+    }[m.type];
+  }
+  return {
+    state: st,
+    get active() { return st.active; },
+    /** A mission this person could offer right now, with what they say, or null. */
+    offer(giver) {
+      if (st.active.length >= MAX_ACTIVE || st.done.has(giver.id) || st.declined.has(giver.id) || st.active.some(m => m.giverId === giver.id)) return null;
+      const m = missionFor(giver);
+      if (!m) return null;
+      // skip asks that nobody else in the tree can satisfy
+      if (!people.some(p => fits(m, p))) return null;
+      return { ...m, speech: missionSpeech(giver, m) };
+    },
+    accept(m) { const { speech, ...keep } = m; st.active.push(keep); save(); },
+    decline(m) { st.declined.add(m.giverId); },
+    /** Missions this person completes (removed from the active list). */
+    check(person) {
+      const done = st.active.filter(m => fits(m, person));
+      if (!done.length) return [];
+      st.active = st.active.filter(m => !done.includes(m));
+      for (const m of done) { st.done.add(m.giverId); st.completed++; }
+      save();
+      return done;
+    },
+    addXP(n) { st.xp += n; save(); },
+    reset() { st.active = []; st.done.clear(); st.declined.clear(); save(); },
+  };
+}
+
+return { fits, createMissions, MAX_ACTIVE };
 })();
 
 // ---- fluffy.js ----
@@ -4404,7 +4788,7 @@ function buildFlatWorld(tree) {
   const people = [...tree.people.values()].filter(p => p.gen > 0);
   people.forEach((person, i) => {
     const look = lookFor(person, rootYear - person.gen * 29);
-    const npc = { person, look, phase: (i * 1.37) % 6.28, met: false, talking: false, flinch: 0, wave: 0, waved: false,
+    const npc = { person, x: person.x, z: person.z, look, phase: (i * 1.37) % 6.28, met: false, talking: false, flinch: 0, wave: 0, waved: false,
       dist: Infinity, near: false, size: 0.56 + ((hashString(person.id) % 7) - 3) * 0.012, nextBlink: 1 + (i % 5), blinkUntil: 0, look2: 0 };
     fluffOf(look, person.id);
     world.npcs.push(npc);
@@ -5160,8 +5544,7 @@ function createGalaxy(host, opts) {
   const smoother = s => s * s * s * (s * (s * 6 - 15) + 10); // zero speed and zero acceleration at both ends
 
   // ---- fly-through ----
-  // The tour is a list of stops. Between two stops the camera slows to a halt, turns, then speeds up again
-  // (each leg uses a smootherstep curve), and it pauses briefly at each ancestor so their caption can be read.
+  // The tour is a list of stops joined into one smooth curve that the camera flows along.
   let tour = null;
   const nodeVec = n => new THREE.Vector3(n.x, n.y, n.z);
   const chainTo = target => {
@@ -5183,13 +5566,13 @@ function createGalaxy(host, opts) {
     }
     const fr = fitRadius();
     const stops = [];
-    const stop = (pos, look, node = null, hold = 0) => stops.push({ pos, look, node, hold });
+    const stop = (pos, look, node = null) => stops.push({ pos, look, node });
     stop(camera.position.clone(), controls.target.clone());
     const chain = target ? chainTo(target) : [];
     if (chain) {
       // out from you along the line of descent
-      if (camera.position.length() < fr * 1.1) stop(new THREE.Vector3(0, fr * 1.3, fr * 0.9), new THREE.Vector3(), null, 0.4);
-      stop(new THREE.Vector3(5, 7, 13), new THREE.Vector3(), G.nodes[0], 1.4);
+      if (camera.position.length() < fr * 1.1) stop(new THREE.Vector3(0, fr * 1.3, fr * 0.9), new THREE.Vector3(), null);
+      stop(new THREE.Vector3(5, 7, 13), new THREE.Vector3(), G.nodes[0]);
       let prev = new THREE.Vector3();
       chain.forEach((n, i) => {
         const p = nodeVec(n);
@@ -5197,14 +5580,14 @@ function createGalaxy(host, opts) {
         if (along.lengthSq() < 0.01) along.set(1, 0, 0);
         along.normalize();
         const side = new THREE.Vector3(-along.z, 0, along.x).multiplyScalar(i % 2 ? 6 : -6);
-        stop(p.clone().addScaledVector(along, -10).add(side).add(new THREE.Vector3(0, 4, 0)), p, n, 1.3);
+        stop(p.clone().addScaledVector(along, -10).add(side).add(new THREE.Vector3(0, 4, 0)), p, n);
         prev = p;
       });
     } else if (target) {
       // not on one of your lines (someone else in the file): fly straight there
       const p = nodeVec(target), dir = camera.position.clone().sub(p).setY(0).normalize();
-      stop(p.clone().addScaledVector(dir, 30).add(new THREE.Vector3(0, 14, 0)), p, null, 0.3);
-      stop(p.clone().addScaledVector(dir, 12).add(new THREE.Vector3(0, 4, 0)), p, target, 1.5);
+      stop(p.clone().addScaledVector(dir, 30).add(new THREE.Vector3(0, 14, 0)), p, null);
+      stop(p.clone().addScaledVector(dir, 12).add(new THREE.Vector3(0, 4, 0)), p, target);
     }
     let endTarget = new THREE.Vector3();
     if (picked) {
@@ -5212,42 +5595,62 @@ function createGalaxy(host, opts) {
       endTarget = nodeVec(target);
     } else {
       const last = stops[stops.length - 1].look.clone();
-      stop(last.clone().multiplyScalar(1.3).add(new THREE.Vector3(0, fr * 0.5, 0)), last.clone().multiplyScalar(0.6), null, 0.2);
-      stop(new THREE.Vector3(-fr * 0.9, fr * 1.15, -fr * 0.9), new THREE.Vector3(), null, 0);
+      stop(last.clone().multiplyScalar(1.3).add(new THREE.Vector3(0, fr * 0.5, 0)), last.clone().multiplyScalar(0.6), null);
+      stop(new THREE.Vector3(-fr * 0.9, fr * 1.15, -fr * 0.9), new THREE.Vector3(), null);
     }
-    // timings for each leg from its length
-    const legs = [];
-    for (let i = 0; i < stops.length - 1; i++) {
-      const d = stops[i].pos.distanceTo(stops[i + 1].pos) + stops[i].look.distanceTo(stops[i + 1].look) * 0.3;
-      legs.push(Math.max(1.6, Math.min(6.5, 1.1 + Math.sqrt(d) * 0.42)));
-    }
+    // One continuous glide: the camera eases away at the start, cruises, slows almost to a stop as it reaches
+    // each person where the path changes direction, then accelerates away again without waiting.
     const camCurve = new THREE.CatmullRomCurve3(stops.map(s => s.pos), false, 'centripetal');
     const lookCurve = new THREE.CatmullRomCurve3(stops.map(s => s.look), false, 'centripetal');
-    return { stops, legs, camCurve, lookCurve, leg: 0, phase: 'hold', clock: 0, endTarget, look: controls.target.clone() };
+    const n = stops.length, M = Math.max(60, 40 * (n - 1));
+    const tAt = [], lenAt = [];
+    let acc = 0, prevP = camCurve.getPoint(0);
+    for (let j = 0; j <= M; j++) {
+      const p = camCurve.getPoint(j / M);
+      acc += p.distanceTo(prevP); prevP = p;
+      tAt.push(j / M); lenAt.push(acc);
+    }
+    const L = Math.max(1, acc);
+    const knotLen = stops.map((_, i) => lenAt[Math.round(i / (n - 1) * M)]);
+    // how sharply the path turns at each stop (0 straight on .. 1 straight back)
+    const sharp = stops.map((_, i) => {
+      if (i === 0 || i === n - 1) return 0;
+      const a = stops[i].pos.clone().sub(stops[i - 1].pos).normalize(), b = stops[i + 1].pos.clone().sub(stops[i].pos).normalize();
+      return Math.min(1, Math.acos(Math.max(-1, Math.min(1, a.dot(b)))) / Math.PI * 1.6);
+    });
+    const cruise = Math.max(9, Math.min(30, fr * 0.11));
+    const speedAt = d => {
+      let k = Math.min(1, 0.12 + Math.sqrt(Math.min(1, d / 14)) * 0.88, Math.sqrt(Math.max(0, (L - d) / 18)) + 0.0);
+      for (let i = 1; i < n - 1; i++) {
+        // slow right down into each change of direction, then pull away again straight away (no waiting)
+        const g = Math.exp(-Math.pow((d - knotLen[i]) / (7 + 5 * sharp[i]), 2));
+        k *= 1 - g * 0.95;
+      }
+      return cruise * Math.max(0.025, k);
+    };
+    return { stops, camCurve, lookCurve, tAt, lenAt, knotLen, L, speedAt, d: 0, endTarget, look: controls.target.clone() };
   }
+  const paramAt = (T, d) => {
+    // curve parameter for a distance travelled (binary search the arc-length table)
+    let lo = 0, hi = T.lenAt.length - 1;
+    while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (T.lenAt[mid] < d) lo = mid; else hi = mid; }
+    const span = T.lenAt[hi] - T.lenAt[lo] || 1;
+    return T.tAt[lo] + (T.tAt[hi] - T.tAt[lo]) * Math.max(0, Math.min(1, (d - T.lenAt[lo]) / span));
+  };
   // Moves the camera one frame along the tour. Returns the person to caption (or null).
   function stepTour(dt) {
-    const T = tour, n = T.stops.length;
-    T.clock += dt;
-    let caption = null;
-    if (T.phase === 'hold') {
-      caption = T.stops[T.leg].node;
-      if (T.clock >= T.stops[T.leg].hold) {
-        if (T.leg >= n - 1) { stopTour(true); return caption; }
-        T.phase = 'move'; T.clock = 0;
-      }
-    }
-    if (T.phase === 'move') {
-      const s = Math.min(1, T.clock / T.legs[T.leg]), e = smoother(s);
-      const u = (T.leg + e) / (n - 1);
-      camera.position.copy(T.camCurve.getPoint(u));
-      T.lookWant = T.lookCurve.getPoint(u);
-      caption = s < 0.5 ? T.stops[T.leg].node : T.stops[T.leg + 1].node;
-      if (s >= 1) { T.leg++; T.phase = 'hold'; T.clock = 0; }
-    }
-    // the gaze follows a moment behind, so turns are gentle
-    if (T.lookWant) T.look.lerp(T.lookWant, 1 - Math.exp(-dt * 5));
+    const T = tour;
+    T.d = Math.min(T.L, T.d + T.speedAt(T.d) * dt);
+    const u = paramAt(T, T.d);
+    camera.position.copy(T.camCurve.getPoint(u));
+    // the gaze leads the camera a little and follows a moment behind, so turns are gentle
+    const want = T.lookCurve.getPoint(Math.min(1, u + 0.25 / (T.stops.length - 1)));
+    T.look.lerp(want, 1 - Math.exp(-dt * 3));
     camera.lookAt(T.look);
+    // caption whoever is the nearest stop
+    let caption = null, bd = Infinity;
+    T.knotLen.forEach((kl, i) => { const dd = Math.abs(kl - T.d); if (dd < bd && dd < 22) { bd = dd; caption = T.stops[i].node; } });
+    if (T.d >= T.L - 0.01) stopTour(true);
     return caption;
   }
   function startTour(target) {
@@ -5396,40 +5799,103 @@ const __m_treeart = (() => {
 // flowers blooming in the grass, falling petals or leaves, fireflies at night). Everything is drawn on one
 // canvas so it all ends up in recorded videos.
 const { seededRandom } = __m_ancestry;
+// Seasons set the colours of the land, bark, leaves and blossoms; the time of day sets the sky and the light.
 const TREE_STYLES = {
   spring: {
-    name: 'Spring', sky: ['#5fa8e0', '#a9dcf7', '#fde6d4'], sun: { x: 0.16, y: 0.13, core: '255,250,225', glow: '255,236,190' }, rays: true, clouds: true,
+    name: 'Spring', icon: '🌸',
     hills: ['#a8d8a0', '#8cc87e', '#6db35e'], ground: ['#79c25e', '#4f9a3e'], bark: ['#4a3324', '#7a5638', '#b08a64'],
     leaves: ['#8fd16a', '#a8de7e', '#6fbf54', '#c2ea94'],
     female: { petal: '#ffb9d2', edge: '#f08cb0', inner: '#ff86b0' }, male: { petal: '#ffffff', edge: '#cfdcf5', inner: '#d9e6ff' },
     centre: '#ffd84a', particle: 'petal', particleCols: ['#ffc8dc', '#ffe0ec', '#ffffff'], grassFlowers: ['#ffffff', '#ffd84a', '#ff9ac0', '#b9a0ff'],
-    legend: [['#ffb9d2', 'woman (pink blossom)'], ['#ffffff', 'man (white blossom)']],
+    flyer: 'butterfly', legend: [['#ffb9d2', 'woman (pink blossom)'], ['#ffffff', 'man (white blossom)']],
   },
   summer: {
-    name: 'Summer', sky: ['#2f86d8', '#7cc2f2', '#e8f6ff'], sun: { x: 0.82, y: 0.12, core: '255,255,240', glow: '255,246,200' }, rays: true, clouds: true,
+    name: 'Summer', icon: '☀️',
     hills: ['#8cc27a', '#6aab5a', '#4f9444'], ground: ['#5aa844', '#3c7f30'], bark: ['#3e2a1c', '#6e4b30', '#a07a56'],
     leaves: ['#3f9a3e', '#58b04a', '#2f8034', '#74c25a'],
     female: { petal: '#ff7f8e', edge: '#e85a6e', inner: '#ff5f78' }, male: { petal: '#ffe066', edge: '#e8b92e', inner: '#ffc93a' },
     centre: '#ffb02e', particle: 'fluff', particleCols: ['#ffffff', '#fffbe8'], grassFlowers: ['#ffffff', '#ffe066', '#ff7f8e', '#8fb8ff'],
-    legend: [['#ff7f8e', 'woman (rose)'], ['#ffe066', 'man (buttercup)']],
+    flyer: 'butterfly', legend: [['#ff7f8e', 'woman (rose)'], ['#ffe066', 'man (buttercup)']],
   },
   autumn: {
-    name: 'Autumn', sky: ['#3b2f62', '#c56a6a', '#ffc27a'], sun: { x: 0.8, y: 0.3, core: '255,228,170', glow: '255,170,90' }, rays: true, clouds: false,
+    name: 'Autumn', icon: '🍂',
     hills: ['#b08a5a', '#8f6e44', '#6f5634'], ground: ['#8a8a3c', '#5f6428'], bark: ['#3a2618', '#674530', '#9a7050'],
     leaves: ['#e8892e', '#d4582a', '#f2b23a', '#b8442a'],
     female: { petal: '#c8326a', edge: '#9a1e4c', inner: '#e0507e' }, male: { petal: '#fff0b0', edge: '#e0c070', inner: '#ffe48a' },
     centre: '#ffd060', particle: 'leaf', particleCols: ['#e8892e', '#d4582a', '#f2b23a'], grassFlowers: ['#fff0b0', '#c8326a', '#f2b23a', '#ffffff'],
-    legend: [['#c8326a', 'woman (crimson)'], ['#fff0b0', 'man (pale gold)']],
+    flyer: 'butterfly', legend: [['#c8326a', 'woman (crimson)'], ['#fff0b0', 'man (pale gold)']],
   },
-  night: {
-    name: 'Night', sky: ['#060a24', '#16204a', '#3a3a6a'], sun: { x: 0.8, y: 0.14, core: '240,244,255', glow: '170,190,255', moon: true }, rays: false, clouds: false, stars: true,
-    hills: ['#1c2a4a', '#162238', '#101a2c'], ground: ['#1f3a2c', '#0f2018'], bark: ['#1a1414', '#3a2e2a', '#7a6a70'],
-    leaves: ['#24503e', '#2e6048', '#1c4234', '#3a705a'],
-    female: { petal: '#ffb0e0', edge: '#ff7ac8', inner: '#ffd0ee', glow: '255,140,210' }, male: { petal: '#b0e0ff', edge: '#7ac0ff', inner: '#d8f0ff', glow: '140,200,255' },
-    centre: '#fff6c0', particle: 'firefly', particleCols: ['#e8ff8a'], grassFlowers: ['#d8f0ff', '#ffd0ee', '#fff6c0'],
-    legend: [['#ffb0e0', 'woman (pink moonflower)'], ['#b0e0ff', 'man (blue moonflower)']],
+  winter: {
+    name: 'Winter', icon: '❄️', snow: true,
+    hills: ['#e2eaf3', '#ccd9e7', '#b8c8db'], ground: ['#f2f6fb', '#c9d6e4'], bark: ['#33261f', '#5a463b', '#8c7a70'],
+    leaves: ['#f4f8ff', '#ffffff', '#dce8f4', '#2f6a4a'],
+    female: { petal: '#e8679a', edge: '#b83c70', inner: '#ff9ac0' }, male: { petal: '#8fc8ff', edge: '#4a8ad0', inner: '#c4e2ff' },
+    centre: '#ffe48a', particle: 'snow', particleCols: ['#ffffff'], grassFlowers: ['#ffffff', '#b69cff', '#ffffff', '#ffe48a'],
+    flyer: 'robin', legend: [['#e8679a', 'woman (winter rose)'], ['#8fc8ff', 'man (ice-blue snowdrop)']],
   },
 };
+const OLD_SEASON = { night: 'spring' };
+const seasonKey = k => TREE_STYLES[k] ? k : OLD_SEASON[k] || 'spring';
+
+// ---------------- time of day ----------------
+const hex = c => { const n = parseInt(c.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+const toHex = a => '#' + a.map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
+const mix = (a, b, k) => toHex(hex(a).map((v, i) => v + (hex(b)[i] - v) * k));
+// sky (top, middle, horizon), the light's colour on the land, and how strongly it tints it
+const SKY_KEYS = [
+  [0, ['#04071a', '#0b1236', '#1a2350'], '#3e4f96', 0.72],
+  [4.6, ['#0b1238', '#262c5c', '#5a4a70'], '#4a5490', 0.62],
+  [6.2, ['#33447e', '#c98a96', '#ffb877'], '#e0a080', 0.4],
+  [8, ['#5fa8e0', '#a9dcf7', '#fde6d4'], '#fff0dc', 0.12],
+  [12, ['#2f86d8', '#7cc2f2', '#e8f6ff'], '#ffffff', 0],
+  [16, ['#4a98dc', '#a0d0f0', '#fff0d8'], '#fff2d8', 0.08],
+  [18.3, ['#3b2f62', '#d8706a', '#ffb26a'], '#ffb880', 0.38],
+  [19.8, ['#151b44', '#3e3270', '#7a4e74'], '#7a6aa0', 0.55],
+  [24, ['#04071a', '#0b1236', '#1a2350'], '#3e4f96', 0.72],
+];
+function lightAt(hour) {
+  const h = ((hour % 24) + 24) % 24;
+  let i = 0; while (i < SKY_KEYS.length - 2 && SKY_KEYS[i + 1][0] <= h) i++;
+  const [h0, s0, t0, a0] = SKY_KEYS[i], [h1, s1, t1, a1] = SKY_KEYS[i + 1];
+  const k = (h - h0) / (h1 - h0), e = k * k * (3 - 2 * k);
+  const sky = s0.map((c, j) => mix(c, s1[j], e));
+  const tint = mix(t0, t1, e), tintAmt = a0 + (a1 - a0) * e;
+  // night: 1 in the small hours, 0 in daylight
+  const dark = h < 4.6 || h > 20.4 ? 1 : h < 6.6 ? 1 - (h - 4.6) / 2 : h > 18.4 ? (h - 18.4) / 2 : 0;
+  // the sun climbs from the left and sets on the right; the moon follows it across the night sky
+  let src;
+  if (h > 5.6 && h < 19.4) {
+    const p = (h - 5.6) / 13.8;
+    const low = 1 - Math.sin(p * Math.PI);
+    src = { x: 0.06 + 0.88 * p, y: 0.66 - Math.sin(p * Math.PI) * 0.56, moon: false,
+      core: low > 0.55 ? '255,214,150' : '255,250,228', glow: low > 0.45 ? '255,160,90' : low > 0.2 ? '255,224,170' : '255,246,200' };
+  } else {
+    const p = (((h - 19.4) + 24) % 24) / 10.2;
+    src = { x: 0.06 + 0.88 * p, y: 0.66 - Math.sin(p * Math.PI) * 0.5, moon: true, core: '236,240,255', glow: '160,180,255' };
+  }
+  return { hour: h, sky, tint, tintAmt, dark, sun: src };
+}
+const shade = (c, tint, amt) => toHex(hex(c).map((v, i) => v * (1 - amt + amt * hex(tint)[i] / 255)));
+const lookCache = new Map();
+/** Everything the painter needs for a season at an hour: the sky, the light, and every colour lit to match. */
+function makeLook(season, hour) {
+  const key = `${seasonKey(season)}|${Math.round(hour * 4) / 4}`;
+  if (lookCache.has(key)) return lookCache.get(key);
+  const S = TREE_STYLES[seasonKey(season)], L = lightAt(hour);
+  const lit = c => shade(c, L.tint, L.tintAmt);
+  const flower = f => ({ petal: lit(f.petal), edge: lit(f.edge), inner: lit(f.inner), glow: L.dark > 0.45 ? hex(f.petal).join(',') : null });
+  const look = {
+    ...S, key, dark: L.dark, sky: L.sky, sun: L.sun,
+    rays: !L.sun.moon && L.sun.y < 0.6, clouds: L.dark < 0.65, stars: L.dark > 0.15 ? L.dark : 0,
+    hills: S.hills.map(lit), ground: S.ground.map(lit), bark: S.bark.map(lit), leaves: S.leaves.map(lit),
+    female: flower(S.female), male: flower(S.male), centre: lit(S.centre), grassFlowers: S.grassFlowers.map(lit),
+    particle: S.snow ? 'snow' : L.dark > 0.55 ? 'firefly' : S.particle, particleCols: L.dark > 0.55 && !S.snow ? ['#e8ff8a'] : S.particleCols,
+    flyer: L.dark > 0.5 ? null : S.flyer, lit,
+  };
+  if (lookCache.size > 400) lookCache.clear();
+  lookCache.set(key, look);
+  return look;
+}
 const EST_FLOWER = { petal: '#cdb8ee', edge: '#a28ad0', inner: '#dccbf6' };
 
 // ---------------- backdrop ----------------
@@ -5441,7 +5907,7 @@ const BLADES = (() => { const r = seededRandom(12); return Array.from({ length: 
 // drift on top. The cache is repainted when the size, season or ground line changes (e.g. while panning).
 let backCache = null, backKey = '';
 function paintBackdrop(ctx, W, H, st, t, groundY, trunkX, dpr = 1) {
-  const key = `${W}x${H}@${dpr}|${st.name}|${Math.round(groundY)}|${Math.round(trunkX)}`;
+  const key = `${W}x${H}@${dpr}|${st.key}|${Math.round(groundY)}|${Math.round(trunkX)}`;
   if (key !== backKey) {
     backKey = key;
     backCache ||= document.createElement('canvas');
@@ -5465,7 +5931,7 @@ function paintStill(ctx, W, H, st, groundY, trunkX) {
   sky.addColorStop(0, st.sky[0]); sky.addColorStop(0.6, st.sky[1]); sky.addColorStop(1, st.sky[2]);
   ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
   if (st.stars) for (const [x, y, s, ph] of STARS) {
-    ctx.globalAlpha = 0.4 + (ph / 6) * 0.55;
+    ctx.globalAlpha = (0.4 + (ph / 6) * 0.55) * st.stars;
     ctx.fillStyle = '#ffffff'; ctx.fillRect(x * W, y * H, s, s);
   }
   ctx.globalAlpha = 1;
@@ -5486,7 +5952,7 @@ function paintStill(ctx, W, H, st, groundY, trunkX) {
     }
     ctx.restore();
   }
-  const sr = Math.max(18, Math.min(34, W * 0.025));
+  const sr = Math.max(18, Math.min(34, W * 0.025)) * (st.sun.moon ? 0.85 : 1);
   ctx.fillStyle = `rgb(${st.sun.core})`; ctx.beginPath(); ctx.arc(sx, sy, sr, 0, 7); ctx.fill();
   if (st.sun.moon) {
     ctx.fillStyle = 'rgba(160,170,200,0.35)';
@@ -5506,7 +5972,7 @@ function paintStill(ctx, W, H, st, groundY, trunkX) {
   ctx.quadraticCurveTo(W * 0.5, groundY - 18, W, groundY + 12); ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.fill();
   // the tree's shadow, cast away from the light
   const away = st.sun.x < 0.5 ? 1 : -1;
-  ctx.fillStyle = 'rgba(20,30,10,0.28)'; ctx.beginPath(); ctx.ellipse(trunkX + away * W * 0.06, groundY + 8, Math.max(60, W * 0.16), 12, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = st.snow ? 'rgba(60,80,120,0.22)' : 'rgba(20,30,10,0.28)'; ctx.beginPath(); ctx.ellipse(trunkX + away * W * 0.06, groundY + 8, Math.max(60, W * 0.16), 12, 0, 0, 7); ctx.fill();
   // grass blades swaying along the top edge
   ctx.strokeStyle = st.ground[0]; ctx.lineWidth = 2; ctx.lineCap = 'round';
   for (const [x, h, ph, k] of BLADES) {
@@ -5518,9 +5984,21 @@ function paintStill(ctx, W, H, st, groundY, trunkX) {
 /** y of the meadow's top edge at x (it bulges up a little in the middle). */
 const meadowY = (x, W, groundY) => groundY + 10 - Math.sin((x / W) * Math.PI) * 26;
 
+let vigCache = null, vigKey = '';
 function vignette(ctx, W, H, st) {
+  const key = `${W}x${H}|${Math.round(st.dark * 10)}`;
+  if (key !== vigKey) {
+    vigKey = key;
+    vigCache ||= document.createElement('canvas');
+    vigCache.width = Math.max(1, Math.round(W / 2)); vigCache.height = Math.max(1, Math.round(H / 2));
+    const c = vigCache.getContext('2d'); c.setTransform(0.5, 0, 0, 0.5, 0, 0);
+    paintVignette(c, W, H, st);
+  }
+  ctx.drawImage(vigCache, 0, 0, W, H);
+}
+function paintVignette(ctx, W, H, st) {
   const g = ctx.createRadialGradient(W / 2, H * 0.45, Math.min(W, H) * 0.35, W / 2, H * 0.5, Math.max(W, H) * 0.8);
-  g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, st.sun.moon ? 'rgba(0,0,10,0.5)' : 'rgba(30,10,0,0.28)');
+  g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, `rgba(${st.dark > 0.5 ? '0,0,10' : '30,10,0'},${0.28 + st.dark * 0.22})`);
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
 }
 
@@ -5537,8 +6015,44 @@ function bezTangent(q, t) {
   return [dx / l, dy / l];
 }
 
+/**
+ * Collects branch segments and strokes them in a few batches (one path per pass and width) instead of
+ * thousands of separate strokes, which keeps big trees smooth on phones.
+ */
+class BranchBatch {
+  constructor() { this.groups = new Map(); }
+  seg(pass, color, width, x0, y0, x1, y1, alpha = 1) {
+    const w = Math.max(0.6, Math.round(width * 2) / 2), key = `${pass}|${color}|${w}|${alpha}`;
+    let g = this.groups.get(key);
+    if (!g) this.groups.set(key, g = { pass, color, w, alpha, path: new Path2D() });
+    g.path.moveTo(x0, y0); g.path.lineTo(x1, y1);
+  }
+  /** Adds a tapered branch along bezier q (screen coords) from t0 to t1, w0 wide at t=0 and w1 at t=1. lx: -1 lit from the left. */
+  branch(q, t0, t1, w0, w1, st, lx) {
+    const n = w0 > 7 ? 10 : w0 > 3 ? 5 : 2;
+    const pts = [];
+    for (let i = 0; i <= n; i++) { const t = t0 + (t1 - t0) * (i / n); const [x, y] = bezierAt(q, t); pts.push([x, y, w0 + (w1 - w0) * t]); }
+    for (let i = 0; i < n; i++) {
+      const [x0, y0, a] = pts[i], [x1, y1, b] = pts[i + 1], w = (a + b) / 2;
+      this.seg(0, st.bark[0], w, x0, y0, x1, y1);
+      this.seg(1, st.bark[1], w * 0.72, x0 + lx * 0.1 * a, y0, x1 + lx * 0.1 * b, y1);
+      if (w0 > 2.2) this.seg(2, st.bark[2], w * 0.26, x0 + lx * 0.24 * a, y0, x1 + lx * 0.24 * b, y1, 0.75);
+      if (st.snow && w0 > 1.6 && Math.abs(x1 - x0) >= Math.abs(y1 - y0) * 0.35) this.seg(3, st.leaves[1], (a + b) * 0.2, x0, y0 - a * 0.42, x1, y1 - b * 0.42, 0.95);
+    }
+  }
+  flush(ctx) {
+    ctx.lineCap = 'round';
+    [...this.groups.values()].sort((a, b) => a.pass - b.pass || b.w - a.w).forEach(g => {
+      ctx.strokeStyle = g.color; ctx.lineWidth = g.w; ctx.globalAlpha = g.alpha; ctx.stroke(g.path);
+    });
+    ctx.globalAlpha = 1;
+    this.groups.clear();
+  }
+}
+
 /** A tapered branch along bezier q (screen coords) from t0 to t1, w0 wide at t=0 and w1 at t=1. lx: -1 lit from the left, 1 from the right. */
 function drawBranch(ctx, q, t0, t1, w0, w1, st, lx) {
+  const snowy = st.snow && w0 > 1.6;
   const n = w0 > 7 ? 10 : w0 > 3 ? 5 : 2;
   const pts = [];
   for (let i = 0; i <= n; i++) { const t = t0 + (t1 - t0) * (i / n); const [x, y] = bezierAt(q, t); pts.push([x, y, w0 + (w1 - w0) * t]); }
@@ -5554,6 +6068,16 @@ function drawBranch(ctx, q, t0, t1, w0, w1, st, lx) {
   pass(st.bark[0], 1, 0);
   pass(st.bark[1], 0.72, lx * 0.1);
   if (w0 > 2.2) pass(st.bark[2], 0.26, lx * 0.24, 0.75);
+  if (snowy) {
+    // a ridge of snow along the top of the branch
+    ctx.strokeStyle = st.leaves[1]; ctx.globalAlpha = 0.95;
+    for (let i = 0; i < n; i++) {
+      const [x0, y0, a] = pts[i], [x1, y1, b] = pts[i + 1];
+      if (Math.abs(x1 - x0) < Math.abs(y1 - y0) * 0.35) continue; // little settles on steep parts
+      ctx.lineWidth = Math.max(0.8, (a + b) * 0.2);
+      ctx.beginPath(); ctx.moveTo(x0, y0 - a * 0.42); ctx.lineTo(x1, y1 - b * 0.42); ctx.stroke();
+    }
+  }
   ctx.globalAlpha = 1;
 }
 
@@ -5583,6 +6107,25 @@ function drawLeaf(ctx, x, y, size, ang, col, vein) {
   ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(size * 0.5, -size * 0.42, size, 0); ctx.quadraticCurveTo(size * 0.5, size * 0.42, 0, 0); ctx.fill();
   if (vein) { ctx.strokeStyle = 'rgba(0,0,0,0.18)'; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(size * 0.1, 0); ctx.lineTo(size * 0.85, 0); ctx.stroke(); }
   ctx.restore();
+}
+
+// Blossoms are drawn once into small sprites (per colour, sex, how open and which way turned) and reused.
+const flowerCache = new Map();
+function drawFlowerFast(ctx, x, y, r, open, female, pal, centre, spin = 0, glowing = false) {
+  if (open <= 0 || r <= 0) return;
+  if (r < 3) { drawFlower(ctx, x, y, r, open, female, pal, centre, spin, false); return; }
+  const o = Math.round(open * 10) / 10, sp = Math.round(((spin % 6.283) / 6.283) * 8) % 8;
+  const key = `${pal.petal}${pal.edge}${pal.inner}${centre}${female ? 1 : 0}|${o}|${sp}`;
+  let spr = flowerCache.get(key);
+  if (!spr) {
+    spr = document.createElement('canvas'); spr.width = spr.height = 72;
+    drawFlower(spr.getContext('2d'), 36, 36, 26, o, female, pal, centre, sp / 8 * 6.283, false);
+    if (flowerCache.size > 500) flowerCache.clear();
+    flowerCache.set(key, spr);
+  }
+  if (glowing && pal.glow) drawGlow(ctx, x, y, r * 2.6, pal.glow);
+  const s = r / 26;
+  ctx.drawImage(spr, x - 36 * s, y - 36 * s, 72 * s, 72 * s);
 }
 
 /** A blossom: a bud that swells and opens. open 0..1, female: 5 round petals, male: 6 slender ones. */
@@ -5624,11 +6167,11 @@ const BUTTERFLY = [['#ffb347', '#a8501a'], ['#7ec8ff', '#2a5a9a'], ['#ff8fd0', '
  */
 class Life {
   constructor(seed = 1) { this.rnd = seededRandom(seed); this.reset(); }
-  reset() { this.flies = []; this.cats = []; this.meadow = []; this.bits = []; this.catClock = 2; this.bitClock = 0; }
+  reset() { this.flies = []; this.cats = []; this.meadow = []; this.bits = []; this.beasts = []; this.catClock = 2; this.bitClock = 0; this.beastClock = 5; }
   bloom(x, y, env) {
     const r = this.rnd;
     if (this.meadow.length < 160) this.meadow.push({ x: env.groundSpan[0] + r() * (env.groundSpan[1] - env.groundSpan[0]), dy: r() * 26, t: 0, ci: Math.floor(r() * 12), s: 0.7 + r() * 0.6, d: 0.6 + r() * 1.4 });
-    if (this.flies.length < 9 && r() < 0.16) this.spawnFly(x, y + 10);
+    if (env.st.flyer && this.flies.length < 9 && r() < 0.16) this.spawnFly(x, y + 10);
   }
   spawnFly(x, y) {
     const r = this.rnd;
@@ -5652,7 +6195,7 @@ class Life {
     this.flies = this.flies.filter(f => f.age < f.life + 7);
     // caterpillars inch along grown branches; at the end of their walk they become butterflies
     this.catClock -= dt;
-    if (this.catClock <= 0 && this.cats.length < 4 && env.branches.length) {
+    if (this.catClock <= 0 && this.cats.length < 4 && env.branches.length && env.st.flyer === 'butterfly') {
       this.catClock = 4 + r() * 5;
       const b = env.branches[Math.floor(r() * env.branches.length)];
       if (b.full && b.w > 3) this.cats.push({ b, s: 0.12 + r() * 0.2, speed: 0.025 + r() * 0.025, ph: r() * 6, col: r() < 0.5 ? ['#7cc84a', '#c8e86a'] : ['#f0a030', '#ffe080'], age: 0 });
@@ -5660,43 +6203,152 @@ class Life {
     for (const c of this.cats) {
       c.age += dt;
       c.s += c.speed * dt * (0.25 + Math.max(0, Math.sin(c.age * 4 + c.ph)) * 1.5);
-      if (c.s > 0.9 || !c.b.full) { c.done = true; if (c.b.full) { const p = env.bezWorld(c.b, c.s); this.spawnFly(p[0], p[1]); } }
+      if (c.s > 0.9 || !c.b.full) { c.done = true; if (c.b.full && env.st.flyer) { const p = env.bezWorld(c.b, c.s); this.spawnFly(p[0], p[1]); } }
     }
     this.cats = this.cats.filter(c => !c.done && env.branches.includes(c.b));
     for (const m of this.meadow) m.t += dt;
+    this.updateBeasts(dt, env);
     // falling petals, leaves, summer fluff or fireflies
     this.bitClock -= dt;
-    if (this.bitClock <= 0 && env.flowers.length && this.bits.length < 40) {
-      this.bitClock = 0.35 + r() * 0.6;
-      const fl = env.flowers[Math.floor(r() * env.flowers.length)];
+    const snowing = env.st.particle === 'snow';
+    if (this.bitClock <= 0 && (env.flowers.length || snowing) && this.bits.length < (snowing ? 90 : 40)) {
+      this.bitClock = snowing ? 0.06 + r() * 0.08 : 0.35 + r() * 0.6;
+      const fl = snowing ? [env.groundSpan[0] + r() * (env.groundSpan[1] - env.groundSpan[0]), env.topY - 40] : env.flowers[Math.floor(r() * env.flowers.length)];
       this.bits.push({ x: fl[0], y: fl[1], vx: (r() - 0.5) * 12, vy: env.st.particle === 'firefly' ? (r() - 0.5) * 10 : 8 + r() * 14, rot: r() * 6, vr: (r() - 0.5) * 3, age: 0, life: 7 + r() * 6, col: env.st.particleCols[Math.floor(r() * env.st.particleCols.length)], ph: r() * 6 });
     }
     for (const b of this.bits) {
       b.age += dt;
       if (env.st.particle === 'firefly') { b.vx += (r() - 0.5) * 40 * dt; b.vy += (r() - 0.5) * 40 * dt; b.vx *= 0.98; b.vy *= 0.98; }
-      else { b.vx = Math.sin(b.age * 1.7 + b.ph) * 18; if (b.y > env.groundY - 4) { b.vy = 0; b.vx = 0; b.vr = 0; } }
+      else { b.vx = Math.sin(b.age * 1.7 + b.ph) * (env.st.particle === 'snow' ? 10 : 18); if (b.y > env.groundY - 4) { b.vy = 0; b.vx = 0; b.vr = 0; } }
       b.x += b.vx * dt; b.y += b.vy * dt; b.rot += b.vr * dt;
     }
     this.bits = this.bits.filter(b => b.age < b.life);
   }
+  // ---- a few mammals: rabbits (white hares in winter), deer, red squirrels on the branches, foxes at
+  // dusk and hedgehogs at night ----
+  updateBeasts(dt, env) {
+    const r = this.rnd, st = env.st;
+    this.beastClock -= dt;
+    if (this.beastClock <= 0 && env.flowers.length > 6) {
+      this.beastClock = 5 + r() * 7;
+      const kinds = [];
+      if (st.dark < 0.45) kinds.push(st.snow ? 'hare' : 'rabbit', 'deer', st.snow ? 'deer' : 'squirrel');
+      if (st.dark > 0.25) kinds.push('fox');
+      if (st.dark > 0.55 && !st.snow) kinds.push('hedgehog', 'hedgehog');
+      const kind = kinds[Math.floor(r() * kinds.length)];
+      const onGround = this.beasts.filter(b => b.kind !== 'squirrel').length;
+      if (kind === 'squirrel') {
+        const ok = env.branches.filter(b => b.full && b.w > 3 && b.wWorld > 2);
+        if (ok.length && !this.beasts.some(b => b.kind === 'squirrel')) this.beasts.push({ kind, b: ok[Math.floor(r() * ok.length)], s: 0.15, dir: 1, speed: 0.18 + r() * 0.1, pause: 0, age: 0, ph: r() * 6 });
+      } else if (kind && onGround < 3) {
+        const fromLeft = r() < 0.5, [x0, x1] = env.groundSpan;
+        const speed = { rabbit: 34, hare: 40, deer: 14, fox: 30, hedgehog: 7 }[kind];
+        this.beasts.push({ kind, x: fromLeft ? x0 - 40 : x1 + 40, dy: 6 + r() * 18, dir: fromLeft ? 1 : -1, speed, pause: 0, age: 0, ph: r() * 6, antlers: r() < 0.5, s: 0.85 + r() * 0.3 });
+      }
+    }
+    for (const b of this.beasts) {
+      b.age += dt;
+      if (b.kind === 'squirrel') {
+        if (!env.branches.includes(b.b)) { b.gone = true; continue; }
+        if (b.pause > 0) { b.pause -= dt; continue; }
+        b.s += b.dir * b.speed * dt;
+        if (r() < dt * 0.5) b.pause = 0.6 + r() * 1.4;
+        if (b.s > 0.95) { b.dir = -1; } else if (b.s < 0.08 && b.dir < 0) b.gone = true;
+        continue;
+      }
+      if (b.pause > 0) { b.pause -= dt; continue; }
+      if (r() < dt * (b.kind === 'deer' ? 0.25 : 0.15)) b.pause = b.kind === 'deer' ? 2.5 + r() * 3 : 0.8 + r() * 1.6; // stop to graze or sniff the air
+      const hop = b.kind === 'rabbit' || b.kind === 'hare' ? Math.max(0, Math.sin(b.age * 9 + b.ph)) * 1.8 : 1;
+      b.x += b.dir * b.speed * hop * dt;
+      if (b.x < env.groundSpan[0] - 80 || b.x > env.groundSpan[1] + 80) b.gone = true;
+    }
+    this.beasts = this.beasts.filter(b => !b.gone);
+  }
+  drawBeasts(ctx, env, t) {
+    const { X, Y, k, st } = env, lit = st.lit || (c => c);
+    for (const b of this.beasts) {
+      if (b.kind === 'squirrel') {
+        const [wx, wy] = env.bezWorld(b.b, b.s), [tx, ty] = env.bezTanWorld(b.b, b.s);
+        let nx = -ty, ny = tx; if (ny > 0) { nx = -nx; ny = -ny; }
+        const off = b.b.wWorld * 0.5 + 3;
+        const x = X(wx + nx * off), y = Y(wy + ny * off), s = 4.2 * k;
+        const face = (tx * b.dir) >= 0 ? 1 : -1, bob = b.pause > 0 ? 0 : Math.abs(Math.sin(b.age * 14)) * s * 0.3;
+        ctx.save(); ctx.translate(x, y - bob); ctx.scale(face, 1);
+        ctx.strokeStyle = lit('#b4552a'); ctx.lineWidth = s * 0.9; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(-s * 0.8, 0); ctx.quadraticCurveTo(-s * 2.4, -s * 0.4, -s * 1.6, -s * 2.2); ctx.quadraticCurveTo(-s * 0.9, -s * 2.8, -s * 1.2, -s * 1.6); ctx.stroke();
+        ctx.fillStyle = lit('#c0602e'); ctx.beginPath(); ctx.ellipse(0, -s * 0.2, s, s * 0.7, -0.2, 0, 7); ctx.fill();
+        ctx.beginPath(); ctx.arc(s * 0.9, -s * 0.8, s * 0.55, 0, 7); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(s * 0.7, -s * 1.2); ctx.lineTo(s * 0.8, -s * 1.75); ctx.lineTo(s * 1.0, -s * 1.2); ctx.fill();
+        ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(s * 1.1, -s * 0.9, s * 0.1, 0, 7); ctx.fill();
+        ctx.restore();
+        continue;
+      }
+      const x = X(b.x), base = Y(env.groundY) + b.dy * k, s = 5 * k * b.s, face = b.dir;
+      const moving = b.pause <= 0;
+      ctx.save(); ctx.translate(x, base); ctx.scale(face, 1);
+      ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.beginPath(); ctx.ellipse(0, 0, s * (b.kind === 'deer' ? 2.6 : 1.6), s * 0.35, 0, 0, 7); ctx.fill();
+      if (b.kind === 'rabbit' || b.kind === 'hare') {
+        const up = moving ? Math.max(0, Math.sin(b.age * 9 + b.ph)) * s * 1.4 : 0;
+        const fur = lit(b.kind === 'hare' ? '#f2f2f6' : '#9a7a5a');
+        ctx.translate(0, -up);
+        ctx.fillStyle = fur;
+        ctx.beginPath(); ctx.ellipse(0, -s * 0.9, s * 1.2, s * 0.85, 0, 0, 7); ctx.fill();
+        ctx.beginPath(); ctx.arc(s * 1.1, -s * 1.6, s * 0.6, 0, 7); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(s * 0.9, -s * 2.6, s * 0.18, s * 0.7, -0.2, 0, 7); ctx.ellipse(s * 1.25, -s * 2.55, s * 0.18, s * 0.7, 0.15, 0, 7); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(-s * 1.15, -s * 1.0, s * 0.35, 0, 7); ctx.fill();
+        ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(s * 1.35, -s * 1.7, s * 0.1, 0, 7); ctx.fill();
+      } else if (b.kind === 'deer') {
+        const coat = lit('#a8703e'), legT = moving ? b.age * 5 : 0, graze = b.pause > 0;
+        ctx.strokeStyle = lit('#7a4e2a'); ctx.lineWidth = s * 0.28; ctx.lineCap = 'round';
+        for (const [lx0, ph] of [[-1.4, 0], [-1.0, 2], [1.0, 1], [1.4, 3]]) { ctx.beginPath(); ctx.moveTo(lx0 * s, -s * 2.2); ctx.lineTo(lx0 * s + Math.sin(legT + ph) * s * 0.4, 0); ctx.stroke(); }
+        ctx.fillStyle = coat; ctx.beginPath(); ctx.ellipse(0, -s * 2.6, s * 2.1, s * 0.85, 0, 0, 7); ctx.fill();
+        const hx = graze ? s * 2.3 : s * 2.2, hy = graze ? -s * 0.6 : -s * 4.2;
+        ctx.strokeStyle = coat; ctx.lineWidth = s * 0.7; ctx.beginPath(); ctx.moveTo(s * 1.6, -s * 2.9); ctx.lineTo(hx, hy); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(hx + s * 0.4, hy, s * 0.7, s * 0.4, graze ? 0.9 : 0.25, 0, 7); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(hx - s * 0.15, hy - s * 0.4, s * 0.15, s * 0.4, -0.5, 0, 7); ctx.fill();
+        if (b.antlers) { ctx.strokeStyle = lit('#d8c4a0'); ctx.lineWidth = s * 0.15; ctx.beginPath(); ctx.moveTo(hx, hy - s * 0.3); ctx.lineTo(hx - s * 0.3, hy - s * 1.6); ctx.moveTo(hx - s * 0.15, hy - s * 0.9); ctx.lineTo(hx + s * 0.4, hy - s * 1.3); ctx.moveTo(hx - s * 0.25, hy - s * 1.3); ctx.lineTo(hx - s * 0.8, hy - s * 1.8); ctx.stroke(); }
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(-s * 2.1, -s * 2.8, s * 0.25, s * 0.35, 0, 0, 7); ctx.fill();
+      } else if (b.kind === 'fox') {
+        const coat = lit('#e07a2e'), legT = moving ? b.age * 12 : 0;
+        ctx.strokeStyle = lit('#3a2418'); ctx.lineWidth = s * 0.25; ctx.lineCap = 'round';
+        for (const [lx0, ph] of [[-0.9, 0], [-0.5, 2], [0.7, 1], [1.0, 3]]) { ctx.beginPath(); ctx.moveTo(lx0 * s, -s * 1.1); ctx.lineTo(lx0 * s + Math.sin(legT + ph) * s * 0.35, 0); ctx.stroke(); }
+        ctx.fillStyle = coat; ctx.beginPath(); ctx.ellipse(0, -s * 1.4, s * 1.5, s * 0.6, 0, 0, 7); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(-s * 2.1, -s * 1.5, s * 1.1, s * 0.45, 0.25, 0, 7); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(-s * 3.0, -s * 1.3, s * 0.35, s * 0.3, 0, 0, 7); ctx.fill();
+        ctx.fillStyle = coat; ctx.beginPath(); ctx.moveTo(s * 1.2, -s * 1.9); ctx.lineTo(s * 2.4, -s * 1.5); ctx.lineTo(s * 1.3, -s * 1.1); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(s * 1.2, -s * 1.8); ctx.lineTo(s * 1.35, -s * 2.5); ctx.lineTo(s * 1.65, -s * 1.85); ctx.fill();
+        ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(s * 2.4, -s * 1.5, s * 0.12, 0, 7); ctx.fill();
+      } else if (b.kind === 'hedgehog') {
+        ctx.fillStyle = lit('#6a4a32'); ctx.beginPath(); ctx.ellipse(0, -s * 0.5, s * 1.2, s * 0.8, 0, Math.PI, 0); ctx.fill();
+        ctx.strokeStyle = lit('#3a2818'); ctx.lineWidth = s * 0.12;
+        ctx.beginPath(); for (let i = 0; i < 9; i++) { const a = Math.PI + (i + 0.5) / 9 * Math.PI, cx = Math.cos(a) * s * 1.1, cy = -s * 0.5 + Math.sin(a) * s * 0.75; ctx.moveTo(cx, cy); ctx.lineTo(cx * 1.3, cy - s * 0.35); } ctx.stroke();
+        ctx.fillStyle = lit('#c8a888'); ctx.beginPath(); ctx.moveTo(s * 0.9, -s * 0.7); ctx.lineTo(s * 1.8, -s * 0.3); ctx.lineTo(s * 0.9, -s * 0.1); ctx.fill();
+        ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(s * 1.8, -s * 0.3, s * 0.12, 0, 7); ctx.fill();
+      }
+      ctx.restore();
+    }
+  }
   drawMeadow(ctx, env) {
     const { X, Y, k } = env;
+    const cols = env.st.grassFlowers, stems = new Path2D(), heads = cols.map(() => new Path2D()), mids = new Path2D();
     for (const m of this.meadow) {
       const g = Math.min(1, m.t / m.d), x = X(m.x), base = Y(env.groundY) + m.dy * k;
       const h = (8 + m.s * 10) * k * Math.min(1, g * 1.6);
-      ctx.strokeStyle = '#3f8a34'; ctx.lineWidth = Math.max(1, 1.2 * k);
-      ctx.beginPath(); ctx.moveTo(x, base); ctx.quadraticCurveTo(x + 2 * k, base - h * 0.5, x, base - h); ctx.stroke();
+      stems.moveTo(x, base); stems.quadraticCurveTo(x + 2 * k, base - h * 0.5, x, base - h);
       const open = Math.max(0, (g - 0.4) / 0.6);
       if (open > 0) {
-        ctx.fillStyle = env.st.grassFlowers[m.ci % env.st.grassFlowers.length];
-        const rr = (2.4 + m.s * 1.8) * k * open;
-        for (let i = 0; i < 5; i++) { const a = i * 1.2566; ctx.beginPath(); ctx.arc(x + Math.cos(a) * rr * 0.8, base - h + Math.sin(a) * rr * 0.8, rr * 0.62, 0, 7); ctx.fill(); }
-        ctx.fillStyle = '#ffcf3a'; ctx.beginPath(); ctx.arc(x, base - h, rr * 0.45, 0, 7); ctx.fill();
+        const rr = (2.4 + m.s * 1.8) * k * open, path = heads[m.ci % cols.length];
+        for (let i = 0; i < 5; i++) { const a = i * 1.2566, cx = x + Math.cos(a) * rr * 0.8, cy = base - h + Math.sin(a) * rr * 0.8; path.moveTo(cx + rr * 0.62, cy); path.arc(cx, cy, rr * 0.62, 0, 7); }
+        mids.moveTo(x + rr * 0.45, base - h); mids.arc(x, base - h, rr * 0.45, 0, 7);
       }
     }
+    ctx.strokeStyle = env.st.lit ? env.st.lit('#3f8a34') : '#3f8a34'; ctx.lineWidth = Math.max(1, 1.2 * k); ctx.stroke(stems);
+    cols.forEach((c, i) => { ctx.fillStyle = c; ctx.fill(heads[i]); });
+    ctx.fillStyle = env.st.lit ? env.st.lit('#ffcf3a') : '#ffcf3a'; ctx.fill(mids);
   }
   drawCreatures(ctx, env, t) {
     const { X, Y, k } = env;
+    this.drawBeasts(ctx, env, t);
     // caterpillars
     for (const c of this.cats) {
       const segs = 7;
@@ -5715,8 +6367,21 @@ class Life {
         }
       }
     }
-    // butterflies
-    for (const f of this.flies) {
+    // butterflies (or robins in winter)
+    if (env.st.flyer === 'robin') for (const f of this.flies) {
+      const x = X(f.x), y = Y(f.y), s = 5.5 * f.s * k, flap = Math.sin(t * 16 + f.ph);
+      const face = f.vx >= 0 ? 1 : -1;
+      ctx.save(); ctx.translate(x, y); ctx.scale(face, 1);
+      ctx.fillStyle = '#7a5a3e'; ctx.beginPath(); ctx.ellipse(0, 0, s, s * 0.8, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = '#e8562e'; ctx.beginPath(); ctx.ellipse(s * 0.35, s * 0.2, s * 0.55, s * 0.5, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = '#7a5a3e'; ctx.beginPath(); ctx.arc(s * 0.75, -s * 0.45, s * 0.45, 0, 7); ctx.fill();
+      ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(s * 0.95, -s * 0.55, s * 0.09, 0, 7); ctx.fill();
+      ctx.fillStyle = '#e8b040'; ctx.beginPath(); ctx.moveTo(s * 1.15, -s * 0.45); ctx.lineTo(s * 1.45, -s * 0.38); ctx.lineTo(s * 1.15, -s * 0.3); ctx.fill();
+      ctx.fillStyle = '#5a3e2a'; ctx.beginPath(); ctx.ellipse(-s * 0.15, -s * 0.2 - flap * s * 0.35, s * 0.6, s * 0.28, -0.3 - flap * 0.5, 0, 7); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-s * 0.8, 0); ctx.lineTo(-s * 1.4, -s * 0.25); ctx.lineTo(-s * 1.35, s * 0.2); ctx.fill();
+      ctx.restore();
+    }
+    else for (const f of this.flies) {
       const x = X(f.x), y = Y(f.y), s = 6 * f.s * k;
       const flap = 0.2 + 0.8 * Math.abs(Math.sin(t * 13 + f.ph));
       const tilt = Math.max(-0.5, Math.min(0.5, f.vx / 120));
@@ -5745,6 +6410,8 @@ class Life {
       } else if (env.st.particle === 'fluff') {
         ctx.strokeStyle = b.col; ctx.lineWidth = 0.8;
         for (let i = 0; i < 6; i++) { const a = i * 1.047 + b.rot; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a) * 3 * k, y + Math.sin(a) * 3 * k); ctx.stroke(); }
+      } else if (env.st.particle === 'snow') {
+        ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(x, y, (1.3 + (b.ph % 1.5)) * k, 0, 7); ctx.fill();
       } else if (env.st.particle === 'leaf') drawLeaf(ctx, x, y, 7 * k, b.rot, b.col, false);
       else { ctx.save(); ctx.translate(x, y); ctx.rotate(b.rot); ctx.fillStyle = b.col; ctx.beginPath(); ctx.ellipse(0, 0, 3.4 * k, 2.2 * k, 0, 0, 7); ctx.fill(); ctx.restore(); }
     }
@@ -5752,7 +6419,7 @@ class Life {
   }
 }
 
-return { paintBackdrop, vignette, bezierAt, bezTangent, drawBranch, addLeaf, drawGlow, drawLeaf, drawFlower, TREE_STYLES, EST_FLOWER, meadowY, Life };
+return { lightAt, makeLook, paintBackdrop, vignette, bezierAt, bezTangent, drawBranch, addLeaf, drawGlow, drawLeaf, drawFlowerFast, drawFlower, TREE_STYLES, seasonKey, EST_FLOWER, meadowY, BranchBatch, Life };
 })();
 
 // ---- verses.js ----
@@ -5784,8 +6451,7 @@ const VERSES = [
 const VERSE_COPYRIGHT = 'Scripture quotations taken from The Holy Bible, New International Version® NIV®. Copyright © 1973, 1978, 1984, 2011 by Biblica, Inc.™ Used by permission. All rights reserved worldwide.';
 
 /**
- * Reads verses out a word at a time, like someone reading aloud: each word fades and rises into place,
- * with a longer pause at commas and full stops. Then the reference appears, the verse rests on screen,
+ * Reveals verses a word at a time (the whole verse in a second or two): each word fades and rises into place. Then the reference appears, the verse rests on screen,
  * fades away, and after a quiet gap the next one begins.
  */
 class VerseReader {
@@ -5798,17 +6464,20 @@ class VerseReader {
   plan() {
     const v = this.list[this.i % this.list.length];
     this.verse = v;
+    const words = v.text.split(/\s+/);
+    // the whole verse appears in about 1-2 seconds, a word at a time, with tiny pauses at punctuation
+    const step = Math.max(0.05, Math.min(0.14, 1.5 / words.length));
     this.words = [];
     let at = 0;
-    for (const w of v.text.split(/\s+/)) {
+    for (const w of words) {
       this.words.push({ w, at });
-      at += 0.36 + Math.min(0.25, w.length * 0.025) + (/[,;:]$/.test(w) ? 0.35 : /[.!?]$/.test(w) ? 0.6 : 0);
+      at += step + (/[,;:]$/.test(w) ? step * 0.8 : /[.!?—]$/.test(w) ? step * 1.2 : 0);
     }
     this.readEnd = at;
-    this.refAt = at + 0.4;
-    this.fadeAt = at + 6.5;
-    this.end = this.fadeAt + 1.6;
-    this.gap = 7;
+    this.refAt = at + 0.3;
+    this.fadeAt = at + 3.5 + words.length * 0.18; // time to read it
+    this.end = this.fadeAt + 1.2;
+    this.gap = 4;
   }
   update(dt) {
     if (!this.list.length) return;
@@ -5819,7 +6488,7 @@ class VerseReader {
   draw(ctx, cx, y, maxW, style) {
     if (!this.list.length || this.t < 0 || this.t > this.end) return 0;
     const fade = this.t > this.fadeAt ? Math.max(0, 1 - (this.t - this.fadeAt) / (this.end - this.fadeAt)) : 1;
-    const size = Math.max(16, Math.min(24, maxW / 24));
+    const size = Math.max(15, Math.min(21, maxW / 30));
     ctx.font = `italic 500 ${size}px Lora, Georgia, 'Times New Roman', serif`;
     const space = ctx.measureText(' ').width, lh = size * 1.45;
     // lay the words out in lines
@@ -5833,16 +6502,18 @@ class VerseReader {
     }
     ctx.save();
     ctx.textBaseline = 'top'; ctx.textAlign = 'left';
-    ctx.shadowColor = style.glow; ctx.shadowBlur = 10;
+    ctx.lineJoin = 'round'; ctx.lineWidth = 3.5; ctx.strokeStyle = style.outline || 'rgba(20,10,30,0.8)';
     lines.forEach((line, li) => {
       const total = line.reduce((s, w) => s + w.width, 0) + space * (line.length - 1);
       let x = cx - total / 2;
       for (const word of line) {
-        const k = Math.max(0, Math.min(1, (this.t - word.at) / 0.55));
+        const k = Math.max(0, Math.min(1, (this.t - word.at) / 0.35));
         if (k > 0) {
           ctx.globalAlpha = fade * k * k * (3 - 2 * k);
+          const wy = y + li * lh + (1 - k) * 6;
+          ctx.strokeText(word.w, x, wy);
           ctx.fillStyle = style.ink;
-          ctx.fillText(word.w, x, y + li * lh + (1 - k) * 6);
+          ctx.fillText(word.w, x, wy);
         }
         x += word.width + space;
       }
@@ -5852,7 +6523,8 @@ class VerseReader {
       ctx.globalAlpha = fade * refK;
       ctx.font = `600 ${Math.round(size * 0.62)}px Nunito, system-ui, sans-serif`;
       ctx.textAlign = 'center'; ctx.fillStyle = style.ink;
-      ctx.fillText(`— ${this.verse.ref}`, cx, y + lines.length * lh + 4);
+      ctx.strokeText(`— ${this.verse.ref}`, cx, y + lines.length * lh + 2);
+      ctx.fillText(`— ${this.verse.ref}`, cx, y + lines.length * lh + 2);
     }
     ctx.restore();
     return lines.length * lh + size;
@@ -5874,7 +6546,7 @@ const __m_growtree = (() => {
 // The art (seasons, light, blossoms, butterflies and so on) is in treeart.js; Bible verses in verses.js.
 const { collectAncestors, displayName, firstName, lifespan, relationship, findEvent, seededRandom, hashString } = __m_ancestry;
 const { estimateYears, personLines } = __m_vizkit;
-const { TREE_STYLES, EST_FLOWER, paintBackdrop, vignette, drawBranch, addLeaf, drawGlow, drawFlower, Life, bezierAt, bezTangent } = __m_treeart;
+const { makeLook, seasonKey, EST_FLOWER, paintBackdrop, vignette, BranchBatch, addLeaf, drawGlow, drawFlowerFast, Life, bezierAt, bezTangent } = __m_treeart;
 const { VerseReader } = __m_verses;
 function bezierPoint(p, t) {
   const u = 1 - t;
@@ -5947,7 +6619,7 @@ function createGrowTree(host, opts) {
   canvas.className = 'vizGL';
   host.appendChild(canvas);
   const ctx = canvas.getContext('2d');
-  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const dpr = Math.min(1.5, window.devicePixelRatio || 1);
   let W = 0, H = 0;
   const view = { s: 1, tx: 0, ty: 0 };
   function resize() {
@@ -5958,7 +6630,7 @@ function createGrowTree(host, opts) {
   window.addEventListener('resize', resize);
 
   const state = { dir: 'back', spacing: 'year', T: yMax, playing: false, speed: 1, popAt: new Map(), selected: null,
-    style: TREE_STYLES[opts.style] ? opts.style : 'spring', versesOn: opts.versesOn !== false, verseBelow: false };
+    season: seasonKey(opts.style), hour: opts.hour ?? 12, autoDay: !!opts.autoDay, versesOn: opts.versesOn !== false };
   const life = new Life(hashString(rootId));
   // leaves along each branch, placed once so they don't jump about
   for (const e of edges) {
@@ -5974,7 +6646,10 @@ function createGrowTree(host, opts) {
   const endYear = () => state.dir === 'back' ? yMin - 3 : yMax + 2;
 
   // layout in screen space (before pan/zoom): x across the canopy, y by birth year or by generation
-  const pad = () => ({ l: Math.max(54, W * 0.06), r: Math.max(24, W * 0.04), t: Math.max(134, H * 0.16) + (state.verseBelow ? 112 : 0), b: W < 600 ? Math.max(250, H * 0.3) : Math.max(170, H * 0.24) });
+  // the bottom holds the meadow (with the verse written on it) above the control bar
+  const inset = () => (opts.bottomInset?.() ?? 110);
+  const verseBand = () => (state.versesOn && reader ? (W < 600 ? 86 : 70) : 0);
+  const pad = () => ({ l: Math.max(54, W * 0.06), r: Math.max(24, W * 0.04), t: Math.max(134, H * 0.16), b: inset() + verseBand() + 56 });
   function layout() {
     const P = pad(), cw = W - P.l - P.r, ch = H - P.t - P.b;
     const yOf = p => state.spacing === 'gen' ? P.t + ch - (p.gen / maxGenFound) * ch : P.t + ((p.birth - yMin) / Math.max(1, yMax - yMin)) * ch;
@@ -5999,25 +6674,23 @@ function createGrowTree(host, opts) {
 
   // ---- drawing ----
   const SHADOW = 'rgba(20,14,30,0.7)';
+  // text with a soft dark outline (much cheaper than a blurred shadow)
   function text(str, x, y, font, color, align = 'left', base = 'top') {
-    ctx.font = font; ctx.textAlign = align; ctx.textBaseline = base;
-    ctx.shadowColor = SHADOW; ctx.shadowBlur = 6; ctx.fillStyle = color; ctx.fillText(str, x, y); ctx.shadowBlur = 0;
+    ctx.font = font; ctx.textAlign = align; ctx.textBaseline = base; ctx.lineJoin = 'round';
+    ctx.strokeStyle = SHADOW; ctx.lineWidth = 3; ctx.strokeText(str, x, y);
+    ctx.fillStyle = color; ctx.fillText(str, x, y);
   }
   let lastDraw = performance.now();
   function draw() {
-    const T = state.T, st = TREE_STYLES[state.style];
     const now = performance.now(), t = now / 1000, dt = Math.min(0.1, (now - lastDraw) / 1000); lastDraw = now;
+    if (state.autoDay) state.hour = (state.hour + dt * 24 / 80) % 24; // a whole day in 80 seconds
+    const T = state.T, st = makeLook(state.season, state.hour);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    // where the verse goes: between the title and the year on wide screens, under the title on narrow ones
     const title = `The family tree of ${displayName(root.indi)}`;
-    ctx.font = '700 18px Fredoka, Nunito, system-ui, sans-serif';
-    const titleW = ctx.measureText(title).width + 32, yearW = Math.max(34, Math.min(64, W * 0.07)) * 2.6 + 16;
-    const wideRoom = W - 2 * Math.max(titleW, yearW) - 40;
     const showVerse = state.versesOn && reader;
-    state.verseBelow = showVerse && wideRoom < 340;
     const { P, yearY } = layout();
     const k = Math.sqrt(view.s);
-    const groundW = root.sy + Math.max(36, P.b * 0.45);
+    const groundW = root.sy + 30;
     const groundY = Y(groundW), trunkX = X(root.sx);
     const lx = st.sun.x < 0.5 ? -1 : 1;
 
@@ -6049,7 +6722,9 @@ function createGrowTree(host, opts) {
     // trunk: wide where it meets the ground, narrowing up to you
     if (visible(root, T)) {
       const tw = branchWidth(root), ry = Y(root.sy);
-      drawBranch(ctx, [trunkX - lx * tw * 0.3, groundY + 8, trunkX, groundY - (groundY - ry) * 0.3, trunkX, ry + (groundY - ry) * 0.3, trunkX, ry], 0, 1, tw * 1.9, tw * 1.05, st, lx);
+      const tb = new BranchBatch();
+      tb.branch([trunkX - lx * tw * 0.3, groundY + 8, trunkX, groundY - (groundY - ry) * 0.3, trunkX, ry + (groundY - ry) * 0.3, trunkX, ry], 0, 1, tw * 1.9, tw * 1.05, st, lx);
+      tb.flush(ctx);
       // roots spreading into the grass
       ctx.strokeStyle = st.bark[1]; ctx.lineCap = 'round';
       for (const d of [-1, 1]) { ctx.lineWidth = tw * 0.45; ctx.beginPath(); ctx.moveTo(trunkX, groundY); ctx.quadraticCurveTo(trunkX + d * tw * 1.2, groundY + 4, trunkX + d * tw * 2.4, groundY + 10); ctx.stroke(); }
@@ -6058,6 +6733,7 @@ function createGrowTree(host, opts) {
     const order = edges.slice().sort((a, b) => b.p.weight - a.p.weight);
     const branches = [];
     const grownNow = new Map();
+    const batch = new BranchBatch();
     for (const e of order) {
       const [t0, t1] = grown(e, T);
       grownNow.set(e, [t0, t1]);
@@ -6066,10 +6742,11 @@ function createGrowTree(host, opts) {
       e.branch.full = t1 - t0 > 0.999;
       if (t1 - t0 <= 0.001) continue;
       const wb = branchWidth(e.p);
-      e.branch.wWorld = wb / view.s;
+      e.branch.wWorld = wb / view.s; e.branch.w = wb;
       if (e.branch.full) branches.push(e.branch);
-      drawBranch(ctx, curveFor(e), t0, t1, wb * 1.3, wb * 0.72, st, lx);
+      batch.branch(curveFor(e), t0, t1, wb * 1.3, wb * 0.72, st, lx);
     }
+    batch.flush(ctx);
     // leaves are gathered into one path per colour and filled in a few calls
     const leafPaths = st.leaves.map(() => new Path2D());
     for (const e of order) {
@@ -6091,8 +6768,10 @@ function createGrowTree(host, opts) {
 
     // people: a cluster of leaves and an opening blossom; a glow if they're alive in the year on the clock
     const labelled = [], flowers = [];
-    const env = { X, Y, k, st, groundY: groundW, groundSpan: [P.l - 30, W - P.r + 30], midX: W / 2, flowers, branches,
+    const env = { X, Y, k, st, groundY: groundW, topY: P.t, groundSpan: [P.l - 30, W - P.r + 30], midX: W / 2, flowers, branches,
       bezWorld: (b, s) => bezierAt(b.q, s), bezTanWorld: (b, s) => bezTangent(b.q, s) };
+    const shown = [];
+    const crown = st.leaves.map(() => new Path2D());
     for (const p of people) {
       if (!visible(p, T)) { state.popAt.delete(p.id); continue; }
       if (!state.popAt.has(p.id)) { state.popAt.set(p.id, now); if (state.playing && p !== root) life.bloom(p.sx, p.sy, env); }
@@ -6102,19 +6781,18 @@ function createGrowTree(host, opts) {
       const x = X(p.sx), y = Y(p.sy);
       flowers.push([p.sx, p.sy]);
       if (x < -40 || x > W + 40 || y < -40 || y > H + 40) continue;
-      const alive = T >= p.birth && T <= p.end && p !== root;
-      if (alive) drawGlow(ctx, x, y, r * 2.4, '255,236,150');
-      if (p !== root) {
-        const crown = st.leaves.map(() => new Path2D());
-        for (let i = 0; i < 4; i++) {
-          const a = -Math.PI / 2 + (i - 1.5) * 0.85 + p.spin;
-          addLeaf(crown[(i + (Math.cos(a) * -lx > 0 ? 1 : 0)) % st.leaves.length], x + Math.cos(a) * r * 0.5, y + Math.sin(a) * r * 0.5, r * 0.95 * Math.min(1, open * 2), a);
-        }
-        st.leaves.forEach((c, i) => { ctx.fillStyle = c; ctx.fill(crown[i]); });
+      shown.push([p, x, y, r, open]);
+      if (p !== root) for (let i = 0; i < 4; i++) {
+        const a = -Math.PI / 2 + (i - 1.5) * 0.85 + p.spin;
+        addLeaf(crown[(i + (Math.cos(a) * -lx > 0 ? 1 : 0)) % st.leaves.length], x + Math.cos(a) * r * 0.5, y + Math.sin(a) * r * 0.5, r * 0.95 * Math.min(1, open * 2), a);
       }
+    }
+    for (const [p, x, y, r] of shown) if (T >= p.birth && T <= p.end && p !== root) drawGlow(ctx, x, y, r * 2.4, '255,236,150');
+    st.leaves.forEach((c, i) => { ctx.fillStyle = c; ctx.fill(crown[i]); });
+    for (const [p, x, y, r, open] of shown) {
       const female = p.indi.sex === 'F';
       const pal = p.est ? EST_FLOWER : female ? st.female : st.male;
-      drawFlower(ctx, x, y, r, open, female, pal, st.centre, p.spin * 6.28, !!st.sun.moon);
+      drawFlowerFast(ctx, x, y, r, open, female, pal, st.centre, p.spin * 6.28, st.dark > 0.45);
       if (p === state.selected) { ctx.strokeStyle = '#ffd36a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, r * 1.25, 0, 7); ctx.stroke(); }
       p.hitR = Math.max(12, r * 1.2);
       if (p.room * view.s > 46 || p === root || p === state.selected) labelled.push([p, x, y, r]);
@@ -6135,25 +6813,29 @@ function createGrowTree(host, opts) {
     vignette(ctx, W, H, st);
 
     // title, year, the latest events and the verse (drawn on the canvas, so they are in recordings too)
+    const narrow = W < 600;
     text(title, 16, 60, '700 18px Fredoka, Nunito, system-ui, sans-serif', '#fff8e8');
-    text(state.dir === 'back' ? 'Growing back in time from you' : 'History playing forward to you', 16, 84, '600 12px Nunito, system-ui, sans-serif', 'rgba(255,248,232,0.85)');
-    text(String(Math.round(Math.max(yMin - 3, Math.min(yMax + 2, T)))), W - 16, 10, `700 ${Math.max(34, Math.min(64, W * 0.07))}px Fredoka, Nunito, system-ui, sans-serif`, 'rgba(255,240,200,0.95)', 'right');
-    const passed = state.dir === 'back' ? events.filter(e => e.year >= T && e.year <= yMax + 1).slice(0, 4) : events.filter(e => e.year <= T).slice(-4).reverse();
+    if (!narrow) text(state.dir === 'back' ? 'Growing back in time from you' : 'History playing forward to you', 16, 84, '600 12px Nunito, system-ui, sans-serif', 'rgba(255,248,232,0.85)');
+    const yearSize = Math.max(34, Math.min(64, W * 0.07));
+    text(String(Math.round(Math.max(yMin - 3, Math.min(yMax + 2, T)))), W - 16, 10, `700 ${yearSize}px Fredoka, Nunito, system-ui, sans-serif`, 'rgba(255,240,200,0.95)', 'right');
+    // the latest births and deaths: under the year on wide screens, under the title on phones
+    const passed = state.dir === 'back' ? events.filter(e => e.year >= T && e.year <= yMax + 1).slice(0, 3) : events.filter(e => e.year <= T).slice(-3).reverse();
+    const tx = narrow ? 16 : W - 16, ty = narrow ? 86 : 18 + yearSize, maxW = narrow ? W - 32 : W * 0.42;
     passed.forEach((e, i) => {
-      ctx.globalAlpha = 1 - i * 0.22;
-      const font = `${i ? 600 : 700} ${i ? 12 : 14}px Nunito, system-ui, sans-serif`;
+      ctx.globalAlpha = 1 - i * 0.25;
+      const font = `${i ? 600 : 700} ${i ? 11 : 13}px Nunito, system-ui, sans-serif`;
       ctx.font = font;
       let str = e.text;
-      while (str.length > 8 && ctx.measureText(str).width > W - 32) str = str.slice(0, -2);
+      while (str.length > 8 && ctx.measureText(str).width > maxW) str = str.slice(0, -2);
       if (str !== e.text) str = str.trimEnd() + '…';
-      text(str, 16, H - (W < 600 ? 196 : 128) - i * 18, font, e.kind === 'died' ? '#e4def4' : '#fff4cc', 'left', 'alphabetic');
+      text(str, tx, ty + i * 16, font, e.kind === 'died' ? '#e4def4' : '#fff4cc', narrow ? 'left' : 'right');
     });
     ctx.globalAlpha = 1;
+    // the verse, written across the meadow just above the controls
     if (showVerse) {
       reader.update(dt);
-      const style = { ink: '#fffaf0', glow: 'rgba(20,10,30,0.9)' };
-      if (state.verseBelow) reader.draw(ctx, W / 2, W < 600 ? 106 : 128, W - 40, style);
-      else reader.draw(ctx, W / 2, 18, Math.min(580, wideRoom), style);
+      const band = verseBand(), top = H - inset() - band - 4;
+      reader.draw(ctx, W / 2, top, Math.min(W - 40, 820), { ink: '#fffaf0', outline: 'rgba(24,30,16,0.75)' });
     }
   }
 
@@ -6236,7 +6918,9 @@ function createGrowTree(host, opts) {
     restart() { state.T = startYear(); state.popAt.clear(); life.reset(); },
     seek(year) { state.T = year; state.popAt.clear(); life.reset(); },
     setDirection(d) { state.dir = d === 'forward' ? 'forward' : 'back'; state.T = startYear(); state.popAt.clear(); life.reset(); },
-    setStyle(name) { if (TREE_STYLES[name]) state.style = name; },
+    setStyle(name) { state.season = seasonKey(name); },
+    setHour(h) { state.hour = ((+h % 24) + 24) % 24; },
+    setAutoDay(on) { state.autoDay = !!on; },
     setVersesOn(on) { state.versesOn = !!on; },
     setVerses(list) { reader = list?.length ? new VerseReader(list) : null; },
     setSpacing(s) { state.spacing = s === 'gen' ? 'gen' : 'year'; },
@@ -6268,7 +6952,12 @@ const store = {
   set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* private mode */ } },
 };
 const SEASONS = Object.keys(TREE_STYLES);
+// (the old Night season is now a time of day)
 let season = SEASONS.includes(store.get('a3d:season')) ? store.get('a3d:season') : 'spring';
+let hour = store.get('a3d:season') === 'night' ? 22 : Math.max(0, Math.min(24, parseFloat(store.get('a3d:hour')) || 12));
+let autoDay = false;
+const clock = h => { const m = Math.round((h % 24) * 60); return `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; };
+const timeIcon = h => h < 5 || h >= 20.5 ? '🌙' : h < 7.5 ? '🌅' : h < 17.5 ? '☀️' : '🌇';
 let versesOn = store.get('a3d:versesOn') !== '0';
 function chosenVerseIds() {
   try { const ids = JSON.parse(store.get('a3d:verses') || 'null'); if (Array.isArray(ids)) return new Set(ids); } catch (e) { /* fall through */ }
@@ -6346,6 +7035,7 @@ function tick(state) {
     $('vTour').textContent = V.view.touring ? '■ Stop' : '▶ Fly-through';
   } else {
     $('vPlay').textContent = state.playing ? '❚❚ Pause' : '▶ Play';
+    if (autoDay && Math.abs(state.hour - hour) > 0.05) { hour = state.hour; showTime(); }
     const sc = $('vScrub');
     if (document.activeElement !== sc) sc.value = String(Math.round(state.T));
   }
@@ -6375,7 +7065,7 @@ function openViz({ kind, scope = 'ancestors', data, rootId, maxGen, onClose }) {
       if (scope === 'all' && V.view.total > V.view.count) status(`Showing ${V.view.count.toLocaleString()} of ${V.view.total.toLocaleString()} people (the closest relatives first).`);
     } else {
       V.view = createGrowTree(host, {
-        data, rootId, maxGen, onSelect: showInfo, onFrame: tick, style: season, verses: chosenVerses(), versesOn,
+        data, rootId, maxGen, onSelect: showInfo, onFrame: tick, style: season, hour, autoDay, bottomInset: () => document.querySelector('#viz .vbar').offsetHeight + 18, verses: chosenVerses(), versesOn,
         onEnd: () => { if (V?.recorder?.recording) setTimeout(finishRecording, 1500); },
       });
       const [a, b] = V.view.range;
@@ -6414,9 +7104,23 @@ for (const b of document.querySelectorAll('#vDir button')) b.onclick = () => {
   document.querySelectorAll('#vDir button').forEach(x => x.classList.toggle('on', x === b));
   V?.view?.setDirection?.(b.dataset.dir); V?.view?.play?.();
 };
+function showTime() {
+  $('vTimeIcon').textContent = timeIcon(hour);
+  $('vTimeLbl').textContent = clock(hour);
+  if (document.activeElement !== $('vTime')) $('vTime').value = String(hour);
+  $('vDay').classList.toggle('lit', autoDay);
+}
+$('vTime').addEventListener('input', e => {
+  hour = +e.target.value; autoDay = false;
+  store.set('a3d:hour', String(hour));
+  V?.view?.setHour?.(hour); V?.view?.setAutoDay?.(false);
+  showTime();
+});
+$('vDay').onclick = () => { autoDay = !autoDay; V?.view?.setAutoDay?.(autoDay); showTime(); };
 function showSeason() {
-  const icons = { spring: '🌸', summer: '☀️', autumn: '🍂', night: '🌙' };
-  $('vSeason').textContent = `${icons[season]} ${TREE_STYLES[season].name}`;
+  const st = TREE_STYLES[season];
+  $('vSeason').textContent = `${st.icon} ${st.name}`;
+  showTime();
   $('vVerse').classList.toggle('lit', versesOn);
   $('vVerse').setAttribute('aria-pressed', versesOn);
 }
@@ -6486,11 +7190,13 @@ const __m_main = (() => {
 const { parseGedcom, decodeGedcomBytes } = __m_gedcom;
 const { genAt, collectAncestors, layoutAncestors, displayName, firstName, lifespan, relationship, countAncestors, birthYear, hashString } = __m_ancestry;
 const { buildWorld, GEN_NAMES, THEMES } = __m_world;
-const { buildDialogue, shotQuip, stompQuip, bumpQuip } = __m_dialogue;
+const { buildDialogue, shotQuip, stompQuip, bumpQuip, foundSpeech } = __m_dialogue;
 const { drawPortrait, drawIslandPortrait } = __m_textures;
 const { buildIslandFigure } = __m_npc;
 const { createMinigun, createImpacts, traceShot } = __m_weapon;
 const { buildFlatWorld, drawFluffyPortrait } = __m_fluffy;
+const { createFight } = __m_fight;
+const { createMissions } = __m_missions;
 const { computeTraits } = __m_traits;
 const { openViz, vizOpen, vizView } = __m_viz;
 const $ = id => document.getElementById(id);
@@ -6533,6 +7239,8 @@ const cute = () => S.theme === 'island' || S.theme === 'fluffy';
 const platform = () => S.theme === 'island';
 // The Fluffy look is a top-down 2D garden drawn on its own canvas.
 const flat = () => S.theme === 'fluffy';
+// Fight back mode: Retro only
+const fighting = () => S.fight && S.theme === 'doom' && !!S.fightCtl;
 
 // ---------------- Renderer ----------------
 const canvas = $('game');
@@ -6616,6 +7324,9 @@ const sfx = {
   stomp: () => { beep(240, 0.06, 'square', 0.05, -120); setTimeout(() => beep(520, 0.08, 'square', 0.04, 300), 60); },
   coin: () => { beep(988, 0.05, 'square', 0.035); setTimeout(() => beep(1319, 0.12, 'square', 0.035), 55); },
   ouch: () => beep(cute() ? 700 : 300, 0.12, 'square', 0.04, -150),
+  hurt: () => { beep(140, 0.18, 'sawtooth', 0.07, -60); setTimeout(() => beep(90, 0.15, 'square', 0.05, -30), 60); },
+  swish: () => beep(500, 0.09, 'triangle', 0.03, -380),
+  heal: () => [523, 784, 1046].forEach((f, i) => setTimeout(() => beep(f, 0.08, 'square', 0.04), i * 60)),
 };
 
 // ---------------- Messages ----------------
@@ -6642,6 +7353,7 @@ function applyStyle(style, { silent = false } = {}) {
   store.set('a3d:style', style);
   document.body.classList.toggle('island', cute());
   document.body.classList.toggle('fluffy', flat());
+  document.body.classList.toggle('fight', S.fight && S.theme === 'doom');
   $('logo').innerHTML = LOGOS[style][0];
   $('tagline').textContent = LOGOS[style][1];
   $('lookNote').textContent = LOOK_NOTES[style];
@@ -6667,6 +7379,18 @@ for (const b of $('shapeSeg').querySelectorAll('button')) b.onclick = () => {
   refreshResume();
   if (!S.running && S.booted) buildAttract();
 };
+// Fight back mode (Retro): shot ancestors chase you; you have health and a score.
+function applyFight() {
+  document.body.classList.toggle('fight', S.fight && S.theme === 'doom');
+  if (S.fightCtl) S.fightCtl.setOn(S.fight);
+  if (S.gun) S.gun.state.regen = !fighting();
+}
+$('fightToggle').addEventListener('change', e => {
+  S.fight = e.target.checked;
+  store.set('a3d:fight', S.fight ? '1' : '0');
+  sfx.select();
+  applyFight();
+});
 $('couplesToggle').addEventListener('change', e => {
   S.couples = e.target.checked;
   store.set('a3d:couples', S.couples ? '1' : '0');
@@ -6864,7 +7588,23 @@ async function startGame() {
     resize();
   }
   $('ammoCell').style.display = S.gun && S.gun.state.ammo == null ? 'none' : '';
+  S.fightCtl = S.theme === 'doom' ? createFight({
+    world: S.world, impacts: S.impacts, store, key: S.fileKey + ':best', sfx,
+    message,
+    onHurt: (dmg) => {
+      sfx.hurt();
+      const el = $('hurt'); el.style.transition = 'none'; el.style.opacity = String(Math.min(0.85, 0.35 + dmg / 25));
+      requestAnimationFrame(() => requestAnimationFrame(() => { el.style.transition = 'opacity 0.6s'; el.style.opacity = '0'; }));
+      S.face.hurtUntil = performance.now() + 500;
+    },
+    onKO: () => { sfx.meet(); S.face.grinUntil = performance.now() + 1500; },
+    onHeal: () => sfx.heal(),
+    onDeath: () => { S.pos.set(S.tree.hub.x, 0, S.tree.hub.z); S.vel.set(0, 0, 0); S.yaw = 0; S.pitch = -0.05; if (S.gun) S.gun.state.ammo = Math.max(S.gun.state.ammo, 150); },
+  }) : null;
+  applyFight();
   S.met = new Set(JSON.parse(store.get(S.fileKey + ':met:' + S.rootId) || '[]'));
+  S.missions = createMissions({ tree, store, key: S.fileKey + ':missions:' + S.rootId });
+  S.missionsShown = '';
   for (const id of S.met) { const n = S.world.byId.get(id); if (n) n.met = true; }
   S.pos.set(tree.hub.x, 0, tree.hub.z); S.vel.set(0, 0, 0); S.posY = 0; S.vy = 0; S.coins = 0; S.onGround = true;
   S.camInit = false; S.flatCam = { x: tree.hub.x, z: tree.hub.z, scale: flatScale() };
@@ -7055,7 +7795,7 @@ function movePlayer(dt) {
       }
       push(n.person.x, n.person.z, 1.3);
     }
-  } else for (const n of S.world.npcs) if (n.near && S.posY < 1.2) push(n.person.x, n.person.z, 0.85);
+  } else for (const n of S.world.npcs) if (n.near && S.posY < 1.2) push(n.x, n.z, 0.85);
   for (const c of S.world.colliders) if (S.posY > 1.2) c.skip = true; else c.skip = false;
   for (const c of S.world.colliders) if (!c.skip && !(c.barrel && !c.barrel.alive) && Math.abs(c.x - S.pos.x) < 2 && Math.abs(c.z - S.pos.z) < 2) push(c.x, c.z, c.r + 0.3);
   // boxes of bullets
@@ -7200,10 +7940,11 @@ function updateNPCs(t, dt) {
   const talkR = cute() ? 2.8 : 3.4;
   for (const n of S.world.npcs) {
     const p = n.person;
-    const dx = p.x - S.pos.x, dz = p.z - S.pos.z;
+    const dx = n.x - S.pos.x, dz = n.z - S.pos.z;
     const d = Math.hypot(dx, dz);
     n.dist = d;
     n.near = d < 3;
+    if (n.angry) { n.fig.root.visible = true; continue; } // chasing you: fight.js moves them
     const vis = d < visR;
     n.fig.root.visible = vis;
     if (!vis) continue;
@@ -7251,7 +7992,7 @@ function updateNPCs(t, dt) {
       fig.head.rotation.x *= 0.9;
     }
     const dirAngle = Math.acos(Math.max(-1, Math.min(1, (dx * camDir.x + dz * camDir.z) / (d || 1))));
-    if (d < talkR && dirAngle < (cute() ? 1.3 : 0.9)) {
+    if (d < talkR && dirAngle < (cute() ? 1.3 : 0.9) && !n.angry) {
       const score = d + dirAngle * 2;
       if (score < bestScore) { bestScore = score; best = n; }
     }
@@ -7290,6 +8031,12 @@ function updateGun(dt) {
     if (!hit) continue;
     if (hit.prop) { blowUp(hit.prop); continue; }
     if (!G.melee || hit.npc) S.impacts.spawn(hit.point.addScaledVector(fwdV, -0.15));
+    if (hit.npc && fighting()) {
+      const n = hit.npc;
+      if (!n.angry) sfx.ouch();
+      S.fightCtl.hit(n, 1);
+      continue;
+    }
     if (hit.npc) {
       const n = hit.npc;
       if (n.flinch <= 0) sfx.ouch();
@@ -7309,6 +8056,7 @@ function updateGun(dt) {
 // A toxic barrel bursting: noise, dust, and everyone nearby jumps out of their skin.
 function blowUp(b) {
   S.world.explodeBarrel?.(b);
+  if (fighting()) S.fightCtl.blast(b.x, b.z, S.pos);
   boomSound();
   for (let k = 0; k < 6; k++) S.impacts.spawn(new THREE.Vector3(b.x + (Math.random() - 0.5) * 1.6, 0.3 + Math.random() * 1.4, b.z + (Math.random() - 0.5) * 1.6));
   S.face.grinUntil = performance.now() + 900;
@@ -7341,7 +8089,12 @@ function openDialog(npc) {
   S.firing = false;
   S.talkingTo = npc; npc.talking = true;
   const dlg = buildDialogue(npc.person, { data: S.data, tree: S.tree });
-  Object.assign(D, { pages: dlg.pages, links: dlg.links, page: 0, npc, portraitFrame: -1 });
+  Object.assign(D, { pages: dlg.pages, links: dlg.links, page: 0, npc, portraitFrame: -1, mission: null });
+  // missions: finding someone you were sent to look for, and being asked to find someone else
+  const done = S.missions.check(npc.person);
+  if (done.length) { D.pages.unshift(foundSpeech(npc.person, done[0].giverName)); missionReward(done, npc); }
+  const offer = S.missions.offer(npc.person);
+  if (offer) { D.pages.push(offer.speech); D.mission = offer; }
   const indi = npc.person.indi;
   $('dWho').textContent = displayName(indi);
   const rel = relationship(npc.person.gen, indi.sex).replace(/^./, c => c.toUpperCase());
@@ -7356,7 +8109,8 @@ function openDialog(npc) {
     store.set(S.fileKey + ':met:' + S.rootId, JSON.stringify([...S.met]));
     sfx.meet();
     S.face.grinUntil = performance.now() + 1500;
-    message(`You met ${displayName(indi)}! (${S.met.size}/${S.world.npcs.length})`);
+    message(`You met ${displayName(indi)}! (${S.met.size}/${S.world.npcs.length})${flat() ? ' +5 XP' : ''}`);
+    if (flat()) S.missions.addXP(5);
     if (S.met.size >= S.world.npcs.length) setTimeout(() => message('You have met every ancestor. 100% kin!'), 400);
   }
   updateStatus();
@@ -7374,6 +8128,15 @@ function renderOpts() {
   const last = D.page >= D.pages.length - 1;
   const add = (label, cls, fn) => { const b = document.createElement('button'); b.textContent = label; if (cls) b.className = cls; b.onclick = e => { e.stopPropagation(); fn(); }; opts.appendChild(b); };
   if (!last) add('Next ▶', 'next', advanceDialog);
+  if (last && D.mission) {
+    add('I\'ll do it! ✓', 'next', () => {
+      S.missions.accept(D.mission);
+      message(`New mission: ${D.mission.label}`);
+      sfx.select();
+      D.mission = null; renderMissions(true); closeDialog();
+    });
+    add('Not now', '', () => { S.missions.decline(D.mission); D.mission = null; renderOpts(); });
+  }
   if (last) for (const l of D.links) add(l.label, '', () => { setWaypoint(l.id); closeDialog(); });
   if (D.page > 0) add('◀ Back', 'bye', () => { D.page--; showPage(); });
   add(cute() ? 'See you!' : 'Bye', 'bye', () => closeDialog());
@@ -7414,6 +8177,34 @@ function tickDialog(dt) {
   }
 }
 
+// ---------------- Missions ----------------
+const MISSION_XP = 50;
+function missionReward(done, npc) {
+  const n = done.length;
+  S.missions.addXP(MISSION_XP * n);
+  let prize;
+  if (flat()) prize = `+${MISSION_XP * n} XP`;
+  else if (platform()) { S.coins += 25 * n; prize = `+${25 * n} coins`; }
+  else {
+    if (S.gun?.state.ammo != null) S.gun.state.ammo = Math.min(S.gun.state.maxAmmo, S.gun.state.ammo + 200 * n);
+    if (fighting()) S.fightCtl.state.score += 250 * n;
+    prize = `+${200 * n} ammo${fighting() ? `, +${250 * n} score` : ''}`;
+  }
+  for (const m of done) message(`Mission complete: ${m.label}! ${prize}`);
+  [784, 988, 1175, 1568, 2093].forEach((f, i) => setTimeout(() => beep(f, 0.1, cute() ? 'sine' : 'square', 0.05), i * 80));
+  S.face.grinUntil = performance.now() + 2000;
+  renderMissions(true);
+}
+function renderMissions(force) {
+  if (!S.missions) return;
+  const list = S.missions.active;
+  const html = list.length ? `<b>Missions</b>${list.map(m => `<div>• ${escapeHtml(m.label)}</div>`).join('')}` : '';
+  if (!force && html === S.missionsShown) return;
+  S.missionsShown = html;
+  $('missions').innerHTML = html;
+  $('missions').classList.toggle('hidden', !html);
+}
+
 // ---------------- Waypoints & status ----------------
 function setWaypoint(id) {
   const n = S.world.byId.get(id);
@@ -7448,9 +8239,10 @@ function updateStatus(t = 0) {
   let near = null;
   for (const n of S.world.npcs) if (!near || n.dist < near.dist) near = n;
   const root = S.tree.people.get(S.rootId).indi;
+  renderMissions();
   if (cute()) {
     $('iName').textContent = firstName(root);
-    $('iInfo').textContent = `Gen ${gen} · Met ${S.met.size}/${total}`;
+    $('iInfo').textContent = `Gen ${gen} · Met ${S.met.size}/${total}` + (flat() ? ` · ⭐ ${S.missions.state.xp} XP` : '');
     $('pCoins').textContent = S.coins;
     const fr = Math.floor(t * 2) % 10 === 9 ? 9 : 0;
     if (flat()) drawFluffyPortrait($('iFace').getContext('2d'), S.world.rootLook, 64, fr);
@@ -7459,6 +8251,12 @@ function updateStatus(t = 0) {
   }
   $('sGen').textContent = gen;
   $('sMet').textContent = `${S.met.size}/${total}`;
+  if (fighting()) {
+    const f = S.fightCtl.state;
+    $('sHealth').textContent = `${Math.ceil(f.health)}%`;
+    $('sHealth').style.color = f.health > 60 ? '' : f.health > 30 ? '#ffcc33' : '#ff3a2a';
+    $('sScore').textContent = f.score.toLocaleString();
+  }
   if (near) {
     const y = birthYear(near.person.indi);
     $('sEra').textContent = y ? String(y) : '----';
@@ -7467,7 +8265,7 @@ function updateStatus(t = 0) {
   // The status-bar face is you: it glances about and grins when firing or meeting someone.
   const now = performance.now();
   if (now > S.face.nextGaze) { S.face.gaze = [-1, 0, 0, 1][Math.floor(Math.random() * 4)]; S.face.nextGaze = now + 800 + Math.random() * 1600; }
-  const look = Object.assign({}, S.world.rootLook, { gaze: S.face.gaze, grin: now < S.face.grinUntil });
+  const look = Object.assign({}, S.world.rootLook, { gaze: S.face.gaze, grin: now < S.face.grinUntil && !(now < (S.face.hurtUntil || 0)) });
   drawPortrait($('sFace').getContext('2d'), look, 64, Math.floor(t * 2));
 }
 
@@ -7532,7 +8330,7 @@ function drawMap() {
   }
   const dot = Math.max(2, Math.min(7, scale * 0.6));
   for (const n of S.world.npcs) {
-    const x = X(n.person.x), y = Y(n.person.z);
+    const x = X(n.x ?? n.person.x), y = Y(n.z ?? n.person.z);
     c.fillStyle = n === S.waypoint || n.met ? C.met : C.dot;
     if (isl) { c.beginPath(); c.arc(x, y, dot / 2 + 0.5, 0, 7); c.fill(); c.strokeStyle = 'rgba(74,48,32,0.6)'; c.lineWidth = 1; c.stroke(); }
     else c.fillRect(x - dot / 2, y - dot / 2, dot, dot);
@@ -7567,11 +8365,17 @@ $('mapSearch').addEventListener('input', () => {
   const q = $('mapSearch').value.trim().toLowerCase();
   const res = $('mapResults');
   if (!q) { res.classList.add('hidden'); return; }
-  const found = S.world.npcs.filter(n => displayName(n.person.indi).toLowerCase().includes(q)).slice(0, 30);
+  // search names, birthplaces and jobs (handy for missions)
+  const about = n => {
+    const indi = n.person.indi, b = indi.events.find(e => ['BIRT', 'CHR', 'BAPM'].includes(e.tag));
+    return { place: b?.place || '', jobs: indi.events.filter(e => e.tag === 'OCCU' && e.value).map(e => e.value).join(', ') };
+  };
+  const found = S.world.npcs.filter(n => { const a = about(n); return (displayName(n.person.indi) + ' ' + a.place + ' ' + a.jobs).toLowerCase().includes(q); }).slice(0, 30);
   res.innerHTML = '';
   for (const n of found) {
     const d = document.createElement('div');
-    d.textContent = `${displayName(n.person.indi)}  ${lifespan(n.person.indi)}  · gen ${n.person.gen}`;
+    const a = about(n), extra = !displayName(n.person.indi).toLowerCase().includes(q) ? (a.place.toLowerCase().includes(q) ? ` · born ${a.place.split(',')[0]}` : a.jobs ? ` · ${a.jobs}` : '') : '';
+    d.textContent = `${displayName(n.person.indi)}  ${lifespan(n.person.indi)}  · gen ${n.person.gen}${extra}`;
     d.onclick = () => { setWaypoint(n.person.id); $('mapSearch').value = ''; res.classList.add('hidden'); drawMap(); };
     res.appendChild(d);
   }
@@ -7660,6 +8464,7 @@ function loop(now) {
     movePlayer(dt);
     updateAvatar(dt);
     updateNPCs(t, dt);
+    if (fighting() && !S.talkingTo && $('automap').classList.contains('hidden')) S.fightCtl.update(dt, t, S.pos);
     tickDialog(dt);
     updateCompass();
     if (now - lastStatus > 250) { lastStatus = now; updateStatus(t); renderMsgs(); if (!$('automap').classList.contains('hidden')) drawMap(); }
@@ -7731,6 +8536,8 @@ async function buildAttract() {
   requestAnimationFrame(spin);
 }
 
+S.fight = store.get('a3d:fight') === '1';
+$('fightToggle').checked = S.fight;
 // Defaults for a first visit: the Fluffy look, the Tree layout and couples standing together.
 S.couples = store.get('a3d:couples') !== '0';
 S.shape = ['circle', 'half', 'tree'].includes(store.get('a3d:shape')) ? store.get('a3d:shape') : 'tree';

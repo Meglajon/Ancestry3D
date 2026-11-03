@@ -38,6 +38,21 @@ middle of a courtyard where every ancestor stands on the ground as a 3D person y
 
 Ancestors who get shot, jumped on or bumped into flinch and tell you off in their own accent. Nobody is hurt.
 
+**Fight back** (Retro, a switch under Look): shoot someone and they pull out a weapon from their time (a broom,
+rolling pin, frying pan, umbrella, club, cane or pitchfork) and walk after you, swinging when they're close.
+You have health (first-aid kits top it up) and a score: points for every hit and more for knocking someone out,
+which sends them home to their spot, calm again until you shoot them next time. Exploding barrels hurt everyone
+nearby, you included. If your health runs out you go back to the middle and everyone calms down. Your ammo no
+longer tops itself up in this mode: boxes of bullets and first-aid kits turn up at random spots around the
+courtyard. Your best score is remembered.
+
+**Missions** (every look): chat to ancestors and some will ask you to find someone: a person born in a certain
+town, someone called Edith, someone who worked as a weaver, someone born in the 1840s, one of their own parents,
+or one of a family they married into. Talk to anyone who fits and the mission is done, and they'll tell you who
+sent you. You earn XP in Fluffy (plus a little for everyone you meet), coins on the Island, and ammo (and score
+in Fight back) in Retro. Up to three missions at a time are listed on screen, and the map search finds names,
+birthplaces and jobs.
+
 ## Visualisation
 
 The menu has two tabs: **Play** and **Visualisation**. Load a tree, pick whose family it is and how many
@@ -50,18 +65,22 @@ generations, then open one of these:
   Drag to spin, scroll or pinch to zoom. **Tap a star** to glide over to that person and read about them;
   **double-tap** (or double-click) a star to take the fly-through to them, ending circling round them.
   **Fly-through** flies out from you along your longest line, naming each ancestor as you pass. The camera
-  slows to a stop at each person, turns, then speeds up again, so the journey never jerks.
+  glides in one continuous flight: it slows right down at each person where the path changes direction, then
+  pulls away again without waiting.
 - **Growing tree**: a tree with you as the trunk. Height is the year each person was born (or their
   generation), and the branches grow back in time a generation at a time until the oldest ancestors blossom at
   the tips. Switch to *Forward* to play history the other way, with the oldest ancestors first and every line
   arriving at you. Anyone alive in the year on the clock glows, and births and deaths scroll past.
-  Every person is a blossom that opens as they appear (pink for women, white for men in spring). Pick a season:
-  *Spring* blossom, *Summer*, *Autumn* at sunset or *Night* under the moon with glowing moonflowers, each with
-  its own light. The tree comes alive as it grows: butterflies visit the flowers, caterpillars inch along the
-  branches and turn into butterflies, flowers bloom in the meadow, and petals, leaves, seeds or fireflies drift
-  about.
-  **Bible verses** about the generations can appear in the sky, read out word by word. Choose which ones in the
-  Visualisation tab (New International Version), or switch them off with the *Verses* button.
+  Every person is a blossom that opens as they appear (pink for women, white for men in spring). Pick a season
+  (*Spring*, *Summer*, *Autumn* or *Winter* with snow on the branches) and a **time of day** with the slider, or
+  press *Day* to watch it go by: the sun rises on the left and sets on the right, the sky and the light on the
+  tree change with it, and at night the moon comes up and the blossoms glow. The tree comes alive as it grows:
+  butterflies (robins in winter) visit the flowers, caterpillars inch along the branches and turn into
+  butterflies, flowers bloom in the meadow, petals, leaves, seeds, snow or fireflies drift about, and rabbits,
+  deer, red squirrels, foxes and hedgehogs wander through at the right time of day.
+  **Bible verses** about the generations are written across the meadow, a word at a time (each verse appears in a
+  second or two). Choose which ones in the Visualisation tab (New International Version), or switch them off
+  with the *Verses* button.
 
 **Record video** saves the fly-through, or the whole growing tree, as a video file (MP4 where the browser
 supports it, otherwise WebM). Names and captions are recorded too. Missing birth years are estimated from the
@@ -127,6 +146,8 @@ js/verses.js        the Bible verses and the word-by-word reader
 js/viz.js           the Visualisation screen: controls, info panel, recording
 js/dialogue.js      dialect, period and schooling-aware speech, job memories, local history
 js/weapon.js        minigun viewmodel, impacts, shot tracing
+js/fight.js         Fight back mode: angry ancestors, their weapons, chasing, health and score
+js/missions.js      missions: what ancestors ask you to find, and checking when you've found it
 js/textures.js      procedural pixel-art textures and portraits
 js/main.js          renderer, controls, cameras, jumping, interaction, dialogue box, HUDs, map
 sample/demo.ged     fictional demo family (regenerate with npm run demo)

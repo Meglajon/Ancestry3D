@@ -12,7 +12,12 @@ const store = {
   set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* private mode */ } },
 };
 const SEASONS = Object.keys(TREE_STYLES);
+// (the old Night season is now a time of day)
 let season = SEASONS.includes(store.get('a3d:season')) ? store.get('a3d:season') : 'spring';
+let hour = store.get('a3d:season') === 'night' ? 22 : Math.max(0, Math.min(24, parseFloat(store.get('a3d:hour')) || 12));
+let autoDay = false;
+const clock = h => { const m = Math.round((h % 24) * 60); return `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; };
+const timeIcon = h => h < 5 || h >= 20.5 ? '🌙' : h < 7.5 ? '🌅' : h < 17.5 ? '☀️' : '🌇';
 let versesOn = store.get('a3d:versesOn') !== '0';
 function chosenVerseIds() {
   try { const ids = JSON.parse(store.get('a3d:verses') || 'null'); if (Array.isArray(ids)) return new Set(ids); } catch (e) { /* fall through */ }
@@ -90,6 +95,7 @@ function tick(state) {
     $('vTour').textContent = V.view.touring ? '■ Stop' : '▶ Fly-through';
   } else {
     $('vPlay').textContent = state.playing ? '❚❚ Pause' : '▶ Play';
+    if (autoDay && Math.abs(state.hour - hour) > 0.05) { hour = state.hour; showTime(); }
     const sc = $('vScrub');
     if (document.activeElement !== sc) sc.value = String(Math.round(state.T));
   }
@@ -119,7 +125,7 @@ export function openViz({ kind, scope = 'ancestors', data, rootId, maxGen, onClo
       if (scope === 'all' && V.view.total > V.view.count) status(`Showing ${V.view.count.toLocaleString()} of ${V.view.total.toLocaleString()} people (the closest relatives first).`);
     } else {
       V.view = createGrowTree(host, {
-        data, rootId, maxGen, onSelect: showInfo, onFrame: tick, style: season, verses: chosenVerses(), versesOn,
+        data, rootId, maxGen, onSelect: showInfo, onFrame: tick, style: season, hour, autoDay, bottomInset: () => document.querySelector('#viz .vbar').offsetHeight + 18, verses: chosenVerses(), versesOn,
         onEnd: () => { if (V?.recorder?.recording) setTimeout(finishRecording, 1500); },
       });
       const [a, b] = V.view.range;
@@ -158,9 +164,23 @@ for (const b of document.querySelectorAll('#vDir button')) b.onclick = () => {
   document.querySelectorAll('#vDir button').forEach(x => x.classList.toggle('on', x === b));
   V?.view?.setDirection?.(b.dataset.dir); V?.view?.play?.();
 };
+function showTime() {
+  $('vTimeIcon').textContent = timeIcon(hour);
+  $('vTimeLbl').textContent = clock(hour);
+  if (document.activeElement !== $('vTime')) $('vTime').value = String(hour);
+  $('vDay').classList.toggle('lit', autoDay);
+}
+$('vTime').addEventListener('input', e => {
+  hour = +e.target.value; autoDay = false;
+  store.set('a3d:hour', String(hour));
+  V?.view?.setHour?.(hour); V?.view?.setAutoDay?.(false);
+  showTime();
+});
+$('vDay').onclick = () => { autoDay = !autoDay; V?.view?.setAutoDay?.(autoDay); showTime(); };
 function showSeason() {
-  const icons = { spring: '🌸', summer: '☀️', autumn: '🍂', night: '🌙' };
-  $('vSeason').textContent = `${icons[season]} ${TREE_STYLES[season].name}`;
+  const st = TREE_STYLES[season];
+  $('vSeason').textContent = `${st.icon} ${st.name}`;
+  showTime();
   $('vVerse').classList.toggle('lit', versesOn);
   $('vVerse').setAttribute('aria-pressed', versesOn);
 }

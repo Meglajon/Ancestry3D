@@ -310,7 +310,7 @@ export function lookFor(person, fallbackYear) {
   }
   if (!L.legs && !L.skirt) L.legs = { kind: 'trousers', color: shade(L.top, 0.9) };
   L.sleeves ||= 'long';
-  // Summary for the island and blocks builders
+  // Summary for the island and fluffy builders
   L.dress = !!L.skirt;
   L.longHair = ['long', 'curls', 'bun', 'updo', 'parted', 'hidden'].includes(L.hairStyle) && female || L.hairStyle === 'long' || L.hairStyle === 'wig';
   L.beard = L.facial === 'beard';

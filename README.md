@@ -33,11 +33,30 @@ middle of a courtyard where every ancestor stands on the ground as a 3D person y
 | Look | What you get |
 |---|---|
 | **Retro** | 90s demon-shooter: flagstones, brick walls, torches, a burning sky, a status bar with your own face, and a **minigun**. The courtyard is dotted with toxic barrels (shoot them and they explode, setting off any next to them), burning barrels, tech lamps, candelabras, crate stacks, broken pillars and boxes of bullets to top up your ammo. |
-| **Platform** | A bright 3D-platformer land: checkered grass, yellow brick paths, rolling hills, floating brick platforms and coins to collect. **Jump** on platforms and bounce on your ancestors' heads. |
-| **Blocks** | A voxel world: grass blocks, gravel paths, block trees, cube-headed people, a hotbar and XP bar, and you can **punch**. |
-| **Island** | A bright, cozy island seen from behind your own villager, with round villagers and speech-bubble chats. |
+| **Island** | A bright, cozy island seen from behind your own villager, with round villagers and speech-bubble chats. Floating brick platforms and coins are dotted about: **jump** onto the platforms, collect the coins and bounce on your ancestors' heads. |
+| **Fluffy** | A top-down 2D garden where you and every ancestor are round, fluffy balls in colours taken from their period clothes, with their hair as a tuft on top (or their hat). Roll along the paths, bump into people (they squeak), and chat exactly as in the other looks. |
 
-Ancestors who get hit, punched or jumped on flinch and tell you off in their own accent. Nobody is hurt.
+Ancestors who get shot, jumped on or bumped into flinch and tell you off in their own accent. Nobody is hurt.
+
+## Visualisation
+
+The menu has two tabs: **Play** and **Visualisation**. Load a tree, pick whose family it is and how many
+generations, then open one of these:
+
+- **Galaxy**: the family as glowing stars in 3D, with you as the sun in the middle. Stars are coloured by the
+  century they were born in (older stars burn redder) and faint threads join parents and children (blue through
+  fathers, pink through mothers). Show *your ancestors* (laid out like the courtyard and twisted into spiral
+  arms) or *everyone in the file* (pulled into shape by a small physics simulation, so families clump together).
+  Drag to spin, scroll or pinch to zoom, tap a star to read about them. **Fly-through** flies out from you along
+  your longest line, naming each ancestor as you pass.
+- **Growing tree**: a tree with you as the trunk. Height is the year each person was born (or their
+  generation), and the branches grow back in time a generation at a time until the oldest ancestors blossom at
+  the tips. Switch to *Forward* to play history the other way, with the oldest ancestors first and every line
+  arriving at you. Anyone alive in the year on the clock glows, and births and deaths scroll past.
+
+**Record video** saves the fly-through, or the whole growing tree, as a video file (MP4 where the browser
+supports it, otherwise WebM). Names and captions are recorded too. Missing birth years are estimated from the
+family so everyone can be placed in time.
 
 Your GEDCOM file is read in the browser and never uploaded. The page remembers your last tree, your look and who
 you've met in local storage on your device.
@@ -54,9 +73,10 @@ you've met in local storage on your device.
 | Move | WASD, arrow keys (left/right turn) | Left thumb stick |
 | Look | Mouse (click to capture) | Drag on the right side |
 | Run | Shift | RUN button, or push the stick to its edge |
-| Talk | E / Space / Enter, 1–9 picks an option | TALK button, or tap the right side |
-| Fire / punch | Left mouse / Ctrl | FIRE / PUNCH button |
-| Jump (Platform) | Space | JUMP button |
+| Talk | E / Enter (and Space, except on the Island), 1–9 picks an option | TALK button, or tap the right side |
+| Fire (Retro) | Left mouse / Ctrl | FIRE button |
+| Jump (Island) | Space | JUMP button |
+| Zoom (Fluffy) | Mouse wheel | |
 | Map | Tab / M | MAP |
 | Menu | Esc | ☰ |
 
@@ -72,19 +92,24 @@ Plain ES modules, no framework. three.js r160 is loaded from jsDelivr through an
 
 ```
 index.html          built, self-contained game (generated, don't edit by hand)
-dev.html            source page: HUD, menus, styles for all four looks (loads js/* as modules; needs a local server)
+dev.html            source page: HUD, menus, styles for all three looks and the Visualisation screen (loads js/* as modules; needs a local server)
 js/gedcom.js        GEDCOM parser (any line endings, CONC/CONT, shared notes, all life events, ANSI/UTF-16 decoding)
 js/ancestry.js      ancestor walk (Ahnentafel, pedigree collapse), relationships, ground layout, couples
 js/places.js        place gazetteer: region, dialect and colouring for a GEDCOM place
 js/traits.js        per-person class, schooling, dress decade, inherited colouring
 js/outfits.js       period wardrobe by decade, sex, class, job and region
-js/npc.js           blocky, voxel and island figure builders (4 draw calls near, 1 far)
+js/npc.js           blocky and island figure builders (4 draw calls near, 1 far)
 js/world.js         generation paths, descent lines, NPCs, beacon; Retro and Island environments
 js/guides.js        generation paths for any layout (rings, arcs or rows), floor labels, open-spot finder
 js/props.js         Retro props: barrels, lamps, candelabras, crates, pillars, ammo pickups, explosions
-js/envs.js          Platform and Blocks environments (platforms and coins included)
+js/envs.js          floating brick platforms and coins for the Island look
+js/fluffy.js        the Fluffy look: top-down 2D garden, fluffy-ball sprites and portraits
+js/vizkit.js        Visualisation helpers: estimated years, star colours, canvas video recorder
+js/galaxy.js        the Galaxy visualisation (stars, threads, physics layout, fly-through)
+js/growtree.js      the Growing tree visualisation (timeline, branches, pan and zoom)
+js/viz.js           the Visualisation screen: controls, info panel, recording
 js/dialogue.js      dialect, period and schooling-aware speech, job memories, local history
-js/weapon.js        minigun and arm viewmodels, impacts, shot tracing
+js/weapon.js        minigun viewmodel, impacts, shot tracing
 js/textures.js      procedural pixel-art textures and portraits
 js/main.js          renderer, controls, cameras, jumping, interaction, dialogue box, HUDs, map
 sample/demo.ged     fictional demo family (regenerate with npm run demo)

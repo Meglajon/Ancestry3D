@@ -6819,12 +6819,13 @@ function createGrowTree(host, opts) {
     ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.lineJoin = 'round';
     for (const [p, x, y, r] of labelled) {
       const roomy = p.room * view.s > 110 || p === root;
-      const name = roomy ? displayName(p.indi) : firstName(p.indi);
       ctx.font = `700 ${roomy ? 13 : 11}px Fredoka, Nunito, system-ui, sans-serif`;
+      const name = fitText(roomy ? displayName(p.indi) : firstName(p.indi), Math.max(70, p.room * view.s * 0.96));
       ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(20,24,40,0.75)'; ctx.fillStyle = '#fff8e6';
       ctx.strokeText(name, x, y + r + 3); ctx.fillText(name, x, y + r + 3);
       if (roomy) { ctx.font = '600 10px Nunito, system-ui, sans-serif'; const l = p === root ? 'You' : lifespan(p.indi) || (p.est ? `c.${p.birth}` : ''); ctx.strokeText(l, x, y + r + 18); ctx.fillStyle = '#d8dcf0'; ctx.fillText(l, x, y + r + 18); }
     }
+    drawSparkles(dt, t, shown, new Set(labelled.map(l => l[0])));
     vignette(ctx, W, H, st);
 
     // title, year, the latest events and the verse (drawn on the canvas, so they are in recordings too)
@@ -6852,6 +6853,85 @@ function createGrowTree(host, opts) {
       const band = verseBand(), top = H - inset() - band - 4;
       reader.draw(ctx, W / 2, top, Math.min(W - 40, 820), { ink: '#fffaf0', outline: 'rgba(24,30,16,0.75)' });
     }
+  }
+
+  // Shortens a label with an ellipsis so long names don't run into their neighbours.
+  function fitText(str, maxW) {
+    if (ctx.measureText(str).width <= maxW) return str;
+    let s2 = str;
+    while (s2.length > 3 && ctx.measureText(s2 + '…').width > maxW) s2 = s2.slice(0, -1);
+    return s2.trimEnd() + '…';
+  }
+
+  // ---- sparkles: names too small to show take turns twinkling into view, so nobody stays nameless ----
+  const sparkles = [];
+  let sparkQueue = [], sparkClock = 0;
+  const SPARK_LIFE = 3.2;
+  function drawSparkles(dt, t, shown, labelledSet) {
+    const hidden = shown.filter(([p]) => !labelledSet.has(p));
+    const hiddenSet = new Set(hidden.map(h => h[0]));
+    for (const s of sparkles) s.age += dt;
+    for (let i = sparkles.length - 1; i >= 0; i--) if (sparkles[i].age > SPARK_LIFE || !hiddenSet.has(sparkles[i].p)) sparkles.splice(i, 1);
+    // a few at a time, more on a bigger tree, each starting a moment after the last
+    const want = Math.max(1, Math.min(5, Math.round(hidden.length / 14)));
+    sparkClock -= dt;
+    if (hidden.length && sparkles.length < want && sparkClock <= 0) {
+      sparkClock = 0.45;
+      const pos = new Map(hidden.map(([p, x, y]) => [p, [x, y]]));
+      for (let tries = 0; tries < 12; tries++) {
+        // everyone gets a turn before anyone has a second one
+        if (!sparkQueue.length) {
+          sparkQueue = hidden.map(h => h[0]);
+          for (let i = sparkQueue.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [sparkQueue[i], sparkQueue[j]] = [sparkQueue[j], sparkQueue[i]]; }
+        }
+        const p = sparkQueue.shift();
+        if (!pos.has(p) || sparkles.some(s => s.p === p)) continue;
+        const [x, y] = pos.get(p);
+        // keep sparkling names apart so their labels don't overlap
+        if (sparkles.some(s => { const q = pos.get(s.p); return q && Math.abs(q[0] - x) < 170 && Math.abs(q[1] - y) < 50; })) { sparkQueue.push(p); continue; }
+        sparkles.push({ p, age: 0, spin: Math.random() * 6 });
+        break;
+      }
+    }
+    if (!sparkles.length) return;
+    const byP = new Map(hidden.map(h => [h[0], h]));
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.lineJoin = 'round';
+    for (const s of sparkles) {
+      const h = byP.get(s.p); if (!h) continue;
+      const [p, x, y, r] = h;
+      const a = s.age < 0.5 ? s.age / 0.5 : s.age > SPARK_LIFE - 0.7 ? Math.max(0, (SPARK_LIFE - s.age) / 0.7) : 1;
+      const ease = a * a * (3 - 2 * a);
+      // a golden glow and little four-pointed stars twinkling round the blossom
+      drawGlow(ctx, x, y, r * 3.2 + 8, '255,226,140', ease);
+      for (let i = 0; i < 5; i++) {
+        const ang = s.spin + i * 1.2566 + t * 0.8, rr = r * 1.4 + 6 + Math.sin(t * 3 + i) * 3;
+        const tw = Math.max(0, Math.sin(t * 7 + i * 1.7 + s.spin));
+        star(x + Math.cos(ang) * rr, y + Math.sin(ang) * rr, (2.2 + tw * 3) * (0.6 + 0.4 * ease), ease * (0.35 + 0.65 * tw));
+      }
+      // the name and dates, rising slightly into place
+      const ly = y + r + 4 + (1 - ease) * 6;
+      ctx.globalAlpha = ease;
+      ctx.font = '700 13px Fredoka, Nunito, system-ui, sans-serif';
+      const name = fitText(displayName(p.indi), 190);
+      const life = lifespan(p.indi) || (p.est ? `c.${p.birth}` : '');
+      // a soft dark backing so a sparkling name reads clearly over busy branches
+      const bw = ctx.measureText(name).width + 16, bh = life ? 32 : 19;
+      ctx.globalAlpha = ease * 0.55; ctx.fillStyle = '#1a1206';
+      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x - bw / 2, ly - 3, bw, bh, 8) : ctx.rect(x - bw / 2, ly - 3, bw, bh); ctx.fill();
+      ctx.globalAlpha = ease;
+      ctx.lineWidth = 3.5; ctx.strokeStyle = 'rgba(40,24,6,0.85)'; ctx.fillStyle = '#ffe9a8';
+      ctx.strokeText(name, x, ly); ctx.fillText(name, x, ly);
+      if (life) { ctx.font = '600 10px Nunito, system-ui, sans-serif'; ctx.strokeText(life, x, ly + 15); ctx.fillStyle = '#fff6dc'; ctx.fillText(life, x, ly + 15); }
+      ctx.globalAlpha = 1;
+    }
+  }
+  function star(x, y, s, alpha) {
+    if (alpha <= 0.01) return;
+    ctx.globalAlpha = alpha; ctx.fillStyle = '#fff8d8';
+    ctx.beginPath();
+    ctx.moveTo(x, y - s * 1.6); ctx.quadraticCurveTo(x, y, x + s * 1.6, y); ctx.quadraticCurveTo(x, y, x, y + s * 1.6); ctx.quadraticCurveTo(x, y, x - s * 1.6, y); ctx.quadraticCurveTo(x, y, x, y - s * 1.6);
+    ctx.fill();
+    ctx.globalAlpha = 1;
   }
 
   // ---- interaction: drag to pan, wheel or pinch to zoom, tap to read about someone ----

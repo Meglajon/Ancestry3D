@@ -70,7 +70,9 @@ generations, then open one of these:
 - **Growing tree**: a tree with you as the trunk. Height is the year each person was born (or their
   generation), and the branches grow back in time a generation at a time until the oldest ancestors blossom at
   the tips. Switch to *Forward* to play history the other way, with the oldest ancestors first and every line
-  arriving at you. Anyone alive in the year on the clock glows, and births and deaths scroll past.
+  arriving at you. Anyone alive in the year on the clock glows, and births and deaths scroll past. On a big tree,
+  names too small to show take turns sparkling into view (a few at a time, everyone before anyone twice), so no
+  name is lost.
   Every person is a blossom that opens as they appear (pink for women, white for men in spring). Pick a season
   (*Spring*, *Summer*, *Autumn* or *Winter* with snow on the branches) and a **time of day** with the slider, or
   press *Day* to watch it go by: the sun rises on the left and sets on the right, the sky and the light on the

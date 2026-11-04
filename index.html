@@ -6022,16 +6022,24 @@ function bezTangent(q, t) {
 class BranchBatch {
   constructor() { this.groups = new Map(); }
   seg(pass, color, width, x0, y0, x1, y1, alpha = 1) {
-    const w = Math.max(0.6, Math.round(width * 2) / 2), key = `${pass}|${color}|${w}|${alpha}`;
+    const w = Math.max(0.5, Math.round(width * 4) / 4), key = `${pass}|${color}|${w}|${alpha}`;
     let g = this.groups.get(key);
     if (!g) this.groups.set(key, g = { pass, color, w, alpha, path: new Path2D() });
     g.path.moveTo(x0, y0); g.path.lineTo(x1, y1);
   }
   /** Adds a tapered branch along bezier q (screen coords) from t0 to t1, w0 wide at t=0 and w1 at t=1. lx: -1 lit from the left. */
-  branch(q, t0, t1, w0, w1, st, lx) {
-    const n = w0 > 7 ? 10 : w0 > 3 ? 5 : 2;
+  // tip: 1 when the branch is still growing at its t1 end, -1 at its t0 end, 0 when it's fully grown.
+  // A growing branch narrows to a point over its last stretch, like a new shoot. Returns the tip [x, y, w].
+  branch(q, t0, t1, w0, w1, st, lx, tip = 0) {
+    const n = Math.max(w0 > 7 ? 10 : w0 > 3 ? 5 : 2, tip ? 8 : 0);
     const pts = [];
-    for (let i = 0; i <= n; i++) { const t = t0 + (t1 - t0) * (i / n); const [x, y] = bezierAt(q, t); pts.push([x, y, w0 + (w1 - w0) * t]); }
+    for (let i = 0; i <= n; i++) {
+      const u = i / n, t = t0 + (t1 - t0) * u;
+      const [x, y] = bezierAt(q, t);
+      const toTip = tip > 0 ? 1 - u : tip < 0 ? u : 1;
+      const taper = tip ? Math.min(1, 0.12 + (toTip / 0.4) * 0.88) : 1;
+      pts.push([x, y, (w0 + (w1 - w0) * t) * taper]);
+    }
     for (let i = 0; i < n; i++) {
       const [x0, y0, a] = pts[i], [x1, y1, b] = pts[i + 1], w = (a + b) / 2;
       this.seg(0, st.bark[0], w, x0, y0, x1, y1);
@@ -6039,6 +6047,9 @@ class BranchBatch {
       if (w0 > 2.2) this.seg(2, st.bark[2], w * 0.26, x0 + lx * 0.24 * a, y0, x1 + lx * 0.24 * b, y1, 0.75);
       if (st.snow && w0 > 1.6 && Math.abs(x1 - x0) >= Math.abs(y1 - y0) * 0.35) this.seg(3, st.leaves[1], (a + b) * 0.2, x0, y0 - a * 0.42, x1, y1 - b * 0.42, 0.95);
     }
+    if (!tip) return null;
+    const end = tip > 0 ? pts[n] : pts[0];
+    return [end[0], end[1], w0 + (w1 - w0) * (tip > 0 ? t1 : t0)];
   }
   flush(ctx) {
     ctx.lineCap = 'round';
@@ -6664,11 +6675,14 @@ function createGrowTree(host, opts) {
     return [X(c.sx), Y(c.sy), X(c.sx), Y(c.sy - dy * 0.55), X(p.sx), Y(p.sy + dy * 0.45), X(p.sx), Y(p.sy)];
   }
   // how much of a branch has grown at year T (0..1 from child to parent)
+  // Each branch eases in and out: it starts slowly, speeds up through the middle and slows as it reaches the
+  // next blossom (smootherstep: no sudden starts or stops).
+  const ease = k => k <= 0 ? 0 : k >= 1 ? 1 : k * k * k * (k * (k * 6 - 15) + 10);
   function grown(e, T) {
     const c = e.c.birth, p = e.p.birth;
-    if (state.dir === 'back') { if (T >= c) return [0, 0]; return [0, Math.min(1, (c - T) / Math.max(1, c - p))]; }
+    if (state.dir === 'back') { if (T >= c) return [0, 0]; return [0, ease((c - T) / Math.max(1, c - p))]; }
     if (T <= p) return [1, 1];
-    return [Math.max(0, 1 - (T - p) / Math.max(1, c - p)), 1];
+    return [1 - ease((T - p) / Math.max(1, c - p)), 1];
   }
   const visible = (p, T) => state.dir === 'back' ? T <= p.birth || p === root : T >= p.birth;
 
@@ -6733,7 +6747,7 @@ function createGrowTree(host, opts) {
     const order = edges.slice().sort((a, b) => b.p.weight - a.p.weight);
     const branches = [];
     const grownNow = new Map();
-    const batch = new BranchBatch();
+    const batch = new BranchBatch(), tips = [];
     for (const e of order) {
       const [t0, t1] = grown(e, T);
       grownNow.set(e, [t0, t1]);
@@ -6744,9 +6758,18 @@ function createGrowTree(host, opts) {
       const wb = branchWidth(e.p);
       e.branch.wWorld = wb / view.s; e.branch.w = wb;
       if (e.branch.full) branches.push(e.branch);
-      batch.branch(curveFor(e), t0, t1, wb * 1.3, wb * 0.72, st, lx);
+      const growingTip = e.branch.full ? 0 : state.dir === 'back' ? 1 : -1;
+      const tip = batch.branch(curveFor(e), t0, t1, wb * 1.3, wb * 0.72, st, lx, growingTip);
+      if (tip) tips.push(tip);
     }
     batch.flush(ctx);
+    // a small bud with a soft glow on every shoot that's still growing
+    for (const [x, y, w] of tips) {
+      const r = Math.max(1.6, w * 0.42);
+      drawGlow(ctx, x, y, r * 4, '255,240,190', 0.55);
+      ctx.fillStyle = st.leaves[2]; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+      ctx.fillStyle = st.leaves[3]; ctx.beginPath(); ctx.arc(x - r * 0.3, y - r * 0.3, r * 0.45, 0, 7); ctx.fill();
+    }
     // leaves are gathered into one path per colour and filled in a few calls
     const leafPaths = st.leaves.map(() => new Path2D());
     for (const e of order) {

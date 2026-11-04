@@ -127,11 +127,14 @@ export function createGrowTree(host, opts) {
     return [X(c.sx), Y(c.sy), X(c.sx), Y(c.sy - dy * 0.55), X(p.sx), Y(p.sy + dy * 0.45), X(p.sx), Y(p.sy)];
   }
   // how much of a branch has grown at year T (0..1 from child to parent)
+  // Each branch eases in and out: it starts slowly, speeds up through the middle and slows as it reaches the
+  // next blossom (smootherstep: no sudden starts or stops).
+  const ease = k => k <= 0 ? 0 : k >= 1 ? 1 : k * k * k * (k * (k * 6 - 15) + 10);
   function grown(e, T) {
     const c = e.c.birth, p = e.p.birth;
-    if (state.dir === 'back') { if (T >= c) return [0, 0]; return [0, Math.min(1, (c - T) / Math.max(1, c - p))]; }
+    if (state.dir === 'back') { if (T >= c) return [0, 0]; return [0, ease((c - T) / Math.max(1, c - p))]; }
     if (T <= p) return [1, 1];
-    return [Math.max(0, 1 - (T - p) / Math.max(1, c - p)), 1];
+    return [1 - ease((T - p) / Math.max(1, c - p)), 1];
   }
   const visible = (p, T) => state.dir === 'back' ? T <= p.birth || p === root : T >= p.birth;
 
@@ -196,7 +199,7 @@ export function createGrowTree(host, opts) {
     const order = edges.slice().sort((a, b) => b.p.weight - a.p.weight);
     const branches = [];
     const grownNow = new Map();
-    const batch = new BranchBatch();
+    const batch = new BranchBatch(), tips = [];
     for (const e of order) {
       const [t0, t1] = grown(e, T);
       grownNow.set(e, [t0, t1]);
@@ -207,9 +210,18 @@ export function createGrowTree(host, opts) {
       const wb = branchWidth(e.p);
       e.branch.wWorld = wb / view.s; e.branch.w = wb;
       if (e.branch.full) branches.push(e.branch);
-      batch.branch(curveFor(e), t0, t1, wb * 1.3, wb * 0.72, st, lx);
+      const growingTip = e.branch.full ? 0 : state.dir === 'back' ? 1 : -1;
+      const tip = batch.branch(curveFor(e), t0, t1, wb * 1.3, wb * 0.72, st, lx, growingTip);
+      if (tip) tips.push(tip);
     }
     batch.flush(ctx);
+    // a small bud with a soft glow on every shoot that's still growing
+    for (const [x, y, w] of tips) {
+      const r = Math.max(1.6, w * 0.42);
+      drawGlow(ctx, x, y, r * 4, '255,240,190', 0.55);
+      ctx.fillStyle = st.leaves[2]; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+      ctx.fillStyle = st.leaves[3]; ctx.beginPath(); ctx.arc(x - r * 0.3, y - r * 0.3, r * 0.45, 0, 7); ctx.fill();
+    }
     // leaves are gathered into one path per colour and filled in a few calls
     const leafPaths = st.leaves.map(() => new Path2D());
     for (const e of order) {

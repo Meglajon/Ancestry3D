@@ -227,16 +227,24 @@ export function bezTangent(q, t) {
 export class BranchBatch {
   constructor() { this.groups = new Map(); }
   seg(pass, color, width, x0, y0, x1, y1, alpha = 1) {
-    const w = Math.max(0.6, Math.round(width * 2) / 2), key = `${pass}|${color}|${w}|${alpha}`;
+    const w = Math.max(0.5, Math.round(width * 4) / 4), key = `${pass}|${color}|${w}|${alpha}`;
     let g = this.groups.get(key);
     if (!g) this.groups.set(key, g = { pass, color, w, alpha, path: new Path2D() });
     g.path.moveTo(x0, y0); g.path.lineTo(x1, y1);
   }
   /** Adds a tapered branch along bezier q (screen coords) from t0 to t1, w0 wide at t=0 and w1 at t=1. lx: -1 lit from the left. */
-  branch(q, t0, t1, w0, w1, st, lx) {
-    const n = w0 > 7 ? 10 : w0 > 3 ? 5 : 2;
+  // tip: 1 when the branch is still growing at its t1 end, -1 at its t0 end, 0 when it's fully grown.
+  // A growing branch narrows to a point over its last stretch, like a new shoot. Returns the tip [x, y, w].
+  branch(q, t0, t1, w0, w1, st, lx, tip = 0) {
+    const n = Math.max(w0 > 7 ? 10 : w0 > 3 ? 5 : 2, tip ? 8 : 0);
     const pts = [];
-    for (let i = 0; i <= n; i++) { const t = t0 + (t1 - t0) * (i / n); const [x, y] = bezierAt(q, t); pts.push([x, y, w0 + (w1 - w0) * t]); }
+    for (let i = 0; i <= n; i++) {
+      const u = i / n, t = t0 + (t1 - t0) * u;
+      const [x, y] = bezierAt(q, t);
+      const toTip = tip > 0 ? 1 - u : tip < 0 ? u : 1;
+      const taper = tip ? Math.min(1, 0.12 + (toTip / 0.4) * 0.88) : 1;
+      pts.push([x, y, (w0 + (w1 - w0) * t) * taper]);
+    }
     for (let i = 0; i < n; i++) {
       const [x0, y0, a] = pts[i], [x1, y1, b] = pts[i + 1], w = (a + b) / 2;
       this.seg(0, st.bark[0], w, x0, y0, x1, y1);
@@ -244,6 +252,9 @@ export class BranchBatch {
       if (w0 > 2.2) this.seg(2, st.bark[2], w * 0.26, x0 + lx * 0.24 * a, y0, x1 + lx * 0.24 * b, y1, 0.75);
       if (st.snow && w0 > 1.6 && Math.abs(x1 - x0) >= Math.abs(y1 - y0) * 0.35) this.seg(3, st.leaves[1], (a + b) * 0.2, x0, y0 - a * 0.42, x1, y1 - b * 0.42, 0.95);
     }
+    if (!tip) return null;
+    const end = tip > 0 ? pts[n] : pts[0];
+    return [end[0], end[1], w0 + (w1 - w0) * (tip > 0 ? t1 : t0)];
   }
   flush(ctx) {
     ctx.lineCap = 'round';

@@ -66,6 +66,7 @@ async def main():
                     if st['fail']: state = 'FAIL: ' + st['fail']; break
                     if not st['m'] and not st['busy'] and not st['dlg']: state = 'ok'; break
                     if st['t'] - t0 > 420: break
+                if state == 'timeout': print('   stuck:', await ev("const st = s.step, pp = s.player.vehicle || s.player, T = 32; return JSON.stringify({ busy: s.busy, dlg: s.ui.dialogOpen, panel: s.ui.panelOpen, transit: !!s.transit, step: st && st.step.t, timer: st && st.timer, k: st && st.k, n: st && st.n, me: [Math.round(pp.x / T), Math.round(pp.y / T)], veh: !!s.player.vehicle, walk: s.bot && s.bot.walk, items: s.items.filter(i => i.step).map(i => [Math.round(i.x / T), Math.round(i.y / T), s.city.at(Math.floor(i.x / T), Math.floor(i.y / T))]), t: s.t })"))
                 tele = await ev("return s.tele")
                 dur = (await ev("return s.t")) - t0
                 if state == 'ok': break

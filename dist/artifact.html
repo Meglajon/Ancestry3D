@@ -9964,6 +9964,7 @@ const storyState = () => S;
 let AC = null;
 function beep(freq = 440, dur = 0.06, type = 'square', vol = 0.04, slide = 0) {
   try {
+    if ((S && S.bot) || (typeof document !== 'undefined' && document.hidden)) return;
     AC = AC || new (window.AudioContext || window.webkitAudioContext)();
     const o = AC.createOscillator(), g = AC.createGain();
     o.type = type; o.frequency.value = freq;
@@ -9985,6 +9986,8 @@ const sfx = {
   ring: () => { beep(1400, 0.05, 'square', 0.03); setTimeout(() => beep(1400, 0.05, 'square', 0.03), 90); },
 };
 
+// No sound from a tab nobody is looking at.
+if (typeof document !== 'undefined') document.addEventListener('visibilitychange', () => { try { if (AC) { if (document.hidden) AC.suspend(); else AC.resume(); } } catch (e) { /* no sound */ } });
 // An engine note for whatever you are driving: each kind of vehicle has its own voice, and it changes gear.
 const ENGINES = {
   car: { type: 'sawtooth', base: 52, range: 150, r2: 2, g2: 0.25, t2: 'sawtooth', cut: 420, cutUp: 520, lfo: 0, vol: 1, gears: 4 },
@@ -10396,7 +10399,7 @@ function damage(v, n) {
 function gentleBump(hit) {
   spillBump(hit);
   const m = S.mission, st = S.step;
-  if (!m || !st || !st.step.gentle || !st.loaded || hit < 3.2 * T || st.bumpCd > 0) return;
+  if (!m || !st || !st.step.gentle || !st.loaded || hit < 4.2 * T || st.bumpCd > 0) return;
   st.bumpCd = 1; st.bumps = (st.bumps || 0) + 1;
   if (st.bumps >= 3) failMission(st.step.passenger ? 'Your passenger got out and walked.' : 'It is in pieces.');
   else S.ui.toast(`Careful! (${st.bumps}/3)`, 1500);
@@ -10456,7 +10459,7 @@ function aiDrive(v, dt) {
     tgt = v.wp[0];
   }
   const want = Math.atan2(tgt.y - v.y, tgt.x - v.x), da = angDiff(want, v.ang);
-  let cruise = st.max * T * (v.ai === 'lead' ? (v.pace || 0.55) : fast ? (v.fast ? 1.06 : v.slow ? 0.7 : 1) : 0.5) * (v.ai === 'flee' && v.maxHp ? 0.78 + 0.22 * Math.max(0, v.hp) / v.maxHp : 1);
+  let cruise = st.max * T * (v.ai === 'lead' ? (v.pace || 0.55) : fast ? (v.fast ? 1.02 : v.slow ? 0.7 : 1) : 0.5) * (v.ai === 'flee' && v.maxHp ? 0.78 + 0.22 * Math.max(0, v.hp) / v.maxHp : 1);
   if (Math.abs(da) > 0.45) cruise = Math.min(cruise, (fast ? 5.5 : 2.4) * T);
   // anything in the way?
   let blocked = false;
@@ -10848,7 +10851,7 @@ function enterStep(step) {
     const sp = step.bark.who ? speaker(step.bark.who) : null, name = step.bark.name || (sp ? sp.who.split(' ')[0] : '');
     S.ui.toast(`${name}: "${sp && sp.person ? voiceLine(sp.person, step.bark.text) : plainText(step.bark.text)}"`, 5200);
   }
-  if (step.timed) st.timer = Math.round(14 + tiles / 5.0 * step.timed + stops * 5);
+  if (step.timed) st.timer = Math.round(14 + tiles / (c.source === 'osm' ? 3.9 : 4.7) * step.timed + stops * 5);   // real streets twist more than drawn ones
   if (step.tokens && st.timer != null) {
     // clocks left about the streets: each one is five more seconds, if you care to go out of your way
     const dest = stepTarget() || pp, x0 = Math.min(pp.x, dest.x) - 9 * T, x1 = Math.max(pp.x, dest.x) + 9 * T, y0 = Math.min(pp.y, dest.y) - 9 * T, y1 = Math.max(pp.y, dest.y) + 9 * T;
@@ -11905,7 +11908,7 @@ function loop(now) {
     if (!S) return;
     if (!s.ui.panelOpen && !s.ui.dialogOpen) { for (let k = 0; k < (s.speed || 1) && S === s && !s.ui.dialogOpen; k++) update(s.speed ? 1 / 30 : dt); } else s.t += dt * 0.0001;
     if (!S) return;
-    const pv = s.player.vehicle, quiet = s.ui.panelOpen || s.ui.dialogOpen || s.busy;
+    const pv = s.player.vehicle, quiet = s.ui.panelOpen || s.ui.dialogOpen || s.busy || !!s.bot || document.hidden;
     engineNote(!!pv && !VEHICLES[pv.type].horse && !quiet, pv ? Math.min(1, Math.abs(pv.speed) / (VEHICLES[pv.type].max * T)) : 0, pv ? VEHICLES[pv.type].eng : 'car', pv ? pv.thr || 0 : 0);
     tyreSqueal(pv && !quiet && !VEHICLES[pv.type].horse ? clamp(((pv.slip || 0) - 2.2) / 5, 0, 1) : 0);
     if (pv && VEHICLES[pv.type].horse && !quiet && Math.abs(pv.speed) > T) { s.clop = (s.clop || 0) - dt * Math.abs(pv.speed) / T; if (s.clop <= 0) { s.clop = 1.6; beep(180 + Math.random() * 40, 0.03, 'triangle', 0.035); } }

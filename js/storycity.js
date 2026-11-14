@@ -48,6 +48,8 @@ export function buildTown(town, year, opts = {}) {
     else polyFill(w.poly, (x, y) => set(x, y, G.WATER));
   }
   for (const gp of net.green || []) polyFill(gp.poly, (x, y) => { if (tiles[y * W + x] === G.GRASS) keep[y * W + x] = 2; });
+  // a bridge is wider than the road it carries: decking either side, so nothing catches on the water
+  for (const w of net.ways) for (let i = 1; i < w.pts.length; i++) stamp(net.nodes[w.pts[i - 1]], net.nodes[w.pts[i]], 2.25, (x, y) => { if (tiles[y * W + x] === G.WATER) tiles[y * W + x] = G.PAVE; });
   net.ways.forEach((w, wi) => {
     const r = w.cls === 0 ? 1.12 : 1.0;
     for (let i = 1; i < w.pts.length; i++) stamp(net.nodes[w.pts[i - 1]], net.nodes[w.pts[i]], r, (x, y) => { tiles[y * W + x] = G.ROAD; if (wayAt[y * W + x] < 0 || w.cls === 0) wayAt[y * W + x] = wi; });

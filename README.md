@@ -41,9 +41,15 @@ estate car that runs on register ink to stop him.
   from, a family photograph of the children by name, a census night, an emigration, a burial, their service
   or their baptism. Each one wins a proof for your pedigree. Their brothers, sisters, children and spouses
   offer optional favours.
-- **Eleven kinds of mission task**: drive, talk, carry (sometimes without a bump), collect, race, chase a
-  van, tail one unseen, defend a convoy, catch a runner on foot, travel, and lose the police. Blank's
-  Erasers hunt you while the clock runs.
+- **Missions in three or four acts**, built from twelve kinds of task: drive, talk, search the places
+  somebody might be, carry (sometimes without a bump), collect, race, chase a van, tail one unseen, defend a
+  convoy, catch a runner on foot, travel, and lose the police. On top of those: a rival racing you to the
+  door, roadblocks, clocks in the road worth five seconds, loads that fall off, and a finale that drags you
+  through four centuries in one chase. Blank's Erasers hunt you while the clock runs. Fail and you restart
+  from the act you failed; do it briskly and you get a medal.
+- **Side jobs**: family favours, an odd-jobs board, cab fares, the sixty-second **Rubber Frenzy**, the
+  **Heirloom Cup** (a timed lap of any town in any year), and the **Foundling File**: a page of the
+  villain's own record hidden in every era, which opens one last mission after the story ends.
 - **Drive anything.** The Heirloom is yours, and can be upgraded and resprayed at Dot's workbench; everything
   else can be borrowed, from hatchbacks to hay carts. Borrow a taxi or a hansom and you are for hire.
 - **Fly to other countries.** The airport (a steamer quay before 1950) sells tickets to every town the story
@@ -205,7 +211,8 @@ js/storygame.js     Story mode game: driving, traffic, the law, missions, ticket
 sample/demo.ged     fictional demo family (regenerate with npm run demo)
 tools/              demo generator and single-file builder
 tests/              parser, layout and story tests (npm test), headless browser smoke tests (smoke.py for the
-                    3D looks, story-smoke.py plays the whole story) and a stand-in three.js for offline test runs
+                    3D looks, story-smoke.py steps through the whole story, story-bot.py drives every
+                    mission for real and reports time, clock margin and collisions) and a stand-in three.js for offline runs
 ```
 
 ```

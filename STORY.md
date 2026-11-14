@@ -52,8 +52,9 @@ straight road, and do not lift off.
 
 Each chapter is set where and when a real event in that person's life happened.
 
-1. **Meeting {name}.** You find your **{relationship}** at home. A grey man has been round asking
-   questions and they trust nobody. To prove you are family you must answer something only family would
+1. **Meeting {name}.** Dot leaves a note of where to look: the house first, then their place of work,
+   then the pub or the church. They are never where you look first, and the neighbours send you on. When
+   you find your **{relationship}**, a grey man has been round asking questions and they trust nobody. To prove you are family you must answer something only family would
    know: **{their mother's maiden name / who they married / the year they were born / their trade / where
    they were born}**, with wrong answers taken from elsewhere in your tree.
 2. **A day's work** at their real trade. Each trade has two different jobs, so a family of weavers does
@@ -76,19 +77,20 @@ Each chapter is set where and when a real event in that person's life happened.
    | gentleman, landowner | *Driving the Quality* | *Leaving Cards* |
 
 3. **The proof.** The chapter's big mission is built on a real event, in the year and the place it
-   happened. The game picks whichever kind this person has that the story has used least.
+   happened, and runs to three or four acts. The game picks whichever kind this person has that the story
+   has used least. Fail an act and you try again from that act, not from the beginning.
 
-   | What the file has | The mission | The proof you win |
+   | What the file has | The mission, act by act | The proof you win |
    |---|---|---|
-   | a marriage | *Get Me to the Church*: get **{the groom}** to the church before the bells stop, then chase down the carriage that has snatched the register. | Marriage of **{groom}** and **{bride}**, **{date, place}** |
-   | the birth of the child you descend from | *Special Delivery*: **{child}** is due and somebody has lamed the midwife's pony. | Birth of **{child}**, **{date, place}** |
-   | three or more children | *Watch the Birdie*: the photographer has come and the children have scattered. Round up **{each child, by name}**, fetch the photographer, rescue the glass plate. | Photograph of the **{surname}** family, **{year}** |
-   | an emigration, or a birth in one country and a family in another | *The Last Boat* (*Final Call* after 1950): trunks, then the traveller, to the quay or the airport. | Passage of **{name}**, bound for **{country}** |
-   | a parent, husband or wife buried in their lifetime | *Set in Stone*: carry the headstone to the churchyard, gently, then catch the Eraser who has come with a chisel. | Burial of **{name}**, **{date, place}** |
-   | a census or residence entry | *Count Me In*: do the enumerator's round before midnight and get the book back. | Census entry, **{year, place}** |
-   | military service | *The King's Shilling*: run the dispatches and get **{name}** to the transport. | Service record |
-   | a baptism | *Wet the Baby's Head*: the register "fell open in the night" in a locked vestry. | Baptism of **{name}**, **{date, place}** |
-   | none of these | *Struck Out*: run down the clerk with the page under his coat, then the van. | Parish entry |
+   | a marriage | *Get Me to the Church*: find **{the groom}**, who has lost his nerve somewhere in town (or the best man, who has the ring). Race him to the church against a grey carriage coming from the other side. Chase down the van that snatches the register. Drive the happy couple to the wedding breakfast without a bump. | Marriage of **{groom}** and **{bride}**, **{date, place}** |
+   | the birth of the child you descend from | *Special Delivery*: find the midwife, who is out on her rounds. Rush her to the house round an Eraser roadblock. Gather the scattered birth register while they hunt you. Beat Blank's clerk back to the register office. | Birth of **{child}**, **{date, place}** |
+   | three or more children | *Watch the Birdie*: round up **{each child, by name}**. Find the photographer (try the pub). Bring him and his camera back in one piece. Rescue the glass plate. | Photograph of the **{surname}** family, **{year}** |
+   | an emigration, or a birth in one country and a family in another | *The Last Boat* (*Final Call* after 1950): both trunks to the quay, and mind they stay on. Then **{the traveller}**, who remembers halfway there that the tickets are at the post office. Then the gangway, past a roadblock. Then the van with the passenger list. | Passage of **{name}**, bound for **{country}** |
+   | a parent, husband or wife buried in their lifetime | *Set in Stone*: carry the headstone gently, see the funeral safe to the church, then catch the Eraser who has come with a chisel. | Burial of **{name}**, **{date, place}** |
+   | a census or residence entry | *Count Me In*: the enumerator's round before midnight. One lodger is dodging the count: find where he has gone to ground and run him down. Then get the schedules back. | Census entry, **{year, place}** |
+   | military service | *The King's Shilling*: the dispatches, then **{name}** to the transport ahead of a rival, then the clerk striking names off the muster roll. | Service record |
+   | a baptism | *Wet the Baby's Head*: gather the pages, find the parson (he is visiting the sick), race him to the church, stop the van. | Baptism of **{name}**, **{date, place}** |
+   | none of these | *Struck Out*: through a roadblock to the hall, run down the clerk, stop the van, lose the law, put the book back. | Parish entry |
 
 4. **Family favours** (optional). Up to two of the ancestor's **{brothers, sisters, children, husband or
    wife}**, alive and grown in that year, stand outside their own doors with a green question mark and a
@@ -138,8 +140,10 @@ earliest known ancestor}**: he is going for the root.
 never goes in the book, every name under it goes blank, down to yours. A grey gentleman is at the church,
 they tell you, and he said the queerest thing: *"Somebody has to be nobody."*
 
-You race to the church, save every page of the torn register, run down his clerk in the churchyard, and
-stop Engine No. 1 before Blank can escape to another century. ("You have thousands of them! I only ever
+You race to the church through a barricade, save every page of the torn register with two grey vans on
+your tail, run down his clerk in the churchyard, and then go after Engine No. 1. Every few knocks Blank
+jumps to another century and drags you with him: the same streets in **{a middle chapter's year}**, then
+the present day, then **{your first chapter's year}**, and back to where it started. ("You have thousands of them! I only ever
 wanted one!") Beaten, he tells you to read the page you were so keen to save. Not the entry. The margin:
 
 > *"Also a second infant of this house, base-born, put out to the parish this day. No name given."*
@@ -160,6 +164,18 @@ newly discovered cousin, many times removed, who cries all over the paperwork.
 The Heirloom is yours, with every town and every year unlocked, and Silas in the back seat. Whenever you
 meet a relative he has something to say. ("She has my chin. Do you see it? That is my chin.")
 
+### After the end: the Foundling File and *Somebody's Son*
+
+In every era the story visits, one page of Silas's own record is lying somewhere near the church, the
+infirmary, the school, the post office, the hall or the farm: the basket at the vestry door, the name the
+overseers gave him, the apprenticeship he kept running from, a letter never posted, a family tree with one
+name on it, and a reference in Dot's writing. After the raid on Blank & Void they show on the map in pink.
+
+Find them all and finish the case, and Dot has one more job. The file says where and when: a Tuesday, the
+vestry door, **{earliest ancestor's town}**, **{year}**. *"We have a machine that goes to Tuesdays. He
+won't ask. So I'm asking for him."* You collect Silas (he has brought sandwiches), take him back, ask
+round the town after a girl with a basket, and drive him up to the church. Slowly. He only wants to see.
+
 ## How it plays
 
 **Getting about**
@@ -171,21 +187,36 @@ meet a relative he has something to say. ("She has my chin. Do you see it? That 
   same street in a different century. Ink is charged by the year.
 
 **Missions**
-- Eleven kinds of task: drive there, talk (and be quizzed), carry loads or passengers (sometimes without a
-  bump), collect things, race round stops, chase and ram a van, **tail** a van unseen, **defend** a convoy,
-  **catch** a runner on foot, travel, and lose the police.
+- Twelve kinds of task: drive there, talk (and be quizzed), **search** the places somebody might be, carry
+  loads or passengers (sometimes without a bump), collect things, race round stops, chase and ram a van,
+  **tail** a van unseen, **defend** a convoy, **catch** a runner on foot, travel, and lose the police.
+- Twists on top: a **rival** racing you to the same door from the far side of town, **roadblocks** of
+  grey vans, **clocks** lying in the road worth five seconds each, loads that **fall off** if you hit
+  something hard, and passengers who change their minds about where they are going.
 - People speak up while you work. After the first chapter, **Erasers hunt you** whenever a clock is
-  running: each ram costs four seconds, and they can be rammed off the road for cash.
-- Fail and you can try again on the spot. The pause menu lists the case so far and can make every timer
-  generous.
+  running: each ram costs three seconds, and they can be rammed off the road for cash.
+- **Checkpoints.** Fail and you can try again on the spot, from the act you failed.
+- **Medals.** Bronze, silver or gold for how briskly you did it, with a cash bonus. Any finished mission
+  can be replayed from the case file in the pause menu, which also keeps a completion percentage and can
+  make every timer generous.
+
+**Side jobs**
+- **Family favours**, the **£ odd-jobs board** and **cab fares**, as before.
+- **Rubber Frenzy.** After the first chapter there is a pink rubber in the road outside the Redaction
+  office in every town. Drive over it: sixty seconds, every Eraser you ram off the road is £20, and they
+  ram back.
+- **The Heirloom Cup.** Stop on the chequered flag by the lock-up for a timed lap of the town, in any
+  year. Your best lap is kept for each town and year.
+- **The Foundling File** (above).
 
 **Money**
 - Story missions, family favours, the £ odd-jobs board in every market place, **cab fares** (get into any
   taxi or hansom and you are for hire, with a bonus for every fare in a row), lost photographs, reunion
   bonuses and badges.
 - **Dot's workbench** at the lock-up (a motor shed or tithe barn in earlier years): a tuned engine, a brass
-  ram bar, an ink economiser, a quick-wind dial, proper tyres, a respray that also loses the police, and a
-  flask of tea.
+  ram bar, an ink economiser, a quick-wind dial, proper tyres, luggage straps, Dot's stopwatch (every
+  timer runs a little long), a klaxon that clears the road, a police-band wireless, a respray that also
+  loses the police, and a flask of tea.
 
 **The world**
 - **Drawn like a picture book.** Ink outlines, flat bright colours, windows that light up at night, smoke
@@ -211,12 +242,14 @@ meet a relative he has something to say. ("She has my chin. Do you see it? That 
   year. Walk up to one to pay your respects.
 - **Lost photographs**, three in every town and era, with the file's own notes written on the back.
 - **Paradoxes.** Run over your own ancestor and history objects.
-- **The law.** Police cars after 1900, constables on foot before. If they box you in you are fined.
-- **Fourteen badges**, and progress saved on your device for each file and each hero.
+- **The law.** Police cars after 1900, constables on foot before, once you have earned a star. If they
+  box you in you are fined. People on the pavement jump clear of anything short of flat out.
+- **Eighteen badges**, and progress saved on your device for each file and each hero.
 
 ## Ideas for later
 
 - Travel with the emigrants: finish *The Last Boat* by sailing with them and arriving in the new country.
 - Wills, apprenticeships and school records as further kinds of proof.
-- A rival: Engine No. 1 turning up in free roam to race you between centuries.
+- Engine No. 1 turning up in free roam to race you between centuries.
+- *Seven Ages*: meet one relative as a child, in their prime and in old age, in three different years.
 - Music for each era.

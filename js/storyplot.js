@@ -356,11 +356,11 @@ export function buildStory(data, rootId, opts = {}) {
     brief: 'A solicitor\'s letter, a ringing phone box and a car that should not exist.',
     intro: [
       { who: 'letter', text: `FINAL NOTICE. Re: the dormant estate of ${estateOf}${benefactor.town && benefactor !== hero ? ', late of ' + benefactor.town.name : ''}. Unless a proven line of descent is lodged by the last day of the month, the estate passes to our client. No reply is necessary. Yours faithfully, S. Blank, Blank & Void, Probate Genealogists.` },
-      { who: 'note', text: `You have never heard of Blank & Void. You have barely heard of ${benefactor === hero ? 'any estate' : benefactor.first}. Outside, ${H.phone} on the corner is ringing. Nobody rings phone boxes any more.` },
+      { who: 'note', text: `You have never heard of Blank & Void. You have barely heard of ${benefactor === hero ? 'any estate' : benefactor.first}. ` + (present >= 1925 ? `Outside, ${H.phone} on the corner is ringing. Nobody rings phone boxes any more.` : `Outside, somebody has pinned a note to ${H.phone}, and it has your name on it.`) },
     ],
     steps: [
-      { t: 'goto', at: 'phone', foot: true, text: `Answer ${H.phone}` },
-      { t: 'talk', who: 'dot', at: 'phone', text: `Answer ${H.phone}`, lines: [
+      { t: 'goto', at: 'phone', foot: true, text: present >= 1925 ? `Answer ${H.phone}` : `Read the note on ${H.phone}` },
+      { t: 'talk', who: 'dot', at: 'phone', text: present >= 1925 ? `Answer ${H.phone}` : `Read the note on ${H.phone}`, lines: [
         `Is that ${hero.first}? ${benefactor === hero ? 'The ' + surname + ' heir' : cap(benefactor.first) + '\'s ' + (benefactor.gen ? 'great-'.repeat(Math.max(0, benefactor.gen - 2)) + (benefactor.gen > 1 ? 'grandchild' : 'child') : 'heir')}? Thank heavens. Dot Quill, County Archivist, retired.`,
         `Don't sign anything. Silas Blank doesn't find heirs. He removes them. Names are going out of the registers like chalk off a slate, and yours is next in the queue.`,
         `Come to my lock-up behind ${H.pub}. Tell nobody. Oh, and I do hope you can drive.`] },

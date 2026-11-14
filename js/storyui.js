@@ -20,11 +20,11 @@ const CSS = `
 #story .st-obj small { display: block; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 12px; color: #d8d2c0; margin-bottom: 2px; letter-spacing: 1px; text-transform: uppercase; }
 #story .st-hint { position: absolute; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 15px; color: #1a1a1a; background: #ffd84a; padding: 6px 14px; border-radius: 999px; box-shadow: 0 3px 0 #9a7a10; white-space: nowrap; pointer-events: none; }
 #story .st-hint:empty, #story .st-toast:empty, #story .st-dial:empty { display: none; }
-#story .st-toast { position: absolute; left: 50%; top: 26%; transform: translateX(-50%); max-width: min(560px, 86%); text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 17px; color: #fff; background: rgba(10,12,18,0.78); padding: 8px 16px; border-radius: 12px; pointer-events: none; }
+#story .st-toast { position: absolute; left: 50%; top: 21%; transform: translateX(-50%); max-width: min(560px, 86%); text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 17px; color: #fff; background: rgba(10,12,18,0.78); padding: 8px 16px; border-radius: 12px; pointer-events: none; }
 #story .st-dial { position: absolute; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: min(380px, 70%); font-family: 'Press Start 2P', monospace; font-size: 10px; color: #a8ecff; text-align: center; text-shadow: 1px 1px 0 #000; pointer-events: none; }
 #story .st-dial i { display: block; height: 12px; margin-top: 5px; border: 2px solid #a8ecff; border-radius: 3px; background: rgba(0,0,0,0.5); overflow: hidden; }
 #story .st-dial i b { display: block; height: 100%; background: linear-gradient(90deg, #2a8ac8, #a8ecff, #fff); }
-#story .st-banner { position: absolute; left: 0; right: 0; top: 36%; text-align: center; pointer-events: none; font-family: 'Press Start 2P', monospace; font-size: clamp(20px, 5.4vw, 44px); line-height: 1.3; color: #ffd84a; text-shadow: 3px 3px 0 #000, -2px -2px 0 #000, 0 0 18px rgba(0,0,0,0.8); opacity: 0; transition: opacity 0.25s; }
+#story .st-banner { position: absolute; left: 0; right: 0; top: 40%; text-align: center; pointer-events: none; font-family: 'Press Start 2P', monospace; font-size: clamp(20px, 5.4vw, 44px); line-height: 1.3; color: #ffd84a; text-shadow: 3px 3px 0 #000, -2px -2px 0 #000, 0 0 18px rgba(0,0,0,0.8); opacity: 0; transition: opacity 0.25s; }
 #story .st-banner.on { opacity: 1; }
 #story .st-banner small { display: block; margin-top: 12px; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: clamp(14px, 2.6vw, 20px); color: #fff; }
 #story .st-fade { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; transition: opacity 0.35s; }
@@ -56,6 +56,7 @@ const CSS = `
 #story .st-touch { position: absolute; inset: 0; pointer-events: none; display: none; }
 #story.touch .st-touch { display: block; }
 #story.touch .st-hint { bottom: calc(150px + env(safe-area-inset-bottom, 0px)); }
+#story.touch .st-dial { bottom: auto; top: calc(70px + env(safe-area-inset-top, 0px)); }
 #story .st-stick { position: absolute; left: 0; bottom: 0; width: 46%; height: 62%; pointer-events: auto; }
 #story .st-knob { position: absolute; width: 96px; height: 96px; margin: -48px 0 0 -48px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.4); background: rgba(255,255,255,0.08); display: none; }
 #story .st-knob i { position: absolute; left: 50%; top: 50%; width: 42px; height: 42px; margin: -21px 0 0 -21px; border-radius: 50%; background: rgba(255,255,255,0.5); }
@@ -67,7 +68,9 @@ const CSS = `
 @media (max-width: 700px) {
   #story #stMini { width: 96px; height: 96px; }
   #story .st-menu { top: calc(114px + env(safe-area-inset-top, 0px)); }
-  #story .st-obj { top: calc(118px + env(safe-area-inset-top, 0px)); width: calc(100% - 24px); font-size: 14px; }
+  #story .st-obj { top: calc(154px + env(safe-area-inset-top, 0px)); width: calc(100% - 24px); font-size: 14px; }
+  #story .st-toast { top: 30%; font-size: 15px; }
+  #story.touch .st-dial { top: calc(214px + env(safe-area-inset-top, 0px)); }
   #story .st-cash { font-size: 14px; }
   #story .st-dlg .txt { font-size: 15px; }
   #story .st-dlg canvas { width: 60px; height: 60px; }

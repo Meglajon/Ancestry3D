@@ -7659,11 +7659,11 @@ function buildStory(data, rootId, opts = {}) {
     brief: 'A solicitor\'s letter, a ringing phone box and a car that should not exist.',
     intro: [
       { who: 'letter', text: `FINAL NOTICE. Re: the dormant estate of ${estateOf}${benefactor.town && benefactor !== hero ? ', late of ' + benefactor.town.name : ''}. Unless a proven line of descent is lodged by the last day of the month, the estate passes to our client. No reply is necessary. Yours faithfully, S. Blank, Blank & Void, Probate Genealogists.` },
-      { who: 'note', text: `You have never heard of Blank & Void. You have barely heard of ${benefactor === hero ? 'any estate' : benefactor.first}. Outside, ${H.phone} on the corner is ringing. Nobody rings phone boxes any more.` },
+      { who: 'note', text: `You have never heard of Blank & Void. You have barely heard of ${benefactor === hero ? 'any estate' : benefactor.first}. ` + (present >= 1925 ? `Outside, ${H.phone} on the corner is ringing. Nobody rings phone boxes any more.` : `Outside, somebody has pinned a note to ${H.phone}, and it has your name on it.`) },
     ],
     steps: [
-      { t: 'goto', at: 'phone', foot: true, text: `Answer ${H.phone}` },
-      { t: 'talk', who: 'dot', at: 'phone', text: `Answer ${H.phone}`, lines: [
+      { t: 'goto', at: 'phone', foot: true, text: present >= 1925 ? `Answer ${H.phone}` : `Read the note on ${H.phone}` },
+      { t: 'talk', who: 'dot', at: 'phone', text: present >= 1925 ? `Answer ${H.phone}` : `Read the note on ${H.phone}`, lines: [
         `Is that ${hero.first}? ${benefactor === hero ? 'The ' + surname + ' heir' : cap(benefactor.first) + '\'s ' + (benefactor.gen ? 'great-'.repeat(Math.max(0, benefactor.gen - 2)) + (benefactor.gen > 1 ? 'grandchild' : 'child') : 'heir')}? Thank heavens. Dot Quill, County Archivist, retired.`,
         `Don't sign anything. Silas Blank doesn't find heirs. He removes them. Names are going out of the registers like chalk off a slate, and yours is next in the queue.`,
         `Come to my lock-up behind ${H.pub}. Tell nobody. Oh, and I do hope you can drive.`] },
@@ -8624,11 +8624,11 @@ const CSS = `
 #story .st-obj small { display: block; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 12px; color: #d8d2c0; margin-bottom: 2px; letter-spacing: 1px; text-transform: uppercase; }
 #story .st-hint { position: absolute; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 15px; color: #1a1a1a; background: #ffd84a; padding: 6px 14px; border-radius: 999px; box-shadow: 0 3px 0 #9a7a10; white-space: nowrap; pointer-events: none; }
 #story .st-hint:empty, #story .st-toast:empty, #story .st-dial:empty { display: none; }
-#story .st-toast { position: absolute; left: 50%; top: 26%; transform: translateX(-50%); max-width: min(560px, 86%); text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 17px; color: #fff; background: rgba(10,12,18,0.78); padding: 8px 16px; border-radius: 12px; pointer-events: none; }
+#story .st-toast { position: absolute; left: 50%; top: 21%; transform: translateX(-50%); max-width: min(560px, 86%); text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 17px; color: #fff; background: rgba(10,12,18,0.78); padding: 8px 16px; border-radius: 12px; pointer-events: none; }
 #story .st-dial { position: absolute; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: min(380px, 70%); font-family: 'Press Start 2P', monospace; font-size: 10px; color: #a8ecff; text-align: center; text-shadow: 1px 1px 0 #000; pointer-events: none; }
 #story .st-dial i { display: block; height: 12px; margin-top: 5px; border: 2px solid #a8ecff; border-radius: 3px; background: rgba(0,0,0,0.5); overflow: hidden; }
 #story .st-dial i b { display: block; height: 100%; background: linear-gradient(90deg, #2a8ac8, #a8ecff, #fff); }
-#story .st-banner { position: absolute; left: 0; right: 0; top: 36%; text-align: center; pointer-events: none; font-family: 'Press Start 2P', monospace; font-size: clamp(20px, 5.4vw, 44px); line-height: 1.3; color: #ffd84a; text-shadow: 3px 3px 0 #000, -2px -2px 0 #000, 0 0 18px rgba(0,0,0,0.8); opacity: 0; transition: opacity 0.25s; }
+#story .st-banner { position: absolute; left: 0; right: 0; top: 40%; text-align: center; pointer-events: none; font-family: 'Press Start 2P', monospace; font-size: clamp(20px, 5.4vw, 44px); line-height: 1.3; color: #ffd84a; text-shadow: 3px 3px 0 #000, -2px -2px 0 #000, 0 0 18px rgba(0,0,0,0.8); opacity: 0; transition: opacity 0.25s; }
 #story .st-banner.on { opacity: 1; }
 #story .st-banner small { display: block; margin-top: 12px; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: clamp(14px, 2.6vw, 20px); color: #fff; }
 #story .st-fade { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; transition: opacity 0.35s; }
@@ -8660,6 +8660,7 @@ const CSS = `
 #story .st-touch { position: absolute; inset: 0; pointer-events: none; display: none; }
 #story.touch .st-touch { display: block; }
 #story.touch .st-hint { bottom: calc(150px + env(safe-area-inset-bottom, 0px)); }
+#story.touch .st-dial { bottom: auto; top: calc(70px + env(safe-area-inset-top, 0px)); }
 #story .st-stick { position: absolute; left: 0; bottom: 0; width: 46%; height: 62%; pointer-events: auto; }
 #story .st-knob { position: absolute; width: 96px; height: 96px; margin: -48px 0 0 -48px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.4); background: rgba(255,255,255,0.08); display: none; }
 #story .st-knob i { position: absolute; left: 50%; top: 50%; width: 42px; height: 42px; margin: -21px 0 0 -21px; border-radius: 50%; background: rgba(255,255,255,0.5); }
@@ -8671,7 +8672,9 @@ const CSS = `
 @media (max-width: 700px) {
   #story #stMini { width: 96px; height: 96px; }
   #story .st-menu { top: calc(114px + env(safe-area-inset-top, 0px)); }
-  #story .st-obj { top: calc(118px + env(safe-area-inset-top, 0px)); width: calc(100% - 24px); font-size: 14px; }
+  #story .st-obj { top: calc(154px + env(safe-area-inset-top, 0px)); width: calc(100% - 24px); font-size: 14px; }
+  #story .st-toast { top: 30%; font-size: 15px; }
+  #story.touch .st-dial { top: calc(214px + env(safe-area-inset-top, 0px)); }
   #story .st-cash { font-size: 14px; }
   #story .st-dlg .txt { font-size: 15px; }
   #story .st-dlg canvas { width: 60px; height: 60px; }
@@ -9064,7 +9067,9 @@ function enterTown(town, year, where) {
     const px = l.x - 2.2 * T, py = l.y;
     if (!circleSolid(px, py, 16)) makeVehicle(mix[(i + n) % mix.length][0], px, py, 0, { parked: true });
   });
-  S.names = residentsOf(S.data, town, year, 40);
+  // (not the hero, and not anybody who has a chapter of their own here)
+  const starring = new Set([S.story.hero.id, ...S.story.chapters.filter(ch => ch.town.id === town.id).map(ch => ch.id)]);
+  S.names = residentsOf(S.data, town, year, 48).filter(n => !starring.has(n.id));
   // three lost photographs in every town and era, with the file's own notes on the back
   const got = new Set(S.save.photos || []), pr = seededRandom(hashString('photo' + town.id + c.era));
   S.notes = townNotes(S.data, town);
@@ -9493,7 +9498,7 @@ function updateMission(dt) {
   const st = S.step, P = S.player; if (!st || st.done) return;
   const s = st.step, pv = P.vehicle, pp = pv || P, speed = pv ? Math.abs(pv.speed) : 0;
   if (st.bumpCd > 0) st.bumpCd -= dt;
-  if (st.timer != null) { st.timer -= dt; if (st.timer <= 0) { failMission(s.t === 'chase' ? 'They got away.' : 'Too late.'); return; } }
+  if (st.timer != null) { st.timer -= dt; if (st.timer <= 0) { failMission(s.t === 'chase' ? 'They got away.' : pv && pv !== S.heirloom ? `Too late. Nothing in ${S.city.year} is as quick as the Heirloom.` : 'Too late.'); return; } }
   const tgt = stepTarget();
   const near = (r1, r2) => tgt && dist(tgt, pp) < (pv ? r2 : r1) * T;
   if (s.t === 'goto') {
@@ -9878,7 +9883,7 @@ function update(dt) {
   if (S.flash > 0) S.flash -= dt;
   if ((S.saveT = (S.saveT || 0) + dt) > 15) { S.saveT = 0; persist(); }
   // the phone box rings until you answer it
-  if (S.step?.step.t === 'goto' && S.step.step.at === 'phone') { S.ringT -= dt; if (S.ringT <= 0) { S.ringT = 1.6; const l = c.lot('phone'); float(l.x, l.y - 18, 'RING RING', '#ffd84a'); if (dist(l, pp) < 12 * T) sfx.ring(); } }
+  if (S.step?.step.t === 'goto' && S.step.step.at === 'phone') { S.ringT -= dt; if (S.ringT <= 0) { S.ringT = 1.6; const l = c.lot('phone'); float(l.x, l.y - 18, c.year >= 1925 ? 'RING RING' : 'A NOTE FOR YOU', '#ffd84a'); if (c.year >= 1925 && dist(l, pp) < 12 * T) sfx.ring(); } }
   for (const it of S.items) if (it.photo && dist(it, pp) < 1.2 * T) {
     it.gone = true;
     (S.save.photos || (S.save.photos = [])).push(it.photo);

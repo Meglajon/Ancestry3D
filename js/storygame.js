@@ -208,7 +208,9 @@ function enterTown(town, year, where) {
     const px = l.x - 2.2 * T, py = l.y;
     if (!circleSolid(px, py, 16)) makeVehicle(mix[(i + n) % mix.length][0], px, py, 0, { parked: true });
   });
-  S.names = residentsOf(S.data, town, year, 40);
+  // (not the hero, and not anybody who has a chapter of their own here)
+  const starring = new Set([S.story.hero.id, ...S.story.chapters.filter(ch => ch.town.id === town.id).map(ch => ch.id)]);
+  S.names = residentsOf(S.data, town, year, 48).filter(n => !starring.has(n.id));
   // three lost photographs in every town and era, with the file's own notes on the back
   const got = new Set(S.save.photos || []), pr = seededRandom(hashString('photo' + town.id + c.era));
   S.notes = townNotes(S.data, town);
@@ -637,7 +639,7 @@ function updateMission(dt) {
   const st = S.step, P = S.player; if (!st || st.done) return;
   const s = st.step, pv = P.vehicle, pp = pv || P, speed = pv ? Math.abs(pv.speed) : 0;
   if (st.bumpCd > 0) st.bumpCd -= dt;
-  if (st.timer != null) { st.timer -= dt; if (st.timer <= 0) { failMission(s.t === 'chase' ? 'They got away.' : 'Too late.'); return; } }
+  if (st.timer != null) { st.timer -= dt; if (st.timer <= 0) { failMission(s.t === 'chase' ? 'They got away.' : pv && pv !== S.heirloom ? `Too late. Nothing in ${S.city.year} is as quick as the Heirloom.` : 'Too late.'); return; } }
   const tgt = stepTarget();
   const near = (r1, r2) => tgt && dist(tgt, pp) < (pv ? r2 : r1) * T;
   if (s.t === 'goto') {
@@ -1022,7 +1024,7 @@ function update(dt) {
   if (S.flash > 0) S.flash -= dt;
   if ((S.saveT = (S.saveT || 0) + dt) > 15) { S.saveT = 0; persist(); }
   // the phone box rings until you answer it
-  if (S.step?.step.t === 'goto' && S.step.step.at === 'phone') { S.ringT -= dt; if (S.ringT <= 0) { S.ringT = 1.6; const l = c.lot('phone'); float(l.x, l.y - 18, 'RING RING', '#ffd84a'); if (dist(l, pp) < 12 * T) sfx.ring(); } }
+  if (S.step?.step.t === 'goto' && S.step.step.at === 'phone') { S.ringT -= dt; if (S.ringT <= 0) { S.ringT = 1.6; const l = c.lot('phone'); float(l.x, l.y - 18, c.year >= 1925 ? 'RING RING' : 'A NOTE FOR YOU', '#ffd84a'); if (c.year >= 1925 && dist(l, pp) < 12 * T) sfx.ring(); } }
   for (const it of S.items) if (it.photo && dist(it, pp) < 1.2 * T) {
     it.gone = true;
     (S.save.photos || (S.save.photos = [])).push(it.photo);

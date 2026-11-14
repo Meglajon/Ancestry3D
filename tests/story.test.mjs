@@ -4,8 +4,8 @@ import assert from 'node:assert/strict';
 import { parseGedcom } from '../js/gedcom.js';
 import { buildStory, placeTown, residentsOf, oddJob, fareBetween, inkCost, eraOf, jobGroup } from '../js/storyplot.js';
 
-const LOTS = new Set(['church', 'hall', 'pub', 'works', 'farm', 'school', 'hub', 'garage', 'market', 'infirmary', 'police', 'post', 'office', 'phone', 'home']);
-const STEPS = new Set(['goto', 'talk', 'carry', 'collect', 'chase', 'race', 'travel', 'escape', 'tail', 'defend', 'catch']);
+const LOTS = new Set(['@found', 'church', 'hall', 'pub', 'works', 'farm', 'school', 'hub', 'garage', 'market', 'infirmary', 'police', 'post', 'office', 'phone', 'home']);
+const STEPS = new Set(['goto', 'talk', 'carry', 'collect', 'chase', 'race', 'travel', 'escape', 'tail', 'defend', 'catch', 'search', 'frenzy']);
 function check(story, label) {
   assert.ok(story.missions.length >= 4, label + ': too few missions');
   assert.equal(story.missions[0].id, 'final-notice');
@@ -25,7 +25,9 @@ function check(story, label) {
       assert.ok(s.text && !/undefined|null|NaN/.test(s.text), `${label}: ${m.id} step text "${s.text}"`);
       if (s.bark) assert.ok(s.bark.text && (s.bark.name || s.bark.who), `${label}: ${m.id} bark`);
       if (s.names) assert.equal(s.names.length, s.n, `${label}: ${m.id} names`);
-      for (const k of [s.at, s.from, s.to, s.around, ...(s.stops || []), ...(s.via || [])]) if (k) assert.ok(LOTS.has(k), `${label}: ${m.id} lot ${k}`);
+      if (s.miss) for (const v of Object.values(s.miss)) assert.ok(!/undefined|null|NaN/.test(v), `${label}: ${m.id} "${v}"`);
+      if (s.hop) assert.ok(s.hop.length >= 1 && s.hop.every(y => Number.isInteger(y) && y <= story.now), `${label}: ${m.id} hop ${s.hop}`);
+      for (const k of [s.at, s.from, s.to, s.around, s.switch && s.switch.to, ...(s.stops || []), ...(s.spots || []), ...(s.via || [])]) if (k) assert.ok(LOTS.has(k), `${label}: ${m.id} lot ${k}`);
       if (s.t === 'travel') assert.ok(story.towns.has(s.town));
       if (s.quiz) { assert.ok(s.quiz.options.length >= 3 && s.quiz.answer >= 0 && s.quiz.answer < s.quiz.options.length); assert.equal(new Set(s.quiz.options).size, s.quiz.options.length, `${label}: quiz repeats an option`); }
       for (const line of s.lines || []) assert.ok(!/undefined|null|NaN/.test(line), `${label}: ${m.id} "${line}"`);

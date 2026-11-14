@@ -188,6 +188,15 @@ export function drawItem(g, kind, t, n = 0) {
     g.restore();
   } else if (kind === 'truants') {
     drawPerson(g, { look: { skin: SKINS[n % 4], hair: HAIRS[n % 5], top: DRAB[n % 7], r: 0.72, female: n % 2 === 0, skirt: n % 2 === 0 ? DRAB[(n + 3) % 7] : null }, walk: t * 9 + n }, t);
+  } else if (kind === 'clock') {
+    g.save(); g.translate(0, bob - 4); g.fillStyle = '#fff6d8'; g.beginPath(); g.arc(0, 0, 9, 0, 7); g.fill(); g.strokeStyle = INK; g.lineWidth = 2; g.stroke();
+    g.beginPath(); g.moveTo(0, 0); g.lineTo(0, -5.5); g.moveTo(0, 0); g.lineTo(4, 1); g.stroke(); g.fillStyle = '#e0362e'; g.fillRect(-6, -12, 4, 3); g.fillRect(2, -12, 4, 3); g.restore();
+  } else if (kind === 'flag') {
+    g.save(); g.translate(0, bob - 6); g.strokeStyle = INK; g.lineWidth = 2.5; g.beginPath(); g.moveTo(-8, 12); g.lineTo(-8, -12); g.stroke();
+    for (let i = 0; i < 4; i++) for (let j = 0; j < 3; j++) { g.fillStyle = (i + j) % 2 ? '#fff' : '#22202a'; g.fillRect(-8 + i * 5, -12 + j * 4.5, 5, 4.5); }
+    g.lineWidth = 1.5; g.strokeRect(-8, -12, 20, 13.5); g.restore();
+  } else if (kind === 'rubber') {
+    g.save(); g.translate(0, bob - 5); g.rotate(-0.3); g.fillStyle = '#f08aa0'; g.beginPath(); g.roundRect(-11, -7, 22, 14, 3); g.fill(); g.strokeStyle = INK; g.lineWidth = 2; g.stroke(); g.fillStyle = '#fff6f0'; g.fillRect(2, -7, 5, 14); g.restore();
   } else if (kind === 'load') {
     g.fillStyle = '#9a7a4a'; g.fillRect(-10, -10 + bob * 0.3, 20, 20); g.strokeStyle = '#6a5230'; g.lineWidth = 2; g.strokeRect(-9, -9 + bob * 0.3, 18, 18);
   } else if (kind === 'photo') {

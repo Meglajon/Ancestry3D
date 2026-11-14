@@ -252,6 +252,14 @@ const DAY_JOBS = {
     steps: [{ t: 'carry', from: 'market', to: 'pub', n: 2, label: c.year < 1900 ? 'barrels' : 'crates', timed: 1.4, text: `Carry two loads from ${c.market} to ${c.pub}` }] }),
 };
 
+// Loads that are not fragile can fall off; anything against the clock has spare seconds lying about.
+function spice(job) {
+  for (const st of job.steps) {
+    if (st.t === 'carry' && !st.gentle && !st.passenger) st.spill = true;
+    if (st.timed && (st.t === 'carry' || st.t === 'race')) st.tokens = 2;
+  }
+  return job;
+}
 function quizFor(c, cast, rnd) {
   const opts = (right, pool) => {
     const wrong = [...new Set(pool.filter(x => x && x !== right))];
@@ -372,7 +380,7 @@ export function buildStory(data, rootId, opts = {}) {
   const proofs = [];
   const add = m => { m.index = missions.length; missions.push(m); return m; };
   const proof = (kind, who, title, detail) => { const pr = { id: kind + ':' + who.id, kind, person: who.id, title, detail }; proofs.push(pr); return pr; };
-  const names = (t, y) => ({ church: lotName('church', t, y), hall: lotName('hall', t, y), pub: lotName('pub', t, y), works: lotName('works', t, y), farm: lotName('farm', t, y), hub: lotName('hub', t, y), market: lotName('market', t, y), infirmary: lotName('infirmary', t, y), police: lotName('police', t, y), post: lotName('post', t, y), garage: lotName('garage', t, y), phone: lotName('phone', t, y) });
+  const names = (t, y) => ({ church: lotName('church', t, y), hall: lotName('hall', t, y), pub: lotName('pub', t, y), works: lotName('works', t, y), farm: lotName('farm', t, y), hub: lotName('hub', t, y), market: lotName('market', t, y), infirmary: lotName('infirmary', t, y), police: lotName('police', t, y), post: lotName('post', t, y), garage: lotName('garage', t, y), phone: lotName('phone', t, y), school: lotName('school', t, y), office: lotName('office', t, y), home: 'the house' });
   const H = names(home, present);
   const heroBirth = findEvent(rootP.indi, 'BIRT');
   const relOfB = benefactor === hero ? 'own' : benefactor.rel;
@@ -433,17 +441,19 @@ export function buildStory(data, rootId, opts = {}) {
     const base = { act, town: c.town.id, year: c.year, chapter: i };
     const relLine = `${c.name}, your ${c.rel}`;
     const quiz = quizFor(c, cast, rnd);
-    // 1. Meet them
+    // 1. Meet them. They are never at home.
+    const workLot = { haul: 'works', cloth: 'works', craft: 'works', farm: 'farm', sea: 'hub', rail: 'hub', shop: 'market', care: 'infirmary', school: 'school', arms: 'police', desk: 'hall' }[c.group] || 'church';
+    const spots = [...new Set(['home', workLot, 'pub', 'church'])].slice(0, 3);
     add({
-      ...base, id: `meet-${i}`, title: isFinale ? 'Brick Wall' : `Meeting ${c.first}`, giver: { who: c.id, at: 'home' },
+      ...base, id: `meet-${i}`, title: isFinale ? 'Brick Wall' : `Meeting ${c.first}`, giver: { who: 'dot', at: 'phone' },
       brief: `Find ${relLine}, in ${c.town.name}, ${c.year}.`,
-      intro: [{ who: c.id, greet: true },
-        { who: c.id, text: `Family, you say. There's a grey fellow been round all week saying the same, and asking after the parish book. I trust nobody who can't tell me something only kin would know.` }],
-      steps: [{ t: 'talk', who: c.id, at: 'home', quiz, text: `Talk to ${c.first}`, lines: quiz ? [] : [`Well. You've the look of us, I'll give you that.`] }],
+      intro: [{ who: 'dot', text: `A note in Dot's hand, pinned where you would see it: "${c.name}, your ${c.rel}${c.job ? ', ' + c.job.toLowerCase() : ''}. Try the house first. If ${c.he} is out, ${c.he} will be at ${N[spots[1]]}, and failing that ${N[spots[2]]}. Be polite. ${cap(c.he)} ${c.he === 'they' ? 'have' : 'has'} never heard of you."` }],
+      steps: [{ t: 'search', spots, miss: { 0: `Nobody in. A neighbour thinks ${c.he} went up to ${N[spots[1]]}.`, 1: `Not here. "Try ${N[spots[2]]}," says somebody, without looking up.`, 2: `Not here either. "Gone to ${N[spots[1]]}, I should think."` }, text: `Find ${c.first}` },
+        { t: 'talk', who: c.id, at: '@found', greet: true, quiz, text: `Talk to ${c.first}`, lines: [`Family, you say. There's a grey fellow been round all week saying the same, and asking after the parish book. I trust nobody who can't tell me something only kin would know.`] }],
       outro: [{ who: c.id, text: isFinale
         ? `Then you're mine, sure enough, though how is past my wits. There's nobody behind me in any book, you know. I'm where it starts.`
-        : `Then you're one of ours, though I can't think how. Sit down. You look half starved and wholly lost.` }],
-      reward: { cash: 60 + i * 10 },
+        : `Then you're one of ours, though I can't think how. Come home with me. You look half starved and wholly lost.` }],
+      reward: { cash: 80 + i * 10 },
     });
     // 2. A day's work
     // The same trade twice in one family gets a different day's work the second time.
@@ -451,7 +461,7 @@ export function buildStory(data, rootId, opts = {}) {
     const jobKey = jobKeys.find(k => !usedJobs[k]) || c.group;
     if (!isFinale) usedJobs[jobKey] = true;
     c.jobKey = jobKey;
-    const job = (DAY_JOBS[jobKey] || DAY_JOBS.odd)(ctx);
+    const job = spice((DAY_JOBS[jobKey] || DAY_JOBS.odd)(ctx));
     if (!isFinale) add({
       ...base, id: `work-${i}`, title: job.title, giver: { who: c.id, at: c.group === 'farm' ? 'farm' : ['haul', 'cloth', 'craft'].includes(c.group) ? 'works' : c.group === 'sea' ? 'hub' : 'home' },
       brief: `${c.first}${c.job ? ' the ' + c.job.toLowerCase() : ''} could use a hand.`,
@@ -540,6 +550,68 @@ export function buildStory(data, rootId, opts = {}) {
         done: `${c.name}: the entry stands.`,
         proof: proof('entry', c, `Parish entry for ${c.name}`, [c.life, c.town.name].filter(Boolean).join(', ')) };
     }
+    if (set) {
+      const g = groom ? firstName(groom) : 'the groom', van = `the ${w.van}`, hp = 4 + Math.min(3, i);
+      const kidNames = c.kids.filter(k => (birthYear(k) ?? 0) <= c.year).slice(0, 6).map(firstName);
+      const acts = {
+        wedding: [
+          c.sex === 'F'
+            ? { t: 'search', spots: ['pub', 'works', 'market'], miss: { 0: `"He was in here an hour since, white as his shirt. Try ${N.works}."`, 1: `"Not here. He said something about needing air. ${cap(N.market)}?"`, 2: `"Him? Went off towards ${N.works} with a face like a wet week."` }, text: `Find ${g}. He has lost his nerve somewhere` }
+            : { t: 'search', spots: ['pub', 'market', 'works'], miss: { 0: `"The best man? He was showing everybody the ring. Try ${N.market}."`, 1: `"He was here. He's gone to ${N.works} to borrow a collar stud."`, 2: `"Not here. ${cap(N.market)}, most like."` }, text: 'Find the best man. He has the ring' },
+          { t: 'carry', from: c.sex === 'F' ? '@found' : 'home', to: 'church', n: 1, label: 'groom', passenger: g, timed: 1.05, rival: true, tokens: 2, text: `Get ${g} to ${N.church} before the Erasers bar the door`, bark: { name: g, text: `I've changed my mind. No. No, I haven't. Faster!` } },
+          { t: 'chase', from: 'church', hp, label: van, drop: 'the marriage register', text: `They've snatched the register! Stop ${van}` },
+          { t: 'carry', from: 'church', to: 'pub', n: 1, label: 'couple', passenger: 'the happy couple', gentle: true, hunt: 1, text: `Drive the happy couple to the wedding breakfast at ${N.pub}. Gently: it is the only good frock she has`, bark: { name: bride ? firstName(bride) : 'The bride', text: `Mind my frock. And mind him, he's gone the colour of the cake.` } },
+        ],
+        birth: [
+          { t: 'search', spots: ['infirmary', 'church', 'market'], miss: { 0: `"The midwife? Out on a call. She was heading for ${N.church}."`, 1: `"You've missed her. She went to ${N.market} for carbolic."`, 2: `"Not here. Try ${N.church}."` }, text: 'Find the midwife. She is out on her rounds' },
+          { t: 'carry', from: '@found', to: 'home', n: 1, label: 'midwife', passenger: 'the midwife', timed: 1.05, blocks: 1, tokens: 2, text: 'Rush the midwife to the house. The Erasers have blocked the street', bark: { name: 'The midwife', text: `I've delivered half this town and I'll not be late for this one. Whatever this thing is, make it go.` } },
+          { t: 'collect', around: 'hall', radius: 14, n: 6, label: 'register pages', timed: 1.4, hunt: 1, text: `Blank's men have scattered the birth register. Collect every page near ${N.hall}` },
+          { t: 'goto', at: 'hall', timed: 1.3, rival: 0.4, text: `Get the pages back to ${N.hall} before Blank's clerk gets there with a rubber` },
+        ],
+        emig: [
+          { t: 'carry', from: 'home', to: 'hub', n: 2, label: 'trunks', timed: 1.25, spill: true, tokens: 2, text: `Get both trunks to ${N.hub}`, bark: { who: c.id, text: `Don't look back at the house. It's bad luck to look back.` } },
+          { t: 'carry', from: 'home', to: 'hub', n: 1, label: 'traveller', passenger: c.first, timed: 1.1, switch: { to: 'post', name: c.first, text: 'The tickets! I left the tickets at the post office!' }, text: `Now ${c.first}. The ${w.boat} is about to leave` },
+          { t: 'goto', at: 'hub', timed: 1.15, blocks: 1, text: `Tickets in hand. Get to ${N.hub} before they take the gangway up` },
+          { t: 'chase', from: 'hub', hp, label: van, drop: 'the passenger list', text: `Erasers have the passenger list. Stop ${van}` },
+        ],
+        arms: [
+          { t: 'race', stops: ['police', 'hall', 'church', 'post', 'home'], timed: 1.15, tokens: 3, hunt: 1, text: 'Carry the dispatches round the town' },
+          { t: 'carry', from: 'home', to: 'hub', n: 1, label: 'soldier', passenger: c.first, timed: 1.05, rival: true, text: `Get ${c.first} to ${N.hub} before the column leaves` },
+          { t: 'catch', from: 'hub', label: 'Eraser clerk', drop: 'the muster roll', text: 'A grey clerk is striking names off the muster roll. Catch him' },
+        ],
+        census: [
+          { t: 'race', stops: ['home', 'pub', 'farm', 'school', 'market', 'church'], timed: 1.3, tokens: 3, hunt: 1, text: 'Do the enumerator\'s round before midnight', bark: { who: c.id, text: `Knock loud. Half of them will think you're the rent man and hide.` } },
+          { t: 'search', spots: ['pub', 'farm', 'market'], miss: { 0: `"The lodger? He scarpered when he heard the census was coming. Try ${N.farm}."`, 1: `"Slept in the barn, went at first light. ${cap(N.market)}, maybe."`, 2: `"Not here. Try ${N.farm}."` }, text: 'One lodger is dodging the count. Find where he has gone to ground' },
+          { t: 'catch', from: '@found', label: 'the lodger', drop: 'his name, age and occupation', text: 'There he goes! Catch him and count him' },
+          { t: 'chase', from: 'hall', hp, label: van, drop: 'the census schedules', text: `Now get the schedules back from ${van}` },
+        ],
+        portrait: [
+          { t: 'collect', around: 'home', radius: 12, n: kidNames.length, names: kidNames, label: 'children', timed: 1.7, text: `Round up the children: ${kidNames.join(', ')}` },
+          { t: 'search', spots: ['hub', 'pub', 'market'], miss: { 0: `"The photographer? Gone to wet his whistle at ${N.pub}."`, 1: `"He was here. Went to ${N.market} to buy a new cloth for his head."`, 2: `"Not here. ${N.pub}?"` }, text: 'Find the photographer' },
+          { t: 'carry', from: '@found', to: 'home', n: 1, label: 'photographer', passenger: 'the photographer', gentle: true, timed: 1.5, hunt: 1, text: 'Bring him to the house without breaking his camera', bark: { name: 'The photographer', text: `Nobody is to smile. It takes eight seconds and smiling is a strain.` } },
+          { t: 'chase', from: 'home', hp, label: van, drop: 'the glass plate', text: `They have the glass plate! Stop ${van}` },
+        ],
+        burial: [
+          { t: 'carry', from: 'works', to: 'church', n: 1, label: 'headstone', gentle: true, timed: 1.7, text: `Carry the headstone from ${N.works} to ${N.church}, gently` },
+          { t: 'defend', from: 'home', to: 'church', hp: 7, waves: 4, text: `See the funeral safe from the house to ${N.church}. They mean to turn it back` },
+          { t: 'catch', from: 'church', label: 'Eraser with a chisel', drop: 'the chisel', text: 'An Eraser is at the stone with a chisel. Catch him' },
+        ],
+        baptism: [
+          { t: 'collect', around: 'church', radius: 15, n: 7, label: 'register pages', timed: 1.4, text: `Gather the register pages around ${N.church}` },
+          { t: 'search', spots: ['pub', 'infirmary', 'farm'], miss: { 0: `"Parson's out visiting the sick. ${cap(N.infirmary)}."`, 1: `"He's been and gone. Up at ${N.farm}, I heard."`, 2: `"Not here. Try ${N.infirmary}."` }, text: 'Find the parson to sign the entry afresh' },
+          { t: 'carry', from: '@found', to: 'church', n: 1, label: 'parson', passenger: 'the parson', timed: 1.1, rival: true, text: `Get the parson to ${N.church} before the Erasers` },
+          { t: 'chase', from: 'church', hp, label: van, drop: 'the last page', text: `The last page is in ${van}. Stop it` },
+        ],
+        chase: [
+          { t: 'goto', at: 'hall', timed: 1.1, blocks: 2, text: `Get to ${N.hall}. They have blocked the road` },
+          { t: 'catch', from: 'hall', label: 'Eraser clerk', drop: 'the torn page', text: 'A clerk in grey has the page under his coat. Run him down on foot', bark: { name: 'The clerk', text: `It's only a name! You've hundreds!` } },
+          { t: 'chase', from: 'hall', hp: hp + 1, label: van, drop: 'the parish book', text: `Stop ${van} and get the book back` },
+          { t: 'escape', heat: 2, text: `${cap(w.law)} think it was you who took it. Lose them` },
+          { t: 'goto', at: 'hall', text: `Put the book back where it belongs, at ${N.hall}` },
+        ],
+      }[kind];
+      if (acts) set.steps = acts;
+    }
     if (set) add({
       ...base, id: `proof-${i}`, title: set.title, giver: { who: c.id, at: 'home' }, brief: set.brief,
       hour: { wedding: 10.5, birth: 2.5, emig: 6, arms: 7, census: 20.2, baptism: 11, chase: 22.5, portrait: 15, burial: 14.5 }[kind],
@@ -560,7 +632,8 @@ export function buildStory(data, rootId, opts = {}) {
       intro: [{ who: 'dot', text: `A note in Dot's hand, left where you would look: "They came in a ${w.van} and they will go home in one. Follow it. Not so close they notice, not so far you lose it. I want to know where Silas keeps his rubbers in ${c.year}."` }],
       steps: [{ t: 'goto', at: 'hall', text: `Wait for the ${w.van} outside ${N.hall}` },
         { t: 'tail', from: 'hall', via: ['hub', 'farm'], to: 'office', text: `Follow the ${w.van}. Keep your distance`, bark: { who: 'dot', text: `Hang back, dear. You are driving the only mustard-coloured estate car in ${c.year}.` } },
-        { t: 'goto', at: 'office', foot: true, text: 'Take a look through the window' }],
+        { t: 'goto', at: 'office', foot: true, text: 'Take a look through the window' },
+        { t: 'catch', from: 'office', label: 'Eraser clerk', drop: 'a ledger of everybody they mean to rub out', text: 'A clerk has come out with a ledger under his arm. He has seen you. Catch him' }],
       outro: [{ who: 'note', text: `Through the glass: rows of desks, rows of grey men, and on every desk a parish register and a bottle of something that smells of bleach. The brass plate by the door says BLANK & VOID. EST. ${c.year - 40}.` },
         { who: 'dot', text: `Dot's next note is mostly underlining: "An office. In ${c.year}. He has a branch in every century, the cheek of the man. No wonder he is always ahead of us. We shall have to pay a call on head office."` }],
       reward: { cash: 220 },
@@ -599,10 +672,10 @@ export function buildStory(data, rootId, opts = {}) {
         brief: `${c.name} is the top of your tree. If ${c.his} name never goes in the book, nobody below it does either.`,
         intro: [{ who: c.id, text: `There's a gentleman at the church this hour, grey as a gravestone, turning the parson's book to my page. He said the queerest thing. He said, "Somebody has to be nobody." What did he mean by it?` },
           { who: 'dot', text: `A note, in pencil, shaking: "${hero.first}. This is it. ${c.name}${bapt?.date ? ', baptised ' + datePhrase(bapt.date) : ', ' + c.by}, ${c.town.name}. Nobody above ${c.him} in any record. Your brick wall. If that entry goes, every name under it goes, down to yours. He has my first Engine. Do not let him turn the page."` }],
-        steps: [{ t: 'goto', at: 'church', timed: 0.95, text: `Race to ${N.church}` },
-          { t: 'collect', around: 'church', radius: 16, n: 8, label: 'register pages', timed: 1.3, text: 'He has torn the register apart. Save every page' },
+        steps: [{ t: 'goto', at: 'church', timed: 1.1, blocks: 2, text: `Race to ${N.church}. They have barricaded the lane` },
+          { t: 'collect', around: 'church', radius: 16, n: 8, label: 'register pages', timed: 1.3, hunt: 2, text: 'He has torn the register apart. Save every page' },
           { t: 'catch', from: 'church', label: 'Blank\'s clerk', drop: 'the flyleaf', time: 70, text: 'His clerk is away through the churchyard with the flyleaf. Catch him' },
-          { t: 'chase', from: 'church', hp: 9, fast: true, boss: true, label: 'Engine No. 1', drop: 'the last page', text: 'Silas Blank is making a run for another century. Stop Engine No. 1', bark: { who: 'blank', text: `You have thousands of them! I only ever wanted one!` } }],
+          { t: 'chase', from: 'church', hp: 12, fast: true, boss: true, hop: [...new Set([chapters[Math.floor((chapters.length - 1) / 2)].year, present, chapters[0].year, c.year])].filter((y, k, a) => k === a.length - 1 || y !== c.year), label: 'Engine No. 1', drop: 'the last page', text: 'Silas Blank is running through the centuries. Stay with Engine No. 1 and stop it', bark: { who: 'blank', text: `You have thousands of them! I only ever wanted one!` } }],
         outro: [
           { who: 'blank', text: `Go on, then. Read it. Read the page you were so keen to save. Not the entry. The margin.` },
           { who: 'note', text: `In the margin beside ${c.first}'s entry, in the parson's cramped hand: "Also a second infant of this house, base-born, put out to the parish this day. No name given." And beneath it, in the workhouse clerk's hand: "Entered as BLANK."` },
@@ -621,8 +694,9 @@ export function buildStory(data, rootId, opts = {}) {
       intro: [{ who: 'dot', text: `He's ahead of us and I want to know how. Blank & Void keep an office in town. Very grey. Very shredder. Get whatever's left of his ledger, and expect company on the way out.` }],
       steps: [{ t: 'goto', at: 'office', text: 'Go to the offices of Blank & Void' },
         { t: 'collect', around: 'office', radius: 15, n: 7, label: 'ledger pages', timed: 1.35, text: 'They are throwing the ledger out of the windows. Grab every page' },
+        { t: 'catch', from: 'office', label: 'the office boy', drop: 'page one', time: 45, text: 'The office boy has page one. After him' },
         { t: 'escape', heat: 2, text: 'The alarm has gone. Lose the police' },
-        { t: 'goto', at: 'garage', text: `Take the ledger back to ${H.garage}` }],
+        { t: 'goto', at: 'garage', timed: 1.4, blocks: 1, hunt: 2, text: `Take the ledger back to ${H.garage}. They will try to stop you` }],
       outro: [{ who: 'dot', text: `I ought to tell you. He was my apprentice. The brightest I ever had, and the loneliest. I showed him my first Engine one Friday, and on the Monday the pair of them were gone.` },
         { who: 'dot', text: `Page one, in his own hand: "BLANK, Silas. Foundling. Left at the door of the parish of ${f.town.name}. No name given." Oh, I see. He isn't only erasing your family, ${hero.first}. He's been looking for his own.` },
         { who: 'dot', text: `And the last entry: ${f.name}, ${f.town.name}, ${f.year}. The very top of your tree. He's going for the root.` }],
@@ -683,7 +757,7 @@ export function buildStory(data, rootId, opts = {}) {
       const key = order.find(k => !usedFav.has(k)) || order[0] || 'odd';
       used.add(key); usedFav.add(key);
       const N = names(c.town, c.year), first = firstName(x), m = x.sex === 'M', f = x.sex === 'F';
-      const tmpl = DAY_JOBS[key]({ ...N, year: c.year, first, jobL: job.toLowerCase() });
+      const tmpl = spice(DAY_JOBS[key]({ ...N, year: c.year, first, jobL: job.toLowerCase() }));
       const rel = sib ? (m ? 'brother' : f ? 'sister' : 'kin') : how === 'child' ? (m ? 'son' : f ? 'daughter' : 'child') : (m ? 'husband' : f ? 'wife' : 'spouse');
       favours.push({
         id: `favour-${c.index}-${x.id}`, odd: true, favour: true, act: 'Family favour', title: tmpl.title, town: c.town.id, year: c.year, after: meet.index,

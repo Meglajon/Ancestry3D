@@ -348,6 +348,15 @@ export function buildTown(town, year, opts = {}) {
     solid(tx, ty) { const t = this.at(tx, ty); return t === G.BUILD || t === G.WATER || t === G.TREE; },
     solidAt(x, y) { return this.solid(Math.floor(x / TILE), Math.floor(y / TILE)); },
     rough(x, y) { const t = this.at(Math.floor(x / TILE), Math.floor(y / TILE)); return t === G.GRASS || t === G.FIELD || t === G.SAND; },
+    /** Can you get to this tile from the road, on foot or on wheels? (Gardens walled in by houses cannot be reached.) */
+    reachable(tx, ty) {
+      if (!this._reach) {
+        const r = this._reach = new Uint8Array(W * H), q = [[xs[0], ys[0]]];
+        r[ys[0] * W + xs[0]] = 1;
+        while (q.length) { const [x, y] = q.pop(); for (const [dx, dy] of DIRS) { const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= W || ny >= H || r[ny * W + nx] || this.solid(nx, ny)) continue; r[ny * W + nx] = 1; q.push([nx, ny]); } }
+      }
+      return tx >= 0 && ty >= 0 && tx < W && ty < H && this._reach[ty * W + tx] === 1;
+    },
     homeFor(id) { return homes.length ? homes[hashString('home' + id) % homes.length] : lots.market; },
     /** A lot by kind; 'home' needs the person it belongs to. */
     lot(kind, who) { if (kind === 'home') { const h = this.homeFor(who || 'x'); return { kind, x: h.x, y: h.y, tx: h.tx, ty: h.ty, name: 'the house' }; } return lots[kind] || lots.market; },

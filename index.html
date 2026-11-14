@@ -7526,7 +7526,7 @@ const DAY_JOBS = {
   railB: c => ({ title: 'The Night Mail', ask: `The mail goes out to ${c.hub} tonight by way of ${c.farm}, and three grey ${c.year < 1900 ? 'carriages' : 'vans'} have sat outside all afternoon doing nothing. I don't care for ${c.year < 1900 ? 'carriages' : 'vans'} that do nothing.`,
     steps: [{ t: 'defend', from: 'post', via: ['farm'], to: 'hub', hp: 9, waves: 6, text: `See the mail safe to ${c.hub}` }] }),
   deskB: c => ({ title: 'Due Process', ask: `A grey gentleman has been in three times this week asking for a copy of every will in the district. Follow him when he leaves. I should like to know where a man like that keeps his paperwork.`,
-    steps: [{ t: 'tail', from: 'hall', via: ['market', 'works'], to: 'office', text: 'Follow the grey gentleman without being noticed' }] }),
+    steps: [{ t: 'tail', from: 'hall', via: ['market'], to: 'office', text: 'Follow the grey gentleman without being noticed' }] }),
   careB: c => ({ title: 'The Rounds', ask: `Four calls to make before dark, and my feet gave out at dinner time. You have wheels. Physic to each door, and no dawdling at ${c.pub}.`,
     steps: [{ t: 'race', stops: ['farm', 'school', 'pub', 'church', 'infirmary'], timed: 1.2, text: 'Do the rounds before dark' }] }),
   schoolB: c => ({ title: 'The Treat', ask: `It is the Sunday school treat and the waggonette has not come. Take the little ones up to ${c.farm} for me. If one of them is sick, you will hear about it.`,
@@ -7952,7 +7952,7 @@ function buildStory(data, rootId, opts = {}) {
       brief: `Where do Hargreaves's men go at the end of the day, in ${c.year}?`,
       intro: [{ who: 'dot', text: `A note in Dorothy's hand, left where you would look: "They came in a ${w.van} and they will go home in one. Follow it. Not so close they notice, not so far you lose it. I want to know where Silas keeps his men in ${c.year}."` }],
       steps: [{ t: 'goto', at: 'hall', text: `Wait for the ${w.van} outside ${N.hall}` },
-        { t: 'tail', from: 'hall', via: ['hub', 'farm'], to: 'office', text: `Follow the ${w.van}. Keep your distance`, bark: { who: 'dot', text: `Hang back, dear. You are driving the only mustard-coloured estate car in ${c.year}.` } },
+        { t: 'tail', from: 'hall', via: ['works'], to: 'office', text: `Follow the ${w.van}. Keep your distance`, bark: { who: 'dot', text: `Hang back, dear. You are driving the only mustard-coloured estate car in ${c.year}.` } },
         { t: 'goto', at: 'office', foot: true, text: 'Take a look through the window' },
         { t: 'catch', from: 'office', label: 'grey clerk', drop: 'a ledger of everybody they mean to strike out', text: 'A clerk has come out with a ledger under his arm. He has seen you. Catch him' }],
       outro: [{ who: 'note', text: `Through the glass: rows of desks, rows of grey men, and on every desk a parish register and a bottle of something that smells of bleach. The brass plate by the door says HARGREAVES & LOWE. EST. ${c.year - 40}.` },
@@ -7967,7 +7967,7 @@ function buildStory(data, rootId, opts = {}) {
         brief: `Every register in ${c.town.name} is going by ${cart} to be bound. Hargreaves knows.`,
         intro: [{ who: 'dot', text: `Dorothy's note: "The parish is sending every old register it has to be rebound: by ${cart}, by way of ${N.farm}, to ${N.hub}. Three centuries of ${c.town.name} in one ${cart}. I have counted five grey ${c.year < 1900 ? 'carriages' : 'vans'} in town this morning. See it safe aboard."` }],
         steps: [{ t: 'goto', at: 'church', text: `Meet the ${cart} at ${N.church}` },
-          { t: 'defend', from: 'church', via: ['farm'], to: 'hub', hp: 10, waves: 7, text: `Keep the grey vans off the ${cart} all the way to ${N.hub}`, bark: { name: 'The carter', text: `I was told this was a quiet job. Books, they said. Who robs books?` } }],
+          { t: 'defend', from: 'church', via: ['works'], to: 'hub', hp: 12, waves: 7, text: `Keep the grey vans off the ${cart} all the way to ${N.hub}`, bark: { name: 'The carter', text: `I was told this was a quiet job. Books, they said. Who robs books?` } }],
         outro: [{ who: 'dot', text: `"Three hundred years of baptisms, safe on the ${w.boat}. Somewhere in that ${cart} is the first time anybody ever wrote your surname down. He will be furious."` }],
         reward: { cash: 380 + i * 40 },
       });
@@ -8259,6 +8259,268 @@ function lifeSoFar(data, id, year) {
 return { eraOf, eraWords, placeTown, fareBetween, lotName, jobGroup, buildStory, residentsOf, oddJob, townNotes, kinOf, burialsIn, lifeSoFar, ERA_NAMES, inkCost };
 })();
 
+// ---- storynet.js ----
+const __m_storynet = (() => {
+// Story mode street plans. A plan is a set of points and the roads that join them, in tiles. It can be
+// drawn from nothing (a market town grown outwards from its square, the way British towns were) or read from
+// OpenStreetMap, so that the town you drive round has the streets the real one has.
+// Pure data: no canvas, no DOM except in fetchNet(), so the rest can be tested in node.
+const { hashString, seededRandom } = __m_ancestry;
+const NET_VERSION = 3;
+const M_PER_TILE = 5;            // one tile is about five metres
+const OSM_RADIUS = 620;          // metres of the real town either side of its middle
+
+const dist2 = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+/**
+ * Tidy a plan and work out what joins what.
+ * Takes { W, H, nodes: [{x, y}], ways: [{ pts: [node index], cls, name, key }] } and returns the same plan with
+ * long stretches broken into short hops, loose ends removed, and every node given its neighbours (nb) and
+ * whether it is down a dead end (dead).
+ */
+function finishNet(net) {
+  const nodes = net.nodes.map(n => ({ x: n.x, y: n.y }));
+  const uses = new Map();
+  for (const w of net.ways) w.pts.forEach((p, i) => uses.set(p, (uses.get(p) || 0) + (i === 0 || i === w.pts.length - 1 ? 2 : 1)));
+  const ways = [];
+  for (const w of net.ways) {
+    // drop points that crowd the one before, unless something else joins there
+    const kept = [];
+    w.pts.forEach((p, i) => {
+      const last = kept[kept.length - 1];
+      if (last == null) { kept.push(p); return; }
+      if (p === last) return;
+      const end = i === w.pts.length - 1, junction = uses.get(p) > 1;
+      if (!end && !junction && dist2(nodes[p], nodes[last]) < 2.6) return;
+      kept.push(p);
+    });
+    if (kept.length < 2) continue;
+    // and put points into anything longer than a few tiles, so there is always a next thing to steer at
+    const out = [kept[0]];
+    for (let i = 1; i < kept.length; i++) {
+      const a = nodes[kept[i - 1]], b = nodes[kept[i]], d = dist2(a, b), n = Math.max(1, Math.round(d / 5.5));
+      for (let k = 1; k < n; k++) { nodes.push({ x: a.x + (b.x - a.x) * k / n, y: a.y + (b.y - a.y) * k / n }); out.push(nodes.length - 1); }
+      out.push(kept[i]);
+    }
+    ways.push({ ...w, pts: out });
+  }
+  for (const n of nodes) n.nb = [];
+  for (const w of ways) for (let i = 1; i < w.pts.length; i++) {
+    const a = w.pts[i - 1], b = w.pts[i];
+    if (a === b) continue;
+    if (!nodes[a].nb.includes(b)) nodes[a].nb.push(b);
+    if (!nodes[b].nb.includes(a)) nodes[b].nb.push(a);
+  }
+  // keep only the biggest piece: everything left can be driven to from everything else
+  const comp = new Int32Array(nodes.length).fill(-1);
+  let best = -1, bestN = 0;
+  for (let s = 0, c = 0; s < nodes.length; s++) {
+    if (comp[s] >= 0 || !nodes[s].nb.length) continue;
+    let n = 0; const q = [s]; comp[s] = c;
+    while (q.length) { const k = q.pop(); n++; for (const m of nodes[k].nb) if (comp[m] < 0) { comp[m] = c; q.push(m); } }
+    if (n > bestN) { bestN = n; best = c; }
+    c++;
+  }
+  const remap = new Int32Array(nodes.length).fill(-1), keptNodes = [];
+  nodes.forEach((n, i) => { if (comp[i] === best) { remap[i] = keptNodes.length; keptNodes.push(n); } });
+  for (const n of keptNodes) n.nb = n.nb.map(m => remap[m]);
+  const keptWays = ways.filter(w => remap[w.pts[0]] >= 0).map(w => ({ ...w, pts: w.pts.map(p => remap[p]) }));
+  // dead ends: strip the leaves until none are left, and whatever went is a close or a lane to nowhere
+  const deg = keptNodes.map(n => n.nb.length), q = [];
+  keptNodes.forEach((n, i) => { n.dead = false; if (deg[i] <= 1) q.push(i); });
+  while (q.length) { const k = q.pop(); if (keptNodes[k].dead) continue; keptNodes[k].dead = true; for (const m of keptNodes[k].nb) if (!keptNodes[m].dead && --deg[m] <= 1) q.push(m); }
+  if (keptNodes.every(n => n.dead)) for (const n of keptNodes) n.dead = false;  // a town that is all one lane
+  return { ...net, nodes: keptNodes, ways: keptWays };
+}
+
+/**
+ * A town drawn from its name alone: a market place in the middle, old roads running out of it in every
+ * direction, lanes joining them in broken rings, and closes off the newer streets. No two alike; the same
+ * every time for the same town.
+ */
+function makeNet(town) {
+  const rnd = seededRandom(hashString('net' + town.id));
+  const R = 100 + Math.floor(rnd() * 14);
+  const W = 2 * R + 36, H = 2 * R + 36;
+  const cx = W / 2 + (rnd() - 0.5) * 10, cy = H / 2 + (rnd() - 0.5) * 10;
+  const sx = 0.86 + rnd() * 0.28, sy = 2 - sx, tilt = rnd() * Math.PI;
+  const at = (r, a) => { const x = Math.cos(a) * r * sx, y = Math.sin(a) * r * sy; return { x: cx + x * Math.cos(tilt) - y * Math.sin(tilt), y: cy + x * Math.sin(tilt) + y * Math.cos(tilt) }; };
+  const nodes = [], ways = [];
+  const add = p => { nodes.push({ x: Math.max(5, Math.min(W - 6, p.x)), y: Math.max(5, Math.min(H - 6, p.y)) }); return nodes.length - 1; };
+  const radii = [0, 13, 28, 45, 63, 82, R], counts = [1, 5, 8, 12, 16, 19, 21], ringP = [0, 1, 0.82, 0.7, 0.6, 0.48, 0.3];
+  // the points: rings of them, each a little out of true
+  const ring = radii.map((r, k) => {
+    if (k === 0) return [{ a: 0, r: 0, i: add({ x: cx, y: cy }) }];
+    const n = counts[k], a0 = rnd() * 6.28, out = [];
+    for (let j = 0; j < n; j++) { const a = a0 + (j + (rnd() - 0.5) * 0.5) * 6.2832 / n, rr = r + (rnd() - 0.5) * (k === 1 ? 3 : 6); out.push({ a, r: rr, i: add(at(rr, a)) }); }
+    return out;
+  });
+  const angd = (a, b) => { let d = (a - b) % 6.2832; if (d > 3.1416) d -= 6.2832; if (d < -3.1416) d += 6.2832; return d; };
+  const nearest = (k, a) => ring[k].reduce((b, n) => Math.abs(angd(n.a, a)) < Math.abs(angd(b.a, a)) ? n : b);
+  const seen = new Set();
+  const edge = (A, B, key, cls, bend = 0) => {
+    const id = A.i < B.i ? A.i + ':' + B.i : B.i + ':' + A.i;
+    if (A.i === B.i || seen.has(id)) return null;
+    seen.add(id);
+    // a road is never quite straight: one or two points pushed off the line between its ends
+    const a = nodes[A.i], b = nodes[B.i], d = dist2(a, b), n = d > 16 ? 2 : 1, pts = [A.i], nx = -(b.y - a.y) / (d || 1), ny = (b.x - a.x) / (d || 1);
+    const off = (rnd() - 0.5) * d * 0.22 + bend;
+    for (let k = 1; k <= n; k++) { const t = k / (n + 1), s = Math.sin(t * Math.PI) * off * (n === 2 && k === 2 ? (rnd() < 0.5 ? -0.6 : 1) : 1); pts.push(add({ x: a.x + (b.x - a.x) * t + nx * s, y: a.y + (b.y - a.y) * t + ny * s })); }
+    pts.push(B.i);
+    const w = { pts, cls, key, name: null };
+    ways.push(w);
+    return w;
+  };
+  // roads out of town: every point is joined to the nearest one on the ring inside it
+  let chain = 0;
+  const key = new Map();
+  key.set(ring[0][0].i, 'centre');
+  for (let k = 1; k < ring.length; k++) {
+    const firstChild = new Set();
+    for (const n of ring[k]) {
+      const p = k === 1 ? ring[0][0] : nearest(k - 1, n.a);
+      let kk;
+      if (k === 1) { const j = ring[1].indexOf(n); kk = j === 0 || j === 2 ? 'high' : j === 1 ? 'church' : 'road' + (chain++); }
+      else if (!firstChild.has(p.i)) { firstChild.add(p.i); kk = key.get(p.i); }
+      else kk = 'road' + (chain++);
+      key.set(n.i, kk);
+      edge(p, n, kk, k <= 3 ? 0 : 1);
+    }
+    // and now and then one more, the other way, so the middle is not the only way across
+    if (k >= 2) for (const p of ring[k - 1]) if (rnd() < 0.4) { const n = nearest(k, p.a); edge(p, n, 'lane' + (chain++), 1); }
+  }
+  // lanes round the town: broken rings
+  const closes = [];
+  for (let k = 1; k < ring.length; k++) {
+    let run = 0;
+    for (let j = 0; j < ring[k].length; j++) {
+      const A = ring[k][j], B = ring[k][(j + 1) % ring[k].length];
+      if (rnd() > ringP[k]) { run++; continue; }
+      const d = dist2(nodes[A.i], nodes[B.i]);
+      const w = edge(A, B, k === 1 ? 'market' : 'ring' + k + ':' + run, k <= 2 ? 0 : 1, d * 0.1);
+      if (w && k >= 2 && k < ring.length - 1 && d > 15 && rnd() < 0.5) closes.push({ w, k });
+    }
+  }
+  // closes: short dead ends off the lanes, where the newer houses are
+  for (const { w, k } of closes) {
+    const m = w.pts[Math.floor(w.pts.length / 2)], p = nodes[m], out = rnd() < 0.5 ? 1 : -1;
+    const dx = p.x - cx, dy = p.y - cy, d = Math.hypot(dx, dy) || 1, len = 7 + rnd() * 3, sk = (rnd() - 0.5) * 0.5;
+    const ux = dx / d * out, uy = dy / d * out;
+    const e = add({ x: p.x + (ux * Math.cos(sk) - uy * Math.sin(sk)) * len, y: p.y + (ux * Math.sin(sk) + uy * Math.cos(sk)) * len });
+    ways.push({ pts: [m, e], cls: 1, key: 'close' + k + ':' + m, name: null, close: true });
+  }
+  // a river down one side, crossed wherever a road meets it
+  const side = rnd() < 0.5 ? -1 : 1, rx = cx + side * R * (0.42 + rnd() * 0.2), ph = rnd() * 6, amp = 8 + rnd() * 8, lean = (rnd() - 0.5) * 0.3;
+  const river = [];
+  for (let y = -4; y <= H + 4; y += 4) river.push({ x: rx + Math.sin(y / 34 + ph) * amp + (y - H / 2) * lean, y });
+  return finishNet({ v: NET_VERSION, source: 'drawn', W, H, centre: { x: cx, y: cy }, radius: R, nodes, ways, water: [{ line: river, r: 2.6 }], green: [] });
+}
+
+const ROADS = { trunk: 0, trunk_link: 0, primary: 0, primary_link: 0, secondary: 0, secondary_link: 0, tertiary: 0, tertiary_link: 0, unclassified: 1, residential: 1, living_street: 1, pedestrian: 1, road: 1 };
+
+/** The Overpass question that fetches a town's streets, water and parks. */
+function osmQuery(lat, lon, radius = OSM_RADIUS) {
+  const a = `(around:${Math.round(radius * 1.25)},${lat.toFixed(5)},${lon.toFixed(5)})`;
+  return `[out:json][timeout:25];(way["highway"~"^(${Object.keys(ROADS).join('|')})$"]${a};way["waterway"~"^(river|canal)$"]${a};way["natural"="water"]${a};way["leisure"~"^(park|garden|recreation_ground)$"]${a};);out body;>;out skel qt;`;
+}
+
+/**
+ * Turn an Overpass answer into a plan. Real roads keep their real names; anything too far from the middle is
+ * cut off at the edge of the map. Returns null if there is not enough there to make a town of.
+ */
+function netFromOsm(json, lat, lon, radius = OSM_RADIUS) {
+  const els = (json && json.elements) || [];
+  const half = Math.round(radius / M_PER_TILE), W = half * 2 + 24, H = W, k = Math.cos(lat * Math.PI / 180);
+  const px = n => ({ x: W / 2 + (n.lon - lon) * k * 111320 / M_PER_TILE, y: H / 2 - (n.lat - lat) * 110540 / M_PER_TILE });
+  const raw = new Map();
+  for (const e of els) if (e.type === 'node' && e.lat != null) raw.set(e.id, px(e));
+  const inside = p => p && p.x >= 6 && p.y >= 6 && p.x <= W - 7 && p.y <= H - 7;
+  const nodes = [], index = new Map(), ways = [], water = [], green = [];
+  const idx = id => { if (!index.has(id)) { index.set(id, nodes.length); nodes.push(raw.get(id)); } return index.get(id); };
+  for (const e of els) {
+    if (e.type !== 'way' || !e.nodes || !e.tags) continue;
+    const t = e.tags;
+    if (t.highway && ROADS[t.highway] != null && t.area !== 'yes' && t.access !== 'private' && t.tunnel !== 'yes') {
+      // a road that leaves the map is cut where it leaves, and may come back as another piece
+      let run = [];
+      const flush = () => { if (run.length > 1) ways.push({ pts: run, cls: ROADS[t.highway], name: t.name || null, key: t.name || 'way' + e.id }); run = []; };
+      for (const id of e.nodes) { if (inside(raw.get(id))) run.push(idx(id)); else flush(); }
+      flush();
+    } else if (t.waterway === 'river' || t.waterway === 'canal') {
+      const line = e.nodes.map(id => raw.get(id)).filter(Boolean);
+      if (line.length > 1) water.push({ line, r: t.waterway === 'river' ? 2.4 : 1.3 });
+    } else if (t.natural === 'water') {
+      const poly = e.nodes.map(id => raw.get(id)).filter(Boolean);
+      if (poly.length > 3) water.push({ poly });
+    } else if (t.leisure) {
+      const poly = e.nodes.map(id => raw.get(id)).filter(Boolean);
+      if (poly.length > 3) green.push({ poly, name: t.name || null });
+    }
+  }
+  if (ways.length < 6) return null;
+  const net = finishNet({ v: NET_VERSION, source: 'osm', W, H, centre: { x: W / 2, y: H / 2 }, radius: half, nodes, ways, water, green });
+  if (net.nodes.length < 20) return null;
+  // the middle of town is the busiest corner near the middle of the map
+  let best = null, bs = -1;
+  for (const n of net.nodes) { const d = Math.hypot(n.x - W / 2, n.y - H / 2); if (d > half * 0.35) continue; const s = n.nb.length * 10 - d * 0.25; if (s > bs) { bs = s; best = n; } }
+  if (best) net.centre = { x: best.x, y: best.y };
+  return net;
+}
+
+/** A plan small enough to keep: whole numbers, and only what buildTown needs. */
+function packNet(net) {
+  return { v: NET_VERSION, source: net.source, W: net.W, H: net.H, c: [Math.round(net.centre.x), Math.round(net.centre.y)], r: net.radius,
+    n: net.nodes.flatMap(n => [Math.round(n.x * 10), Math.round(n.y * 10)]),
+    w: net.ways.map(w => [w.cls, w.name || '', w.pts]),
+    wa: net.water.map(w => w.line ? ['l', w.r, w.line.flatMap(p => [Math.round(p.x), Math.round(p.y)])] : ['p', 0, w.poly.flatMap(p => [Math.round(p.x), Math.round(p.y)])]),
+    g: net.green.map(w => w.poly.flatMap(p => [Math.round(p.x), Math.round(p.y)])) };
+}
+function unpackNet(o) {
+  if (!o || o.v !== NET_VERSION || !o.n || !o.w) return null;
+  const pair = a => { const out = []; for (let i = 0; i + 1 < a.length; i += 2) out.push({ x: a[i], y: a[i + 1] }); return out; };
+  const nodes = []; for (let i = 0; i + 1 < o.n.length; i += 2) nodes.push({ x: o.n[i] / 10, y: o.n[i + 1] / 10 });
+  return finishNet({ v: o.v, source: o.source, W: o.W, H: o.H, centre: { x: o.c[0], y: o.c[1] }, radius: o.r, nodes,
+    ways: o.w.map(([cls, name, pts], i) => ({ cls, name: name || null, key: name || 'way' + i, pts })),
+    water: (o.wa || []).map(([t, r, a]) => t === 'l' ? { line: pair(a), r } : { poly: pair(a) }), green: (o.g || []).map(a => ({ poly: pair(a) })) });
+}
+
+const cacheKey = town => 'a3d:streets:' + NET_VERSION + ':' + town.id;
+/** A plan already fetched and kept on this device: the plan, null if the town is known not to be findable, undefined if never asked. */
+function cachedNet(town) {
+  try { const hit = localStorage.getItem(cacheKey(town)); if (hit == null) return undefined; if (hit === 'none') return null; return unpackNet(JSON.parse(hit)) || undefined; } catch (e) { return undefined; }
+}
+const getJson = async (url, opts, signal) => { const r = await fetch(url, { ...opts, signal }); if (!r.ok) throw new Error('http ' + r.status); return r.json(); };
+/**
+ * The real streets of a town, from OpenStreetMap: looked up by name, fetched once and kept on this device.
+ * Resolves to a plan, or null if the town cannot be found or there is no connection. Only the town's name
+ * is sent. Map data © OpenStreetMap contributors (ODbL).
+ */
+async function fetchNet(town, timeoutMs = 12000) {
+  const had = cachedNet(town);
+  if (had !== undefined) return had;
+  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), timeoutMs);
+  const keepIt = v => { try { localStorage.setItem(cacheKey(town), v); } catch (e) { /* full: fetch again next time */ } };
+  try {
+    const q = [town.name, town.nation || town.country].filter(Boolean).join(', ');
+    // where is it? (two free gazetteers built on OpenStreetMap; the second is only asked if the first fails)
+    let lat = null, lon = null;
+    try { const g = await getJson('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=' + encodeURIComponent(q), { headers: { Accept: 'application/json' } }, ctl.signal); if (g && g.length) { lat = +g[0].lat; lon = +g[0].lon; } else if (g) { keepIt('none'); return null; } } catch (e) { /* try the other */ }
+    if (lat == null) { const g = await getJson('https://photon.komoot.io/api/?limit=1&q=' + encodeURIComponent(q), {}, ctl.signal); const c = g && g.features && g.features[0] && g.features[0].geometry && g.features[0].geometry.coordinates; if (!c) { keepIt('none'); return null; } lon = +c[0]; lat = +c[1]; }
+    if (!isFinite(lat) || !isFinite(lon)) return null;
+    // and what streets has it?
+    const body = { method: 'POST', body: 'data=' + encodeURIComponent(osmQuery(lat, lon)), headers: { 'Content-Type': 'application/x-www-form-urlencoded' } };
+    let json = null;
+    for (const host of ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter']) { try { json = await getJson(host, body, ctl.signal); break; } catch (e) { if (ctl.signal.aborted) throw e; } }
+    if (!json) return null;
+    const net = netFromOsm(json, lat, lon);
+    keepIt(net ? JSON.stringify(packNet(net)) : 'none');
+    return net;
+  } catch (e) { return null; } finally { clearTimeout(timer); }
+}
+
+return { finishNet, makeNet, osmQuery, netFromOsm, packNet, unpackNet, cachedNet, fetchNet, NET_VERSION };
+})();
+
 // ---- storycity.js ----
 const __m_storycity = (() => {
 // Story mode towns. Every town in the file gets its own street plan (seeded from its name), and the same
@@ -8266,279 +8528,224 @@ const __m_storycity = (() => {
 // roads turn from tarmac to setts to mud, and slate gives way to thatch.
 const { hashString, seededRandom } = __m_ancestry;
 const { eraOf, lotName } = __m_storyplot;
+const { makeNet } = __m_storynet;
 const TILE = 32;
 const G = { GRASS: 0, ROAD: 1, PAVE: 2, BUILD: 3, WATER: 4, PLAZA: 5, FIELD: 6, YARD: 7, APRON: 8, TREE: 9, SAND: 10 };
-const NB = 7; // blocks each way
 const STONE = new Set(['pennine', 'cotswold', 'granite', 'scotstone', 'tenement', 'lakeland', 'blackhouse', 'welsh', 'valleys', 'irishcottage', 'colliery']);
 const MED = new Set(['med', 'stucco', 'flatroof']);
 const WOOD = new Set(['clapboard', 'veranda', 'wooden', 'nordic', 'chattel', 'stilt']);
 const pick = (r, a) => a[Math.floor(r() * a.length)];
 
-const SPECIAL_SIZE = { church: [4, 6], hall: [6, 4], pub: [3, 3], post: [4, 3], police: [4, 3], school: [6, 3], infirmary: [6, 4], office: [4, 4], works: [0, 0], farm: [4, 3], hub: [6, 3] };
+const SPECIAL_SIZE = { church: [4, 6], hall: [6, 4], pub: [3, 3], post: [4, 3], police: [4, 3], school: [6, 3], infirmary: [6, 4], office: [4, 4], works: [8, 5], farm: [4, 3], hub: [6, 3] };
 
-/** Build the town as it stood in `year`. */
+/** Build the town as it stood in `year`, on its street plan (opts.net, or one drawn from the town's name). */
 function buildTown(town, year, opts = {}) {
   const era = eraOf(year);
+  const net = opts.net || makeNet(town);
   const rnd = seededRandom(hashString('town' + town.id));
-  const xs = [], ys = [];
-  let p = 8;
-  for (let i = 0; i <= NB; i++) { xs.push(p); p += 10 + Math.floor(rnd() * 4); }
-  p = 8;
-  for (let i = 0; i <= NB; i++) { ys.push(p); p += 10 + Math.floor(rnd() * 4); }
-  const W = xs[NB] + 2 + 13, H = ys[NB] + 2 + 8;
-  const tiles = new Uint8Array(W * H);
-  const set = (x, y, v) => { if (x >= 0 && y >= 0 && x < W && y < H) tiles[y * W + x] = v; };
+  const { W, H } = net, cx = net.centre.x, cy = net.centre.y, R = net.radius;
+  const tiles = new Uint8Array(W * H), zone = new Uint8Array(W * H), wayAt = new Int16Array(W * H).fill(-1), keep = new Uint8Array(W * H);
+  const inb = (x, y) => x >= 0 && y >= 0 && x < W && y < H;
+  const get = (x, y) => inb(x, y) ? tiles[y * W + x] : G.WATER;
+  const set = (x, y, v) => { if (inb(x, y)) tiles[y * W + x] = v; };
   const fill = (x0, y0, x1, y1, v) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) set(x, y, v); };
-  // fields: 1 ploughed, 2 pasture, 3 wheat, 4 cabbages, 5 allotment beds
-  const zone = new Uint8Array(W * H);
-  const fieldFill = (x0, y0, x1, y1, z) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (x >= 0 && y >= 0 && x < W && y < H) { tiles[y * W + x] = G.FIELD; zone[y * W + x] = z; } };
-  const buildings = [], homes = [], props = [], lots = {}, parkSpots = [];
+  const buildings = [], homes = [], props = [], lots = {}, parkSpots = [], blocks = [];
   const air = year >= 1950;
-
-  // Sea along the east side; woods round the rest.
-  fill(xs[NB] + 2, 0, W - 1, H - 1, G.WATER);
-  fill(xs[NB] + 2, 0, xs[NB] + 3, H - 1, G.SAND); // a strip of beach
-  // farmland round the edge of town, in strips
-  for (let y = 0, k = 0; y < H; k++) { const hgt = 5 + Math.floor(rnd() * 5), z = [2, 3, 0, 1, 4, 0, 3][k % 7]; if (z) fieldFill(0, y, xs[0] - 2, Math.min(H - 1, y + hgt - 1), z); y += hgt + 1; }
-  for (let x = xs[0], k = 0; x < xs[NB]; k++) { const wd = 6 + Math.floor(rnd() * 6), z = [3, 0, 2, 1, 0, 4][k % 6]; if (z) { fieldFill(x, 0, Math.min(xs[NB], x + wd - 1), ys[0] - 2, z); fieldFill(x, ys[NB] + 3, Math.min(xs[NB], x + wd - 1), H - 1, [1, 2, 3, 4][(k + 2) % 4]); } x += wd + 1; }
-  for (let i = 0; i < 260; i++) {
-    const x = Math.floor(rnd() * (xs[NB] + 2)), y = Math.floor(rnd() * H);
-    if (x < xs[0] - 1 || y < ys[0] - 1 || y > ys[NB] + 2) set(x, y, G.TREE);
-  }
-  // Roads
-  for (const x of xs) fill(x, ys[0], x + 1, ys[NB] + 1, G.ROAD);
-  for (const y of ys) fill(xs[0], y, xs[NB] + 1, y + 1, G.ROAD);
-
-  // What each block is.
-  const use = Array.from({ length: NB }, () => Array(NB).fill('homes'));
-  const C = 3;
-  use[C][C] = 'market';
-  const ring1 = [];
-  for (let j = C - 1; j <= C + 1; j++) for (let i = C - 1; i <= C + 1; i++) if (i !== C || j !== C) ring1.push([i, j]);
-  for (let i = ring1.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [ring1[i], ring1[j]] = [ring1[j], ring1[i]]; }
-  ['church', 'hall', 'pub', 'post', 'police', 'school', 'infirmary', 'office'].forEach((k, n) => { use[ring1[n][1]][ring1[n][0]] = k; });
-  const ring2 = [];
-  for (let j = 1; j <= 5; j++) for (let i = 1; i <= 5; i++) if (Math.max(Math.abs(i - C), Math.abs(j - C)) === 2) ring2.push([i, j]);
-  const wk = ring2[Math.floor(rnd() * ring2.length)];
-  use[wk[1]][wk[0]] = 'works';
-  let pk = ring2[Math.floor(rnd() * ring2.length)];
-  if (pk === wk) pk = ring2[(ring2.indexOf(wk) + 5) % ring2.length];
-  use[pk[1]][pk[0]] = 'park';
-  use[C][NB - 1] = 'hub';
-  use[2 + Math.floor(rnd() * 3)][0] = 'farm';
-  // Blocks that are only something special for part of the town's history.
-  use[NB - 1][1 + Math.floor(rnd() * 5)] = 'retail';
-  use[0][1 + Math.floor(rnd() * 5)] = 'allot';
-  let gs = ring2[Math.floor(rnd() * ring2.length)];
-  if (use[gs[1]][gs[0]] !== 'homes') gs = ring2.find(r => use[r[1]][r[0]] === 'homes');
-  use[gs[1]][gs[0]] = 'gas';
-
-  const blocks = [];
-  for (let bj = 0; bj < NB; bj++) for (let bi = 0; bi < NB; bi++) {
-    const x0 = xs[bi] + 2, x1 = xs[bi + 1] - 1, y0 = ys[bj] + 2, y1 = ys[bj + 1] - 1;
-    const ring = Math.max(Math.abs(bi - C), Math.abs(bj - C));
-    const r1 = rnd(), r2 = rnd();
-    // The old core has always been there; the rest was built outwards over the centuries.
-    const built = ring <= 1 ? 0 : ring === 2 ? 1690 + Math.floor(r1 * 190) : 1850 + Math.floor(r1 * 125);
-    const b = { bi, bj, x0, y0, x1, y1, ix0: x0 + 1, iy0: y0 + 1, ix1: x1 - 1, iy1: y1 - 1, ring, built, kind: use[bj][bi], seed: Math.floor(r2 * 1e9) };
-    blocks.push(b);
-    fill(x0, y0, x1, y1, G.PAVE);
-    fill(b.ix0, b.iy0, b.ix1, b.iy1, G.GRASS);
-  }
-
-  const addB = (x, y, w, h, kind, extra = {}) => { const b = { x, y, w, h, kind, ...extra }; buildings.push(b); fill(x, y, x + w - 1, y + h - 1, G.BUILD); return b; };
-  const rowHouses = (rr, x0, x1, y, depth, doorY, attached, list) => {
-    let x = x0;
-    while (x1 - x + 1 >= 2) {
-      let w = 2 + Math.floor(rr() * 3);
-      if (x1 - (x + w) + 1 < 2) w = x1 - x + 1;
-      const gap = !attached && w > 2 && rr() < 0.6 ? 1 : 0;
-      list.push({ x, y, w: w - gap, h: depth, door: { x: x + Math.floor((w - gap) / 2), y: doorY } });
-      x += w;
+  // every tile whose middle is within r of the line from a to b
+  const stamp = (a, b, r, fn) => {
+    const x0 = Math.max(0, Math.floor(Math.min(a.x, b.x) - r - 1)), x1 = Math.min(W - 1, Math.ceil(Math.max(a.x, b.x) + r + 1)), y0 = Math.max(0, Math.floor(Math.min(a.y, b.y) - r - 1)), y1 = Math.min(H - 1, Math.ceil(Math.max(a.y, b.y) + r + 1));
+    const dx = b.x - a.x, dy = b.y - a.y, l2 = dx * dx + dy * dy || 1;
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+      const t = Math.max(0, Math.min(1, ((x + 0.5 - a.x) * dx + (y + 0.5 - a.y) * dy) / l2));
+      if (Math.hypot(x + 0.5 - a.x - dx * t, y + 0.5 - a.y - dy * t) <= r) fn(x, y);
     }
   };
-  const lot = (kind, tx, ty, b) => { lots[kind] = { kind, x: (tx + 0.5) * TILE, y: (ty + 0.5) * TILE, tx, ty, b, name: lotName(kind, town, year) }; };
-
-  for (const b of blocks) {
-    const rr = seededRandom(b.seed);
-    const iw = b.ix1 - b.ix0 + 1, ih = b.iy1 - b.iy0 + 1;
-    const exists = year >= b.built;
-    const attached = b.ring <= 2;
-    let kind = b.kind;
-    if (kind === 'gas' && !(year >= 1840 && year < 1975)) kind = 'homes';
-    if (kind === 'retail' && year < 1985) kind = 'homes';
-    if (kind === 'allot' && year < 1900) kind = 'homes';
-    if (kind === 'gas') {
-      b.edge = 'wall';
-      fill(b.ix0, b.iy0, b.ix1, b.iy1, G.YARD);
-      const gx = b.ix0 + Math.floor(iw / 2) - (iw >= 8 ? 1 : 0), gy = b.iy0 + Math.floor(ih / 2);
-      fill(gx - 1, gy - 1, gx + 1, gy + 1, G.BUILD);
-      props.push({ t: 'gasometer', x: gx, y: gy, r: 2.0 });
-      addB(b.ix1 - 2, b.iy1 - 1, 3, 2, 'shed');
-      continue;
-    }
-    if (kind === 'retail') {
-      fill(b.ix0, b.iy0, b.ix1, b.iy1, G.YARD);
-      addB(b.ix0, b.iy0, iw, Math.max(3, ih - 5), 'store');
-      props.push({ t: 'bays', x: b.ix0, y: b.iy1 - 2, w: iw });
-      for (let i = 0; i < iw; i += 2) parkSpots.push({ x: (b.ix0 + i + 0.5) * TILE, y: (b.iy1 - 0.9) * TILE, ang: -Math.PI / 2 });
-      continue;
-    }
-    if (kind === 'allot') {
-      fieldFill(b.ix0, b.iy0, b.ix1, b.iy1, 5); b.edge = 'fence';
-      for (let i = 0; i < 7; i++) props.push({ t: 'shed', x: b.ix0 + Math.floor(rr() * iw), y: b.iy0 + Math.floor(rr() * ih) });
-      continue;
-    }
-    if (kind === 'market') {
-      fill(b.x0, b.y0, b.x1, b.y1, G.PLAZA);
-      lot('market', b.x0 + Math.floor((b.x1 - b.x0) / 2), b.y1, null);
-      lot('phone', b.x0, b.y0, null);
-      for (let i = 0; i < 5; i++) props.push({ t: 'stall', x: b.ix0 + 1 + Math.floor(rr() * (iw - 2)), y: b.iy0 + 1 + Math.floor(rr() * (ih - 3)), c: pick(rr, ['#c8443a', '#3a6ac8', '#e0b030', '#3a9a5a', '#e8e0d0']) });
-      props.push({ t: 'cross', x: b.x0 + (b.x1 - b.x0) / 2, y: b.y0 + (b.y1 - b.y0) / 2, memorial: year >= 1920 });
-      if (year < 1837) props.push({ t: 'stocks', x: b.ix1 - 1, y: b.iy1 - 1 });
-      props.push({ t: 'phone', x: b.x0, y: b.y0 });
-      props.push({ t: 'board', x: lots.market.tx, y: b.y1 - 1 });
-      continue;
-    }
-    if (kind === 'homes') {
-      const depth = ih >= 8 ? 3 : 2, v = rr(), list = [];
-      // What sort of housing a block has depends on when you are looking at it.
-      const variant = !exists ? 'field' : year < 1800 ? (b.ring <= 1 ? 'terrace' : 'cottages')
-        : year >= 1962 && b.ring >= 2 && v < 0.2 ? 'flats' : year >= 1925 && b.ring >= 2 && v < 0.72 ? 'semis'
-          : year >= 1830 && year < 1935 && ih >= 8 && v > 0.62 ? 'court' : 'terrace';
-      b.variant = variant;
-      const house = h => { const hb = addB(h.x, h.y, h.w, h.h, h.kind || 'house', { door: h.door, ring: b.ring }); homes.push({ tx: h.door.x, ty: h.door.y, x: (h.door.x + 0.5) * TILE, y: (h.door.y + 0.5) * TILE, b: hb }); return hb; };
-      if (variant === 'field') {
-        fieldFill(b.ix0, b.iy0, b.ix1, b.iy1, 1 + Math.floor(rr() * 4));
-        for (let i = 0; i < 4; i++) set(b.ix0 + Math.floor(rr() * iw), b.iy0 + Math.floor(rr() * ih), G.TREE);
-        if (rr() < 0.5) props.push({ t: 'scarecrow', x: b.ix0 + iw / 2, y: b.iy0 + ih / 2 });
-        b.edge = 'hedge';
-      } else if (variant === 'cottages') {
-        fieldFill(b.ix0, b.iy0 + 2, b.ix1, b.iy1 - 2, 4);
-        for (let x = b.ix0; x + 1 <= b.ix1; x += 3 + Math.floor(rr() * 2)) if (rr() < 0.85) house({ x, y: b.iy0, w: 2, h: 2, door: { x, y: b.y0 } });
-        for (let x = b.ix0 + 1; x + 1 <= b.ix1; x += 3 + Math.floor(rr() * 2)) if (rr() < 0.85) house({ x, y: b.iy1 - 1, w: 2, h: 2, door: { x, y: b.y1 } });
-        for (let i = 0; i < 3; i++) set(b.ix0 + Math.floor(rr() * iw), b.iy0 + 2 + Math.floor(rr() * Math.max(1, ih - 4)), G.TREE);
-        props.push({ t: 'well', x: b.ix0 + Math.floor(iw / 2), y: b.iy0 + Math.floor(ih / 2) });
-        b.edge = 'hedge';
-      } else if (variant === 'flats') {
-        const fw = Math.min(iw - 1, 5), two = ih >= 7, py = b.iy0 + (two ? 3 : 1);
-        house({ x: b.ix0, y: b.iy1 - 1, w: fw, h: 2, kind: 'flats', door: { x: b.ix0 + Math.floor(fw / 2), y: b.y1 } });
-        if (two) house({ x: b.ix1 - fw + 1, y: b.iy0, w: fw, h: 2, kind: 'flats', door: { x: b.ix1 - Math.floor(fw / 2), y: b.y0 } });
-        fill(b.ix0, py, b.ix1, py, G.YARD);
-        for (let i = 0; i < iw; i += 2) parkSpots.push({ x: (b.ix0 + i + 0.5) * TILE, y: (py + 0.5) * TILE, ang: 0 });
-        if (fw + 2 <= iw) props.push({ t: 'playground', x: b.ix0 + fw + 0.4, y: b.iy1 - 1 });
-        b.edge = 'fence';
-      } else {
-        const semis = variant === 'semis', back = semis && ih >= 8 ? 1 : 0, d = semis ? 2 : depth;
-        rowHouses(rr, b.ix0, b.ix1, b.iy0 + back, d, b.y0, !semis && attached, list);
-        rowHouses(rr, b.ix0, b.ix1, b.iy1 - d + 1 - back, d, b.y1, !semis && attached, list);
-        for (const h of list) house(h);
-        const m0 = b.iy0 + back + d, m1 = b.iy1 - back - d; // the rows behind the houses
-        if (variant === 'court' && m1 >= m0) {
-          fill(b.ix0, m0, b.ix1, m1, G.YARD);
-          if (m1 - m0 >= 2) { const l2 = []; rowHouses(rr, b.ix0 + 1, b.ix1 - 1, m0 + 1, Math.min(2, m1 - m0 - 1), 0, true, l2); for (const h of l2) addB(h.x, h.y, h.w, h.h, 'house', { ring: b.ring }); }
-          for (let x = b.ix0; x <= b.ix1; x += 3) props.push({ t: 'privy', x, y: m0 });
-        } else if (m1 >= m0) {
-          // back gardens: a fence every plot, and something different in each
-          const stuff = year >= 1990 ? ['flowers', 'shed', 'tramp', 'patio', 'veg', 'bin', 'pool'] : year >= 1950 ? ['wash', 'shed', 'veg', 'flowers', 'bin', 'veg'] : year >= 1850 ? ['wash', 'privy', 'coal', 'veg', 'wash', 'hens'] : ['veg', 'woodpile', 'wash', 'hens', 'veg'];
-          for (let x = b.ix0; x <= b.ix1;) {
-            const w = 2 + Math.floor(rr() * 2);
-            props.push({ t: 'gfence', x, y: m0, h: m1 - m0 + 1 });
-            props.push({ t: stuff[Math.floor(rr() * stuff.length)], x: x + (w > 2 ? 0.5 : 0), y: m0 + Math.floor(rr() * (m1 - m0 + 1)) });
-            if (m1 > m0 && rr() < 0.6) props.push({ t: stuff[Math.floor(rr() * stuff.length)], x: x + 1, y: m0 + Math.floor(rr() * (m1 - m0 + 1)) });
-            if (rr() < 0.16) set(x + 1, m0 + Math.floor(rr() * (m1 - m0 + 1)), G.TREE);
-            x += w;
-          }
-        }
-        if (back) for (let x = b.ix0; x <= b.ix1; x += 1) { if (rr() < 0.5) props.push({ t: 'flowers', x, y: b.iy0 }); if (rr() < 0.5) props.push({ t: 'flowers', x, y: b.iy1 }); }
-        b.edge = semis ? 'hedge' : year >= 1850 ? 'wall' : 'none';
-      }
-      continue;
-    }
-    if (kind === 'park') {
-      b.edge = 'hedge';
-      if (exists && year >= 1860) props.push({ t: 'bandstand', x: b.ix0 + iw / 2 - 0.5, y: b.iy0 + 1.5 });
-      if (exists && year >= 1900 && ih >= 7) props.push({ t: 'pitch', x: b.ix0 + 1, y: b.iy1 - 3, w: iw - 2, h: 3.4 });
-      if (year < 1714) props.push({ t: 'maypole', x: b.ix0 + iw / 2 - 0.5, y: b.iy0 + ih / 2 });
-      const n = 10;
-      for (let i = 0; i < n; i++) set(b.ix0 + Math.floor(rr() * iw), b.iy0 + Math.floor(rr() * ih), G.TREE);
-      const px = b.ix0 + 2 + Math.floor(rr() * Math.max(1, iw - 5)), py = b.iy0 + 2 + Math.floor(rr() * Math.max(1, ih - 5));
-      fill(px, py, px + 1, py + 1, G.WATER);
-      if (!exists) b.field = 'pasture';
-      continue;
-    }
-    // Landmarks: one main building facing the road to the south, with its own grounds.
-    let [bw, bh] = SPECIAL_SIZE[b.kind];
-    const ground = { church: G.GRASS, school: G.YARD, works: G.YARD, police: G.YARD, farm: G.FIELD, hub: G.APRON, pub: G.YARD }[b.kind] ?? G.GRASS;
-    fill(b.ix0, b.iy0, b.ix1, b.iy1, ground);
-    if (b.kind === 'hub') fill(b.x0, b.y0, b.x1, b.y1, G.APRON);
-    if (b.kind === 'works') { bw = iw; bh = ih - 3; }
-    if (b.kind === 'farm') fieldFill(b.ix0, b.iy0, b.ix1, b.iy1, 3);
-    b.edge = { church: 'wall', school: 'fence', works: 'wall', farm: 'hedge', infirmary: 'hedge', police: 'wall' }[b.kind] || 'none';
-    const bx = b.ix0 + Math.floor((iw - bw) / 2), by = b.iy1 - bh + 1;
-    const main = addB(bx, by, bw, bh, b.kind, { door: { x: bx + Math.floor(bw / 2), y: b.y1 } });
-    lot(b.kind, bx + Math.floor(bw / 2), b.y1, main);
-    if (b.kind === 'church') {
-      main.tower = { x: bx + 1, y: by + bh - 2, w: 2, h: 2 };
-      for (let i = 0; i < 12; i++) { const gx = b.ix0 + Math.floor(rr() * iw), gy = b.iy0 + Math.floor(rr() * ih); if (gx < bx - 0 || gx >= bx + bw) props.push({ t: 'grave', x: gx, y: gy }); }
-      set(b.ix0, b.iy0, G.TREE); set(b.ix1, b.iy0, G.TREE);
-    } else if (b.kind === 'pub') {
-      // the lock-up is behind the pub, facing the road to the north
-      const gx = b.ix0 + Math.floor((iw - 3) / 2);
-      const g = addB(gx, b.iy0, 3, 2, 'garage');
-      lot('garage', gx + 1, b.y0, g);
-    } else if (b.kind === 'works') {
-      props.push({ t: 'chimney', x: bx + bw - 1.5, y: by + 0.8 });
-      if (year >= 1760) props.push({ t: 'chimney', x: bx + 1.2, y: by + bh - 1.2 });
-    } else if (b.kind === 'farm') {
-      addB(b.ix0, b.iy0, 3, 3, 'barn');
-      for (let i = 0; i < 4; i++) props.push({ t: 'hay', x: b.ix0 + 4 + Math.floor(rr() * Math.max(1, iw - 5)), y: b.iy0 + Math.floor(rr() * 3) });
-      set(b.ix1, b.iy0, G.TREE); set(b.ix1, b.iy0 + 2, G.TREE);
-      if (year < 1850) { set(b.ix1 - 1, b.iy0 + 4, G.BUILD); props.push({ t: 'windmill', x: b.ix1 - 1, y: b.iy0 + 4 }); }
-    } else if (b.kind === 'hub') {
-      const my = (b.y0 + b.y1) / 2;
-      if (air) {
-        fill(xs[NB] + 2, b.y0 - 5, W - 3, b.y1 + 5, G.APRON);
-        props.push({ t: 'runway', x: xs[NB] + 6.5, y: b.y0 - 4, w: 4, h: b.y1 - b.y0 + 9 });
-        props.push({ t: 'plane', x: xs[NB] + 4.5, y: my - 2 });
-      } else {
-        fill(xs[NB] + 2, b.y0 - 2, xs[NB] + 3, b.y1 + 2, G.APRON);
-        props.push({ t: year >= 1840 ? 'steamer' : 'sail', x: xs[NB] + 6.5, y: my });
-        for (let i = 0; i < 5; i++) props.push({ t: 'crate', x: b.ix0 + Math.floor(rr() * iw), y: b.iy0 + Math.floor(rr() * 2) });
-      }
-    } else if (['hall', 'post', 'police', 'school', 'infirmary', 'office'].includes(b.kind)) {
-      // a short row of houses along the back of the block
-      if (by - b.iy0 >= 3) {
-        const list = [];
-        rowHouses(rr, b.ix0, b.ix1, b.iy0, 2, b.y0, true, list);
-        for (const h of list) { const hb = addB(h.x, h.y, h.w, h.h, 'house', { door: h.door }); homes.push({ tx: h.door.x, ty: h.door.y, x: (h.door.x + 0.5) * TILE, y: (h.door.y + 0.5) * TILE, b: hb }); }
-      }
-    }
+  const inPoly = (poly, x, y) => { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const a = poly[i], b = poly[j]; if ((a.y > y) !== (b.y > y) && x < (b.x - a.x) * (y - a.y) / (b.y - a.y) + a.x) c = !c; } return c; };
+  const polyFill = (poly, fn) => {
+    let x0 = W, x1 = 0, y0 = H, y1 = 0;
+    for (const p of poly) { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y); }
+    for (let y = Math.max(0, Math.floor(y0)); y <= Math.min(H - 1, Math.ceil(y1)); y++) for (let x = Math.max(0, Math.floor(x0)); x <= Math.min(W - 1, Math.ceil(x1)); x++) if (inPoly(poly, x + 0.5, y + 0.5)) fn(x, y);
+  };
+  // Water first, then parks, then the roads over the top (so every road that meets a river is a bridge).
+  for (const w of net.water || []) {
+    if (w.line) for (let i = 1; i < w.line.length; i++) stamp(w.line[i - 1], w.line[i], w.r, (x, y) => set(x, y, G.WATER));
+    else polyFill(w.poly, (x, y) => set(x, y, G.WATER));
   }
-  // Street lamps on the corners of built-up blocks.
-  if (year >= 1810) for (const b of blocks) if (year >= b.built && b.kind !== 'market') { props.push({ t: 'lamp', x: b.x0, y: b.y0 }); props.push({ t: 'lamp', x: b.x1, y: b.y1 }); }
+  for (const gp of net.green || []) polyFill(gp.poly, (x, y) => { if (tiles[y * W + x] === G.GRASS) keep[y * W + x] = 2; });
+  net.ways.forEach((w, wi) => {
+    const r = w.cls === 0 ? 1.12 : 1.0;
+    for (let i = 1; i < w.pts.length; i++) stamp(net.nodes[w.pts[i - 1]], net.nodes[w.pts[i]], r, (x, y) => { tiles[y * W + x] = G.ROAD; if (wayAt[y * W + x] < 0 || w.cls === 0) wayAt[y * W + x] = wi; });
+  });
+  for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) if (tiles[y * W + x] === G.ROAD) for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (tiles[(y + dy) * W + x + dx] === G.GRASS) tiles[(y + dy) * W + x + dx] = G.PAVE;
+  // how far every tile is from a road
+  const dRoad = new Uint8Array(W * H).fill(255);
+  { const q = []; for (let k = 0; k < W * H; k++) if (tiles[k] === G.ROAD) { dRoad[k] = 0; q.push(k); }
+    for (let h = 0; h < q.length; h++) { const k = q[h], x = k % W, y = (k - x) / W, d = dRoad[k] + 1; if (d > 60) continue; for (const [dx, dy] of DIRS) { const nx = x + dx, ny = y + dy; if (!inb(nx, ny) || dRoad[ny * W + nx] <= d) continue; dRoad[ny * W + nx] = d; q.push(ny * W + nx); } } }
+  // The old middle has always been there; the rest was built outwards over the centuries.
+  const ringAt = (x, y) => { const d = Math.hypot(x - cx, y - cy) / R; return d < 0.2 ? 0 : d < 0.4 ? 1 : d < 0.66 ? 2 : 3; };
+  const builtAt = (x, y) => { const rg = ringAt(x, y); if (rg <= 1) return 0; const h = hsh(Math.floor(x / 14) + 7, Math.floor(y / 14) + 3); return rg === 2 ? 1690 + Math.floor(h * 190) : 1850 + Math.floor(h * 125); };
 
-  // Street furniture, different in every period.
-  const fr = seededRandom(hashString('furn' + town.id + era));
+  const addB = (x, y, w, h, kind, extra = {}) => { const b = { x, y, w, h, kind, ...extra }; buildings.push(b); fill(x, y, x + w - 1, y + h - 1, G.BUILD); return b; };
+  const lot = (kind, tx, ty, b) => { lots[kind] = { kind, x: (tx + 0.5) * TILE, y: (ty + 0.5) * TILE, tx, ty, b, name: lotName(kind, town, year) }; };
+  const free = (x0, y0, x1, y1) => { if (x0 < 3 || y0 < 3 || x1 > W - 4 || y1 > H - 4) return false; for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (tiles[y * W + x] !== G.GRASS) return false; return true; };
+  // A plot of bw by bh with a road along its south side (or, failing that, its north), as near (wx, wy) as can be had.
+  const findPlot = (bw, bh, wx, wy, pad = 1) => {
+    let best = null, bd = 1e9;
+    for (let y = 4; y < H - 4; y++) for (let x = 4; x < W - 4; x++) {
+      if (tiles[y * W + x] !== G.PAVE) continue;
+      const d = Math.hypot(x - wx, y - wy);
+      if (d >= bd) continue;
+      const x0 = x - (bw >> 1);
+      if (tiles[(y + 1) * W + x] === G.ROAD && free(x0 - pad, y - bh - pad, x0 + bw - 1 + pad, y - 1)) { best = { x0, y0: y - bh, door: { x, y }, south: true }; bd = d; }
+      else if (d + 8 < bd && tiles[(y - 1) * W + x] === G.ROAD && free(x0 - pad, y + 1, x0 + bw - 1 + pad, y + bh + pad)) { best = { x0, y0: y + 1, door: { x, y }, south: false }; bd = d + 8; }
+    }
+    return best;
+  };
+  const GROUND = { church: G.GRASS, school: G.YARD, works: G.YARD, police: G.YARD, farm: G.FIELD, hub: G.APRON, pub: G.YARD };
+  const EDGE = { church: 'wall', school: 'fence', works: 'wall', farm: 'hedge', infirmary: 'hedge', police: 'wall' };
+  const landmark = (kind, wx, wy, pad = 1) => {
+    const [bw, bh] = SPECIAL_SIZE[kind];
+    const pl = findPlot(bw, bh, wx, wy, pad) || findPlot(bw, bh, wx, wy, 0) || findPlot(Math.min(bw, 3), Math.min(bh, 2), wx, wy, 0);
+    if (!pl) { const tx = Math.round(wx), ty = Math.round(wy); lot(kind, tx, ty, null); return null; }   // nowhere at all: at least the place exists
+    const w = pl.x0 + bw - 1 <= W - 4 ? bw : 3, h = bh;
+    const gx0 = pl.x0 - pad, gy0 = pl.y0 - (pl.south ? pad : 0), gx1 = pl.x0 + w - 1 + pad, gy1 = pl.y0 + h - 1 + (pl.south ? 0 : pad);
+    const gk = GROUND[kind] ?? G.GRASS;
+    for (let y = gy0; y <= gy1; y++) for (let x = gx0; x <= gx1; x++) if (get(x, y) === G.GRASS) { keep[y * W + x] = 1; if (gk === G.FIELD) { tiles[y * W + x] = G.FIELD; zone[y * W + x] = 3; } else tiles[y * W + x] = gk; }
+    const main = addB(pl.x0, pl.y0, w, h, kind, { door: pl.door });
+    lot(kind, pl.door.x, pl.door.y, main);
+    const blk = { x0: gx0, y0: gy0, x1: gx1, y1: gy1, kind, edge: EDGE[kind] || 'none', main, south: pl.south };
+    blocks.push(blk);
+    return blk;
+  };
+  // The market place: an open square as near the middle as there is room for one.
+  {
+    const pl = findPlot(9, 6, cx, cy, 0) || findPlot(6, 4, cx, cy, 0) || { x0: Math.round(cx) - 3, y0: Math.round(cy) - 4, door: { x: Math.round(cx), y: Math.round(cy) }, south: true, none: true };
+    const pw = pl.none ? 0 : free(pl.x0, pl.y0, pl.x0 + 8, pl.y0 + 5) ? 9 : 6, ph = pw === 9 ? 6 : 4;
+    const x0 = pl.x0, y0 = pl.y0, x1 = x0 + pw - 1, y1 = y0 + ph - 1;
+    if (pw) {
+      fill(x0, y0, x1, y1, G.PLAZA);
+      const pr = seededRandom(hashString('mkt' + town.id));
+      for (let i = 0; i < 5; i++) props.push({ t: 'stall', x: x0 + 1 + Math.floor(pr() * (pw - 3)), y: y0 + 1 + Math.floor(pr() * (ph - 2)), c: pick(pr, ['#c8443a', '#3a6ac8', '#e0b030', '#3a9a5a', '#e8e0d0']) });
+      props.push({ t: 'cross', x: x0 + pw / 2 - 0.5, y: y0 + ph / 2 - 0.5, memorial: year >= 1920 });
+      if (year < 1837) props.push({ t: 'stocks', x: x1 - 1, y: y1 - 1 });
+      props.push({ t: year >= 1860 ? 'fountain' : 'pump', x: x1 - 1.5, y: y0 + 0.5 });
+      for (let i = 0; i < 3; i++) props.push({ t: year >= 1900 ? 'bench' : 'barrel', x: x0 + 1 + i * 2, y: pl.south ? y0 : y1 });
+      blocks.push({ x0, y0, x1, y1, kind: 'market', edge: 'none' });
+    }
+    lot('market', pl.door.x, pl.door.y, null);
+    const phx = pw ? (pl.door.x - 3 >= x0 ? pl.door.x - 3 : x0) : pl.door.x + 2, phy = pl.door.y;
+    lot('phone', phx, phy, null);
+    props.push({ t: 'phone', x: phx, y: phy });
+    props.push({ t: 'board', x: pl.door.x, y: pl.south ? pl.door.y - 1 : pl.door.y + 1 });
+  }
+  // The landmarks, round the market place; then the ones that want room, further out.
+  {
+    const a0 = rnd() * 6.28, mk = lots.market, mx = mk.tx, my = mk.ty;
+    ['church', 'hall', 'pub', 'post', 'police', 'school', 'infirmary', 'office'].forEach((kind, n) => {
+      const a = a0 + n * 0.785 + (rnd() - 0.5) * 0.4, r = 11 + rnd() * 12;
+      const blk = landmark(kind, mx + Math.cos(a) * r, my + Math.sin(a) * r, kind === 'church' ? 2 : 1);
+      if (!blk) return;
+      const m = blk.main;
+      if (kind === 'church') {
+        m.tower = { x: m.x + 1, y: m.y + m.h - 2, w: 2, h: 2 };
+        const gr = seededRandom(hashString('graves' + town.id));
+        for (let i = 0, guard = 0; i < 12 && guard < 200; guard++) { const gx = blk.x0 + Math.floor(gr() * (blk.x1 - blk.x0 + 1)), gy = blk.y0 + Math.floor(gr() * (blk.y1 - blk.y0 + 1)); if (get(gx, gy) !== G.GRASS || props.some(p => p.t === 'grave' && p.x === gx && p.y === gy)) continue; props.push({ t: 'grave', x: gx, y: gy }); i++; }
+      } else if (kind === 'pub') {
+        // the lock-up is round the back of the pub
+        const g = findPlot(3, 2, m.x + 6, m.y - 5, 0);
+        if (g) { const gb = addB(g.x0, g.y0, 3, 2, 'garage', { door: g.door }); lot('garage', g.door.x, g.door.y, gb); }
+      }
+    });
+    if (!lots.garage) lot('garage', lots.pub.tx + 2, lots.pub.ty, null);
+    const far = (kind, frac, pad) => { const a = rnd() * 6.28; return landmark(kind, cx + Math.cos(a) * R * frac, cy + Math.sin(a) * R * frac, pad); };
+    const wk = far('works', 0.42, 1);
+    if (wk) { const m = wk.main; props.push({ t: 'chimney', x: m.x + m.w - 1.5, y: m.y + 0.8 }); if (year >= 1760) props.push({ t: 'chimney', x: m.x + 1.2, y: m.y + m.h - 1.2 }); }
+    const fm = far('farm', 0.8, 3);
+    if (fm) {
+      const m = fm.main, fr = seededRandom(hashString('farm' + town.id));
+      const bp = findPlot(3, 3, m.x + 7, m.y, 0);
+      if (bp && Math.hypot(bp.x0 - m.x, bp.y0 - m.y) < 16) addB(bp.x0, bp.y0, 3, 3, 'barn');
+      for (let i = 0; i < 4; i++) { const hx = fm.x0 + Math.floor(fr() * (fm.x1 - fm.x0 + 1)), hy = fm.y0 + Math.floor(fr() * (fm.y1 - fm.y0 + 1)); if (get(hx, hy) === G.FIELD) props.push({ t: 'hay', x: hx, y: hy }); }
+      if (year < 1850) for (let k = 0; k < 40; k++) { const wx = m.x - 3 + Math.floor(fr() * (m.w + 6)), wy = m.y - 4 + Math.floor(fr() * 3); if (get(wx, wy) === G.FIELD || get(wx, wy) === G.GRASS) { set(wx, wy, G.BUILD); props.push({ t: 'windmill', x: wx, y: wy }); break; } }
+    }
+    // the way out of town: an airport, or before that a quay if there is water, or a coach yard if there is not
+    const hb = far('hub', 0.7, 2);
+    if (hb) {
+      const m = hb.main, hr = seededRandom(hashString('hub' + town.id));
+      if (air) {
+        let rw = null;
+        for (const [ox, oy] of [[m.w + 3, -8], [-9, -8], [m.w + 3, -2], [-9, -2], [0, -22], [0, 6]]) if (free(m.x + ox, m.y + oy, m.x + ox + 5, m.y + oy + 15)) { rw = [m.x + ox, m.y + oy]; break; }
+        if (rw) { for (let y = rw[1]; y <= rw[1] + 15; y++) for (let x = rw[0]; x <= rw[0] + 5; x++) { tiles[y * W + x] = G.APRON; keep[y * W + x] = 1; } props.push({ t: 'runway', x: rw[0] + 1, y: rw[1], w: 4, h: 16 }); props.push({ t: 'plane', x: rw[0] + 3, y: rw[1] + 6 }); }
+        else props.push({ t: 'plane', x: hb.x0 + 1.5, y: hb.y0 + 1 });
+      } else {
+        let wt = null;
+        for (let r = 2; r < 22 && !wt; r++) for (let k = 0; k < 16 && !wt; k++) { const x = Math.round(m.x + m.w / 2 + Math.cos(k / 16 * 6.28) * r), y = Math.round(m.y + Math.sin(k / 16 * 6.28) * r); if (inb(x, y) && tiles[y * W + x] === G.WATER && get(x + 1, y) === G.WATER && get(x - 1, y) === G.WATER) wt = [x, y]; }
+        if (wt) props.push({ t: year >= 1840 ? 'steamer' : 'sail', x: wt[0] + 0.5, y: wt[1] });
+        for (let i = 0; i < 5; i++) props.push({ t: 'crate', x: hb.x0 + Math.floor(hr() * (hb.x1 - hb.x0 + 1)), y: hb.y0 });
+      }
+    }
+    for (const k of ['church', 'hall', 'pub', 'post', 'police', 'school', 'infirmary', 'office', 'works', 'farm', 'hub']) if (!lots[k]) lot(k, mx, my, null);
+  }
+
+  // Houses: along every built-up street, facing it, in whatever fashion the year and the part of town call for.
+  const putHouse = h => { const hb = addB(h.x, h.y, h.w, h.h, h.kind || 'house', { door: h.door, ring: h.ring }); homes.push({ tx: h.door.x, ty: h.door.y, x: (h.door.x + 0.5) * TILE, y: (h.door.y + 0.5) * TILE, b: hb }); return hb; };
+  const stuff = year >= 1990 ? ['flowers', 'shed', 'tramp', 'patio', 'veg', 'bin', 'pool'] : year >= 1950 ? ['wash', 'shed', 'veg', 'flowers', 'bin', 'veg'] : year >= 1850 ? ['wash', 'privy', 'coal', 'veg', 'wash', 'hens'] : ['veg', 'woodpile', 'wash', 'hens', 'veg'];
+  const row = (dx, dy) => {
+    const horiz = dy !== 0, A = horiz ? H : W, B = horiz ? W : H;
+    // a doorstep: pavement with the road right there, or one more flag of pavement first (so houses can follow a road that runs at a slant)
+    const front = (x, y) => { if (!inb(x, y) || tiles[y * W + x] !== G.PAVE) return false; const n1 = get(x + dx, y + dy); return n1 === G.ROAD || (n1 === G.PAVE && get(x + 2 * dx, y + 2 * dy) === G.ROAD); };
+    for (let a = 4; a < A - 4; a++) for (let b = 4; b < B - 4; b++) {
+      const x = horiz ? b : a, y = horiz ? a : b;
+      if (!front(x, y) || year < builtAt(x, y) || keep[y * W + x] === 2) continue;
+      const rg = ringAt(x, y), h1 = hsh(x * 3 + 1, y * 5 + 2), cell = hsh(Math.floor(x / 14), Math.floor(y / 14) + 9);
+      const variant = year < 1800 ? (rg <= 1 ? 'terrace' : 'cottages') : year >= 1962 && rg >= 2 && cell < 0.1 ? 'flats' : year >= 1925 && rg >= 2 && cell < 0.75 ? 'semis' : 'terrace';
+      if (variant === 'cottages' && h1 < 0.5) continue;
+      if (rg >= 3 && h1 < 0.16) continue;
+      const depth = variant === 'terrace' && h1 > 0.5 ? 3 : 2;
+      const fits = w => { for (let k = 0; k < w; k++) { const fx = horiz ? x + k : x, fy = horiz ? y : y + k; if (!front(fx, fy)) return false; for (let d = 1; d <= depth; d++) { const tx = fx - dx * d, ty = fy - dy * d; if (!inb(tx, ty) || tiles[ty * W + tx] !== G.GRASS || keep[ty * W + tx]) return false; } } return true; };
+      let w = variant === 'flats' ? 5 : variant === 'cottages' ? 2 : 2 + Math.floor(h1 * 2.99);
+      while (w >= 2 && !fits(w)) w--;
+      if (w < 2) continue;
+      const hx = horiz ? x : dx > 0 ? x - depth : x + 1, hy = horiz ? (dy > 0 ? y - depth : y + 1) : y;
+      const hb = putHouse({ x: hx, y: hy, w: horiz ? w : depth, h: horiz ? depth : w, kind: variant === 'flats' && w === 5 ? 'flats' : 'house', door: horiz ? { x: x + (w >> 1), y } : { x, y: y + (w >> 1) }, ring: rg });
+      // the garden behind
+      const gd = variant === 'cottages' ? 3 : 2, gx = [], gy = [];
+      for (let k = 0; k < w; k++) for (let d = depth + 1; d <= depth + gd; d++) { const tx = (horiz ? x + k : x) - dx * d, ty = (horiz ? y : y + k) - dy * d; if (inb(tx, ty) && tiles[ty * W + tx] === G.GRASS && !keep[ty * W + tx]) { keep[ty * W + tx] = 1; gx.push(tx); gy.push(ty); if (variant === 'cottages') { tiles[ty * W + tx] = G.FIELD; zone[ty * W + tx] = 4; } } }
+      if (gx.length && hb.kind === 'house' && variant !== 'cottages') { const gi = Math.floor(hsh(x + 5, y + 9) * gx.length); props.push({ t: stuff[Math.floor(hsh(x + 2, y + 4) * stuff.length)], x: gx[gi], y: gy[gi] }); if (horiz && gx.length >= 2) props.push({ t: 'gfence', x: Math.min(...gx), y: Math.min(...gy), h: Math.max(...gy) - Math.min(...gy) + 1 }); }
+      b += w - 1 + (variant === 'terrace' ? (h1 > 0.9 ? 1 : 0) : 1);
+    }
+  };
+  row(0, 1); row(0, -1); row(1, 0); row(-1, 0);
+
+  // Lamps and street furniture along the pavements, different in every period.
   const kit = year >= 1980 ? ['bin', 'bench', 'planter', 'postbox', 'bike', 'busstop', 'bin', 'planter'] : year >= 1925 ? ['postbox', 'bench', 'busstop', 'bin', 'pram', 'bike']
     : year >= 1853 ? ['postbox', 'bench', 'trough', 'handcart', 'barrel'] : year >= 1700 ? ['trough', 'barrel', 'handcart', 'pump'] : ['barrel', 'pump', 'handcart', 'woodpile'];
-  for (const b of blocks) {
-    if (year < b.built || b.kind === 'market' || b.kind === 'hub') continue;
-    const span = Math.max(1, b.x1 - b.x0 - 1), top = fr() < 0.5;
-    props.push({ t: kit[Math.floor(fr() * kit.length)], x: b.x0 + 1 + Math.floor(fr() * span), y: top ? b.y0 : b.y1 });
-    if (b.ring <= 1 && fr() < 0.8) props.push({ t: kit[Math.floor(fr() * kit.length)], x: b.x0 + 1 + Math.floor(fr() * span), y: top ? b.y1 : b.y0 });
-    if (year >= 1870 && year < 1975 && fr() < 0.5) props.push({ t: 'pole', x: b.x0, y: b.y0 + 2 + Math.floor(fr() * 4) });
+  const taken = new Set(homes.map(h => h.tx + ',' + h.ty));
+  for (const k of Object.values(lots)) taken.add(k.tx + ',' + k.ty);
+  for (let y = 4; y < H - 4; y++) for (let x = 4; x < W - 4; x++) {
+    if (tiles[y * W + x] !== G.PAVE || taken.has(x + ',' + y) || year < builtAt(x, y)) continue;
+    if (get(x + 1, y) !== G.ROAD && get(x - 1, y) !== G.ROAD && get(x, y + 1) !== G.ROAD && get(x, y - 1) !== G.ROAD) continue;
+    const h = hsh(x * 7 + 3, y * 11 + 1), rg = ringAt(x, y);
+    if (year >= 1810 && h < (rg <= 1 ? 0.07 : 0.045)) props.push({ t: 'lamp', x, y });
+    else if (h > (rg <= 1 ? 0.955 : 0.985)) props.push({ t: kit[Math.floor(hsh(x + 1, y + 1) * kit.length)], x, y });
+    else if (year >= 1870 && year < 1975 && h > 0.5 && h < 0.512) props.push({ t: 'pole', x, y });
   }
-  if (year >= 1951) for (const [i, j, vert] of [[C, C, false], [C + 1, C + 1, false], [C, C + 1, true], [C + 1, C, true]]) props.push({ t: 'zebra', x: vert ? xs[i] : xs[i] + 3.3, y: vert ? ys[j] + 3.3 : ys[j], vert });
-  { const mk = blocks.find(b => b.kind === 'market'); props.push({ t: year >= 1860 ? 'fountain' : 'pump', x: mk.ix1 - 1.5, y: mk.iy0 + 0.5 }); for (let i = 0; i < 4; i++) props.push({ t: year >= 1900 ? 'bench' : 'barrel', x: mk.ix0 + i * 2, y: mk.iy1 }); }
-  // Boats off the beach, and whatever the year leaves on the sand.
-  const br = seededRandom(hashString('beach' + town.id));
-  for (let i = 0; i < 9; i++) { const x = xs[NB] + 5 + br() * 6, y = 2 + br() * (H - 4), a = br() * 6.3, col = pick(br, ['#e8554a', '#4a8fd8', '#f2c230', '#f4efe2', '#4fb08a']); if (tiles[Math.floor(y) * W + Math.floor(x)] === G.WATER) props.push({ t: 'boat', x, y, a, c: col, sail: year < 1900 && br() < 0.5 }); }
-  for (let y = 3; y < H - 3; y += 2 + Math.floor(br() * 5)) {
-    if (tiles[y * W + xs[NB] + 2] !== G.SAND) continue;
-    props.push({ t: year >= 1955 ? pick(br, ['brolly', 'brolly', 'towel', 'castle']) : year >= 1870 ? pick(br, ['deckchair', 'castle', 'net']) : pick(br, ['net', 'pots', 'rowboat']), x: xs[NB] + 2 + br() * 1.2, y, c: pick(br, ['#e8554a', '#4a8fd8', '#f2c230', '#f08aa0', '#4fb08a']) });
+  // Trees, fields and woods on whatever is left.
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const k = y * W + x;
+    if (tiles[k] !== G.GRASS || keep[k] === 1) continue;
+    const d = dRoad[k], h = hsh(x * 13 + 5, y * 17 + 3), out = Math.hypot(x - cx, y - cy) / R;
+    if (x < 2 || y < 2 || x > W - 3 || y > H - 3) { tiles[k] = G.TREE; continue; }
+    if (keep[k] === 2) { if (h < 0.07 && d >= 2) tiles[k] = G.TREE; continue; }            // a park
+    if (out > 1.12 && h < 0.2) { tiles[k] = G.TREE; continue; }                              // woods beyond the last houses
+    const open = year < builtAt(x, y) || ringAt(x, y) >= 2;
+    if (open && d >= (year < builtAt(x, y) ? 2 : 5)) {
+      const z = [2, 3, 0, 1, 4, 3, 0, 2][Math.floor(hsh(Math.floor(x / 17) + 3, Math.floor(y / 12) + 8) * 8)];
+      if (h < 0.012) tiles[k] = G.TREE; else if (z) { tiles[k] = G.FIELD; zone[k] = z; }
+      continue;
+    }
+    if (h < 0.035 && d >= 2) tiles[k] = G.TREE;
   }
-  for (let y = 6; y < H - 6; y += 13) if (tiles[y * W + xs[NB] + 2] === G.SAND) props.push({ t: 'groyne', x: xs[NB] + 2, y });
 
   // Colours for the year and the part of the world: bright and flat, like a picture book.
   const er = seededRandom(hashString(town.id + era));
@@ -8579,7 +8786,6 @@ function buildTown(town, year, opts = {}) {
     apron: air ? '#8d90a0' : '#c49a62', water: '#52b8de', sand: '#f3e2a4', marks: era === 'retro' || era === 'modern', setts: era === 'victorian' || era === 'vintage', mud: era === 'early' || era === 'georgian',
   };
 
-  // Street names: the High Street, Market Street, Church Lane, and the rest after the family.
   const sr = seededRandom(hashString('streets' + town.id));
   const fam = (opts.surnames || []).filter(Boolean).slice(0, 40);
   for (let i = fam.length - 1; i > 0; i--) { const j = Math.floor(sr() * (i + 1)); [fam[i], fam[j]] = [fam[j], fam[i]]; }
@@ -8593,18 +8799,67 @@ function buildTown(town, year, opts = {}) {
   };
   let pi = 0;
   const local = MAIN_STREETS[town.key] || (form ? [form('Main', 0), form('Market', 1), form('Church', 0), form(air ? 'Airport' : 'Harbor', 1)] : null);
-  const streets = { h: ys.map((y, j) => j === C ? (local ? local[0] : named('High', 0, false)) : j === C + 1 ? (local ? local[1] : named('Market', 0, false)) : named(pool[pi++ % pool.length], j, false)),
-    v: xs.map((x, i) => i === C ? (local ? local[2] : named('Church', 0, true)) : i === NB ? (local ? local[3] : named(air ? 'Airport' : 'Quay', 1, true)) : named(pool[pi++ % pool.length], i, true)) };
-  const tramJ = year >= 1895 && year <= 1958 ? C : -1;
+  // Real streets keep their real names. The rest: High Street, Market Street, Church Lane, and then the family.
+  const names = [], byKey = new Map();
+  net.ways.forEach((w, wi) => {
+    let nm = w.name;
+    if (!nm) {
+      const k = w.key || 'w' + wi;
+      if (!byKey.has(k)) {
+        const a = net.nodes[w.pts[0]], b = net.nodes[w.pts[w.pts.length - 1]], vertical = Math.abs(b.y - a.y) > Math.abs(b.x - a.x);
+        byKey.set(k, k === 'high' ? (local ? local[0] : named('High', 0, false)) : k === 'market' ? (local ? local[1] : named('Market', 0, false)) : k === 'church' ? (local ? local[2] : named('Church', 0, true))
+          : w.close && !form ? pool[pi++ % pool.length] + (year < 1750 ? ' Yard' : pi % 3 ? ' Close' : ' Court') : named(pool[pi % pool.length], pi++, vertical));
+      }
+      nm = byKey.get(k);
+    }
+    let ni = names.indexOf(nm);
+    if (ni < 0) { names.push(nm); ni = names.length - 1; }
+    w.ni = ni;
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    for (const p of w.pts) { const n = net.nodes[p]; x0 = Math.min(x0, n.x); x1 = Math.max(x1, n.x); y0 = Math.min(y0, n.y); y1 = Math.max(y1, n.y); }
+    w.box = [x0, y0, x1, y1];
+  });
+  const hi = net.ways.findIndex(w => w.key === 'high');
+  const tramWay = year >= 1895 && year <= 1958 ? (hi >= 0 ? hi : net.ways.reduce((b, w, i) => w.cls === 0 && w.pts.length > net.ways[b].pts.length ? i : b, 0)) : -1;
+  // the junctions and bends, in pixels, with what each is joined to
+  const nodes = net.nodes.map(n => ({ x: n.x * TILE, y: n.y * TILE, nb: n.nb, dead: n.dead }));
+  const BK = 12 * TILE, bw = Math.ceil(W * TILE / BK), buckets = new Map();
+  nodes.forEach((n, i) => { const k = Math.floor(n.x / BK) + Math.floor(n.y / BK) * bw; if (!buckets.has(k)) buckets.set(k, []); buckets.get(k).push(i); });
+  const fields = new Map();
   const city = {
-    town, year, era, W, H, tiles, xs, ys, blocks, buildings, homes, props, lots, ground, air, left: town.left !== false, streets, tramJ, parkSpots, zone,
+    town, year, era, W, H, tiles, blocks, buildings, homes, props, lots, ground, air, left: town.left !== false, names, tramWay, parkSpots, zone, nodes, ways: net.ways, source: net.source, centre: { x: cx * TILE, y: cy * TILE },
     graves: props.filter(p => p.t === 'grave'),
     /** The street a point is on, or ''. */
-    streetAt(x, y) {
-      const tx = Math.floor(x / TILE), ty = Math.floor(y / TILE);
-      const j = ys.findIndex(v => ty === v || ty === v + 1), i = xs.findIndex(v => tx === v || tx === v + 1);
-      return j >= 0 && tx >= xs[0] && tx <= xs[NB] + 1 ? streets.h[j] : i >= 0 && ty >= ys[0] && ty <= ys[NB] + 1 ? streets.v[i] : '';
+    streetAt(x, y) { const tx = Math.floor(x / TILE), ty = Math.floor(y / TILE); if (tx < 0 || ty < 0 || tx >= W || ty >= H) return ''; const wi = wayAt[ty * W + tx]; return wi < 0 ? '' : names[net.ways[wi].ni]; },
+    /** The nearest junction or bend to a point (optionally only those that pass a test). */
+    nearNode(x, y, ok) {
+      let best = -1, bd = 1e18;
+      const bx = Math.floor(x / BK), by = Math.floor(y / BK);
+      for (let r = 0; r < 40; r++) {
+        for (let j = by - r; j <= by + r; j++) for (let i = bx - r; i <= bx + r; i++) {
+          if (Math.max(Math.abs(i - bx), Math.abs(j - by)) !== r) continue;
+          const list = buckets.get(i + j * bw); if (!list || i < 0 || i >= bw) continue;
+          for (const n of list) { if (ok && !ok(n)) continue; const d = (nodes[n].x - x) ** 2 + (nodes[n].y - y) ** 2; if (d < bd) { bd = d; best = n; } }
+        }
+        if (best >= 0 && bd < (r * BK) ** 2) break;
+      }
+      return best;
     },
+    /** How far every junction is from one of them, by road. */
+    field(from) {
+      let f = fields.get(from);
+      if (f) return f;
+      f = new Float32Array(nodes.length).fill(1e9); f[from] = 0;
+      const heap = [from];
+      while (heap.length) { let bi = 0; for (let i = 1; i < heap.length; i++) if (f[heap[i]] < f[heap[bi]]) bi = i; const k = heap[bi]; heap[bi] = heap[heap.length - 1]; heap.pop(); for (const m of nodes[k].nb) { const d = f[k] + Math.hypot(nodes[m].x - nodes[k].x, nodes[m].y - nodes[k].y); if (d < f[m]) { f[m] = d; heap.push(m); } } }
+      if (fields.size > 24) fields.delete(fields.keys().next().value);
+      fields.set(from, f);
+      return f;
+    },
+    /** The junctions to pass through, by the shortest road, from one to another. */
+    route(a, b) { const f = this.field(b), out = [a]; let k = a; for (let guard = 0; k !== b && guard < 4000; guard++) { let nx = -1, bd = f[k]; for (const m of nodes[k].nb) if (f[m] < bd) { bd = f[m]; nx = m; } if (nx < 0) break; out.push(nx); k = nx; } return out; },
+    /** How many tiles a tile is from the nearest road. */
+    roadDist(tx, ty) { return tx < 0 || ty < 0 || tx >= W || ty >= H ? 99 : dRoad[ty * W + tx]; },
     wpx: W * TILE, hpx: H * TILE, chunks: new Map(),
     at(tx, ty) { return tx < 0 || ty < 0 || tx >= W || ty >= H ? G.WATER : tiles[ty * W + tx]; },
     solid(tx, ty) { const t = this.at(tx, ty); return t === G.BUILD || t === G.WATER || t === G.TREE; },
@@ -8613,8 +8868,9 @@ function buildTown(town, year, opts = {}) {
     /** Can you get to this tile from the road, on foot or on wheels? (Gardens walled in by houses cannot be reached.) */
     reachable(tx, ty) {
       if (!this._reach) {
-        const r = this._reach = new Uint8Array(W * H), q = [[xs[0], ys[0]]];
-        r[ys[0] * W + xs[0]] = 1;
+        const sx = Math.floor(net.nodes[0].x), sy = Math.floor(net.nodes[0].y);
+        const r = this._reach = new Uint8Array(W * H), q = [[sx, sy]];
+        r[sy * W + sx] = 1;
         while (q.length) { const [x, y] = q.pop(); for (const [dx, dy] of DIRS) { const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= W || ny >= H || r[ny * W + nx] || this.solid(nx, ny)) continue; r[ny * W + nx] = 1; q.push([nx, ny]); } }
       }
       return tx >= 0 && ty >= 0 && tx < W && ty < H && this._reach[ty * W + tx] === 1;
@@ -8623,16 +8879,9 @@ function buildTown(town, year, opts = {}) {
     /** A lot by kind; 'home' needs the person it belongs to. */
     lot(kind, who) { if (kind === 'home') { const h = this.homeFor(who || 'x'); return { kind, x: h.x, y: h.y, tx: h.tx, ty: h.ty, name: 'the house' }; } return lots[kind] || lots.market; },
   };
-  city.roadCells = roadCells(city);
   return city;
 }
 
-// Every stretch of road as lane positions, for traffic.
-function roadCells(city) {
-  const { xs, ys } = city;
-  return { nx: xs.length, ny: ys.length,
-    node: (i, j) => ({ x: (xs[i] + 1) * TILE, y: (ys[j] + 1) * TILE }) };
-}
 const DIRS = [[1, 0], [0, 1], [-1, 0], [0, -1]]; // E S W N
 const MAIN_STREETS = {
   france: ['Grande Rue', 'Rue du Marché', 'Rue de l\'Église', 'Quai du Port'], belgium: ['Grand\'Rue', 'Rue du Marché', 'Rue de l\'Église', 'Quai du Port'],
@@ -8668,8 +8917,7 @@ function renderChunk(city, cx, cy) {
   const c = document.createElement('canvas');
   c.width = c.height = CHUNK * TILE;
   const g = c.getContext('2d');
-  const { ground: gr, xs, ys, zone } = city;
-  const isV = x => xs.some(v => x === v || x === v + 1), isH = y => ys.some(v => y === v || y === v + 1);
+  const { ground: gr, zone } = city;
   g.translate(-cx * CHUNK * TILE, -cy * CHUNK * TILE); // everything below is in world pixels
   g.lineCap = 'round';
   const trees = [];
@@ -8678,17 +8926,7 @@ function renderChunk(city, cx, cy) {
     const X = tx * TILE, Y = ty * TILE, n = hsh(tx, ty), m = hsh(ty + 31, tx + 17);
     if (isTree) trees.push([X, Y]);
     if (t === G.ROAD || t === G.PAVE) {
-      g.fillStyle = gr.road; g.fillRect(X, Y, TILE, TILE);
-      if (t === G.PAVE) continue;
-      const v = isV(tx), h = isH(ty);
-      if (gr.setts) { g.strokeStyle = 'rgba(45,36,56,0.14)'; g.lineWidth = 1.5; g.beginPath(); g.arc(X + 8, Y + 22, 8, Math.PI, 0); g.stroke(); g.beginPath(); g.arc(X + 24, Y + 10, 8, Math.PI, 0); g.stroke(); }
-      if (gr.mud) {
-        g.fillStyle = 'rgba(128,88,44,0.3)'; g.beginPath(); g.ellipse(X + 6 + n * 20, Y + 6 + m * 20, 7, 4, n * 3, 0, 7); g.fill();
-        if (v !== h) { g.strokeStyle = 'rgba(255,238,196,0.3)'; g.lineWidth = 2.5; g.beginPath(); if (h) { g.moveTo(X, Y + 10); g.lineTo(X + TILE, Y + 10); g.moveTo(X, Y + 22); g.lineTo(X + TILE, Y + 22); } else { g.moveTo(X + 10, Y); g.lineTo(X + 10, Y + TILE); g.moveTo(X + 22, Y); g.lineTo(X + 22, Y + TILE); } g.stroke(); }
-      }
-      if (gr.marks && v !== h) { g.fillStyle = '#fff6d8'; if (v && xs.includes(tx) && ty % 2 === 0) rrf(g, X + TILE - 2, Y + 5, 4, 22, 2); if (h && ys.includes(ty) && tx % 2 === 0) rrf(g, X + 5, Y + TILE - 2, 22, 4, 2); }
-      if (city.tramJ >= 0 && (ty === ys[city.tramJ] || ty === ys[city.tramJ] + 1)) { g.fillStyle = '#d8dce4'; g.fillRect(X, Y + 9, TILE, 2.5); g.fillRect(X, Y + 21, TILE, 2.5); g.fillStyle = 'rgba(45,36,56,0.35)'; g.fillRect(X, Y + 11.5, TILE, 1); g.fillRect(X, Y + 23.5, TILE, 1); }
-      if (!gr.mud && n > 0.987 && v !== h) { g.fillStyle = 'rgba(45,36,56,0.55)'; g.beginPath(); g.arc(X + 16, Y + 16, 6, 0, 7); g.fill(); g.fillStyle = gr.road; g.beginPath(); g.arc(X + 16, Y + 16, 4, 0, 7); g.fill(); }
+      g.fillStyle = t === G.ROAD ? gr.pave : gr.grass; g.fillRect(X, Y, TILE, TILE);
     } else if (t === G.WATER) {
       g.fillStyle = gr.water; g.fillRect(X, Y, TILE, TILE);
       if (n > 0.55) { g.strokeStyle = 'rgba(255,255,255,0.6)'; g.lineWidth = 2.2; g.beginPath(); g.arc(X + 9 + m * 14, Y + 13 + n * 8, 6, Math.PI * 1.15, Math.PI * 1.85); g.stroke(); }
@@ -8723,21 +8961,27 @@ function renderChunk(city, cx, cy) {
     }
   }
   for (const [X, Y] of trees) { g.fillStyle = 'rgba(45,36,56,0.22)'; g.beginPath(); g.ellipse(X + 21, Y + 22, 16, 13, 0, 0, 7); g.fill(); }
-  // each block: a ring of pavement with a kerb, and a hedge, wall or fence round the gardens
+  // the roads: smooth ribbons with an ink kerb, drawn over the pavement
+  const bx0 = cx * CHUNK - 3, by0 = cy * CHUNK - 3, bx1 = (cx + 1) * CHUNK + 3, by1 = (cy + 1) * CHUNK + 3;
+  const near = city.ways.filter(w => w.box[2] >= bx0 && w.box[0] <= bx1 && w.box[3] >= by0 && w.box[1] <= by1);
+  const trace = w => { g.beginPath(); w.pts.forEach((p, i) => { const n = city.nodes[p]; if (i) g.lineTo(n.x, n.y); else g.moveTo(n.x, n.y); }); };
+  g.lineJoin = 'round'; g.lineCap = 'round';
+  const wd = w => (w.cls === 0 ? 2.24 : 2.0) * TILE;
+  // pavement first: a wider ribbon under the road
+  for (const w of near) { trace(w); g.strokeStyle = gr.mud ? 'rgba(45,36,56,0.0)' : 'rgba(45,36,56,0.55)'; g.lineWidth = wd(w) + 1.9 * TILE + 3; g.stroke(); }
+  for (const w of near) { trace(w); g.strokeStyle = gr.pave; g.lineWidth = wd(w) + 1.9 * TILE; g.stroke(); }
+  if (!gr.mud) for (const w of near) { trace(w); g.strokeStyle = 'rgba(45,36,56,0.13)'; g.lineWidth = wd(w) + 1.9 * TILE - 4; g.setLineDash([1.5, TILE - 1.5]); g.lineCap = 'butt'; g.stroke(); g.setLineDash([]); g.lineCap = 'round'; }
+  for (const w of near) { trace(w); g.strokeStyle = gr.mud ? '#9a7444' : INK; g.lineWidth = wd(w) + (gr.mud ? 4 : 5); g.stroke(); }
+  for (const w of near) { trace(w); g.strokeStyle = gr.road; g.lineWidth = wd(w); g.stroke(); }
+  if (gr.setts) for (const w of near) { trace(w); g.strokeStyle = 'rgba(45,36,56,0.1)'; g.lineWidth = wd(w) - 10; g.setLineDash([3, 9]); g.stroke(); g.setLineDash([]); }
+  if (gr.mud) for (const w of near) { trace(w); g.strokeStyle = 'rgba(255,238,196,0.22)'; g.lineWidth = 22; g.stroke(); trace(w); g.strokeStyle = gr.road; g.lineWidth = 15; g.stroke(); }
+  if (gr.marks) for (const w of near) { if (w.close) continue; trace(w); g.strokeStyle = '#fff6d8'; g.lineWidth = 3; g.setLineDash([16, 18]); g.lineCap = 'butt'; g.stroke(); g.setLineDash([]); g.lineCap = 'round'; }
+  if (city.tramWay >= 0) { const tk = city.ways[city.tramWay].key; for (const w of near) { if (w !== city.ways[city.tramWay] && (tk == null || w.key !== tk)) continue; trace(w); g.strokeStyle = '#d8dce4'; g.lineWidth = 17; g.stroke(); trace(w); g.strokeStyle = gr.road; g.lineWidth = 12; g.stroke(); } }
+  // grounds: a hedge, wall or fence round the churchyard, the school, the works
   for (const b of city.blocks) {
     if (b.x1 < cx * CHUNK - 1 || b.x0 > (cx + 1) * CHUNK + 1 || b.y1 < cy * CHUNK - 1 || b.y0 > (cy + 1) * CHUNK + 1) continue;
-    const X0 = b.x0 * TILE, Y0 = b.y0 * TILE, Wd = (b.x1 - b.x0 + 1) * TILE, Hd = (b.y1 - b.y0 + 1) * TILE;
-    if (b.kind === 'market' || b.kind === 'hub') { g.strokeStyle = INK; g.lineWidth = 2.5; g.beginPath(); g.roundRect(X0 + 1, Y0 + 1, Wd - 2, Hd - 2, 10); g.stroke(); continue; }
-    g.beginPath(); g.roundRect(X0, Y0, Wd, Hd, 13); g.rect(X0 + TILE, Y0 + TILE, Wd - 2 * TILE, Hd - 2 * TILE);
-    g.fillStyle = gr.pave; g.fill('evenodd');
-    if (!gr.mud) {
-      g.strokeStyle = 'rgba(45,36,56,0.16)'; g.lineWidth = 1.5; g.beginPath();
-      for (let k = TILE; k < Wd; k += TILE) { g.moveTo(X0 + k, Y0 + 3); g.lineTo(X0 + k, Y0 + TILE); g.moveTo(X0 + k, Y0 + Hd - TILE); g.lineTo(X0 + k, Y0 + Hd - 3); }
-      for (let k = TILE; k < Hd; k += TILE) { g.moveTo(X0 + 3, Y0 + k); g.lineTo(X0 + TILE, Y0 + k); g.moveTo(X0 + Wd - TILE, Y0 + k); g.lineTo(X0 + Wd - 3, Y0 + k); }
-      g.stroke();
-      g.strokeStyle = INK; g.lineWidth = 2.5; g.beginPath(); g.roundRect(X0 + 1.2, Y0 + 1.2, Wd - 2.4, Hd - 2.4, 13); g.stroke();
-    }
-    const ix = X0 + TILE, iy = Y0 + TILE, iw = Wd - 2 * TILE, ih = Hd - 2 * TILE;
+    const ix = b.x0 * TILE, iy = b.y0 * TILE, iw = (b.x1 - b.x0 + 1) * TILE, ih = (b.y1 - b.y0 + 1) * TILE;
+    if (b.kind === 'market') { g.strokeStyle = INK; g.lineWidth = 2.5; g.beginPath(); g.roundRect(ix + 1, iy + 1, iw - 2, ih - 2, 8); g.stroke(); continue; }
     if (b.edge === 'hedge') { g.strokeStyle = '#2f8a44'; g.lineWidth = 7; g.setLineDash([26, 3]); g.strokeRect(ix + 2, iy + 2, iw - 4, ih - 4); g.setLineDash([]); g.strokeStyle = '#56b85e'; g.lineWidth = 3; g.setLineDash([10, 19]); g.strokeRect(ix + 1, iy + 1, iw - 4, ih - 4); g.setLineDash([]); }
     else if (b.edge === 'wall') { g.strokeStyle = INK; g.lineWidth = 5; g.strokeRect(ix + 1.5, iy + 1.5, iw - 3, ih - 3); g.strokeStyle = '#cdbf9f'; g.lineWidth = 2.5; g.strokeRect(ix + 1.5, iy + 1.5, iw - 3, ih - 3); }
     else if (b.edge === 'fence') { g.strokeStyle = '#a9773f'; g.lineWidth = 2.5; g.setLineDash([7, 4]); g.strokeRect(ix + 2, iy + 2, iw - 4, ih - 4); g.setLineDash([]); }
@@ -8748,10 +8992,15 @@ function renderChunk(city, cx, cy) {
   }
   // street names painted along the road (not on mud)
   if (!gr.mud) {
-    g.font = '800 10px "Nunito", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = gr.marks ? 'rgba(255,246,216,0.62)' : 'rgba(255,246,216,0.45)';
-    const X0 = cx * CHUNK - 6, X1 = (cx + 1) * CHUNK + 6, Y0 = cy * CHUNK - 6, Y1 = (cy + 1) * CHUNK + 6;
-    ys.forEach((y, j) => { if (y < Y0 || y > Y1) return; for (let i = 0; i < xs.length - 1; i++) { const mx = (xs[i] + xs[i + 1]) / 2 + 1; if (mx > X0 && mx < X1) g.fillText(city.streets.h[j].toUpperCase(), mx * TILE, (y + (city.left ? 0.5 : 1.5)) * TILE); } });
-    xs.forEach((x, i) => { if (x < X0 || x > X1) return; for (let j = 0; j < ys.length - 1; j++) { const my = (ys[j] + ys[j + 1]) / 2 + 1; if (my > Y0 && my < Y1) { g.save(); g.translate((x + (city.left ? 1.5 : 0.5)) * TILE, my * TILE); g.rotate(-Math.PI / 2); g.fillText(city.streets.v[i].toUpperCase(), 0, 0); g.restore(); } } });
+    g.font = '800 10px "Nunito", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = gr.marks ? 'rgba(255,246,216,0.66)' : 'rgba(255,246,216,0.48)';
+    const X0 = cx * CHUNK - 7, X1 = (cx + 1) * CHUNK + 7, Y0 = cy * CHUNK - 7, Y1 = (cy + 1) * CHUNK + 7, side = (city.left ? -1 : 1) * TILE * 0.5;
+    for (const w of near) {
+      if (w.pts.length < 3) continue;
+      const m = w.pts.length >> 1, a = city.nodes[w.pts[m - 1]], b = city.nodes[w.pts[m]], mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+      if (mx < X0 * TILE || mx > X1 * TILE || my < Y0 * TILE || my > Y1 * TILE) continue;
+      let ang = Math.atan2(b.y - a.y, b.x - a.x); if (ang > Math.PI / 2 || ang < -Math.PI / 2) ang += Math.PI;
+      g.save(); g.translate(mx, my); g.rotate(ang); g.fillText(city.names[w.ni].toUpperCase(), 0, side); g.restore();
+    }
   }
   return c;
 }
@@ -8848,12 +9097,13 @@ function drawGround(ctx, city, view) {
   const half = { w: view.w / 2 / view.z, h: view.h / 2 / view.z };
   const cs = CHUNK * TILE;
   const cx0 = Math.floor((view.x - half.w) / cs), cx1 = Math.floor((view.x + half.w) / cs), cy0 = Math.floor((view.y - half.h) / cs), cy1 = Math.floor((view.y + half.h) / cs);
-  ctx.fillStyle = city.ground.water; ctx.fillRect(0, 0, view.w, view.h);
+  ctx.fillStyle = '#3f8f46'; ctx.fillRect(0, 0, view.w, view.h);
   for (let cy = cy0; cy <= cy1; cy++) for (let cx = cx0; cx <= cx1; cx++) {
     if (cx < 0 || cy < 0 || cx * CHUNK >= city.W || cy * CHUNK >= city.H) continue;
     const key = cx + ',' + cy;
     let ch = city.chunks.get(key);
-    if (!ch) { ch = renderChunk(city, cx, cy); city.chunks.set(key, ch); }
+    if (!ch) { ch = renderChunk(city, cx, cy); if (city.chunks.size >= 56) city.chunks.delete(city.chunks.keys().next().value); } else city.chunks.delete(key);
+    city.chunks.set(key, ch);
     const sx = Math.floor((cx * cs - view.x) * view.z + view.w / 2), sy = Math.floor((cy * cs - view.y) * view.z + view.h / 2);
     ctx.drawImage(ch, sx, sy, Math.ceil(cs * view.z) + 1, Math.ceil(cs * view.z) + 1);
   }
@@ -9655,7 +9905,8 @@ const { lookFor } = __m_outfits;
 const { drawPortrait } = __m_textures;
 const { buildDialogue, voiceLine } = __m_dialogue;
 const { buildStory, eraOf, ERA_NAMES, eraWords, fareBetween, inkCost, residentsOf, oddJob, townNotes, kinOf, burialsIn, lifeSoFar } = __m_storyplot;
-const { buildTown, TILE, G, DIRS, laneOffset, drawGround, drawTall, renderMiniMap } = __m_storycity;
+const { buildTown, TILE, G, DIRS, drawGround, drawTall, renderMiniMap } = __m_storycity;
+const { makeNet, fetchNet, cachedNet, netFromOsm } = __m_storynet;
 const { VEHICLES, trafficMix, trafficCount, paintFor, drawVehicle, drawSmoke, strangerLook, lookSummary, drawPerson, drawItem, drawMarker, FIXED_LOOKS, drawPortraitExtras, drawCritter, ERASER_LOOK } = __m_storyart;
 const { mountStoryUi, escapeText } = __m_storyui;
 const { resolvePlace } = __m_places;
@@ -9797,7 +10048,7 @@ function openStory({ data, rootId, store, key, onClose }) {
   const ui = mountStoryUi();
   S = {
     data, tree, story, ui, store, key: (key || 'a3d') + ':story:' + rootId, onClose, t: 0, last: performance.now(), raf: 0,
-    save: null, city: null, mini: null, player: null, heirloom: null, vehicles: [], peds: [], items: [], floats: [], sparks: [], skids: [],
+    save: null, city: null, mini: null, player: null, heirloom: null, vehicles: [], peds: [], items: [], floats: [], sparks: [], skids: [], nets: new Map(), asked: new Set(),
     mission: null, step: null, busy: false, heat: 0, heatCalm: 0, bust: 0, dial: null, target: null, near: null,
     view: { x: 0, y: 0, z: 1, w: 1, h: 1 }, spawnT: 0, names: [], flash: 0, looks: new Map(), ringT: 0, paused: false,
     clock: 9, rain: 0, rainT: 0, rainRoll: -1, critters: [], burials: [], glitch: 0,
@@ -9814,6 +10065,20 @@ function openStory({ data, rootId, store, key, onClose }) {
   const hero = tree.people.get(rootId);
   S.player = { x: 0, y: 0, ang: 0, vehicle: null, hearts: 3, walk: 0, look: lookSummary(lookFor(hero)), down: 0, invuln: 0, moving: false };
   enterTown(story.towns.get(save.town), save.year, save.fresh ? 'start' : 'load');
+  if (realStreets() && S.city.source !== 'osm') {
+    // look up the real streets before anything starts; if they come, lay the town out again on them
+    const tok = S, town0 = S.city.town, others = [...story.towns.values()].filter(t => t.id !== town0.id);
+    S.busy = true;
+    ui.toast(`Looking up the real streets of ${town0.name}…`, 12000);
+    fetchStreets(town0).then(got => {
+      if (S !== tok) return;
+      if (got && !S.mission) enterTown(town0, save.year, save.fresh ? 'start' : 'load');
+      ui.toast(got ? `The real streets of ${town0.name}. © OpenStreetMap contributors` : '', got ? 4200 : 1);
+      S.busy = false;
+      // and the other towns in the story, one at a time, so they are ready when you get there
+      (async () => { for (const t of others) { await new Promise(r => setTimeout(r, 1600)); if (S !== tok) return; await fetchStreets(t); } })();
+    });
+  }
   // Hooks for the headless test (tests/story-smoke.py): jump to the current target, finish a step, travel.
   S.debug = {
     warp() { if (['tail', 'defend', 'catch'].includes(S.step?.step.t)) return; if (S.step?.step.need === 'heirloom' || ['carry', 'chase'].includes(S.step?.step.t)) this.intoHeirloom(); const t = stepTarget() || idleTarget(); if (!t) return; const P = S.player, sp = freeSpotNear(t.x, t.y, 0); if (P.vehicle) { const r = roadNear(t.x, t.y); P.vehicle.x = r.x; P.vehicle.y = r.y; P.vehicle.speed = P.vehicle.vx = P.vehicle.vy = 0; P.x = r.x; P.y = r.y; } else { P.x = sp.x; P.y = sp.y; } S.view.x = P.x; S.view.y = P.y; },
@@ -9825,6 +10090,7 @@ function openStory({ data, rootId, store, key, onClose }) {
     startFav(f) { if (f && !S.mission) startMission(f); },
     target() { return stepTarget(); },
     fail() { failMission('Too late.'); },
+    useOsm(townId, json, lat, lon) { const net = netFromOsm(json, lat, lon); if (net) S.nets.set(townId, net); return net ? { nodes: net.nodes.length, ways: net.ways.length } : null; },
     startSide(k) { if (!S.mission) startSide(k); },
     startNext() { const n = nextStory(); if (n && isHere(n) && !S.mission) startMission(n); },
   };
@@ -9925,17 +10191,35 @@ function makeVehicle(type, x, y, ang, extra = {}) {
   S.vehicles.push(v);
   return v;
 }
+// Real street plans come from OpenStreetMap, once per town, and are kept on this device. Off: every town is drawn.
+const realStreets = () => { try { return localStorage.getItem('a3d:realstreets') !== '0'; } catch (e) { return false; } };
+/** Fetch a town's real streets if we have not got them. Resolves true if a new plan arrived. */
+async function fetchStreets(town) {
+  const tok = S;
+  if (!realStreets() || S.asked.has(town.id)) return false;
+  S.asked.add(town.id);
+  const cur = S.nets.get(town.id);
+  if ((cur && cur.source === 'osm') || cachedNet(town) === null) return false;
+  const net = await fetchNet(town);
+  if (S !== tok || !net) return false;
+  S.nets.set(town.id, net);
+  return true;
+}
 function parkHeirloom(x, y) {
-  const r = roadNear(x, y), h = S.heirloom;
-  const off = laneOffset(S.city, r.horiz ? 0 : 1);
-  h.x = r.x + (r.horiz ? 0 : off[0] * 0.2); h.y = r.y; h.ang = r.horiz ? 0 : Math.PI / 2; h.vx = h.vy = h.speed = 0;
+  const c = S.city, h = S.heirloom, n = c.nearNode(x, y), nb = c.nodes[n].nb;
+  const m = nb.slice().sort((a, b) => Math.hypot(c.nodes[a].x - x, c.nodes[a].y - y) - Math.hypot(c.nodes[b].x - x, c.nodes[b].y - y))[0];
+  if (m == null) { const r = roadNear(x, y); h.x = r.x; h.y = r.y; h.ang = 0; h.vx = h.vy = h.speed = 0; return; }
+  // the nearest point on that stretch, then over to the kerb
+  const A = c.nodes[n], B = c.nodes[m], dx = B.x - A.x, dy = B.y - A.y, l2 = dx * dx + dy * dy || 1, t = clamp(((x - A.x) * dx + (y - A.y) * dy) / l2, 0.15, 0.85), d = Math.sqrt(l2), side = (c.left ? 1 : -1) * 0.55 * T;
+  h.x = A.x + dx * t + dy / d * side; h.y = A.y + dy * t - dx / d * side; h.ang = Math.atan2(dy, dx); h.vx = h.vy = h.speed = 0;
 }
 
 function enterTown(town, year, where) {
   const P = S.player, old = S.city;
   const keep = where === 'jump' && P.vehicle === S.heirloom;
   if (old && S.mission && S.step?.step.t !== 'travel' && !S.hopping) failMission('You left before the job was done.');
-  S.city = buildTown(town, year, { surnames: S.surnames });
+  if (!S.nets.has(town.id)) S.nets.set(town.id, (realStreets() && cachedNet(town)) || makeNet(town));
+  S.city = buildTown(town, year, { surnames: S.surnames, net: S.nets.get(town.id) });
   S.mini = renderMiniMap(S.city, 2);
   const c = S.city;
   S.vehicles = [];
@@ -9986,7 +10270,7 @@ function enterTown(town, year, where) {
   const rank = c.lots.hub, cabType = year >= 1950 ? 'taxi' : year >= 1830 ? 'cab' : null;
   if (cabType && !circleSolid(rank.x + 2.4 * T, rank.y, 16)) makeVehicle(cabType, rank.x + 2.4 * T, rank.y, 0, { parked: true });
   // the tram runs up and down the High Street
-  if (c.tramJ >= 0) { const tp = lanePt(0, c.tramJ, 0, 1); makeVehicle('tram', tp.x, tp.y, 0, { ai: 'traffic', straight: true, keep: true, dir: 0, ni: 1, nj: c.tramJ }); }
+  if (c.tramWay >= 0) { const w = c.ways[c.tramWay], a = w.pts[0], b = w.pts[1], tp = lanePt(a, b, 1); makeVehicle('tram', tp.x, tp.y, Math.atan2(c.nodes[b].y - c.nodes[a].y, c.nodes[b].x - c.nodes[a].x), { ai: 'traffic', straight: true, keep: true, pn: a, n: b }); }
   S.burials = burialsIn(S.data, town, year);
   c.graves.forEach((gv, i) => { gv.who = S.burials[i] || null; });
   spawnCritters();
@@ -10118,28 +10402,43 @@ function spark(x, y, n = 5, col = '#ffe08a') { for (let i = 0; i < n; i++) { con
 function float(x, y, text, col = '#fff') { S.floats.push({ x, y, text, t: 2.2, col }); }
 
 // Traffic follows the lanes from junction to junction.
-const hasNode = (i, j) => i >= 0 && j >= 0 && i < S.city.xs.length && j < S.city.ys.length;
-const nodeC = (i, j) => ({ x: (S.city.xs[i] + 1) * T, y: (S.city.ys[j] + 1) * T });
-function lanePt(i, j, dir, sign) { const c = nodeC(i, j), lo = laneOffset(S.city, dir); return { x: c.x + DIRS[dir][0] * 1.7 * T * sign + lo[0], y: c.y + DIRS[dir][1] * 1.7 * T * sign + lo[1] }; }
+// Where a vehicle going from junction a to junction b should be: on its own side of the road, back a little
+// from b (at = -1) or a little way on from a (at = 1).
+function lanePt(a, b, at) {
+  const c = S.city, A = c.nodes[a], B = c.nodes[b], dx = B.x - A.x, dy = B.y - A.y, d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d;
+  const side = (c.left ? 1 : -1) * 0.5 * T, back = Math.min(1.5 * T, d * 0.45), o = at < 0 ? B : A, k = at < 0 ? -back : back;
+  return { x: o.x + ux * k + uy * side, y: o.y + uy * k - ux * side };
+}
+const turnOf = (a, b, n) => { const c = S.city.nodes; return Math.abs(angDiff(Math.atan2(c[n].y - c[b].y, c[n].x - c[b].x), Math.atan2(c[b].y - c[a].y, c[b].x - c[a].x))); };
+// The junction the player (or whoever is being hunted) is nearest, and how far everything is from it by road.
+function preyField(prey) {
+  const c = S.city, k = prey === S.player || !prey ? 'p' : 'v' + prey.id, t = S.pf || (S.pf = {});
+  if (!t[k] || t[k].until < S.t || t[k].city !== c) { const q = prey && prey !== S.player ? prey : S.player.vehicle || S.player; t[k] = { until: S.t + 0.8, city: c, f: c.field(c.nearNode(q.x, q.y)) }; }
+  return t[k].f;
+}
+// Having reached v.n (from v.pn), choose where to go next.
 function planLeg(v) {
-  let opts = [0, 1, 2, 3].filter(d => d !== (v.dir + 2) % 4 && hasNode(v.ni + DIRS[d][0], v.nj + DIRS[d][1]));
-  if (!opts.length) opts = [(v.dir + 2) % 4];
-  let nd;
-  const P = v.prey && !v.prey.dead ? v.prey : S.player, score = d => { const n = nodeC(v.ni + DIRS[d][0], v.nj + DIRS[d][1]); return Math.hypot(n.x - P.x, n.y - P.y); };
-  const lead = d => { const n = nodeC(v.ni + DIRS[d][0], v.nj + DIRS[d][1]); return Math.hypot(n.x - v.dest.x, n.y - v.dest.y); };
-  if (v.ai === 'flee') nd = opts.slice().sort((a, b) => score(b) - score(a))[Math.random() < 0.8 ? 0 : opts.length - 1];
-  else if (v.ai === 'lead') nd = opts.slice().sort((a, b) => lead(a) - lead(b))[0];
-  else if (v.ai === 'cop' || v.ai === 'hunt') nd = opts.slice().sort((a, b) => score(a) - score(b))[0];
-  else if (v.straight) nd = opts.includes(v.dir) ? v.dir : (v.dir + 2) % 4;
-  else nd = opts.includes(v.dir) && Math.random() < 0.55 ? v.dir : opts[Math.floor(Math.random() * opts.length)];
-  v.nd = nd;
-  v.wp = [lanePt(v.ni, v.nj, v.dir, -1), lanePt(v.ni, v.nj, nd, 1)];
+  const c = S.city, here = c.nodes[v.n];
+  let opts = here.nb.filter(m => m !== v.pn);
+  if (!opts.length) opts = [v.pn];
+  const live = opts.filter(m => !c.nodes[m].dead);
+  let nn;
+  if (v.ai === 'lead') { if (v.destN == null || v.destFor !== v.dest) { v.destN = c.nearNode(v.dest.x, v.dest.y); v.destFor = v.dest; } const f = c.field(v.destN); nn = here.nb.slice().sort((a, b) => f[a] - f[b])[0]; }
+  else if (v.ai === 'flee') { const f = preyField(S.player), pool = live.length ? live : opts; nn = pool.slice().sort((a, b) => f[b] - f[a])[Math.random() < 0.8 ? 0 : pool.length - 1]; }
+  else if (v.ai === 'cop' || v.ai === 'hunt') { const f = preyField(v.prey && !v.prey.dead ? v.prey : S.player); nn = here.nb.slice().sort((a, b) => f[a] - f[b])[0]; }
+  else {
+    const pool = live.length && !(c.nodes[v.n].dead) ? live : opts, straight = pool.slice().sort((a, b) => turnOf(v.pn, v.n, a) - turnOf(v.pn, v.n, b))[0];
+    nn = v.straight || Math.random() < 0.6 ? straight : pool[Math.floor(Math.random() * pool.length)];
+  }
+  v.nn = nn;
+  v.wp = [lanePt(v.pn, v.n, -1), lanePt(v.n, nn, 1)];
 }
 function aiDrive(v, dt) {
   const st = VEHICLES[v.type], P = S.player;
+  if (v.hold > 0) { v.hold -= dt; driveVehicle(v, { thr: 0, steer: 0, brake: true }, dt); return; }   // waiting to set off
   if (!v.wp || !v.wp.length) planLeg(v);
   let tgt = v.wp[0];
-  if (v.ai === 'lead' && Math.hypot(v.dest.x - v.x, v.dest.y - v.y) < 3.4 * T) {
+  if (v.ai === 'lead' && (Math.hypot(v.dest.x - v.x, v.dest.y - v.y) < 3.4 * T || (v.destN != null && v.destFor === v.dest && Math.hypot(S.city.nodes[v.destN].x - v.x, S.city.nodes[v.destN].y - v.y) < 2.2 * T))) {
     if (v.route && v.route.length) { v.dest = v.route.shift(); planLeg(v); tgt = v.wp[0]; }
     else { v.ai = null; v.arrived = true; return; }
   }
@@ -10150,7 +10449,7 @@ function aiDrive(v, dt) {
   const fx = Math.cos(v.ang), fy = Math.sin(v.ang);
   if (tgt === v.wp[0] && (d < 0.75 * T || (d < 2.4 * T && dx * fx + dy * fy < 0))) {
     v.wp.shift();
-    if (!v.wp.length) { v.dir = v.nd; v.ni += DIRS[v.dir][0]; v.nj += DIRS[v.dir][1]; planLeg(v); }
+    if (!v.wp.length) { v.pn = v.n; v.n = v.nn; planLeg(v); }
     tgt = v.wp[0];
   }
   const want = Math.atan2(tgt.y - v.y, tgt.x - v.x), da = angDiff(want, v.ang);
@@ -10184,35 +10483,32 @@ function spawnTraffic(target) {
   const c = S.city, P = S.player, n = S.vehicles.filter(v => v.ai === 'traffic').length;
   if (n >= target) return;
   const vr = Math.hypot(S.view.w, S.view.h) / 2 / S.view.z + 2 * T;
-  for (let tries = 0; tries < 8; tries++) {
-    const i = Math.floor(Math.random() * c.xs.length), j = Math.floor(Math.random() * c.ys.length), d = Math.floor(Math.random() * 4);
-    if (!hasNode(i + DIRS[d][0], j + DIRS[d][1])) continue;
-    const p = lanePt(i, j, d, 1), dp = Math.hypot(p.x - P.x, p.y - P.y);
-    if (dp < vr || dp > 34 * T) continue;
+  for (let tries = 0; tries < 10; tries++) {
+    // somewhere just out of sight of the player
+    const a = Math.random() * 6.283, r = vr + (2 + Math.random() * 12) * T;
+    const n = c.nearNode(P.x + Math.cos(a) * r, P.y + Math.sin(a) * r), nb = c.nodes[n].nb;
+    if (c.nodes[n].dead || !nb.length) continue;
+    const m = nb[Math.floor(Math.random() * nb.length)], p = lanePt(n, m, 1), dp = Math.hypot(p.x - P.x, p.y - P.y);
+    if (dp < vr || dp > vr + 22 * T) continue;
     if (S.vehicles.some(v => Math.hypot(v.x - p.x, v.y - p.y) < 3.5 * T)) continue;
-    const mix = trafficMix(c.year), tot = mix.reduce((a, m) => a + m[1], 0);
-    let r = Math.random() * tot, type = mix[0][0];
-    for (const m of mix) { r -= m[1]; if (r <= 0) { type = m[0]; break; } }
-    const v = makeVehicle(type, p.x, p.y, Math.atan2(DIRS[d][1], DIRS[d][0]), { ai: 'traffic', dir: d, ni: i + DIRS[d][0], nj: j + DIRS[d][1] });
+    const mix = trafficMix(c.year), tot = mix.reduce((a2, q) => a2 + q[1], 0);
+    let rr = Math.random() * tot, type = mix[0][0];
+    for (const q of mix) { rr -= q[1]; if (rr <= 0) { type = q[0]; break; } }
+    const v = makeVehicle(type, p.x, p.y, Math.atan2(c.nodes[m].y - c.nodes[n].y, c.nodes[m].x - c.nodes[n].x), { ai: 'traffic', pn: n, n: m });
     v.color = paintFor(type, Math.random);
     return;
   }
 }
 function spawnAi(type, nearPt, ai, extra = {}) {
   const c = S.city, P = S.player;
-  let best = null, bd = 1e9;
-  for (let i = 0; i < c.xs.length; i++) for (let j = 0; j < c.ys.length; j++) {
-    const n = nodeC(i, j), d = Math.hypot(n.x - nearPt.x, n.y - nearPt.y) + (extra.minPlayer && Math.hypot(n.x - P.x, n.y - P.y) < extra.minPlayer ? 1e6 : 0);
-    if (d < bd) { bd = d; best = [i, j]; }
-  }
-  const [i, j] = best;
-  const dirs = [0, 1, 2, 3].filter(d => hasNode(i + DIRS[d][0], j + DIRS[d][1]));
-  const far = d => { const n = nodeC(i + DIRS[d][0], j + DIRS[d][1]); return Math.hypot(n.x - P.x, n.y - P.y); };
-  const toDest = d => { const n = nodeC(i + DIRS[d][0], j + DIRS[d][1]); return Math.hypot(n.x - extra.dest.x, n.y - extra.dest.y); };
-  dirs.sort((a, b) => ai === 'lead' ? toDest(a) - toDest(b) : ai === 'flee' ? far(b) - far(a) : far(a) - far(b));
-  const d = dirs[0], p = lanePt(i, j, d, 1);
+  const n = c.nearNode(nearPt.x, nearPt.y, extra.minPlayer ? k => Math.hypot(c.nodes[k].x - P.x, c.nodes[k].y - P.y) >= extra.minPlayer : null);
+  const nb = c.nodes[n].nb.slice();
+  const far = k => Math.hypot(c.nodes[k].x - P.x, c.nodes[k].y - P.y);
+  if (ai === 'lead') { const f = c.field(c.nearNode(extra.dest.x, extra.dest.y)); nb.sort((a, b) => f[a] - f[b]); }
+  else nb.sort((a, b) => ai === 'flee' ? far(b) - far(a) : far(a) - far(b));
+  const m = nb[0], p = lanePt(n, m, 1);
   for (const o of S.vehicles) if (o.ai === 'traffic' && Math.hypot(o.x - p.x, o.y - p.y) < 3 * T) o.gone = true;
-  return makeVehicle(type, p.x, p.y, Math.atan2(DIRS[d][1], DIRS[d][0]), { ai, dir: d, ni: i + DIRS[d][0], nj: j + DIRS[d][1], ...extra });
+  return makeVehicle(type, p.x, p.y, Math.atan2(c.nodes[m].y - c.nodes[n].y, c.nodes[m].x - c.nodes[n].x), { ai, pn: n, n: m, ...extra });
 }
 
 function collideVehicles() {
@@ -10231,15 +10527,15 @@ function collideVehicles() {
     A.vx -= nx * vn * wb * 1.1; A.vy -= ny * vn * wb * 1.1; B.vx += nx * vn * wa * 1.1; B.vy += ny * vn * wa * 1.1;
     A.speed = A.vx * Math.cos(A.ang) + A.vy * Math.sin(A.ang); B.speed = B.vx * Math.cos(B.ang) + B.vy * Math.sin(B.ang);
     const hunter = A.ai === 'hunt' && B.convoy ? A : B.ai === 'hunt' && A.convoy ? B : null;
-    if (hunter && !(hunter.ramCd > 0)) { const cv = hunter === A ? B : A; hunter.ramCd = 3.8; hunter.speed *= 0.3; cv.hp -= 1; float(cv.x, cv.y - 30, 'RAMMED!', '#ff5a4a'); spark((A.x + B.x) / 2, (A.y + B.y) / 2, 8); }
+    if (hunter && !(hunter.ramCd > 0)) { const cv = hunter === A ? B : A; hunter.ramCd = 5; hunter.speed *= 0.3; cv.hp -= 1; float(cv.x, cv.y - 30, 'RAMMED!', '#ff5a4a'); spark((A.x + B.x) / 2, (A.y + B.y) / 2, 8); }
     if (A !== pv && B !== pv) continue;
     const other = A === pv ? B : A;
-    const nudge = other.ai === 'flee' && Math.abs(pv.speed) > 2.5 * T;  // touching the one you are chasing always counts
+    const nudge = (other.ai === 'flee' || (other.ai === 'hunt' && other.prey)) && Math.abs(pv.speed) > 2.5 * T;  // touching the one you are chasing always counts
     if (!nudge && vn < (other.ai === 'flee' ? 1.1 : 2.2) * T) continue;
     sfx.bump(); spark((A.x + B.x) / 2, (A.y + B.y) / 2, 8);
     if (other.ai === 'hunt') {
       const mine = Math.abs(pv.speed) >= Math.abs(other.speed);
-      if (mine && vn > 2.2 * T && other.hitCd <= 0) {
+      if (((mine && vn > 2.2 * T) || (other.prey && Math.abs(pv.speed) > 3 * T)) && other.hitCd <= 0) {   // anything going for the convoy only needs a shove
         other.hp -= 1 + 0.5 * up('bar'); other.hitCd = 0.8; other.speed *= 0.3; other.ramCd = Math.max(other.ramCd || 0, 1.5);
         float(other.x, other.y - 30, other.hp > 0 ? 'CRUNCH!' : 'RUBBED OUT! +£15', '#f08aa0');
         if (other.hp <= 0) { other.dead = true; other.ai = null; S.save.cash += 15; sfx.cash(); if (S.step && S.step.step.t === 'frenzy') S.step.k++; if (bump('erasers') >= 5) badge('rubber'); }
@@ -10250,7 +10546,7 @@ function collideVehicles() {
         gentleBump(vn + 3 * T);
       }
     } else if (other.ai === 'lead' || other.convoy) {
-      if (S.step && S.step.step.t === 'tail') S.step.spotted = 1;
+      if (S.step && S.step.step.t === 'tail' && !(S.step.grace > 0) && !(other.hold > 0) && !(other.tapCd > S.t)) { other.tapCd = S.t + 2; S.step.sus += Math.abs(pv.speed) > 3 * T ? 1 : 0.4; }   // run into them and they know; a touch at a crawl only makes them wonder
     } else if (other.ai === 'flee') {
       if (other.hitCd <= 0) { other.hp -= 1 + 0.5 * up('bar'); other.speed *= 0.6; other.hitCd = 0.9; float(other.x, other.y - 30, other.hp > 0 ? 'CRUNCH!' : 'GOT IT!', '#ffd84a'); if (S.step) S.step.hits = (S.step.hits || 0) + 1; }
     } else {
@@ -10320,7 +10616,7 @@ function knockDown(p, v) {
   sfx.bump();
   if (v !== S.player.vehicle) { float(p.x, p.y - 22, quip(), '#fff'); return; }
   if (p.runner || p.vandal) { p.caught = true; return; }
-  offence(p.cop ? 1 : 0.5);
+  offence(p.cop ? 1 : 0.34);
   if (p.rid && S.tree.people.has(p.rid) && S.tree.people.get(p.rid).gen > 0) {
     // your own ancestor: history objects
     const fine = Math.min(S.save.cash, 50);
@@ -10452,7 +10748,7 @@ function flattened() {
 }
 
 // ---------------- Missions ----------------
-const manh = (a, b) => (Math.abs(a.x - b.x) + Math.abs(a.y - b.y)) / T;
+const manh = (a, b) => { const c = S.city, na = c.nearNode(a.x, a.y), nb = c.nearNode(b.x, b.y); return (c.field(nb)[na] + dist(a, c.nodes[na]) + dist(b, c.nodes[nb])) / T * 1.08; };
 function nextStory() { return S.story.missions[S.save.idx] || (bonusReady() ? S.story.bonus : null); }
 const fragsGot = () => (S.save.frags || []).length;
 const bonusReady = () => S.story.bonus && !S.save.foundling && S.save.idx >= S.story.missions.length && fragsGot() >= S.story.frags.length;
@@ -10504,7 +10800,7 @@ function enterStep(step) {
     while (S.items.filter(i => i.step).length < step.n && guard++ < 600) {
       const a = Math.random() * 7, r = (3 + Math.random() * (step.radius - 3)) * T, x = l.x + Math.cos(a) * r, y = l.y + Math.sin(a) * r;
       const tt = c.at(Math.floor(x / T), Math.floor(y / T));
-      if (!c.reachable(Math.floor(x / T), Math.floor(y / T)) || circleSolid(x, y, 14) || (tt !== G.ROAD && tt !== G.PAVE && tt !== G.PLAZA && tt !== G.YARD && tt !== G.GRASS && tt !== G.FIELD && tt !== G.APRON)) continue;
+      if (!c.reachable(Math.floor(x / T), Math.floor(y / T)) || c.roadDist(Math.floor(x / T), Math.floor(y / T)) > 3 || circleSolid(x, y, 14) || (tt !== G.ROAD && tt !== G.PAVE && tt !== G.PLAZA && tt !== G.YARD && tt !== G.GRASS && tt !== G.FIELD && tt !== G.APRON)) continue;
       if (S.items.some(i => Math.hypot(i.x - x, i.y - y) < 2.5 * T)) continue;
       S.items.push({ step: true, x, y, kind: step.names ? 'truants' : kind, n: S.items.length, label: step.names ? step.names[S.items.filter(i => i.step).length] : null });
     }
@@ -10517,12 +10813,12 @@ function enterStep(step) {
   } else if (step.t === 'escape') { S.heat = Math.max(S.heat, step.heat); S.heatCalm = -6; S.copT = 7; }
   else if (step.t === 'tail') {
     const troute = [...(step.via || []), step.to].map(k => lotPt(k));
-    st.target = spawnAi(c.year < 1900 ? 'erasercoach' : 'eraser', lotPt(step.from), 'lead', { dest: troute.shift(), route: troute, pace: 0.5 });
-    st.sus = 0; st.lost = 0; st.grace = 5;
+    st.target = spawnAi(c.year < 1900 ? 'erasercoach' : 'eraser', lotPt(step.from), 'lead', { dest: troute.shift(), route: troute, pace: 0.5, hold: 4 });
+    st.sus = 0; st.lost = 0; st.grace = 10;
   } else if (step.t === 'defend') {
     const type = c.year < 1900 ? 'wagon' : c.year < 1950 ? 'lorry' : 'van';
     const route = [...(step.via || []), step.to].map(k => lotPt(k));
-    st.convoy = spawnAi(type, lotPt(step.from), 'lead', { dest: route.shift(), route, pace: 2.7 / VEHICLES[type].max, convoy: true });
+    st.convoy = spawnAi(type, lotPt(step.from), 'lead', { dest: route.shift(), route, pace: 3.4 / VEHICLES[type].max, convoy: true, hold: 3 });
     st.convoy.color = '#e8dfc4'; st.convoy.hp = step.hp || 10; st.maxHp = st.convoy.hp; st.sent = 0; st.wave = 6;
   } else if (step.t === 'catch') {
     const l = lotPt(step.from);
@@ -10658,7 +10954,7 @@ function updateMission(dt) {
     if (st.wave <= 0 && alive < 2 && st.sent < (s.waves || 6)) {
       st.wave = 9; st.sent++;
       const a = Math.random() * 7, h = spawnAi(S.city.year < 1900 ? 'erasercoach' : 'eraser', { x: cv.x + Math.cos(a) * 11 * T, y: cv.y + Math.sin(a) * 11 * T }, 'hunt', { prey: cv });
-      h.hp = 2;
+      h.hp = 1;
     }
   } else if (s.t === 'catch') {
     const r = st.runner;
@@ -10697,12 +10993,12 @@ function updateIncident(dt) {
     if (S.incT > 0) return;
     S.incT = 80 + Math.random() * 70;
     for (let tries = 0; tries < 12; tries++) {
-      const i = Math.floor(Math.random() * c.xs.length), j = Math.floor(Math.random() * c.ys.length), horiz = Math.random() < 0.5;
-      const x = (c.xs[i] + 2.5) * T, y = (c.ys[j] + 2.5) * T, d = Math.hypot(x - pp.x, y - pp.y), name = horiz ? c.streets.h[j] : c.streets.v[i];
-      if (d < 9 * T || d > 24 * T || circleSolid(x, y, 9) || /^—/.test(name)) continue;
+      const w = c.ways[Math.floor(Math.random() * c.ways.length)], nd = c.nodes[w.pts[w.pts.length >> 1]], sp = freeSpotNear(nd.x + 1.6 * T, nd.y + 1.6 * T, 1);
+      const x = sp.x, y = sp.y, d = Math.hypot(x - pp.x, y - pp.y), name = c.names[w.ni];
+      if (d < 9 * T || d > 26 * T || circleSolid(x, y, 9) || /^—/.test(name)) continue;
       const r = { stepPed: true, vandal: true, x, y, ang: 0, sp: 4.7 * T, walk: 0, down: 0, look: ERASER_LOOK, name: 'Man in grey', think: 0 };
       S.peds.push(r);
-      S.incident = { r, horiz, idx: horiz ? j : i, name, t: 50, alerted: false, rub: 0 };
+      S.incident = { r, idx: w.ni, name, t: 50, alerted: false, rub: 0 };
       S.ui.toast(`A man in grey is scrubbing ${name} off the street signs! Catch him before the name is gone.`, 5200);
       return;
     }
@@ -10720,7 +11016,7 @@ function updateIncident(dt) {
     earn(30); S.ui.toast(`${inc.name} is saved. The parish is grateful to the tune of £30.`, 4200);
     if (bump('saved') >= 5) badge('streets');
   } else if (inc.t <= 0) {
-    (inc.horiz ? c.streets.h : c.streets.v)[inc.idx] = '— — —';
+    c.names[inc.idx] = '— — —';
     c.chunks.clear();
     S.ui.toast(`Too late. ${inc.name} has been scrubbed off the map, and nobody can remember what it was called.`, 5200);
     end();
@@ -10729,21 +11025,24 @@ function updateIncident(dt) {
 // A grey vehicle racing you to the same door.
 function startRival(dest, pace) {
   const st = S.step, P = S.player, pp = P.vehicle || P;
-  const type = S.city.year < 1900 ? 'erasercoach' : 'eraser', c = S.city, far = Math.max(1, 16 * T / Math.max(1, dist(pp, dest))), from = { x: clamp(dest.x + (dest.x - pp.x) * far, c.xs[0] * T, (c.xs[c.xs.length - 1] + 1) * T), y: clamp(dest.y + (dest.y - pp.y) * far, c.ys[0] * T, (c.ys[c.ys.length - 1] + 1) * T) };  // from the far side of where you are both going
+  const type = S.city.year < 1900 ? 'erasercoach' : 'eraser', c = S.city, far = Math.max(1, 16 * T / Math.max(1, dist(pp, dest))), from = { x: clamp(dest.x + (dest.x - pp.x) * far, 6 * T, c.wpx - 6 * T), y: clamp(dest.y + (dest.y - pp.y) * far, 6 * T, c.hpx - 6 * T) };  // from the far side of where you are both going
   const secs = (st.timer ?? manh(pp, dest) / 5 + 14) * (pace === true ? 0.8 : 0.8 * 0.44 / pace);
   st.rival = spawnAi(type, from, 'lead', { dest, pace: clamp((manh(from, dest) + 4) / Math.max(secs, 12) / VEHICLES[type].max, 0.1, 0.6) });
   hintOnce('rival', 'A grey one is racing you there from the other side of town. Get there first, or get in its way.', 5200);
 }
 // Grey vans drawn across the road near where you are going.
 function placeBlocks(dest, n) {
-  const [i, j] = botNode(dest), P = S.player, pp = P.vehicle || P, type = S.city.year < 1900 ? 'erasercoach' : 'eraser';
-  const dirs = [0, 1, 2, 3].filter(d => hasNode(i + DIRS[d][0], j + DIRS[d][1])).sort((a, b) => { const na = nodeC(i + DIRS[a][0], j + DIRS[a][1]), nb = nodeC(i + DIRS[b][0], j + DIRS[b][1]); return dist(na, pp) - dist(nb, pp); });
-  const c0 = nodeC(i, j);
-  for (const d of dirs.slice(0, n)) for (const side of [-0.5, 0.5]) {
-    const x = c0.x + DIRS[d][0] * 4 * T + DIRS[d][1] * side * T, y = c0.y + DIRS[d][1] * 4 * T + DIRS[d][0] * side * T;
-    if (Math.hypot(x - pp.x, y - pp.y) < 5 * T) continue;
-    for (const o of S.vehicles) if (o.ai === 'traffic' && Math.hypot(o.x - x, o.y - y) < 3 * T) o.gone = true;
-    makeVehicle(type, x, y, Math.atan2(DIRS[d][0], DIRS[d][1]) + (side > 0 ? 0.25 : -0.25), { parked: true, block: true, keep: true });
+  const c = S.city, P = S.player, pp = P.vehicle || P, type = c.year < 1900 ? 'erasercoach' : 'eraser';
+  const k = c.nearNode(dest.x, dest.y, q => c.nodes[q].nb.length >= 2), here = c.nodes[k];
+  const arms = here.nb.slice().sort((a, b) => dist(c.nodes[a], pp) - dist(c.nodes[b], pp)).slice(0, Math.min(n, here.nb.length - 1));
+  for (const m of arms) {
+    const B = c.nodes[m], d = dist(here, B) || 1, ux = (B.x - here.x) / d, uy = (B.y - here.y) / d, at = Math.min(d * 0.8, 3.6 * T);
+    for (const side of [-0.5, 0.5]) {
+      const x = here.x + ux * at - uy * side * T, y = here.y + uy * at + ux * side * T;
+      if (Math.hypot(x - pp.x, y - pp.y) < 5 * T || Math.hypot(x - dest.x, y - dest.y) < 2.2 * T) continue;
+      for (const o of S.vehicles) if (o.ai === 'traffic' && Math.hypot(o.x - x, o.y - y) < 3 * T) o.gone = true;
+      makeVehicle(type, x, y, Math.atan2(uy, ux) + Math.PI / 2 + (side > 0 ? 0.25 : -0.25), { parked: true, block: true, keep: true });
+    }
   }
 }
 // A load that is not tied down comes off if you hit something hard enough.
@@ -10760,13 +11059,13 @@ function spillBump(hit) {
 // The finale: every few knocks, Engine No. 1 jumps to another century and drags you with it.
 function hopChase(year) {
   const st = S.step, v = st.target, m = S.mission;
-  const keep = { x: v.x, y: v.y, ang: v.ang, hp: v.hp, dir: v.dir, ni: v.ni, nj: v.nj, nd: v.nd, type: v.type, fast: v.fast, speed: v.speed };
+  const keep = { x: v.x, y: v.y, ang: v.ang, hp: v.hp, pn: v.pn, n: v.n, type: v.type, fast: v.fast, speed: v.speed, maxHp: v.maxHp };
   st.hops = (st.hops || 0) + 1;
   S.hopping = true; sfx.jump(); S.flash = 0.9;
   enterTown(S.city.town, year, 'jump');
   S.hopping = false;
   S.mission = m; S.step = st;
-  const nv = makeVehicle(keep.type, keep.x, keep.y, keep.ang, { ai: 'flee', dir: keep.dir, ni: keep.ni, nj: keep.nj, fast: keep.fast });
+  const nv = makeVehicle(keep.type, keep.x, keep.y, keep.ang, { ai: 'flee', pn: keep.pn, n: keep.n, fast: keep.fast, maxHp: keep.maxHp });
   nv.hp = keep.hp; nv.speed = keep.speed; st.target = nv;
   if (st.timer != null) st.timer += 25;
   S.ui.toast(`Hargreaves has jumped to ${year}, and taken you with him!`, 3600);
@@ -10948,11 +11247,13 @@ function travel(town, year, where) {
   S.transit = { jump, t: 0, dur: jump ? 1.5 : 2.6, from: c.town, to: town, y0: c.year, y1: year, air: c.air, abroad: town.country !== c.town.country, swapped: false,
     swap: () => { if (S === tok) enterTown(town, year, where); }, done: () => { if (S === tok) { const after = S.transit.after; S.transit = null; S.busy = false; after?.(); } } };
   if (jump) sfx.jump(); else sfx.door();
+  if (!jump && town.id !== c.town.id) { const tr = S.transit; tr.pending = true; tr.held = 0; fetchStreets(town).then(() => { tr.pending = false; }); }
 }
 // Drawn over everything while a journey is under way.
 function drawTransit(g, w, h, dpr, dt) {
   const tr = S.transit;
   tr.t += dt;
+  if (tr.pending && !tr.swapped && tr.t / tr.dur > 0.44 && tr.held < 10) { tr.t -= dt; tr.held += dt; }   // hold the journey while the streets arrive
   const k = clamp(tr.t / tr.dur, 0, 1);
   if (k >= 0.5 && !tr.swapped) { tr.swapped = true; tr.swap(); }
   const font = (px, f = '"Press Start 2P", monospace') => { g.font = `${Math.round(px * dpr)}px ${f}`; };
@@ -11045,9 +11346,10 @@ function openPause() {
   S.ui.panel(`<h2>Relative Speed</h2><p>${escapeText(nextStory()?.brief || 'Free roam: every town, every year.')}</p>
     ${S.ui.touch ? '<p>Left thumb steers and walks. GO talks, gets in and out and starts jobs. CAR calls the Heirloom.</p>' : k('WASD / arrows', 'walk, drive') + k('E', 'talk, get in or out, start a job') + k('Space', 'handbrake: hold it into a corner to slide the back round') + k('T', 'time dial') + k('H', 'call the Heirloom (£10)') + k('M', 'town map') + k('P', 'pedigree') }
     <p><b>The case so far</b> <small>${tally().text}</small></p>${fragsGot() || S.save.idx > S.story.missions.findIndex(m => m.id === 'blank-and-void') ? `<p>📄 <b>The Foundling File</b> ${fragsGot()} of ${S.story.frags.length} pages <small>${S.story.frags.map(f => (S.save.frags || []).includes(f.id) ? '✔' : `${escapeText(S.story.towns.get(f.town).name)} ${f.year}`).join(' · ')}</small></p>` : ''}${S.story.missions.map((m, i) => i < S.save.idx ? `<div class="row" style="padding:3px 0;border:0"><span>✔ ${escapeText(m.title)} <b style="color:#c8901a">${'★'.repeat((S.save.medals || {})[m.id] || 0)}</b><small>${escapeText(m.act)} · ${escapeText(S.story.towns.get(m.town).name)}, ${m.year}</small></span>${m.town === S.city.town.id && m.year === S.city.year && !S.mission && m.steps.some(x => x.t !== 'travel' && x.t !== 'talk') ? `<button class="alt" data-go="replay:${i}">Replay</button>` : ''}</div>` : i === S.save.idx ? `<div class="row need" style="padding:5px 8px"><span>▶ ${escapeText(m.title)}<small>${escapeText(m.act)} · ${escapeText(S.story.towns.get(m.town).name)}, ${m.year}</small></span></div>` : '').join('')}${S.save.idx < S.story.missions.length - 1 ? `<p>…and ${S.story.missions.length - S.save.idx - 1} more to come.</p>` : ''}
-    <div class="foot"><button data-go="close">Resume</button><button class="alt" data-go="easy">Timers: ${S.save.easy ? 'generous' : 'normal'}</button><button class="alt" data-go="quit">Save and leave</button><button class="alt" data-go="reset">Restart the story</button></div>`, {
+    <div class="foot"><button data-go="close">Resume</button><button class="alt" data-go="easy">Timers: ${S.save.easy ? 'generous' : 'normal'}</button><button class="alt" data-go="streets">Streets: ${realStreets() ? 'real (OpenStreetMap)' : 'made up'}</button><button class="alt" data-go="quit">Save and leave</button><button class="alt" data-go="reset">Restart the story</button></div>`, {
     close: () => S.ui.closePanel(),
     easy: () => { S.save.easy = !S.save.easy; persist(); openPause(); },
+    streets: () => { try { localStorage.setItem('a3d:realstreets', realStreets() ? '0' : '1'); } catch (e) { /* no storage */ } S.nets.clear(); S.asked.clear(); S.ui.closePanel(); S.ui.toast(realStreets() ? 'Real streets from OpenStreetMap, from the next town you enter. Only the town\'s name is sent.' : 'Made-up streets from the next town you enter. Nothing is looked up.', 6000); if (realStreets()) fetchStreets(S.city.town); },
     replay: i => { S.ui.closePanel(); startMission(S.story.missions[+i]); },
     quit: () => { S.ui.closePanel(); closeStory(); },
     reset: () => { S.ui.panel('<h2>Restart the story?</h2><p>Your cash, proofs and progress for this person will be wiped.</p><div class="foot"><button data-go="yes">Restart</button><button class="alt" data-go="close">Keep playing</button></div>', {
@@ -11071,24 +11373,15 @@ function callHeirloom() {
 // ---------------- A test driver ----------------
 // Plays missions through the same controls a person has, so that tests/story-bot.py can measure how long
 // each one takes, how tight its clock is and where it goes wrong. Switched on with S.debug.bot(true).
-function botNode(p) {
-  const c = S.city;
-  let i = 0, j = 0;
-  c.xs.forEach((x, k) => { if (Math.abs((x + 1) * T - p.x) < Math.abs((c.xs[i] + 1) * T - p.x)) i = k; });
-  c.ys.forEach((y, k) => { if (Math.abs((y + 1) * T - p.y) < Math.abs((c.ys[j] + 1) * T - p.y)) j = k; });
-  return [i, j];
-}
 function botPath(from, to) {
-  const c = S.city, [i1, j1] = botNode(to);
-  let [i, j] = botNode(from);
-  // join the grid along whichever road we are already on
-  const onH = c.ys.some(y => Math.abs((y + 1) * T - from.y) < 1.2 * T), pts = [];
-  const lane = (a, b, d) => { const n = nodeC(a, b), lo = laneOffset(c, d); return { x: n.x + lo[0], y: n.y + lo[1], node: true }; };
-  const goI = () => { while (i !== i1) { const d = i1 > i ? 0 : 2; i += Math.sign(i1 - i); pts.push(lane(i, j, d)); } };
-  const goJ = () => { while (j !== j1) { const d = j1 > j ? 1 : 3; j += Math.sign(j1 - j); pts.push(lane(i, j, d)); } };
+  const c = S.city, pts = [];
   // off the road (a yard, a court): get back onto it first
   if (c.at(Math.floor(from.x / T), Math.floor(from.y / T)) !== G.ROAD) { const r = roadNear(from.x, from.y); if (dist(r, from) > 1.2 * T) pts.push({ x: r.x, y: r.y }); }
-  if (onH) { j = botNode({ x: from.x, y: from.y })[1]; goI(); goJ(); } else { goJ(); goI(); }
+  const a = c.nearNode(from.x, from.y), b = c.nearNode(to.x, to.y), rt = c.route(a, b);
+  // do not double back to a junction that is behind us on the way
+  let s0 = 0;
+  if (rt.length > 1 && dist(c.nodes[rt[1]], from) < dist(c.nodes[rt[0]], c.nodes[rt[1]]) + 0.5 * T) s0 = 1;
+  for (let i = Math.max(1, s0); i < rt.length; i++) pts.push(lanePt(rt[i - 1], rt[i], -1));
   pts.push({ x: to.x, y: to.y });
   return pts;
 }
@@ -11101,12 +11394,12 @@ function botGoal() {
     for (const v of S.vehicles) if (v.ai === 'hunt' && v.prey === st.convoy) { const d = dist(v, st.convoy); if (d < bd) { bd = d; best = v; } }
     return best ? { o: best, ram: true } : { o: st.convoy, keep: 4.5 };
   }
-  if (s.t === 'escape') { const c = S.city; let far = null, fd = -1; for (let i = 0; i < c.xs.length; i += 3) for (let j = 0; j < c.ys.length; j += 3) { const n = nodeC(i, j); if (dist(n, pp) < 9 * T) continue; let d = 1e9; for (const v of S.vehicles) if (v.ai === 'cop') d = Math.min(d, dist(v, n)); for (const q of S.peds) if (q.cop) d = Math.min(d, dist(q, n)); d = Math.min(d, 60 * T) - dist(n, pp) * 0.2; if (d > fd) { fd = d; far = n; } } return { o: far }; }
+  if (s.t === 'escape') { const c = S.city; let far = null, fd = -1; for (let i = 0; i < c.nodes.length; i += 9) { const n = c.nodes[i]; if (n.dead || dist(n, pp) < 9 * T || dist(n, pp) > 50 * T) continue; let d = 1e9; for (const v of S.vehicles) if (v.ai === 'cop') d = Math.min(d, dist(v, n)); for (const q of S.peds) if (q.cop) d = Math.min(d, dist(q, n)); d = Math.min(d, 60 * T) - dist(n, pp) * 0.2; for (const v of S.vehicles) if (v.ai === 'cop' && dist(v, pp) < 30 * T && (n.x - pp.x) * (v.x - pp.x) + (n.y - pp.y) * (v.y - pp.y) > 0.5 * dist(n, pp) * dist(v, pp)) d -= 30 * T; if (d > fd) { fd = d; far = n; } } return { o: far }; }
   if (s.t === 'frenzy') { let best = null, bd = 1e9; for (const v of S.vehicles) if (v.ai === 'hunt') { const d = dist(v, pp); if (d < bd) { bd = d; best = v; } } return best ? { o: best, ram: true } : null; }
   const t = stepTarget();
   if (!t) return null;
   if (s.t === 'chase') return { o: t, ram: true };
-  if (s.t === 'tail') return { o: t, keep: 7.5 };
+  if (s.t === 'tail') return { o: t, keep: 9 };
   if (s.t === 'carry' || s.t === 'talk') return { o: t, stop: true };
   if (s.t === 'collect') return { o: t, direct: 9 };
   return { o: t };
@@ -11131,7 +11424,7 @@ function botDrive(v, dt) {
   if (!g || !g.o) return { thr: 0, steer: 0, brake: true };
   const goal = g.o, dGoal = dist(v, goal);
   B.replan -= dt;
-  if (B.replan <= 0 || !B.path || !B.at || dist(goal, B.at) > 3 * T) { B.path = botPath(v, goal); B.at = { x: goal.x, y: goal.y }; B.replan = 1.5; }
+  if (B.replan <= 0 || !B.path || !B.at || dist(goal, B.at) > 3 * T) { B.path = botPath(v, g.keep && goal.pn != null ? S.city.nodes[goal.pn] : goal); if (g.keep && goal.pn != null) B.path.push({ x: goal.x, y: goal.y }); B.at = { x: goal.x, y: goal.y }; B.replan = 1.5; }   // when following, come up from behind
   while (B.path.length > 1 && dist(v, B.path[0]) < 1.7 * T) B.path.shift();
   const direct = dGoal < (g.direct || (g.ram ? 7 : 3.5)) * T;
   const wp = direct ? goal : B.path[0];
@@ -11143,7 +11436,7 @@ function botDrive(v, dt) {
     if (turn > 0.5) vmax = Math.min(vmax, (4 + dW / T * 1.3) * T);
   }
   if (g.stop && dGoal < 8 * T) vmax = Math.min(vmax, Math.max(1.4 * T, (dGoal - 1.6 * T) * 2.2));
-  if (g.keep) { if (dGoal < g.keep * T) vmax = 0; else vmax = Math.min(vmax, (dGoal / T - g.keep) * 1.6 * T + Math.abs(goal.speed || 0)); }
+  if (g.keep) { if (dGoal < g.keep * T) vmax = 0; else vmax = Math.min(vmax, (dGoal / T - g.keep) * 1.6 * T + Math.abs(goal.speed || 0)); if (dGoal < (g.keep - 2) * T && v.speed > T) return { thr: -1, steer: 0, brake: true }; }
   if (Math.abs(da) > 0.8) vmax = Math.min(vmax, 3.2 * T);
   if (S.step && S.step.step.gentle && S.step.loaded) vmax = Math.min(vmax, 7.5 * T);  // it drives a fragile load as a person would
   { const fx = Math.cos(v.ang), fy = Math.sin(v.ang), reach = 1.6 * T + Math.abs(v.speed) * 0.5;
@@ -11273,8 +11566,8 @@ function updatePlayer(dt) {
   P.x = v.x; P.y = v.y; P.ang = v.ang;
   // knock people over
   // people jump clear of anything they can see coming; flat out, they cannot
-  if (Math.abs(v.speed) > 1.5 * T && Math.abs(v.speed) < (v === S.heirloom && up('horn') ? 13 : 10) * T) {
-    const fx = Math.cos(v.ang) * Math.sign(v.speed), fy = Math.sin(v.ang) * Math.sign(v.speed), reach = (1.8 * T + Math.abs(v.speed) * 0.22) * (v === S.heirloom && up('horn') ? 2 : 1);
+  if (Math.abs(v.speed) > 1.5 * T && Math.abs(v.speed) < (v === S.heirloom && up('horn') ? 15 : 12.5) * T) {
+    const fx = Math.cos(v.ang) * Math.sign(v.speed), fy = Math.sin(v.ang) * Math.sign(v.speed), reach = (2.2 * T + Math.abs(v.speed) * 0.3) * (v === S.heirloom && up('horn') ? 2 : 1);
     for (const p of S.peds) {
       if (p.npc || p.stepPed || p.cop || p.down > 0) continue;
       const rx = p.x - v.x, ry = p.y - v.y, f = rx * fx + ry * fy, l = -rx * fy + ry * fx;
@@ -11424,7 +11717,7 @@ function hud() {
   ui.stat(P.hearts, Math.floor(S.heat + 0.001));
   { const b = ui.root.querySelector('[data-act="dial"]'), lab = dialReady() ? '⏱ Dial' : '🔒 Dial'; if (b && b.textContent !== lab) b.textContent = lab; }
   const pq = P.vehicle || P, hh = Math.floor(S.clock), mm = Math.floor((S.clock % 1) * 6) * 10, street = c.streetAt(pq.x, pq.y);
-  ui.where(S.townLabel, `${c.year} · ${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}${S.rain > 0.3 ? ' · rain' : ''} · ${street || ERA_NAMES[c.era]}`);
+  ui.where(S.townLabel, `${c.year} · ${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}${S.rain > 0.3 ? ' · rain' : ''} · ${street || ERA_NAMES[c.era]}${c.source === 'osm' ? ' · © OpenStreetMap' : ''}`);
   let obj = '';
   const guide = (town, year) => {
     const t = S.story.towns.get(town);

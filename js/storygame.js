@@ -7,7 +7,8 @@ import { lookFor } from './outfits.js';
 import { drawPortrait } from './textures.js';
 import { buildDialogue, voiceLine } from './dialogue.js';
 import { buildStory, eraOf, ERA_NAMES, eraWords, fareBetween, inkCost, residentsOf, oddJob, townNotes, kinOf, burialsIn, lifeSoFar } from './storyplot.js';
-import { buildTown, TILE, G, DIRS, laneOffset, drawGround, drawTall, renderMiniMap } from './storycity.js';
+import { buildTown, TILE, G, DIRS, drawGround, drawTall, renderMiniMap } from './storycity.js';
+import { makeNet, fetchNet, cachedNet, netFromOsm } from './storynet.js';
 import { VEHICLES, trafficMix, trafficCount, paintFor, drawVehicle, drawSmoke, strangerLook, lookSummary, drawPerson, drawItem, drawMarker, FIXED_LOOKS, drawPortraitExtras, drawCritter, ERASER_LOOK } from './storyart.js';
 import { mountStoryUi, escapeText } from './storyui.js';
 import { resolvePlace } from './places.js';
@@ -150,7 +151,7 @@ export function openStory({ data, rootId, store, key, onClose }) {
   const ui = mountStoryUi();
   S = {
     data, tree, story, ui, store, key: (key || 'a3d') + ':story:' + rootId, onClose, t: 0, last: performance.now(), raf: 0,
-    save: null, city: null, mini: null, player: null, heirloom: null, vehicles: [], peds: [], items: [], floats: [], sparks: [], skids: [],
+    save: null, city: null, mini: null, player: null, heirloom: null, vehicles: [], peds: [], items: [], floats: [], sparks: [], skids: [], nets: new Map(), asked: new Set(),
     mission: null, step: null, busy: false, heat: 0, heatCalm: 0, bust: 0, dial: null, target: null, near: null,
     view: { x: 0, y: 0, z: 1, w: 1, h: 1 }, spawnT: 0, names: [], flash: 0, looks: new Map(), ringT: 0, paused: false,
     clock: 9, rain: 0, rainT: 0, rainRoll: -1, critters: [], burials: [], glitch: 0,
@@ -167,6 +168,20 @@ export function openStory({ data, rootId, store, key, onClose }) {
   const hero = tree.people.get(rootId);
   S.player = { x: 0, y: 0, ang: 0, vehicle: null, hearts: 3, walk: 0, look: lookSummary(lookFor(hero)), down: 0, invuln: 0, moving: false };
   enterTown(story.towns.get(save.town), save.year, save.fresh ? 'start' : 'load');
+  if (realStreets() && S.city.source !== 'osm') {
+    // look up the real streets before anything starts; if they come, lay the town out again on them
+    const tok = S, town0 = S.city.town, others = [...story.towns.values()].filter(t => t.id !== town0.id);
+    S.busy = true;
+    ui.toast(`Looking up the real streets of ${town0.name}…`, 12000);
+    fetchStreets(town0).then(got => {
+      if (S !== tok) return;
+      if (got && !S.mission) enterTown(town0, save.year, save.fresh ? 'start' : 'load');
+      ui.toast(got ? `The real streets of ${town0.name}. © OpenStreetMap contributors` : '', got ? 4200 : 1);
+      S.busy = false;
+      // and the other towns in the story, one at a time, so they are ready when you get there
+      (async () => { for (const t of others) { await new Promise(r => setTimeout(r, 1600)); if (S !== tok) return; await fetchStreets(t); } })();
+    });
+  }
   // Hooks for the headless test (tests/story-smoke.py): jump to the current target, finish a step, travel.
   S.debug = {
     warp() { if (['tail', 'defend', 'catch'].includes(S.step?.step.t)) return; if (S.step?.step.need === 'heirloom' || ['carry', 'chase'].includes(S.step?.step.t)) this.intoHeirloom(); const t = stepTarget() || idleTarget(); if (!t) return; const P = S.player, sp = freeSpotNear(t.x, t.y, 0); if (P.vehicle) { const r = roadNear(t.x, t.y); P.vehicle.x = r.x; P.vehicle.y = r.y; P.vehicle.speed = P.vehicle.vx = P.vehicle.vy = 0; P.x = r.x; P.y = r.y; } else { P.x = sp.x; P.y = sp.y; } S.view.x = P.x; S.view.y = P.y; },
@@ -178,6 +193,7 @@ export function openStory({ data, rootId, store, key, onClose }) {
     startFav(f) { if (f && !S.mission) startMission(f); },
     target() { return stepTarget(); },
     fail() { failMission('Too late.'); },
+    useOsm(townId, json, lat, lon) { const net = netFromOsm(json, lat, lon); if (net) S.nets.set(townId, net); return net ? { nodes: net.nodes.length, ways: net.ways.length } : null; },
     startSide(k) { if (!S.mission) startSide(k); },
     startNext() { const n = nextStory(); if (n && isHere(n) && !S.mission) startMission(n); },
   };
@@ -278,17 +294,35 @@ function makeVehicle(type, x, y, ang, extra = {}) {
   S.vehicles.push(v);
   return v;
 }
+// Real street plans come from OpenStreetMap, once per town, and are kept on this device. Off: every town is drawn.
+const realStreets = () => { try { return localStorage.getItem('a3d:realstreets') !== '0'; } catch (e) { return false; } };
+/** Fetch a town's real streets if we have not got them. Resolves true if a new plan arrived. */
+async function fetchStreets(town) {
+  const tok = S;
+  if (!realStreets() || S.asked.has(town.id)) return false;
+  S.asked.add(town.id);
+  const cur = S.nets.get(town.id);
+  if ((cur && cur.source === 'osm') || cachedNet(town) === null) return false;
+  const net = await fetchNet(town);
+  if (S !== tok || !net) return false;
+  S.nets.set(town.id, net);
+  return true;
+}
 function parkHeirloom(x, y) {
-  const r = roadNear(x, y), h = S.heirloom;
-  const off = laneOffset(S.city, r.horiz ? 0 : 1);
-  h.x = r.x + (r.horiz ? 0 : off[0] * 0.2); h.y = r.y; h.ang = r.horiz ? 0 : Math.PI / 2; h.vx = h.vy = h.speed = 0;
+  const c = S.city, h = S.heirloom, n = c.nearNode(x, y), nb = c.nodes[n].nb;
+  const m = nb.slice().sort((a, b) => Math.hypot(c.nodes[a].x - x, c.nodes[a].y - y) - Math.hypot(c.nodes[b].x - x, c.nodes[b].y - y))[0];
+  if (m == null) { const r = roadNear(x, y); h.x = r.x; h.y = r.y; h.ang = 0; h.vx = h.vy = h.speed = 0; return; }
+  // the nearest point on that stretch, then over to the kerb
+  const A = c.nodes[n], B = c.nodes[m], dx = B.x - A.x, dy = B.y - A.y, l2 = dx * dx + dy * dy || 1, t = clamp(((x - A.x) * dx + (y - A.y) * dy) / l2, 0.15, 0.85), d = Math.sqrt(l2), side = (c.left ? 1 : -1) * 0.55 * T;
+  h.x = A.x + dx * t + dy / d * side; h.y = A.y + dy * t - dx / d * side; h.ang = Math.atan2(dy, dx); h.vx = h.vy = h.speed = 0;
 }
 
 function enterTown(town, year, where) {
   const P = S.player, old = S.city;
   const keep = where === 'jump' && P.vehicle === S.heirloom;
   if (old && S.mission && S.step?.step.t !== 'travel' && !S.hopping) failMission('You left before the job was done.');
-  S.city = buildTown(town, year, { surnames: S.surnames });
+  if (!S.nets.has(town.id)) S.nets.set(town.id, (realStreets() && cachedNet(town)) || makeNet(town));
+  S.city = buildTown(town, year, { surnames: S.surnames, net: S.nets.get(town.id) });
   S.mini = renderMiniMap(S.city, 2);
   const c = S.city;
   S.vehicles = [];
@@ -339,7 +373,7 @@ function enterTown(town, year, where) {
   const rank = c.lots.hub, cabType = year >= 1950 ? 'taxi' : year >= 1830 ? 'cab' : null;
   if (cabType && !circleSolid(rank.x + 2.4 * T, rank.y, 16)) makeVehicle(cabType, rank.x + 2.4 * T, rank.y, 0, { parked: true });
   // the tram runs up and down the High Street
-  if (c.tramJ >= 0) { const tp = lanePt(0, c.tramJ, 0, 1); makeVehicle('tram', tp.x, tp.y, 0, { ai: 'traffic', straight: true, keep: true, dir: 0, ni: 1, nj: c.tramJ }); }
+  if (c.tramWay >= 0) { const w = c.ways[c.tramWay], a = w.pts[0], b = w.pts[1], tp = lanePt(a, b, 1); makeVehicle('tram', tp.x, tp.y, Math.atan2(c.nodes[b].y - c.nodes[a].y, c.nodes[b].x - c.nodes[a].x), { ai: 'traffic', straight: true, keep: true, pn: a, n: b }); }
   S.burials = burialsIn(S.data, town, year);
   c.graves.forEach((gv, i) => { gv.who = S.burials[i] || null; });
   spawnCritters();
@@ -471,28 +505,43 @@ function spark(x, y, n = 5, col = '#ffe08a') { for (let i = 0; i < n; i++) { con
 function float(x, y, text, col = '#fff') { S.floats.push({ x, y, text, t: 2.2, col }); }
 
 // Traffic follows the lanes from junction to junction.
-const hasNode = (i, j) => i >= 0 && j >= 0 && i < S.city.xs.length && j < S.city.ys.length;
-const nodeC = (i, j) => ({ x: (S.city.xs[i] + 1) * T, y: (S.city.ys[j] + 1) * T });
-function lanePt(i, j, dir, sign) { const c = nodeC(i, j), lo = laneOffset(S.city, dir); return { x: c.x + DIRS[dir][0] * 1.7 * T * sign + lo[0], y: c.y + DIRS[dir][1] * 1.7 * T * sign + lo[1] }; }
+// Where a vehicle going from junction a to junction b should be: on its own side of the road, back a little
+// from b (at = -1) or a little way on from a (at = 1).
+function lanePt(a, b, at) {
+  const c = S.city, A = c.nodes[a], B = c.nodes[b], dx = B.x - A.x, dy = B.y - A.y, d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d;
+  const side = (c.left ? 1 : -1) * 0.5 * T, back = Math.min(1.5 * T, d * 0.45), o = at < 0 ? B : A, k = at < 0 ? -back : back;
+  return { x: o.x + ux * k + uy * side, y: o.y + uy * k - ux * side };
+}
+const turnOf = (a, b, n) => { const c = S.city.nodes; return Math.abs(angDiff(Math.atan2(c[n].y - c[b].y, c[n].x - c[b].x), Math.atan2(c[b].y - c[a].y, c[b].x - c[a].x))); };
+// The junction the player (or whoever is being hunted) is nearest, and how far everything is from it by road.
+function preyField(prey) {
+  const c = S.city, k = prey === S.player || !prey ? 'p' : 'v' + prey.id, t = S.pf || (S.pf = {});
+  if (!t[k] || t[k].until < S.t || t[k].city !== c) { const q = prey && prey !== S.player ? prey : S.player.vehicle || S.player; t[k] = { until: S.t + 0.8, city: c, f: c.field(c.nearNode(q.x, q.y)) }; }
+  return t[k].f;
+}
+// Having reached v.n (from v.pn), choose where to go next.
 function planLeg(v) {
-  let opts = [0, 1, 2, 3].filter(d => d !== (v.dir + 2) % 4 && hasNode(v.ni + DIRS[d][0], v.nj + DIRS[d][1]));
-  if (!opts.length) opts = [(v.dir + 2) % 4];
-  let nd;
-  const P = v.prey && !v.prey.dead ? v.prey : S.player, score = d => { const n = nodeC(v.ni + DIRS[d][0], v.nj + DIRS[d][1]); return Math.hypot(n.x - P.x, n.y - P.y); };
-  const lead = d => { const n = nodeC(v.ni + DIRS[d][0], v.nj + DIRS[d][1]); return Math.hypot(n.x - v.dest.x, n.y - v.dest.y); };
-  if (v.ai === 'flee') nd = opts.slice().sort((a, b) => score(b) - score(a))[Math.random() < 0.8 ? 0 : opts.length - 1];
-  else if (v.ai === 'lead') nd = opts.slice().sort((a, b) => lead(a) - lead(b))[0];
-  else if (v.ai === 'cop' || v.ai === 'hunt') nd = opts.slice().sort((a, b) => score(a) - score(b))[0];
-  else if (v.straight) nd = opts.includes(v.dir) ? v.dir : (v.dir + 2) % 4;
-  else nd = opts.includes(v.dir) && Math.random() < 0.55 ? v.dir : opts[Math.floor(Math.random() * opts.length)];
-  v.nd = nd;
-  v.wp = [lanePt(v.ni, v.nj, v.dir, -1), lanePt(v.ni, v.nj, nd, 1)];
+  const c = S.city, here = c.nodes[v.n];
+  let opts = here.nb.filter(m => m !== v.pn);
+  if (!opts.length) opts = [v.pn];
+  const live = opts.filter(m => !c.nodes[m].dead);
+  let nn;
+  if (v.ai === 'lead') { if (v.destN == null || v.destFor !== v.dest) { v.destN = c.nearNode(v.dest.x, v.dest.y); v.destFor = v.dest; } const f = c.field(v.destN); nn = here.nb.slice().sort((a, b) => f[a] - f[b])[0]; }
+  else if (v.ai === 'flee') { const f = preyField(S.player), pool = live.length ? live : opts; nn = pool.slice().sort((a, b) => f[b] - f[a])[Math.random() < 0.8 ? 0 : pool.length - 1]; }
+  else if (v.ai === 'cop' || v.ai === 'hunt') { const f = preyField(v.prey && !v.prey.dead ? v.prey : S.player); nn = here.nb.slice().sort((a, b) => f[a] - f[b])[0]; }
+  else {
+    const pool = live.length && !(c.nodes[v.n].dead) ? live : opts, straight = pool.slice().sort((a, b) => turnOf(v.pn, v.n, a) - turnOf(v.pn, v.n, b))[0];
+    nn = v.straight || Math.random() < 0.6 ? straight : pool[Math.floor(Math.random() * pool.length)];
+  }
+  v.nn = nn;
+  v.wp = [lanePt(v.pn, v.n, -1), lanePt(v.n, nn, 1)];
 }
 function aiDrive(v, dt) {
   const st = VEHICLES[v.type], P = S.player;
+  if (v.hold > 0) { v.hold -= dt; driveVehicle(v, { thr: 0, steer: 0, brake: true }, dt); return; }   // waiting to set off
   if (!v.wp || !v.wp.length) planLeg(v);
   let tgt = v.wp[0];
-  if (v.ai === 'lead' && Math.hypot(v.dest.x - v.x, v.dest.y - v.y) < 3.4 * T) {
+  if (v.ai === 'lead' && (Math.hypot(v.dest.x - v.x, v.dest.y - v.y) < 3.4 * T || (v.destN != null && v.destFor === v.dest && Math.hypot(S.city.nodes[v.destN].x - v.x, S.city.nodes[v.destN].y - v.y) < 2.2 * T))) {
     if (v.route && v.route.length) { v.dest = v.route.shift(); planLeg(v); tgt = v.wp[0]; }
     else { v.ai = null; v.arrived = true; return; }
   }
@@ -503,7 +552,7 @@ function aiDrive(v, dt) {
   const fx = Math.cos(v.ang), fy = Math.sin(v.ang);
   if (tgt === v.wp[0] && (d < 0.75 * T || (d < 2.4 * T && dx * fx + dy * fy < 0))) {
     v.wp.shift();
-    if (!v.wp.length) { v.dir = v.nd; v.ni += DIRS[v.dir][0]; v.nj += DIRS[v.dir][1]; planLeg(v); }
+    if (!v.wp.length) { v.pn = v.n; v.n = v.nn; planLeg(v); }
     tgt = v.wp[0];
   }
   const want = Math.atan2(tgt.y - v.y, tgt.x - v.x), da = angDiff(want, v.ang);
@@ -537,35 +586,32 @@ function spawnTraffic(target) {
   const c = S.city, P = S.player, n = S.vehicles.filter(v => v.ai === 'traffic').length;
   if (n >= target) return;
   const vr = Math.hypot(S.view.w, S.view.h) / 2 / S.view.z + 2 * T;
-  for (let tries = 0; tries < 8; tries++) {
-    const i = Math.floor(Math.random() * c.xs.length), j = Math.floor(Math.random() * c.ys.length), d = Math.floor(Math.random() * 4);
-    if (!hasNode(i + DIRS[d][0], j + DIRS[d][1])) continue;
-    const p = lanePt(i, j, d, 1), dp = Math.hypot(p.x - P.x, p.y - P.y);
-    if (dp < vr || dp > 34 * T) continue;
+  for (let tries = 0; tries < 10; tries++) {
+    // somewhere just out of sight of the player
+    const a = Math.random() * 6.283, r = vr + (2 + Math.random() * 12) * T;
+    const n = c.nearNode(P.x + Math.cos(a) * r, P.y + Math.sin(a) * r), nb = c.nodes[n].nb;
+    if (c.nodes[n].dead || !nb.length) continue;
+    const m = nb[Math.floor(Math.random() * nb.length)], p = lanePt(n, m, 1), dp = Math.hypot(p.x - P.x, p.y - P.y);
+    if (dp < vr || dp > vr + 22 * T) continue;
     if (S.vehicles.some(v => Math.hypot(v.x - p.x, v.y - p.y) < 3.5 * T)) continue;
-    const mix = trafficMix(c.year), tot = mix.reduce((a, m) => a + m[1], 0);
-    let r = Math.random() * tot, type = mix[0][0];
-    for (const m of mix) { r -= m[1]; if (r <= 0) { type = m[0]; break; } }
-    const v = makeVehicle(type, p.x, p.y, Math.atan2(DIRS[d][1], DIRS[d][0]), { ai: 'traffic', dir: d, ni: i + DIRS[d][0], nj: j + DIRS[d][1] });
+    const mix = trafficMix(c.year), tot = mix.reduce((a2, q) => a2 + q[1], 0);
+    let rr = Math.random() * tot, type = mix[0][0];
+    for (const q of mix) { rr -= q[1]; if (rr <= 0) { type = q[0]; break; } }
+    const v = makeVehicle(type, p.x, p.y, Math.atan2(c.nodes[m].y - c.nodes[n].y, c.nodes[m].x - c.nodes[n].x), { ai: 'traffic', pn: n, n: m });
     v.color = paintFor(type, Math.random);
     return;
   }
 }
 function spawnAi(type, nearPt, ai, extra = {}) {
   const c = S.city, P = S.player;
-  let best = null, bd = 1e9;
-  for (let i = 0; i < c.xs.length; i++) for (let j = 0; j < c.ys.length; j++) {
-    const n = nodeC(i, j), d = Math.hypot(n.x - nearPt.x, n.y - nearPt.y) + (extra.minPlayer && Math.hypot(n.x - P.x, n.y - P.y) < extra.minPlayer ? 1e6 : 0);
-    if (d < bd) { bd = d; best = [i, j]; }
-  }
-  const [i, j] = best;
-  const dirs = [0, 1, 2, 3].filter(d => hasNode(i + DIRS[d][0], j + DIRS[d][1]));
-  const far = d => { const n = nodeC(i + DIRS[d][0], j + DIRS[d][1]); return Math.hypot(n.x - P.x, n.y - P.y); };
-  const toDest = d => { const n = nodeC(i + DIRS[d][0], j + DIRS[d][1]); return Math.hypot(n.x - extra.dest.x, n.y - extra.dest.y); };
-  dirs.sort((a, b) => ai === 'lead' ? toDest(a) - toDest(b) : ai === 'flee' ? far(b) - far(a) : far(a) - far(b));
-  const d = dirs[0], p = lanePt(i, j, d, 1);
+  const n = c.nearNode(nearPt.x, nearPt.y, extra.minPlayer ? k => Math.hypot(c.nodes[k].x - P.x, c.nodes[k].y - P.y) >= extra.minPlayer : null);
+  const nb = c.nodes[n].nb.slice();
+  const far = k => Math.hypot(c.nodes[k].x - P.x, c.nodes[k].y - P.y);
+  if (ai === 'lead') { const f = c.field(c.nearNode(extra.dest.x, extra.dest.y)); nb.sort((a, b) => f[a] - f[b]); }
+  else nb.sort((a, b) => ai === 'flee' ? far(b) - far(a) : far(a) - far(b));
+  const m = nb[0], p = lanePt(n, m, 1);
   for (const o of S.vehicles) if (o.ai === 'traffic' && Math.hypot(o.x - p.x, o.y - p.y) < 3 * T) o.gone = true;
-  return makeVehicle(type, p.x, p.y, Math.atan2(DIRS[d][1], DIRS[d][0]), { ai, dir: d, ni: i + DIRS[d][0], nj: j + DIRS[d][1], ...extra });
+  return makeVehicle(type, p.x, p.y, Math.atan2(c.nodes[m].y - c.nodes[n].y, c.nodes[m].x - c.nodes[n].x), { ai, pn: n, n: m, ...extra });
 }
 
 function collideVehicles() {
@@ -584,15 +630,15 @@ function collideVehicles() {
     A.vx -= nx * vn * wb * 1.1; A.vy -= ny * vn * wb * 1.1; B.vx += nx * vn * wa * 1.1; B.vy += ny * vn * wa * 1.1;
     A.speed = A.vx * Math.cos(A.ang) + A.vy * Math.sin(A.ang); B.speed = B.vx * Math.cos(B.ang) + B.vy * Math.sin(B.ang);
     const hunter = A.ai === 'hunt' && B.convoy ? A : B.ai === 'hunt' && A.convoy ? B : null;
-    if (hunter && !(hunter.ramCd > 0)) { const cv = hunter === A ? B : A; hunter.ramCd = 3.8; hunter.speed *= 0.3; cv.hp -= 1; float(cv.x, cv.y - 30, 'RAMMED!', '#ff5a4a'); spark((A.x + B.x) / 2, (A.y + B.y) / 2, 8); }
+    if (hunter && !(hunter.ramCd > 0)) { const cv = hunter === A ? B : A; hunter.ramCd = 5; hunter.speed *= 0.3; cv.hp -= 1; float(cv.x, cv.y - 30, 'RAMMED!', '#ff5a4a'); spark((A.x + B.x) / 2, (A.y + B.y) / 2, 8); }
     if (A !== pv && B !== pv) continue;
     const other = A === pv ? B : A;
-    const nudge = other.ai === 'flee' && Math.abs(pv.speed) > 2.5 * T;  // touching the one you are chasing always counts
+    const nudge = (other.ai === 'flee' || (other.ai === 'hunt' && other.prey)) && Math.abs(pv.speed) > 2.5 * T;  // touching the one you are chasing always counts
     if (!nudge && vn < (other.ai === 'flee' ? 1.1 : 2.2) * T) continue;
     sfx.bump(); spark((A.x + B.x) / 2, (A.y + B.y) / 2, 8);
     if (other.ai === 'hunt') {
       const mine = Math.abs(pv.speed) >= Math.abs(other.speed);
-      if (mine && vn > 2.2 * T && other.hitCd <= 0) {
+      if (((mine && vn > 2.2 * T) || (other.prey && Math.abs(pv.speed) > 3 * T)) && other.hitCd <= 0) {   // anything going for the convoy only needs a shove
         other.hp -= 1 + 0.5 * up('bar'); other.hitCd = 0.8; other.speed *= 0.3; other.ramCd = Math.max(other.ramCd || 0, 1.5);
         float(other.x, other.y - 30, other.hp > 0 ? 'CRUNCH!' : 'RUBBED OUT! +£15', '#f08aa0');
         if (other.hp <= 0) { other.dead = true; other.ai = null; S.save.cash += 15; sfx.cash(); if (S.step && S.step.step.t === 'frenzy') S.step.k++; if (bump('erasers') >= 5) badge('rubber'); }
@@ -603,7 +649,7 @@ function collideVehicles() {
         gentleBump(vn + 3 * T);
       }
     } else if (other.ai === 'lead' || other.convoy) {
-      if (S.step && S.step.step.t === 'tail') S.step.spotted = 1;
+      if (S.step && S.step.step.t === 'tail' && !(S.step.grace > 0) && !(other.hold > 0) && !(other.tapCd > S.t)) { other.tapCd = S.t + 2; S.step.sus += Math.abs(pv.speed) > 3 * T ? 1 : 0.4; }   // run into them and they know; a touch at a crawl only makes them wonder
     } else if (other.ai === 'flee') {
       if (other.hitCd <= 0) { other.hp -= 1 + 0.5 * up('bar'); other.speed *= 0.6; other.hitCd = 0.9; float(other.x, other.y - 30, other.hp > 0 ? 'CRUNCH!' : 'GOT IT!', '#ffd84a'); if (S.step) S.step.hits = (S.step.hits || 0) + 1; }
     } else {
@@ -673,7 +719,7 @@ function knockDown(p, v) {
   sfx.bump();
   if (v !== S.player.vehicle) { float(p.x, p.y - 22, quip(), '#fff'); return; }
   if (p.runner || p.vandal) { p.caught = true; return; }
-  offence(p.cop ? 1 : 0.5);
+  offence(p.cop ? 1 : 0.34);
   if (p.rid && S.tree.people.has(p.rid) && S.tree.people.get(p.rid).gen > 0) {
     // your own ancestor: history objects
     const fine = Math.min(S.save.cash, 50);
@@ -805,7 +851,7 @@ function flattened() {
 }
 
 // ---------------- Missions ----------------
-const manh = (a, b) => (Math.abs(a.x - b.x) + Math.abs(a.y - b.y)) / T;
+const manh = (a, b) => { const c = S.city, na = c.nearNode(a.x, a.y), nb = c.nearNode(b.x, b.y); return (c.field(nb)[na] + dist(a, c.nodes[na]) + dist(b, c.nodes[nb])) / T * 1.08; };
 function nextStory() { return S.story.missions[S.save.idx] || (bonusReady() ? S.story.bonus : null); }
 const fragsGot = () => (S.save.frags || []).length;
 const bonusReady = () => S.story.bonus && !S.save.foundling && S.save.idx >= S.story.missions.length && fragsGot() >= S.story.frags.length;
@@ -857,7 +903,7 @@ function enterStep(step) {
     while (S.items.filter(i => i.step).length < step.n && guard++ < 600) {
       const a = Math.random() * 7, r = (3 + Math.random() * (step.radius - 3)) * T, x = l.x + Math.cos(a) * r, y = l.y + Math.sin(a) * r;
       const tt = c.at(Math.floor(x / T), Math.floor(y / T));
-      if (!c.reachable(Math.floor(x / T), Math.floor(y / T)) || circleSolid(x, y, 14) || (tt !== G.ROAD && tt !== G.PAVE && tt !== G.PLAZA && tt !== G.YARD && tt !== G.GRASS && tt !== G.FIELD && tt !== G.APRON)) continue;
+      if (!c.reachable(Math.floor(x / T), Math.floor(y / T)) || c.roadDist(Math.floor(x / T), Math.floor(y / T)) > 3 || circleSolid(x, y, 14) || (tt !== G.ROAD && tt !== G.PAVE && tt !== G.PLAZA && tt !== G.YARD && tt !== G.GRASS && tt !== G.FIELD && tt !== G.APRON)) continue;
       if (S.items.some(i => Math.hypot(i.x - x, i.y - y) < 2.5 * T)) continue;
       S.items.push({ step: true, x, y, kind: step.names ? 'truants' : kind, n: S.items.length, label: step.names ? step.names[S.items.filter(i => i.step).length] : null });
     }
@@ -870,12 +916,12 @@ function enterStep(step) {
   } else if (step.t === 'escape') { S.heat = Math.max(S.heat, step.heat); S.heatCalm = -6; S.copT = 7; }
   else if (step.t === 'tail') {
     const troute = [...(step.via || []), step.to].map(k => lotPt(k));
-    st.target = spawnAi(c.year < 1900 ? 'erasercoach' : 'eraser', lotPt(step.from), 'lead', { dest: troute.shift(), route: troute, pace: 0.5 });
-    st.sus = 0; st.lost = 0; st.grace = 5;
+    st.target = spawnAi(c.year < 1900 ? 'erasercoach' : 'eraser', lotPt(step.from), 'lead', { dest: troute.shift(), route: troute, pace: 0.5, hold: 4 });
+    st.sus = 0; st.lost = 0; st.grace = 10;
   } else if (step.t === 'defend') {
     const type = c.year < 1900 ? 'wagon' : c.year < 1950 ? 'lorry' : 'van';
     const route = [...(step.via || []), step.to].map(k => lotPt(k));
-    st.convoy = spawnAi(type, lotPt(step.from), 'lead', { dest: route.shift(), route, pace: 2.7 / VEHICLES[type].max, convoy: true });
+    st.convoy = spawnAi(type, lotPt(step.from), 'lead', { dest: route.shift(), route, pace: 3.4 / VEHICLES[type].max, convoy: true, hold: 3 });
     st.convoy.color = '#e8dfc4'; st.convoy.hp = step.hp || 10; st.maxHp = st.convoy.hp; st.sent = 0; st.wave = 6;
   } else if (step.t === 'catch') {
     const l = lotPt(step.from);
@@ -1011,7 +1057,7 @@ function updateMission(dt) {
     if (st.wave <= 0 && alive < 2 && st.sent < (s.waves || 6)) {
       st.wave = 9; st.sent++;
       const a = Math.random() * 7, h = spawnAi(S.city.year < 1900 ? 'erasercoach' : 'eraser', { x: cv.x + Math.cos(a) * 11 * T, y: cv.y + Math.sin(a) * 11 * T }, 'hunt', { prey: cv });
-      h.hp = 2;
+      h.hp = 1;
     }
   } else if (s.t === 'catch') {
     const r = st.runner;
@@ -1050,12 +1096,12 @@ function updateIncident(dt) {
     if (S.incT > 0) return;
     S.incT = 80 + Math.random() * 70;
     for (let tries = 0; tries < 12; tries++) {
-      const i = Math.floor(Math.random() * c.xs.length), j = Math.floor(Math.random() * c.ys.length), horiz = Math.random() < 0.5;
-      const x = (c.xs[i] + 2.5) * T, y = (c.ys[j] + 2.5) * T, d = Math.hypot(x - pp.x, y - pp.y), name = horiz ? c.streets.h[j] : c.streets.v[i];
-      if (d < 9 * T || d > 24 * T || circleSolid(x, y, 9) || /^—/.test(name)) continue;
+      const w = c.ways[Math.floor(Math.random() * c.ways.length)], nd = c.nodes[w.pts[w.pts.length >> 1]], sp = freeSpotNear(nd.x + 1.6 * T, nd.y + 1.6 * T, 1);
+      const x = sp.x, y = sp.y, d = Math.hypot(x - pp.x, y - pp.y), name = c.names[w.ni];
+      if (d < 9 * T || d > 26 * T || circleSolid(x, y, 9) || /^—/.test(name)) continue;
       const r = { stepPed: true, vandal: true, x, y, ang: 0, sp: 4.7 * T, walk: 0, down: 0, look: ERASER_LOOK, name: 'Man in grey', think: 0 };
       S.peds.push(r);
-      S.incident = { r, horiz, idx: horiz ? j : i, name, t: 50, alerted: false, rub: 0 };
+      S.incident = { r, idx: w.ni, name, t: 50, alerted: false, rub: 0 };
       S.ui.toast(`A man in grey is scrubbing ${name} off the street signs! Catch him before the name is gone.`, 5200);
       return;
     }
@@ -1073,7 +1119,7 @@ function updateIncident(dt) {
     earn(30); S.ui.toast(`${inc.name} is saved. The parish is grateful to the tune of £30.`, 4200);
     if (bump('saved') >= 5) badge('streets');
   } else if (inc.t <= 0) {
-    (inc.horiz ? c.streets.h : c.streets.v)[inc.idx] = '— — —';
+    c.names[inc.idx] = '— — —';
     c.chunks.clear();
     S.ui.toast(`Too late. ${inc.name} has been scrubbed off the map, and nobody can remember what it was called.`, 5200);
     end();
@@ -1082,21 +1128,24 @@ function updateIncident(dt) {
 // A grey vehicle racing you to the same door.
 function startRival(dest, pace) {
   const st = S.step, P = S.player, pp = P.vehicle || P;
-  const type = S.city.year < 1900 ? 'erasercoach' : 'eraser', c = S.city, far = Math.max(1, 16 * T / Math.max(1, dist(pp, dest))), from = { x: clamp(dest.x + (dest.x - pp.x) * far, c.xs[0] * T, (c.xs[c.xs.length - 1] + 1) * T), y: clamp(dest.y + (dest.y - pp.y) * far, c.ys[0] * T, (c.ys[c.ys.length - 1] + 1) * T) };  // from the far side of where you are both going
+  const type = S.city.year < 1900 ? 'erasercoach' : 'eraser', c = S.city, far = Math.max(1, 16 * T / Math.max(1, dist(pp, dest))), from = { x: clamp(dest.x + (dest.x - pp.x) * far, 6 * T, c.wpx - 6 * T), y: clamp(dest.y + (dest.y - pp.y) * far, 6 * T, c.hpx - 6 * T) };  // from the far side of where you are both going
   const secs = (st.timer ?? manh(pp, dest) / 5 + 14) * (pace === true ? 0.8 : 0.8 * 0.44 / pace);
   st.rival = spawnAi(type, from, 'lead', { dest, pace: clamp((manh(from, dest) + 4) / Math.max(secs, 12) / VEHICLES[type].max, 0.1, 0.6) });
   hintOnce('rival', 'A grey one is racing you there from the other side of town. Get there first, or get in its way.', 5200);
 }
 // Grey vans drawn across the road near where you are going.
 function placeBlocks(dest, n) {
-  const [i, j] = botNode(dest), P = S.player, pp = P.vehicle || P, type = S.city.year < 1900 ? 'erasercoach' : 'eraser';
-  const dirs = [0, 1, 2, 3].filter(d => hasNode(i + DIRS[d][0], j + DIRS[d][1])).sort((a, b) => { const na = nodeC(i + DIRS[a][0], j + DIRS[a][1]), nb = nodeC(i + DIRS[b][0], j + DIRS[b][1]); return dist(na, pp) - dist(nb, pp); });
-  const c0 = nodeC(i, j);
-  for (const d of dirs.slice(0, n)) for (const side of [-0.5, 0.5]) {
-    const x = c0.x + DIRS[d][0] * 4 * T + DIRS[d][1] * side * T, y = c0.y + DIRS[d][1] * 4 * T + DIRS[d][0] * side * T;
-    if (Math.hypot(x - pp.x, y - pp.y) < 5 * T) continue;
-    for (const o of S.vehicles) if (o.ai === 'traffic' && Math.hypot(o.x - x, o.y - y) < 3 * T) o.gone = true;
-    makeVehicle(type, x, y, Math.atan2(DIRS[d][0], DIRS[d][1]) + (side > 0 ? 0.25 : -0.25), { parked: true, block: true, keep: true });
+  const c = S.city, P = S.player, pp = P.vehicle || P, type = c.year < 1900 ? 'erasercoach' : 'eraser';
+  const k = c.nearNode(dest.x, dest.y, q => c.nodes[q].nb.length >= 2), here = c.nodes[k];
+  const arms = here.nb.slice().sort((a, b) => dist(c.nodes[a], pp) - dist(c.nodes[b], pp)).slice(0, Math.min(n, here.nb.length - 1));
+  for (const m of arms) {
+    const B = c.nodes[m], d = dist(here, B) || 1, ux = (B.x - here.x) / d, uy = (B.y - here.y) / d, at = Math.min(d * 0.8, 3.6 * T);
+    for (const side of [-0.5, 0.5]) {
+      const x = here.x + ux * at - uy * side * T, y = here.y + uy * at + ux * side * T;
+      if (Math.hypot(x - pp.x, y - pp.y) < 5 * T || Math.hypot(x - dest.x, y - dest.y) < 2.2 * T) continue;
+      for (const o of S.vehicles) if (o.ai === 'traffic' && Math.hypot(o.x - x, o.y - y) < 3 * T) o.gone = true;
+      makeVehicle(type, x, y, Math.atan2(uy, ux) + Math.PI / 2 + (side > 0 ? 0.25 : -0.25), { parked: true, block: true, keep: true });
+    }
   }
 }
 // A load that is not tied down comes off if you hit something hard enough.
@@ -1113,13 +1162,13 @@ function spillBump(hit) {
 // The finale: every few knocks, Engine No. 1 jumps to another century and drags you with it.
 function hopChase(year) {
   const st = S.step, v = st.target, m = S.mission;
-  const keep = { x: v.x, y: v.y, ang: v.ang, hp: v.hp, dir: v.dir, ni: v.ni, nj: v.nj, nd: v.nd, type: v.type, fast: v.fast, speed: v.speed };
+  const keep = { x: v.x, y: v.y, ang: v.ang, hp: v.hp, pn: v.pn, n: v.n, type: v.type, fast: v.fast, speed: v.speed, maxHp: v.maxHp };
   st.hops = (st.hops || 0) + 1;
   S.hopping = true; sfx.jump(); S.flash = 0.9;
   enterTown(S.city.town, year, 'jump');
   S.hopping = false;
   S.mission = m; S.step = st;
-  const nv = makeVehicle(keep.type, keep.x, keep.y, keep.ang, { ai: 'flee', dir: keep.dir, ni: keep.ni, nj: keep.nj, fast: keep.fast });
+  const nv = makeVehicle(keep.type, keep.x, keep.y, keep.ang, { ai: 'flee', pn: keep.pn, n: keep.n, fast: keep.fast, maxHp: keep.maxHp });
   nv.hp = keep.hp; nv.speed = keep.speed; st.target = nv;
   if (st.timer != null) st.timer += 25;
   S.ui.toast(`Hargreaves has jumped to ${year}, and taken you with him!`, 3600);
@@ -1301,11 +1350,13 @@ function travel(town, year, where) {
   S.transit = { jump, t: 0, dur: jump ? 1.5 : 2.6, from: c.town, to: town, y0: c.year, y1: year, air: c.air, abroad: town.country !== c.town.country, swapped: false,
     swap: () => { if (S === tok) enterTown(town, year, where); }, done: () => { if (S === tok) { const after = S.transit.after; S.transit = null; S.busy = false; after?.(); } } };
   if (jump) sfx.jump(); else sfx.door();
+  if (!jump && town.id !== c.town.id) { const tr = S.transit; tr.pending = true; tr.held = 0; fetchStreets(town).then(() => { tr.pending = false; }); }
 }
 // Drawn over everything while a journey is under way.
 function drawTransit(g, w, h, dpr, dt) {
   const tr = S.transit;
   tr.t += dt;
+  if (tr.pending && !tr.swapped && tr.t / tr.dur > 0.44 && tr.held < 10) { tr.t -= dt; tr.held += dt; }   // hold the journey while the streets arrive
   const k = clamp(tr.t / tr.dur, 0, 1);
   if (k >= 0.5 && !tr.swapped) { tr.swapped = true; tr.swap(); }
   const font = (px, f = '"Press Start 2P", monospace') => { g.font = `${Math.round(px * dpr)}px ${f}`; };
@@ -1398,9 +1449,10 @@ function openPause() {
   S.ui.panel(`<h2>Relative Speed</h2><p>${escapeText(nextStory()?.brief || 'Free roam: every town, every year.')}</p>
     ${S.ui.touch ? '<p>Left thumb steers and walks. GO talks, gets in and out and starts jobs. CAR calls the Heirloom.</p>' : k('WASD / arrows', 'walk, drive') + k('E', 'talk, get in or out, start a job') + k('Space', 'handbrake: hold it into a corner to slide the back round') + k('T', 'time dial') + k('H', 'call the Heirloom (£10)') + k('M', 'town map') + k('P', 'pedigree') }
     <p><b>The case so far</b> <small>${tally().text}</small></p>${fragsGot() || S.save.idx > S.story.missions.findIndex(m => m.id === 'blank-and-void') ? `<p>📄 <b>The Foundling File</b> ${fragsGot()} of ${S.story.frags.length} pages <small>${S.story.frags.map(f => (S.save.frags || []).includes(f.id) ? '✔' : `${escapeText(S.story.towns.get(f.town).name)} ${f.year}`).join(' · ')}</small></p>` : ''}${S.story.missions.map((m, i) => i < S.save.idx ? `<div class="row" style="padding:3px 0;border:0"><span>✔ ${escapeText(m.title)} <b style="color:#c8901a">${'★'.repeat((S.save.medals || {})[m.id] || 0)}</b><small>${escapeText(m.act)} · ${escapeText(S.story.towns.get(m.town).name)}, ${m.year}</small></span>${m.town === S.city.town.id && m.year === S.city.year && !S.mission && m.steps.some(x => x.t !== 'travel' && x.t !== 'talk') ? `<button class="alt" data-go="replay:${i}">Replay</button>` : ''}</div>` : i === S.save.idx ? `<div class="row need" style="padding:5px 8px"><span>▶ ${escapeText(m.title)}<small>${escapeText(m.act)} · ${escapeText(S.story.towns.get(m.town).name)}, ${m.year}</small></span></div>` : '').join('')}${S.save.idx < S.story.missions.length - 1 ? `<p>…and ${S.story.missions.length - S.save.idx - 1} more to come.</p>` : ''}
-    <div class="foot"><button data-go="close">Resume</button><button class="alt" data-go="easy">Timers: ${S.save.easy ? 'generous' : 'normal'}</button><button class="alt" data-go="quit">Save and leave</button><button class="alt" data-go="reset">Restart the story</button></div>`, {
+    <div class="foot"><button data-go="close">Resume</button><button class="alt" data-go="easy">Timers: ${S.save.easy ? 'generous' : 'normal'}</button><button class="alt" data-go="streets">Streets: ${realStreets() ? 'real (OpenStreetMap)' : 'made up'}</button><button class="alt" data-go="quit">Save and leave</button><button class="alt" data-go="reset">Restart the story</button></div>`, {
     close: () => S.ui.closePanel(),
     easy: () => { S.save.easy = !S.save.easy; persist(); openPause(); },
+    streets: () => { try { localStorage.setItem('a3d:realstreets', realStreets() ? '0' : '1'); } catch (e) { /* no storage */ } S.nets.clear(); S.asked.clear(); S.ui.closePanel(); S.ui.toast(realStreets() ? 'Real streets from OpenStreetMap, from the next town you enter. Only the town\'s name is sent.' : 'Made-up streets from the next town you enter. Nothing is looked up.', 6000); if (realStreets()) fetchStreets(S.city.town); },
     replay: i => { S.ui.closePanel(); startMission(S.story.missions[+i]); },
     quit: () => { S.ui.closePanel(); closeStory(); },
     reset: () => { S.ui.panel('<h2>Restart the story?</h2><p>Your cash, proofs and progress for this person will be wiped.</p><div class="foot"><button data-go="yes">Restart</button><button class="alt" data-go="close">Keep playing</button></div>', {
@@ -1424,24 +1476,15 @@ function callHeirloom() {
 // ---------------- A test driver ----------------
 // Plays missions through the same controls a person has, so that tests/story-bot.py can measure how long
 // each one takes, how tight its clock is and where it goes wrong. Switched on with S.debug.bot(true).
-function botNode(p) {
-  const c = S.city;
-  let i = 0, j = 0;
-  c.xs.forEach((x, k) => { if (Math.abs((x + 1) * T - p.x) < Math.abs((c.xs[i] + 1) * T - p.x)) i = k; });
-  c.ys.forEach((y, k) => { if (Math.abs((y + 1) * T - p.y) < Math.abs((c.ys[j] + 1) * T - p.y)) j = k; });
-  return [i, j];
-}
 function botPath(from, to) {
-  const c = S.city, [i1, j1] = botNode(to);
-  let [i, j] = botNode(from);
-  // join the grid along whichever road we are already on
-  const onH = c.ys.some(y => Math.abs((y + 1) * T - from.y) < 1.2 * T), pts = [];
-  const lane = (a, b, d) => { const n = nodeC(a, b), lo = laneOffset(c, d); return { x: n.x + lo[0], y: n.y + lo[1], node: true }; };
-  const goI = () => { while (i !== i1) { const d = i1 > i ? 0 : 2; i += Math.sign(i1 - i); pts.push(lane(i, j, d)); } };
-  const goJ = () => { while (j !== j1) { const d = j1 > j ? 1 : 3; j += Math.sign(j1 - j); pts.push(lane(i, j, d)); } };
+  const c = S.city, pts = [];
   // off the road (a yard, a court): get back onto it first
   if (c.at(Math.floor(from.x / T), Math.floor(from.y / T)) !== G.ROAD) { const r = roadNear(from.x, from.y); if (dist(r, from) > 1.2 * T) pts.push({ x: r.x, y: r.y }); }
-  if (onH) { j = botNode({ x: from.x, y: from.y })[1]; goI(); goJ(); } else { goJ(); goI(); }
+  const a = c.nearNode(from.x, from.y), b = c.nearNode(to.x, to.y), rt = c.route(a, b);
+  // do not double back to a junction that is behind us on the way
+  let s0 = 0;
+  if (rt.length > 1 && dist(c.nodes[rt[1]], from) < dist(c.nodes[rt[0]], c.nodes[rt[1]]) + 0.5 * T) s0 = 1;
+  for (let i = Math.max(1, s0); i < rt.length; i++) pts.push(lanePt(rt[i - 1], rt[i], -1));
   pts.push({ x: to.x, y: to.y });
   return pts;
 }
@@ -1454,12 +1497,12 @@ function botGoal() {
     for (const v of S.vehicles) if (v.ai === 'hunt' && v.prey === st.convoy) { const d = dist(v, st.convoy); if (d < bd) { bd = d; best = v; } }
     return best ? { o: best, ram: true } : { o: st.convoy, keep: 4.5 };
   }
-  if (s.t === 'escape') { const c = S.city; let far = null, fd = -1; for (let i = 0; i < c.xs.length; i += 3) for (let j = 0; j < c.ys.length; j += 3) { const n = nodeC(i, j); if (dist(n, pp) < 9 * T) continue; let d = 1e9; for (const v of S.vehicles) if (v.ai === 'cop') d = Math.min(d, dist(v, n)); for (const q of S.peds) if (q.cop) d = Math.min(d, dist(q, n)); d = Math.min(d, 60 * T) - dist(n, pp) * 0.2; if (d > fd) { fd = d; far = n; } } return { o: far }; }
+  if (s.t === 'escape') { const c = S.city; let far = null, fd = -1; for (let i = 0; i < c.nodes.length; i += 9) { const n = c.nodes[i]; if (n.dead || dist(n, pp) < 9 * T || dist(n, pp) > 50 * T) continue; let d = 1e9; for (const v of S.vehicles) if (v.ai === 'cop') d = Math.min(d, dist(v, n)); for (const q of S.peds) if (q.cop) d = Math.min(d, dist(q, n)); d = Math.min(d, 60 * T) - dist(n, pp) * 0.2; for (const v of S.vehicles) if (v.ai === 'cop' && dist(v, pp) < 30 * T && (n.x - pp.x) * (v.x - pp.x) + (n.y - pp.y) * (v.y - pp.y) > 0.5 * dist(n, pp) * dist(v, pp)) d -= 30 * T; if (d > fd) { fd = d; far = n; } } return { o: far }; }
   if (s.t === 'frenzy') { let best = null, bd = 1e9; for (const v of S.vehicles) if (v.ai === 'hunt') { const d = dist(v, pp); if (d < bd) { bd = d; best = v; } } return best ? { o: best, ram: true } : null; }
   const t = stepTarget();
   if (!t) return null;
   if (s.t === 'chase') return { o: t, ram: true };
-  if (s.t === 'tail') return { o: t, keep: 7.5 };
+  if (s.t === 'tail') return { o: t, keep: 9 };
   if (s.t === 'carry' || s.t === 'talk') return { o: t, stop: true };
   if (s.t === 'collect') return { o: t, direct: 9 };
   return { o: t };
@@ -1484,7 +1527,7 @@ function botDrive(v, dt) {
   if (!g || !g.o) return { thr: 0, steer: 0, brake: true };
   const goal = g.o, dGoal = dist(v, goal);
   B.replan -= dt;
-  if (B.replan <= 0 || !B.path || !B.at || dist(goal, B.at) > 3 * T) { B.path = botPath(v, goal); B.at = { x: goal.x, y: goal.y }; B.replan = 1.5; }
+  if (B.replan <= 0 || !B.path || !B.at || dist(goal, B.at) > 3 * T) { B.path = botPath(v, g.keep && goal.pn != null ? S.city.nodes[goal.pn] : goal); if (g.keep && goal.pn != null) B.path.push({ x: goal.x, y: goal.y }); B.at = { x: goal.x, y: goal.y }; B.replan = 1.5; }   // when following, come up from behind
   while (B.path.length > 1 && dist(v, B.path[0]) < 1.7 * T) B.path.shift();
   const direct = dGoal < (g.direct || (g.ram ? 7 : 3.5)) * T;
   const wp = direct ? goal : B.path[0];
@@ -1496,7 +1539,7 @@ function botDrive(v, dt) {
     if (turn > 0.5) vmax = Math.min(vmax, (4 + dW / T * 1.3) * T);
   }
   if (g.stop && dGoal < 8 * T) vmax = Math.min(vmax, Math.max(1.4 * T, (dGoal - 1.6 * T) * 2.2));
-  if (g.keep) { if (dGoal < g.keep * T) vmax = 0; else vmax = Math.min(vmax, (dGoal / T - g.keep) * 1.6 * T + Math.abs(goal.speed || 0)); }
+  if (g.keep) { if (dGoal < g.keep * T) vmax = 0; else vmax = Math.min(vmax, (dGoal / T - g.keep) * 1.6 * T + Math.abs(goal.speed || 0)); if (dGoal < (g.keep - 2) * T && v.speed > T) return { thr: -1, steer: 0, brake: true }; }
   if (Math.abs(da) > 0.8) vmax = Math.min(vmax, 3.2 * T);
   if (S.step && S.step.step.gentle && S.step.loaded) vmax = Math.min(vmax, 7.5 * T);  // it drives a fragile load as a person would
   { const fx = Math.cos(v.ang), fy = Math.sin(v.ang), reach = 1.6 * T + Math.abs(v.speed) * 0.5;
@@ -1626,8 +1669,8 @@ function updatePlayer(dt) {
   P.x = v.x; P.y = v.y; P.ang = v.ang;
   // knock people over
   // people jump clear of anything they can see coming; flat out, they cannot
-  if (Math.abs(v.speed) > 1.5 * T && Math.abs(v.speed) < (v === S.heirloom && up('horn') ? 13 : 10) * T) {
-    const fx = Math.cos(v.ang) * Math.sign(v.speed), fy = Math.sin(v.ang) * Math.sign(v.speed), reach = (1.8 * T + Math.abs(v.speed) * 0.22) * (v === S.heirloom && up('horn') ? 2 : 1);
+  if (Math.abs(v.speed) > 1.5 * T && Math.abs(v.speed) < (v === S.heirloom && up('horn') ? 15 : 12.5) * T) {
+    const fx = Math.cos(v.ang) * Math.sign(v.speed), fy = Math.sin(v.ang) * Math.sign(v.speed), reach = (2.2 * T + Math.abs(v.speed) * 0.3) * (v === S.heirloom && up('horn') ? 2 : 1);
     for (const p of S.peds) {
       if (p.npc || p.stepPed || p.cop || p.down > 0) continue;
       const rx = p.x - v.x, ry = p.y - v.y, f = rx * fx + ry * fy, l = -rx * fy + ry * fx;
@@ -1777,7 +1820,7 @@ function hud() {
   ui.stat(P.hearts, Math.floor(S.heat + 0.001));
   { const b = ui.root.querySelector('[data-act="dial"]'), lab = dialReady() ? '⏱ Dial' : '🔒 Dial'; if (b && b.textContent !== lab) b.textContent = lab; }
   const pq = P.vehicle || P, hh = Math.floor(S.clock), mm = Math.floor((S.clock % 1) * 6) * 10, street = c.streetAt(pq.x, pq.y);
-  ui.where(S.townLabel, `${c.year} · ${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}${S.rain > 0.3 ? ' · rain' : ''} · ${street || ERA_NAMES[c.era]}`);
+  ui.where(S.townLabel, `${c.year} · ${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}${S.rain > 0.3 ? ' · rain' : ''} · ${street || ERA_NAMES[c.era]}${c.source === 'osm' ? ' · © OpenStreetMap' : ''}`);
   let obj = '';
   const guide = (town, year) => {
     const t = S.story.towns.get(town);

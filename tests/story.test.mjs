@@ -1,3 +1,4 @@
+import { makeNet, netFromOsm, packNet, unpackNet, osmQuery } from '../js/storynet.js';
 // Story mode plot: every person in the demo file must make a playable story, and so must awkward trees.
 import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
@@ -55,6 +56,47 @@ function check(story, label) {
     for (const l of [...f.intro, ...f.outro]) assert.ok(!/undefined|null|NaN/.test(l.text), `${label}: favour line "${l.text}"`);
     for (const s of f.steps) for (const k of [s.at, s.from, s.to, s.around, ...(s.stops || [])]) if (k) assert.ok(LOTS.has(k), `${label}: favour lot ${k}`);
   }
+}
+
+// ---- street plans ----
+{
+  // drawn: every town gets a plan, the same every time, all of it joined up
+  for (const id of ['leeds-england', 'cork-ireland', 'new-york-usa', 'x']) {
+    const a = makeNet({ id }), b = makeNet({ id });
+    assert.equal(JSON.stringify(a.nodes), JSON.stringify(b.nodes), 'a drawn town should be the same every time');
+    assert.ok(a.nodes.length > 200 && a.ways.length > 60, `${id}: a thin town (${a.nodes.length} points)`);
+    assert.ok(a.nodes.every(n => n.nb.length >= 1 && n.x > 2 && n.y > 2 && n.x < a.W - 2 && n.y < a.H - 2), id + ': a point off the map or joined to nothing');
+    const seen = new Set([0]), q = [0];
+    while (q.length) for (const m of a.nodes[q.pop()].nb) if (!seen.has(m)) { seen.add(m); q.push(m); }
+    assert.equal(seen.size, a.nodes.length, id + ': not all joined up');
+    assert.ok(a.nodes.some(n => !n.dead), id + ': nothing but dead ends');
+  }
+  // read from OpenStreetMap: a made-up answer in the shape Overpass gives
+  const lat0 = 53.8, lon0 = -1.55, els = [];
+  let nid = 1;
+  const node = (dx, dy) => { els.push({ type: 'node', id: nid, lat: lat0 + dy / 110540, lon: lon0 + dx / (111320 * Math.cos(lat0 * Math.PI / 180)) }); return nid++; };
+  const grid = [];
+  for (let j = -4; j <= 4; j++) { const rowN = []; for (let i = -4; i <= 4; i++) rowN.push(node(i * 90 + j * 12, j * 80 - i * 9)); grid.push(rowN); }
+  let wid = 1000;
+  grid.forEach((rowN, j) => els.push({ type: 'way', id: wid++, nodes: rowN, tags: { highway: j === 4 ? 'primary' : 'residential', name: j === 4 ? 'Kirkgate' : 'Row ' + j } }));
+  for (let i = 0; i < 9; i++) els.push({ type: 'way', id: wid++, nodes: grid.map(r => r[i]), tags: { highway: 'tertiary', name: 'Gate ' + i } });
+  els.push({ type: 'way', id: wid++, nodes: [node(2000, 0), node(2100, 0)], tags: { highway: 'residential', name: 'Miles Away' } });        // off the map
+  els.push({ type: 'way', id: wid++, nodes: [node(40, 300), node(45, 320)], tags: { highway: 'footway' } });                               // not a road
+  els.push({ type: 'way', id: wid++, nodes: [node(-500, -200), node(0, -150), node(500, -210)], tags: { waterway: 'river', name: 'Aire' } });
+  const pk = [node(100, 100), node(160, 100), node(160, 150), node(100, 150)];
+  els.push({ type: 'way', id: wid++, nodes: [...pk, pk[0]], tags: { leisure: 'park', name: 'The Rec' } });
+  const net = netFromOsm({ elements: els }, lat0, lon0);
+  assert.ok(net && net.source === 'osm' && net.nodes.length > 80, 'the OpenStreetMap plan should have come out');
+  assert.ok(net.ways.some(w => w.name === 'Kirkgate' && w.cls === 0) && net.ways.some(w => w.name === 'Gate 3'), 'real street names are kept');
+  assert.ok(!net.ways.some(w => w.name === 'Miles Away'), 'roads off the map are dropped');
+  assert.ok(net.water.length === 1 && net.green.length === 1, 'the river and the park come too');
+  assert.ok(net.nodes.every(n => n.nb.length >= 1 && n.x >= 5 && n.y >= 5 && n.x <= net.W - 5 && n.y <= net.H - 5));
+  const again = unpackNet(JSON.parse(JSON.stringify(packNet(net))));
+  assert.ok(again && again.nodes.length === net.nodes.length && again.ways.length === net.ways.length && again.ways.some(w => w.name === 'Kirkgate'), 'a kept plan comes back the same');
+  assert.equal(netFromOsm({ elements: [] }, lat0, lon0), null);
+  assert.equal(netFromOsm(null, lat0, lon0), null);
+  assert.ok(/highway/.test(osmQuery(lat0, lon0)) && /around:\d+,53\.8/.test(osmQuery(lat0, lon0)));
+  console.log(`ok street plans: drawn and OpenStreetMap (${net.nodes.length} points, ${net.ways.length} roads)`);
 }
 
 const data = parseGedcom(readFileSync(new URL('../sample/demo.ged', import.meta.url), 'utf8'));

@@ -1477,8 +1477,18 @@ function render() {
   for (const s of S.sparks) { g.fillStyle = s.col; g.globalAlpha = clamp(s.t * 3, 0, 1); g.fillRect(s.x - 2, s.y - 2, 4, 4); }
   g.globalAlpha = 1;
   g.setTransform(1, 0, 0, 1, 0, 0);
-  drawTall(g, c, V, t);
   const dark = darkness();
+  drawTall(g, c, V, t, dark);
+  // cloud shadows drifting over the town
+  if (dark < 0.3) {
+    g.fillStyle = `rgba(40,50,90,${0.085 * (1 - dark / 0.3)})`;
+    for (let i = 0; i < 6; i++) {
+      const wx = ((i * 977 + t * 22) % (c.wpx + 1400)) - 700, wy = ((i * 613) % c.hpx) + Math.sin(t * 0.05 + i) * 80;
+      const sx = (wx - V.x) * z + w / 2, sy = (wy - V.y) * z + h / 2, rx = (260 + (i % 3) * 90) * z, ry = (120 + (i % 2) * 60) * z;
+      if (sx < -rx * 1.6 || sx > w + rx * 1.6 || sy < -ry * 1.6 || sy > h + ry * 1.6) continue;
+      g.beginPath(); g.ellipse(sx, sy, rx, ry, 0, 0, 7); g.ellipse(sx + rx * 0.7, sy + ry * 0.3, rx * 0.7, ry * 0.8, 0, 0, 7); g.ellipse(sx - rx * 0.6, sy + ry * 0.2, rx * 0.6, ry * 0.7, 0, 0, 7); g.fill();
+    }
+  }
   if (dark > 0.03) drawLight(g, w, h, V, dark);
   if (S.rain > 0.03) {
     g.strokeStyle = `rgba(205,220,240,${0.38 * S.rain})`; g.lineWidth = dpr; g.beginPath();

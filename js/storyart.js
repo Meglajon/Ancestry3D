@@ -55,7 +55,9 @@ export function paintFor(type, rnd) {
   return CAR_COLORS[Math.floor(rnd() * CAR_COLORS.length)];
 }
 
+const INK = '#2d2438';
 function rr(g, x, y, w, h, r) { g.beginPath(); g.roundRect(x, y, w, h, r); g.fill(); }
+const ink = (g, lw = 1.8) => { g.strokeStyle = INK; g.lineWidth = lw; g.stroke(); };
 function tint(hex, f) {
   const n = parseInt(hex.slice(1), 16), c = v => Math.max(0, Math.min(255, Math.round(v * f + (f > 1 ? (f - 1) * 60 : 0))));
   return `rgb(${c(n >> 16)},${c((n >> 8) & 255)},${c(n & 255)})`;
@@ -64,7 +66,7 @@ function horse(g, x, y, col, t, moving) {
   const s = moving ? Math.sin(t * 14) * 3 : 0;
   g.fillStyle = 'rgba(0,0,0,0.28)'; g.beginPath(); g.ellipse(x + 2, y + 3, 15, 6, 0, 0, 7); g.fill();
   g.fillStyle = tint(col, 0.7); g.fillRect(x - 10 + s, y - 7, 4, 3); g.fillRect(x + 6 - s, y - 7, 4, 3); g.fillRect(x - 10 - s, y + 4, 4, 3); g.fillRect(x + 6 + s, y + 4, 4, 3);
-  g.fillStyle = col; g.beginPath(); g.ellipse(x, y, 14, 5.5, 0, 0, 7); g.fill();
+  g.fillStyle = col; g.beginPath(); g.ellipse(x, y, 14, 5.5, 0, 0, 7); g.fill(); ink(g, 1.4);
   g.beginPath(); g.ellipse(x + 16, y, 6, 3.2, 0, 0, 7); g.fill();
   g.fillStyle = tint(col, 0.5); g.fillRect(x + 4, y - 1, 10, 2); g.fillRect(x - 17, y - 1, 5, 2);
 }
@@ -80,12 +82,12 @@ export function drawVehicle(g, v, t) {
     if (S.horse === 2) { horse(g, hx, -6, HORSES[0], t, moving); horse(g, hx, 6, HORSES[2], t + 0.2, moving); } else horse(g, hx, 0, k === 'erasercoach' ? '#9a9a9e' : HORSES[(L + body.charCodeAt(2)) % HORSES.length], t, moving);
     g.fillStyle = 'rgba(0,0,0,0.3)'; rr(g, bx + 3, -W / 2 + 4, bodyLen, W, 3);
     g.fillStyle = '#1e1a16'; g.fillRect(bx + bodyLen * 0.3, -W / 2 - 2, 12, 3); g.fillRect(bx + bodyLen * 0.3, W / 2 - 1, 12, 3);
-    if (k === 'cart') { g.fillStyle = body; rr(g, bx, -W / 2, bodyLen, W, 2); g.fillStyle = tint(body, 0.75); g.fillRect(bx + 2, -W / 2 + 2, bodyLen - 4, W - 4); g.fillStyle = '#b8a060'; g.beginPath(); g.arc(bx + 9, -2, 5, 0, 7); g.arc(bx + 18, 3, 5, 0, 7); g.fill(); }
-    else if (k === 'wagon') { g.fillStyle = body; rr(g, bx, -W / 2, bodyLen, W, 2); g.fillStyle = '#e8dfc8'; rr(g, bx + 2, -W / 2 + 1, bodyLen - 10, W - 2, 6); g.strokeStyle = 'rgba(0,0,0,0.18)'; g.lineWidth = 1; for (let i = 1; i < 4; i++) { g.beginPath(); g.moveTo(bx + 2 + i * (bodyLen - 10) / 4, -W / 2 + 1); g.lineTo(bx + 2 + i * (bodyLen - 10) / 4, W / 2 - 1); g.stroke(); } }
+    if (k === 'cart') { g.fillStyle = body; rr(g, bx, -W / 2, bodyLen, W, 2); ink(g); g.fillStyle = tint(body, 0.75); g.fillRect(bx + 2, -W / 2 + 2, bodyLen - 4, W - 4); g.fillStyle = '#b8a060'; g.beginPath(); g.arc(bx + 9, -2, 5, 0, 7); g.arc(bx + 18, 3, 5, 0, 7); g.fill(); }
+    else if (k === 'wagon') { g.fillStyle = body; rr(g, bx, -W / 2, bodyLen, W, 2); g.fillStyle = '#e8dfc8'; rr(g, bx + 2, -W / 2 + 1, bodyLen - 10, W - 2, 6); ink(g); g.strokeStyle = 'rgba(0,0,0,0.18)'; g.lineWidth = 1; for (let i = 1; i < 4; i++) { g.beginPath(); g.moveTo(bx + 2 + i * (bodyLen - 10) / 4, -W / 2 + 1); g.lineTo(bx + 2 + i * (bodyLen - 10) / 4, W / 2 - 1); g.stroke(); } }
     else {
       const grey = k === 'erasercoach';
       if (k === 'cab') { g.fillStyle = '#f0c030'; g.fillRect(bx + bodyLen - 9, -3, 5, 6); }
-      g.fillStyle = grey ? '#8a8e94' : '#1c1c20'; rr(g, bx, -W / 2, bodyLen, W, 5); g.fillStyle = grey ? '#a4a8ae' : '#34343a'; rr(g, bx + 4, -W / 2 + 3, bodyLen - 12, W - 6, 3);
+      g.fillStyle = grey ? '#8a8e94' : k === 'cab' ? body : '#3a3448'; rr(g, bx, -W / 2, bodyLen, W, 5); ink(g); g.fillStyle = grey ? '#a4a8ae' : '#34343a'; rr(g, bx + 4, -W / 2 + 3, bodyLen - 12, W - 6, 3);
       if (grey) { g.fillStyle = '#f08aa0'; g.fillRect(bx + 7, -5, 14, 10); g.fillStyle = '#f8f4f0'; g.fillRect(bx + 15, -5, 3, 10); } else { g.fillStyle = '#c8a040'; g.fillRect(bx + bodyLen - 5, -W / 2 + 2, 2, 2); g.fillRect(bx + bodyLen - 5, W / 2 - 4, 2, 2); }
     }
     g.fillStyle = '#2a2a30'; g.beginPath(); g.arc(bx + bodyLen - 3, 0, 4, 0, 7); g.fill(); // driver
@@ -96,14 +98,14 @@ export function drawVehicle(g, v, t) {
   for (const x of [-L * 0.3, L * 0.28]) { g.fillRect(x - 5, -W / 2 - 1.5, 10, 4); g.fillRect(x - 5, W / 2 - 2.5, 10, 4); }
   if (k === 'vintage' || k === 'lorry') {
     g.fillStyle = '#18181c'; rr(g, L / 2 - 16, -W / 2, 14, W, 3); rr(g, -L / 2 + 2, -W / 2, 12, W, 3);
-    g.fillStyle = body; rr(g, -L / 2 + 4, -W / 2 + 2, L - 20, W - 4, 2); rr(g, L / 2 - 18, -W / 2 + 5, 16, W - 10, 2);
+    g.fillStyle = body; rr(g, -L / 2 + 4, -W / 2 + 2, L - 20, W - 4, 2); ink(g); g.fillStyle = body; rr(g, L / 2 - 18, -W / 2 + 5, 16, W - 10, 2); ink(g);
     if (k === 'lorry') { g.fillStyle = '#8a6238'; g.fillRect(-L / 2 + 2, -W / 2 + 1, L * 0.55, W - 2); g.fillStyle = '#6a4a28'; g.fillRect(-L / 2 + 4, -W / 2 + 3, L * 0.55 - 4, W - 6); g.fillStyle = '#3a3a3e'; g.beginPath(); g.arc(-L / 2 + 12, -3, 5, 0, 7); g.arc(-L / 2 + 22, 3, 5, 0, 7); g.fill(); }
     else { g.fillStyle = '#d8cfb8'; rr(g, -L / 2 + 7, -W / 2 + 3, 18, W - 6, 2); g.fillStyle = '#20262c'; g.fillRect(L / 2 - 22, -W / 2 + 4, 3, W - 8); }
     g.fillStyle = '#f0e6a0'; g.beginPath(); g.arc(L / 2 - 2, -W / 2 + 4, 2.5, 0, 7); g.arc(L / 2 - 2, W / 2 - 4, 2.5, 0, 7); g.fill();
     return;
   }
   const round = k === 'classic' ? 9 : k === 'van' || k === 'eraser' || k === 'bus' || k === 'tram' ? 4 : 7;
-  g.fillStyle = body; rr(g, -L / 2, -W / 2, L, W, round);
+  g.fillStyle = body; rr(g, -L / 2, -W / 2, L, W, round); ink(g, 2);
   if (k === 'heirloom') { g.fillStyle = '#7a5630'; g.fillRect(-L / 2 + 6, -W / 2 + 1, L * 0.62, 3); g.fillRect(-L / 2 + 6, W / 2 - 4, L * 0.62, 3); }
   if (k === 'police') { g.fillStyle = '#2a4ac8'; g.fillRect(-L / 2 + 4, -W / 2, L - 8, 3); g.fillRect(-L / 2 + 4, W / 2 - 3, L - 8, 3); }
   const longRoof = k === 'van' || k === 'eraser' || k === 'bus' || k === 'heirloom' || k === 'tram';
@@ -163,12 +165,13 @@ export function drawPerson(g, p, t) {
   if (L.skirt) { g.fillStyle = L.skirt; g.beginPath(); g.ellipse(-1.5, 0, 8.5, 9.5, 0, 0, 7); g.fill(); }
   else { g.fillStyle = '#2a2a30'; g.fillRect(-2 + s, -6, 6, 4); g.fillRect(-2 - s, 2, 6, 4); }
   g.fillStyle = L.skin; g.beginPath(); g.arc(2 - s * 0.8, -8.5, 2.4, 0, 7); g.arc(2 + s * 0.8, 8.5, 2.4, 0, 7); g.fill();
-  g.fillStyle = L.shawl || L.top; g.beginPath(); g.ellipse(0, 0, 5, 9, 0, 0, 7); g.fill();
+  g.fillStyle = L.shawl || L.top; g.beginPath(); g.ellipse(0, 0, 5.4, 9.4, 0, 0, 7); g.fill(); ink(g, 1.3);
   if (L.badge) { g.fillStyle = L.badge; g.fillRect(-1, -9, 3, 18); }
   g.fillStyle = L.skin; g.beginPath(); g.arc(1, 0, 5, 0, 7); g.fill();
   g.fillStyle = L.hair; g.beginPath(); g.arc(0.2, 0, 5, Math.PI * 0.5, Math.PI * 1.5); g.fill();
   if (L.female && !L.hat) { g.beginPath(); g.arc(-3.5, 0, 3.2, 0, 7); g.fill(); }
   if (L.hat) { g.fillStyle = L.hat; g.beginPath(); g.arc(0.5, 0, 6.2, 0, 7); g.fill(); g.fillStyle = 'rgba(255,255,255,0.14)'; g.beginPath(); g.arc(0.5, 0, 3.6, 0, 7); g.fill(); }
+  g.beginPath(); g.arc(L.hat ? 0.5 : 1, 0, L.hat ? 6.2 : 5.2, 0, 7); ink(g, 1.3);
   g.restore();
 }
 

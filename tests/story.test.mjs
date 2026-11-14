@@ -35,6 +35,20 @@ function check(story, label) {
     if (m.reward.proof) assert.ok(story.proofs.includes(m.reward.proof));
   });
   assert.equal(new Set(story.proofs.map(p => p.id)).size, story.proofs.length, label + ': duplicate proofs');
+  // the Foundling File: a page in each era the story visits, and the mission it opens
+  assert.equal(new Set(story.frags.map(f => f.town + ':' + f.year)).size, story.frags.length, label + ': two pages in one place');
+  for (const f of story.frags) assert.ok(story.towns.has(f.town) && LOTS.has(f.lot) && f.text && story.missions.some(m => m.town === f.town && m.year === f.year), `${label}: page ${f.id}`);
+  if (story.frags.length) {
+    const b = story.bonus;
+    assert.ok(b && b.bonus && b.odd && story.towns.has(b.town) && b.year === story.now, label + ': bonus');
+    for (const l of [...b.intro, ...b.outro]) assert.ok(l.text && !/undefined|null|NaN/.test(l.text), `${label}: bonus line "${l.text}"`);
+    for (const st of b.steps) {
+      assert.ok(STEPS.has(st.t) && st.text && !/undefined|null|NaN/.test(st.text), `${label}: bonus step`);
+      for (const k of [st.at, st.from, st.to, ...(st.spots || [])]) if (k) assert.ok(LOTS.has(k), `${label}: bonus lot ${k}`);
+      if (st.miss) for (const v of Object.values(st.miss)) assert.ok(!/undefined|null|NaN/.test(v), `${label}: bonus "${v}"`);
+      if (st.t === 'travel') assert.ok(story.towns.has(st.town) && st.year <= story.now);
+    }
+  } else assert.equal(story.bonus, null);
   for (const f of story.favours) {
     assert.ok(story.towns.has(f.town) && f.steps.length && f.title && f.after >= 0, `${label}: favour ${f.id}`);
     assert.ok(!story.tree.people.has(f.giver.who) || !story.chapters.some(c => c.id === f.giver.who), `${label}: favour from a chapter ancestor`);

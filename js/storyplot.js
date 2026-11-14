@@ -560,7 +560,7 @@ export function buildStory(data, rootId, opts = {}) {
             : { t: 'search', spots: ['pub', 'market', 'works'], miss: { 0: `"The best man? He was showing everybody the ring. Try ${N.market}."`, 1: `"He was here. He's gone to ${N.works} to borrow a collar stud."`, 2: `"Not here. ${cap(N.market)}, most like."` }, text: 'Find the best man. He has the ring' },
           { t: 'carry', from: c.sex === 'F' ? '@found' : 'home', to: 'church', n: 1, label: 'groom', passenger: g, timed: 1.05, rival: true, tokens: 2, text: `Get ${g} to ${N.church} before the Erasers bar the door`, bark: { name: g, text: `I've changed my mind. No. No, I haven't. Faster!` } },
           { t: 'chase', from: 'church', hp, label: van, drop: 'the marriage register', text: `They've snatched the register! Stop ${van}` },
-          { t: 'carry', from: 'church', to: 'pub', n: 1, label: 'couple', passenger: 'the happy couple', gentle: true, hunt: 1, text: `Drive the happy couple to the wedding breakfast at ${N.pub}. Gently: it is the only good frock she has`, bark: { name: bride ? firstName(bride) : 'The bride', text: `Mind my frock. And mind him, he's gone the colour of the cake.` } },
+          { t: 'carry', from: 'church', to: 'pub', n: 1, label: 'couple', passenger: 'the happy couple', gentle: true, text: `Drive the happy couple to the wedding breakfast at ${N.pub}. Gently: it is the only good frock she has`, bark: { name: bride ? firstName(bride) : 'The bride', text: `Mind my frock. And mind him, he's gone the colour of the cake.` } },
         ],
         birth: [
           { t: 'search', spots: ['infirmary', 'church', 'market'], miss: { 0: `"The midwife? Out on a call. She was heading for ${N.church}."`, 1: `"You've missed her. She went to ${N.market} for carbolic."`, 2: `"Not here. Try ${N.church}."` }, text: 'Find the midwife. She is out on her rounds' },
@@ -588,7 +588,7 @@ export function buildStory(data, rootId, opts = {}) {
         portrait: [
           { t: 'collect', around: 'home', radius: 12, n: kidNames.length, names: kidNames, label: 'children', timed: 1.7, text: `Round up the children: ${kidNames.join(', ')}` },
           { t: 'search', spots: ['hub', 'pub', 'market'], miss: { 0: `"The photographer? Gone to wet his whistle at ${N.pub}."`, 1: `"He was here. Went to ${N.market} to buy a new cloth for his head."`, 2: `"Not here. ${N.pub}?"` }, text: 'Find the photographer' },
-          { t: 'carry', from: '@found', to: 'home', n: 1, label: 'photographer', passenger: 'the photographer', gentle: true, timed: 1.5, hunt: 1, text: 'Bring him to the house without breaking his camera', bark: { name: 'The photographer', text: `Nobody is to smile. It takes eight seconds and smiling is a strain.` } },
+          { t: 'carry', from: '@found', to: 'home', n: 1, label: 'photographer', passenger: 'the photographer', gentle: true, timed: 1.5, text: 'Bring him to the house without breaking his camera', bark: { name: 'The photographer', text: `Nobody is to smile. It takes eight seconds and smiling is a strain.` } },
           { t: 'chase', from: 'home', hp, label: van, drop: 'the glass plate', text: `They have the glass plate! Stop ${van}` },
         ],
         burial: [
@@ -770,7 +770,46 @@ export function buildStory(data, rootId, opts = {}) {
     }
   }
 
+  // ---- The Foundling File: a page of Silas's own record in every era you visit, and where it leads ----
+  const ft = finale ? finale.town : home, fy = finale ? finale.year : present, FN = names(ft, fy);
+  const fragText = [
+    `Parish of ${ft.name}. Left at the vestry door on a Tuesday: one male infant, about a week old, in a basket. No note. No name.`,
+    `Entered by the overseers as SILAS, for the saint's day, and BLANK, for the column where the father goes.`,
+    `Apprenticed at nine to a law stationer. Absconded. Returned. Absconded. "The boy reads parish registers as other boys read adventure stories."`,
+    `A letter, never posted: "To any person of the name of". The name after it has been rubbed out so often the paper has gone through.`,
+    `A family tree in a child's hand. There is one name on it, his own, drawn very carefully, with room left all round.`,
+    `A reference in Dot's writing: "The brightest apprentice I ever had. He asked who the Engines were for. I said, people with somebody to go back to. I have regretted it since."`,
+  ];
+  const fragLots = ['church', 'infirmary', 'school', 'post', 'hall', 'farm'], seenFrag = new Set();
+  const frags = [];
+  for (const c of chapters) {
+    const k = c.town.id + ':' + c.year;
+    if (seenFrag.has(k) || frags.length >= fragText.length || !missions.some(m => m.chapter === c.index)) continue;
+    seenFrag.add(k);
+    frags.push({ id: 'frag' + frags.length, town: c.town.id, year: c.year, lot: fragLots[frags.length], text: fragText[frags.length] });
+  }
+  const bonus = frags.length ? {
+    id: 'somebodys-son', odd: true, bonus: true, act: 'After the end', title: `Somebody's Son`, town: home.id, year: present, giver: { who: 'dot', at: 'garage' }, hour: 16,
+    brief: `Silas's file is whole again. It says where and when. The Heirloom can do the rest.`,
+    intro: [{ who: 'dot', text: `You found all of it. I never could. A Tuesday, the vestry door, ${ft.name}, ${fy}: the very year you stood there${finale ? ' with ' + finale.first : ''}. He was a week old and forty yards off the whole time.` },
+      { who: 'dot', text: `We have a machine that goes to Tuesdays, ${hero.first}. He won't ask. He has never asked anybody for anything. So I'm asking for him.` }],
+    steps: [
+      { t: 'carry', from: 'garage', to: 'hub', n: 1, label: 'passenger', passenger: 'Silas', gentle: true, text: `Collect Silas. He has packed a bag, and unpacked it, twice`, bark: { name: 'Silas', text: `I have brought sandwiches. I did not know what one brings.` } },
+      { t: 'travel', town: ft.id, year: fy, text: `Take Silas to ${ft.name}, ${fy}` },
+      { t: 'search', spots: ['infirmary', 'pub', 'market'], miss: { 0: `Nobody has seen a girl with a basket. "Try ${FN.pub}. They take in lodgers and ask nothing."`, 1: `"There was a lass. Kept her shawl up. Went toward ${FN.market} at first light."`, 2: `"A basket? Aye. She asked the way to ${FN.infirmary} and then didn't take it."` }, text: 'Somebody carried a basket through this town today. Find where she has been' },
+      { t: 'carry', from: '@found', to: 'church', n: 1, label: 'passenger', passenger: 'Silas', gentle: true, text: `She has gone up to ${FN.church}. Drive Silas there. He would like to arrive slowly`, bark: { name: 'Silas', text: `Not too close. I only want to see. I have rubbed out a great many people and I should not like to smudge this.` } },
+    ],
+    outro: [
+      { who: 'note', text: `A girl of nineteen in a grey shawl sets a basket down at the vestry door. She tucks the blanket in. She says a name, twice, so that it will keep. It is not Blank.` },
+      { who: 'blank', text: `She gave me one. Did you hear? I shan't tell you what it is. I have never had anything before that was only mine.` },
+      { who: 'blank', text: `She has your chin, ${hero.first}. Or you have hers. I should have looked up from the paperwork years ago.` },
+      { who: 'dot', text: `Then write it in, Silas. In ink this time. And come home, the pair of you. There's a chart on my wall with room left all round one name, and I think it's finished waiting.` },
+    ],
+    reward: { cash: 1500 },
+  } : null;
+
   return {
+    frags, bonus,
     title: 'Relative Speed', hero, villain: { name: 'Silas Blank', firm: 'Blank & Void, Probate Genealogists' }, mentor: { name: 'Dot Quill' },
     benefactor, home, now: present, towns, chapters, missions, favours, proofs, tree, surname, foreign,
   };

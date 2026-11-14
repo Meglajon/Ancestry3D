@@ -61,6 +61,7 @@ async def main():
                     await talk()
                     st = await ev("return { m: !!s.mission, busy: s.busy, step: s.step ? s.step.step.t : null, t: s.t, tele: s.tele.length, fail: s.tele.filter(x => x.fail).map(x => x.fail).pop() || null, dlg: s.ui.dialogOpen }")
                     if os.environ.get('TRACE') and tick % 4 == 0: print('   ', await ev("const T = 32, st = s.step, pp = s.player.vehicle || s.player, f = o => o ? [Math.round(o.x / T), Math.round(o.y / T)] : null; return JSON.stringify({ t: +s.t.toFixed(0), yr: s.city.year, hp: st && st.target && st.target.hp, step: st && st.step.t, me: f(pp), veh: !!s.player.vehicle, sp: Math.round(Math.hypot(pp.vx || 0, pp.vy || 0) / T), loaded: st && st.loaded, timer: st && st.timer && +st.timer.toFixed(0), rival: st && f(st.rival), heat: +s.heat.toFixed(1), cops: s.vehicles.filter(v => v.ai === 'cop').length + s.peds.filter(q => q.cop).length, goal: st && f(s.debug.target()) })"))
+                    if os.environ.get('SHOTS') and tick % int(os.environ['SHOTS']) == 3: await page.screenshot(path=f"/tmp/diag/bot-{m['id']}-{tick:03}.png")
                     if st['step'] == 'travel': await ev("s.debug.finishStep();")
                     if st['fail']: state = 'FAIL: ' + st['fail']; break
                     if not st['m'] and not st['busy'] and not st['dlg']: state = 'ok'; break

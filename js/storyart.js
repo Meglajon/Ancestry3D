@@ -191,6 +191,11 @@ export function drawItem(g, kind, t, n = 0) {
   } else if (kind === 'clock') {
     g.save(); g.translate(0, bob - 4); g.fillStyle = '#fff6d8'; g.beginPath(); g.arc(0, 0, 9, 0, 7); g.fill(); g.strokeStyle = INK; g.lineWidth = 2; g.stroke();
     g.beginPath(); g.moveTo(0, 0); g.lineTo(0, -5.5); g.moveTo(0, 0); g.lineTo(4, 1); g.stroke(); g.fillStyle = '#e0362e'; g.fillRect(-6, -12, 4, 3); g.fillRect(2, -12, 4, 3); g.restore();
+  } else if (kind === 'file') {
+    g.save(); g.translate(0, bob - 4);
+    g.fillStyle = 'rgba(240,138,160,' + (0.25 + 0.15 * Math.sin(t * 5)) + ')'; g.beginPath(); g.arc(0, 0, 17, 0, 7); g.fill();
+    g.rotate(-0.15); g.fillStyle = '#f6efe0'; g.fillRect(-8, -10, 16, 20); g.strokeStyle = INK; g.lineWidth = 2; g.strokeRect(-8, -10, 16, 20);
+    g.fillStyle = '#8a8e94'; g.fillRect(-5, -6, 10, 2); g.fillRect(-5, -2, 7, 2); g.fillStyle = '#f08aa0'; g.fillRect(-5, 3, 10, 3); g.restore();
   } else if (kind === 'flag') {
     g.save(); g.translate(0, bob - 6); g.strokeStyle = INK; g.lineWidth = 2.5; g.beginPath(); g.moveTo(-8, 12); g.lineTo(-8, -12); g.stroke();
     for (let i = 0; i < 4; i++) for (let j = 0; j < 3; j++) { g.fillStyle = (i + j) % 2 ? '#fff' : '#22202a'; g.fillRect(-8 + i * 5, -12 + j * 4.5, 5, 4.5); }

@@ -28,13 +28,17 @@ const UPGRADES = [
   { id: 'ink', name: 'Ink economiser', desc: 'Each level takes a fifth off the ink for a jump.', max: 2, cost: [200, 500] },
   { id: 'wind', name: 'Quick-wind dial', desc: 'The Engine winds up sooner, and at a lower speed.', max: 2, cost: [250, 550] },
   { id: 'tyres', name: 'Proper tyres', desc: 'More grip, and no fear of the rain.', max: 1, cost: [350] },
+  { id: 'strap', name: 'Luggage straps', desc: 'Nothing falls off the back, whatever you hit.', max: 1, cost: [300] },
+  { id: 'clock', name: 'Dot\'s stopwatch', desc: 'It runs a little slow. Every timer is a tenth longer per level.', max: 2, cost: [400, 900] },
+  { id: 'horn', name: 'Brass klaxon', desc: 'People hear you coming from twice as far, and jump clear at any speed short of flat out.', max: 1, cost: [250] },
+  { id: 'radio', name: 'Police-band wireless', desc: 'You know where they are looking. Stars fade half as fast again.', max: 1, cost: [450] },
 ];
 const PAINTS = ['#c8a02a', '#a8322a', '#2a5a8a', '#2a6a4a', '#5a3a7a', '#d8d4c8', '#2a2a30', '#c86a2a'];
 const BADGES = {
   jump: ['First jump', 'Turned the years back'], abroad: ['Passport stamped', 'Travelled to another country'], clean: ['Not a scratch', 'A fragile delivery without one bump'],
   reunion: ['Family reunion', 'Met 25 people from your file'], respects: ['Paid your respects', 'Visited 10 family graves'], snaps: ['Family album', 'Found 9 lost photographs'],
   paradox: ['Paradox', 'Ran over your own ancestor and lived'], cabbie: ['The Knowledge', 'Five fares in a row'], rubber: ['Rubbed out', 'Put five Eraser vans off the road'],
-  favours: ['Good turns', 'Five favours for the family'], gold: ['Gold standard', 'Eight gold medals'], streets: ['Street cred', 'Saved five street names from the rubber'],
+  favours: ['Good turns', 'Five favours for the family'], gold: ['Gold standard', 'Eight gold medals'], foundling: ['The Foundling File', 'Found every page of Silas\'s record'], named: ['Somebody\'s son', 'Took Silas to the right Tuesday'], streets: ['Street cred', 'Saved five street names from the rubber'],
   centuries: ['Century hopper', 'Visited four different eras'], fitted: ['Fully fitted', 'Every upgrade on the Heirloom'], proven: ['Proven', 'Lodged every proof'],
 };
 const SILAS = ['Is that one of ours? I mean yours. I mean ours.', 'She has my chin. Do you see it? That is my chin.', 'I had no idea there were so many. Do they all come at Christmas?',
@@ -274,6 +278,12 @@ function enterTown(town, year, where) {
   });
   // (not the hero, and not anybody who has a chapter of their own here)
   const starring = new Set([S.story.hero.id, ...S.story.chapters.filter(ch => ch.town.id === town.id).map(ch => ch.id)]);
+  for (const f of S.story.frags) if (f.town === town.id && f.year === year && !(S.save.frags || []).includes(f.id)) {
+    const l = c.lot(f.lot), fr = seededRandom(hashString(f.id + town.id));
+    let spot = null;
+    for (let k = 0; k < 300 && !spot; k++) { const a = fr() * 7, r = (4 + fr() * 5) * T, x = l.x + Math.cos(a) * r, y = l.y + Math.sin(a) * r, tt = c.at(Math.floor(x / T), Math.floor(y / T)); if ((tt === G.GRASS || tt === G.YARD || tt === G.PAVE || tt === G.PLAZA) && c.reachable(Math.floor(x / T), Math.floor(y / T)) && !circleSolid(x, y, 12)) spot = { x, y }; }
+    if (spot) S.items.push({ frag: f.id, kind: 'file', x: spot.x, y: spot.y, n: 5, text: f.text });
+  }
   sideTokens(c);
   S.names = residentsOf(S.data, town, year, 48).filter(n => !starring.has(n.id));
   // three lost photographs in every town and era, with the file's own notes on the back
@@ -685,7 +695,7 @@ function updateHeat(dt) {
   const footEra = c.year < 1900;
   if (S.heat > 0) {
     S.heatCalm += dt;
-    if (S.heatCalm > 7) S.heat = Math.max(0, S.heat - dt / 4.5);
+    if (S.heatCalm > 7) S.heat = Math.max(0, S.heat - dt / 4.5 * (1 + 0.5 * up('radio')));
     const cops = S.vehicles.filter(v => v.ai === 'cop').length + S.peds.filter(p => p.cop).length;
     if (stars > 0 && cops < stars + (footEra ? 1 : 0) && (S.copT = (S.copT || 0) - dt) <= 0) {
       S.copT = 2.5;
@@ -744,7 +754,9 @@ function flattened() {
 
 // ---------------- Missions ----------------
 const manh = (a, b) => (Math.abs(a.x - b.x) + Math.abs(a.y - b.y)) / T;
-function nextStory() { return S.story.missions[S.save.idx] || null; }
+function nextStory() { return S.story.missions[S.save.idx] || (bonusReady() ? S.story.bonus : null); }
+const fragsGot = () => (S.save.frags || []).length;
+const bonusReady = () => S.story.bonus && !S.save.foundling && S.save.idx >= S.story.missions.length && fragsGot() >= S.story.frags.length;
 const isHere = m => m && m.town === S.city.town.id && m.year === S.city.year;
 
 async function startMission(def) {
@@ -844,6 +856,7 @@ function enterStep(step) {
   if (m.t0 == null) m.t0 = S.t;
   m.par = (m.par || 0) + (st.timer ?? ({ goto: 18, talk: 3, chase: 55, tail: 45, defend: 60, catch: 30, search: 40, escape: 30, travel: 0, collect: 40, carry: 40, race: 40 }[step.t] ?? 20));
   if (st.timer != null && S.save.easy) st.timer = Math.round(st.timer * 1.6);
+  if (st.timer != null && step.t !== 'frenzy' && up('clock')) st.timer = Math.round(st.timer * (1 + 0.1 * up('clock')));
   st.timer0 = st.timer; st.t0 = S.t;
 }
 function stepTarget() {
@@ -1012,11 +1025,10 @@ function updateIncident(dt) {
 // A grey vehicle racing you to the same door.
 function startRival(dest, pace) {
   const st = S.step, P = S.player, pp = P.vehicle || P;
-  const a = Math.atan2(dest.y - pp.y, dest.x - pp.x) + Math.PI + (Math.random() - 0.5);
-  const type = S.city.year < 1900 ? 'erasercoach' : 'eraser', from = { x: pp.x + Math.cos(a) * 7 * T, y: pp.y + Math.sin(a) * 7 * T };
+  const type = S.city.year < 1900 ? 'erasercoach' : 'eraser', c = S.city, from = { x: clamp(2 * dest.x - pp.x, c.xs[0] * T, (c.xs[c.xs.length - 1] + 1) * T), y: clamp(2 * dest.y - pp.y, c.ys[0] * T, (c.ys[c.ys.length - 1] + 1) * T) };  // from the far side of where you are both going
   const secs = (st.timer ?? manh(pp, dest) / 5 + 14) * (pace === true ? 0.8 : 0.8 * 0.44 / pace);
   st.rival = spawnAi(type, from, 'lead', { dest, pace: clamp((manh(from, dest) + 4) / secs / VEHICLES[type].max, 0.16, 0.6) });
-  hintOnce('rival', 'A grey one is racing you there. Get in its way, or just get there first.', 5200);
+  hintOnce('rival', 'A grey one is racing you there from the other side of town. Get there first, or get in its way.', 5200);
 }
 // Grey vans drawn across the road near where you are going.
 function placeBlocks(dest, n) {
@@ -1033,7 +1045,9 @@ function placeBlocks(dest, n) {
 // A load that is not tied down comes off if you hit something hard enough.
 function spillBump(hit) {
   const st = S.step, P = S.player;
-  if (!st || st.step.t !== 'carry' || !st.step.spill || !st.loaded || st.spillPt || hit < 4.2 * T || st.step.passenger) return;
+  if (up('strap') || !st || st.step.t !== 'carry' || !st.step.spill || !st.loaded || st.spillPt || st.tied === st.k || hit < 5.6 * T || st.step.passenger) return;
+  st.tied = st.k;  // once a trip: it gets tied down properly after that
+  if (st.timer != null) st.timer += 4;
   const v = P.vehicle;
   st.loaded = false; st.spillPt = { x: v.x - Math.cos(v.ang) * 30, y: v.y - Math.sin(v.ang) * 30 };
   S.items.push({ spill: true, step: true, kind: 'load', x: st.spillPt.x, y: st.spillPt.y, n: 3 });
@@ -1058,6 +1072,7 @@ function updateAmbush(dt) {
   const m = S.mission, st = S.step;
   if (m && m.def.frenzy) return;
   if (!m || (m.def.odd && !m.def.favour)) { for (const v of S.vehicles) if (v.ai === 'hunt') v.gone = true; return; }
+  if (st && st.step.gentle) return;  // nobody rams the wedding car
   const force = st && st.step.hunt;
   if (!force && (m.def.index < 5 || !st || st.timer == null || !['carry', 'race', 'collect', 'goto', 'search'].includes(st.step.t))) return;
   if (S.vehicles.filter(v => v.ai === 'hunt' && !v.prey).length >= (force || (m.def.index > 14 ? 2 : 1))) return;
@@ -1098,7 +1113,7 @@ function sideTokens(c) {
 function startSide(kind) {
   const c = S.city;
   if (kind === 'frenzy') {
-    hintOnce('frenzy', 'Rubber Frenzy! Sixty seconds. Every grey van you ram off the road is £20. They ram back.', 6000);
+    hintOnce('frenzy', 'Rubber Frenzy! Sixty seconds. Every grey one you ram off the road is £20. They ram back.', 6000);
     startMission({ id: 'frenzy', odd: true, frenzy: true, act: 'Side job', title: 'Rubber Frenzy', town: c.town.id, year: c.year, giver: { who: 'board' }, brief: '', intro: [], outro: [], steps: [{ t: 'frenzy', time: 60, text: 'Ram every Eraser you can before the clock runs out' }], reward: { cash: 0 } });
   } else {
     const best = (S.save.cup || {})[c.town.id + ':' + c.year];
@@ -1147,7 +1162,7 @@ async function passMission() {
   const again = !def.odd && def.index < S.save.idx;
   if (again) cash = Math.round(cash * 0.3 / 5) * 5;
   let lap = 0;
-  if (def.frenzy || def.cup || !def.odd || def.favour) {
+  if (def.frenzy || def.cup || ((!def.odd || def.favour) && def.steps.some(x => x.t !== 'travel' && x.t !== 'talk'))) {
     const ratio = m.par ? (S.t - (m.t0 ?? S.t)) / m.par : 1;
     medal = def.frenzy ? (m.score >= 8 ? 3 : m.score >= 5 ? 2 : m.score >= 2 ? 1 : 0) : ratio <= 0.5 ? 3 : ratio <= 0.72 ? 2 : 1;
     cash = def.frenzy ? (m.score || 0) * 20 : Math.round(cash * (medal === 3 ? 1.4 : medal === 2 ? 1.15 : 1) / 5) * 5;
@@ -1162,6 +1177,7 @@ async function passMission() {
   if (def.reward.proof && !S.save.proofs.includes(def.reward.proof.id)) S.save.proofs.push(def.reward.proof.id);
   if (!def.odd) S.save.idx = Math.max(S.save.idx, def.index + 1);
   if (S.save.proofs.length >= S.story.proofs.length) badge('proven');
+  if (def.bonus) { S.save.foundling = 1; badge('named'); }
   if (def.favour) { (S.save.favours || (S.save.favours = [])).push(def.id); if (S.save.favours.length >= 5) badge('favours'); }
   S.player.hearts = 3; S.heat = 0;
   S.ui.banner(def.id === 'case-closed' ? 'CASE CLOSED' : def.frenzy ? `${m.score || 0} OFF THE ROAD` : def.cup ? `LAP ${lap.toFixed(1)}s` : 'MISSION PASSED', (medal ? '★'.repeat(medal) + '☆'.repeat(3 - medal) + ' · ' : '') + `+£${cash}` + (def.reward.proof ? ` · Proof: ${def.reward.proof.title}` : ''), '#7be07b', 3600);
@@ -1307,9 +1323,9 @@ function openWorkshop(intro) {
 }
 function openPause() {
   const k = (a, b) => `<p><kbd>${a}</kbd> ${b}</p>`;
-  S.ui.panel(`<h2>Relative Speed</h2><p>${escapeText(S.story.missions[S.save.idx]?.brief || 'Free roam: every town, every year.')}</p>
+  S.ui.panel(`<h2>Relative Speed</h2><p>${escapeText(nextStory()?.brief || 'Free roam: every town, every year.')}</p>
     ${S.ui.touch ? '<p>Left thumb steers and walks. GO talks, gets in and out and starts jobs. CAR calls the Heirloom.</p>' : k('WASD / arrows', 'walk, drive') + k('E', 'talk, get in or out, start a job') + k('Space', 'handbrake') + k('T', 'time dial') + k('H', 'call the Heirloom (£10)') + k('M', 'town map') + k('P', 'pedigree') }
-    <p><b>The case so far</b> <small>${tally().text}</small></p>${S.story.missions.map((m, i) => i < S.save.idx ? `<div class="row" style="padding:3px 0;border:0"><span>✔ ${escapeText(m.title)} <b style="color:#c8901a">${'★'.repeat((S.save.medals || {})[m.id] || 0)}</b><small>${escapeText(m.act)} · ${escapeText(S.story.towns.get(m.town).name)}, ${m.year}</small></span>${m.town === S.city.town.id && m.year === S.city.year && !S.mission && m.steps.some(x => x.t !== 'travel' && x.t !== 'talk') ? `<button class="alt" data-go="replay:${i}">Replay</button>` : ''}</div>` : i === S.save.idx ? `<div class="row need" style="padding:5px 8px"><span>▶ ${escapeText(m.title)}<small>${escapeText(m.act)} · ${escapeText(S.story.towns.get(m.town).name)}, ${m.year}</small></span></div>` : '').join('')}${S.save.idx < S.story.missions.length - 1 ? `<p>…and ${S.story.missions.length - S.save.idx - 1} more to come.</p>` : ''}
+    <p><b>The case so far</b> <small>${tally().text}</small></p>${fragsGot() || S.save.idx > S.story.missions.findIndex(m => m.id === 'blank-and-void') ? `<p>📄 <b>The Foundling File</b> ${fragsGot()} of ${S.story.frags.length} pages <small>${S.story.frags.map(f => (S.save.frags || []).includes(f.id) ? '✔' : `${escapeText(S.story.towns.get(f.town).name)} ${f.year}`).join(' · ')}</small></p>` : ''}${S.story.missions.map((m, i) => i < S.save.idx ? `<div class="row" style="padding:3px 0;border:0"><span>✔ ${escapeText(m.title)} <b style="color:#c8901a">${'★'.repeat((S.save.medals || {})[m.id] || 0)}</b><small>${escapeText(m.act)} · ${escapeText(S.story.towns.get(m.town).name)}, ${m.year}</small></span>${m.town === S.city.town.id && m.year === S.city.year && !S.mission && m.steps.some(x => x.t !== 'travel' && x.t !== 'talk') ? `<button class="alt" data-go="replay:${i}">Replay</button>` : ''}</div>` : i === S.save.idx ? `<div class="row need" style="padding:5px 8px"><span>▶ ${escapeText(m.title)}<small>${escapeText(m.act)} · ${escapeText(S.story.towns.get(m.town).name)}, ${m.year}</small></span></div>` : '').join('')}${S.save.idx < S.story.missions.length - 1 ? `<p>…and ${S.story.missions.length - S.save.idx - 1} more to come.</p>` : ''}
     <div class="foot"><button data-go="close">Resume</button><button class="alt" data-go="easy">Timers: ${S.save.easy ? 'generous' : 'normal'}</button><button class="alt" data-go="quit">Save and leave</button><button class="alt" data-go="reset">Restart the story</button></div>`, {
     close: () => S.ui.closePanel(),
     easy: () => { S.save.easy = !S.save.easy; persist(); openPause(); },
@@ -1410,6 +1426,7 @@ function botDrive(v, dt) {
   if (g.stop && dGoal < 8 * T) vmax = Math.min(vmax, Math.max(1.4 * T, (dGoal - 1.6 * T) * 2.2));
   if (g.keep) { if (dGoal < g.keep * T) vmax = 0; else vmax = Math.min(vmax, (dGoal / T - g.keep) * 1.6 * T + Math.abs(goal.speed || 0)); }
   if (Math.abs(da) > 0.8) vmax = Math.min(vmax, 3.2 * T);
+  if (S.step && S.step.step.gentle && S.step.loaded) vmax = Math.min(vmax, 7.5 * T);  // it drives a fragile load as a person would
   { const fx = Math.cos(v.ang), fy = Math.sin(v.ang), reach = 1.6 * T + Math.abs(v.speed) * 0.5;
     for (const p of S.peds) { if (p.runner || p.npc || p.stepPed || p.cop || p.down > 0) continue; const rx = p.x - v.x, ry = p.y - v.y, f = rx * fx + ry * fy; if (f > 0 && f < reach + 2 * T && Math.abs(-rx * fy + ry * fx) < 0.9 * T) { vmax = Math.min(vmax, 9 * T); break; } } }
   let thr = v.speed < vmax ? 1 : v.speed > vmax * 1.15 + 8 ? -1 : 0;
@@ -1537,8 +1554,8 @@ function updatePlayer(dt) {
   P.x = v.x; P.y = v.y; P.ang = v.ang;
   // knock people over
   // people jump clear of anything they can see coming; flat out, they cannot
-  if (Math.abs(v.speed) > 1.5 * T && Math.abs(v.speed) < 10 * T) {
-    const fx = Math.cos(v.ang) * Math.sign(v.speed), fy = Math.sin(v.ang) * Math.sign(v.speed), reach = 1.8 * T + Math.abs(v.speed) * 0.22;
+  if (Math.abs(v.speed) > 1.5 * T && Math.abs(v.speed) < (v === S.heirloom && up('horn') ? 13 : 10) * T) {
+    const fx = Math.cos(v.ang) * Math.sign(v.speed), fy = Math.sin(v.ang) * Math.sign(v.speed), reach = (1.8 * T + Math.abs(v.speed) * 0.22) * (v === S.heirloom && up('horn') ? 2 : 1);
     for (const p of S.peds) {
       if (p.npc || p.stepPed || p.cop || p.down > 0) continue;
       const rx = p.x - v.x, ry = p.y - v.y, f = rx * fx + ry * fy, l = -rx * fy + ry * fx;
@@ -1650,6 +1667,20 @@ function update(dt) {
     earn(30);
     if (S.save.photos.length >= 9) badge('snaps');
   }
+  for (const it of S.items) if (it.frag && !S.busy && !it.gone && dist(it, pp) < 1.3 * T) {
+    it.gone = true;
+    (S.save.frags || (S.save.frags = [])).push(it.frag);
+    const n = fragsGot(), of = S.story.frags.length, tok = S;
+    sfx.pick(); earn(50); persist();
+    S.busy = true;
+    if (P.vehicle) P.vehicle.speed *= 0.2;
+    S.ui.say({ who: `The Foundling File · ${n} of ${of}`, sub: 'a page somebody tried to rub out', text: it.text, letter: true, portrait: ctx => drawPortraitExtras(ctx, 'letter', null, 96) }).then(() => {
+      if (S !== tok) return;
+      S.busy = false;
+      if (n >= of) { badge('foundling'); S.ui.toast(S.save.idx >= S.story.missions.length ? 'That is the whole of his file. Dot will want to see it: the garage, present day.' : 'That is the whole of his file. Finish the case, then take it to Dot.', 7000); }
+      else S.ui.toast(`${of - n} more page${of - n === 1 ? '' : 's'} of his file, somewhere in the other years you have been.`, 5000);
+    });
+  }
   for (const it of S.items) if (it.wait && dist(it, pp) > 4 * T) it.wait = false;
   if (!S.mission && !S.busy && P.vehicle) for (const it of S.items) if (it.frenzy && !it.wait && dist(it, pp) < 1.7 * T) {
     it.gone = true;
@@ -1688,7 +1719,7 @@ function hud() {
     if (s.t === 'carry') text += ` <b>${st.loaded ? '▶ deliver' : '▶ collect'}${s.n > 1 ? ` ${Math.min(st.k + 1, s.n)}/${s.n}` : ''}</b>`;
     if (s.t === 'collect') text += ` <b>${st.k}/${st.n}</b>`;
     if (s.t === 'race') text += ` <b>${st.k}/${s.stops.length}</b>`;
-    if (s.t === 'search') text += ` <b>${st.spots.filter(x => !x.seen).length} places to try</b>`;
+    if (s.t === 'search') text += ` <b>${st.spots.filter(x => !x.seen).length === 1 ? 'one place left to try' : st.spots.filter(x => !x.seen).length + ' places to try'}</b>`;
     if (s.t === 'frenzy') text += ` <b>${st.k} off the road</b>`;
     if (st.rival) { const dp = lotPt(s.t === 'goto' ? s.at : (st.toAlt || s.to)); text += ` <b style="color:#f08aa0">rival ${Math.round(dist(st.rival, dp) / T * 4)}m · you ${Math.round(dist(P.vehicle || P, dp) / T * 4)}m</b>`; }
     if (st.spillPt) text = 'Stop and pick it up!';
@@ -1830,6 +1861,7 @@ function miniMap(pp, tgt) {
   for (const p of S.peds) if (p.cop) dot(p, '#4a7aff', 2.5); else if (p.favour && !S.mission) dot(p, '#7be07b', 3); else if (p.vandal) dot(p, '#f08aa0', 3.5);
   if (S.step?.rival) dot(S.step.rival, '#f08aa0', 4);
   if (S.step?.step.t === 'search') for (const sp of S.step.spots) if (!sp.seen) dot(sp.pt, '#fff', 3);
+  for (const it of S.items) if (it.frag && S.save.idx > S.story.missions.findIndex(m => m.id === 'blank-and-void')) dot(it, '#f08aa0', 3 + Math.sin(S.t * 5));
   for (const it of S.items) if (it.frenzy || it.tok || it.cup) dot(it, it.frenzy ? '#f08aa0' : it.cup ? '#ffffff' : '#7be07b', 2.5);
   for (const i of S.items) if (i.step) dot(i, '#fff', 2);
   if (tgt) dot(tgt, S.step?.step.t === 'chase' ? '#ff5a4a' : tgt.type ? '#8ab4ff' : '#ffd84a', 4.5, '#fff');

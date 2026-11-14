@@ -120,6 +120,38 @@ async def run(b, name, vp, mobile):
         done = await page.evaluate(f"({S}.save.favours || []).length")
         print(name, 'favour', fav, 'done', done)
         assert done == 1, done
+    # the Foundling File: a page in every era, then the mission it opens, then the side jobs
+    frags = await page.evaluate(f"{S}.story.frags.map(f => ({{ id: f.id, town: f.town, year: f.year }}))")
+    for f in frags:
+        await page.evaluate(f"{S}.debug.go('{f['town']}', {f['year']})"); await page.wait_for_timeout(700)
+        ok = await page.evaluate(f"(() => {{ const s = {S}, it = s.items.find(i => i.frag); if (!it) return false; if (s.player.vehicle) {{ s.player.vehicle.driver = null; s.player.vehicle = null; }} s.player.x = it.x + 8; s.player.y = it.y; return true; }})()")
+        assert ok, f"no page of the Foundling File in {f['town']} {f['year']}"
+        await page.wait_for_timeout(300)
+        if f is frags[0]: await shot('9a-foundling-page')
+        await talk_through(page); await page.wait_for_timeout(200)
+    home = await page.evaluate(f"(() => {{ const s = {S}; s.debug.go(s.story.home.id, s.story.now); return s.save.frags.length; }})()")
+    assert home == len(frags), f'pages {home} of {len(frags)}'
+    await page.wait_for_timeout(800)
+    await page.evaluate(f"{S}.debug.startNext()"); await page.wait_for_timeout(300)
+    for n in range(30):
+        await talk_through(page)
+        if not await page.evaluate(f"!!{S}.mission || {S}.busy"): break
+        await page.evaluate(f"(() => {{ const s = {S}; if (s.mission && !s.busy) s.debug.warp(); }})()"); await page.wait_for_timeout(350)
+        await talk_through(page)
+        await page.evaluate(f"(() => {{ const s = {S}; if (s.mission && !s.busy && s.step && !s.step.done) s.debug.finishStep(); }})()"); await page.wait_for_timeout(1300)
+    son = await page.evaluate(f"(() => {{ const s = {S}; return [s.save.foundling || 0, s.save.badges.includes('named'), s.save.badges.includes('foundling')]; }})()")
+    print(name, "Somebody's Son", son)
+    assert son == [1, True, True], son
+    for side in ('cup', 'frenzy'):
+        await page.evaluate(f"(() => {{ const s = {S}; s.debug.intoHeirloom(); s.debug.startSide('{side}'); }})()"); await page.wait_for_timeout(500)
+        if side == 'frenzy': await page.wait_for_timeout(2500); await shot('9b-frenzy')
+        for n in range(12):
+            if not await page.evaluate(f"!!{S}.mission"): break
+            await page.evaluate(f"(() => {{ const s = {S}; if (s.mission && !s.busy) {{ s.debug.warp(); s.debug.finishStep(); }} }})()"); await page.wait_for_timeout(300)
+        assert not await page.evaluate(f"!!{S}.mission"), side + ' did not finish'
+    medals = await page.evaluate(f"Object.keys({S}.save.medals || {{}}).length")
+    print(name, 'medals', medals)
+    await page.keyboard.press('Escape'); await page.wait_for_timeout(300); await shot('9c-case-file'); await page.keyboard.press('Escape'); await page.wait_for_timeout(200)
     # the workbench
     await page.evaluate(f"(() => {{ const s = {S}; s.debug.go(s.story.home.id, s.story.now); }})()"); await page.wait_for_timeout(900)
     await page.evaluate(f"(() => {{ const s = {S}; const l = s.city.lots.garage; s.heirloom.x = l.x + 260; s.player.vehicle = null; s.player.x = l.x + 4; s.player.y = l.y + 6; }})()"); await page.wait_for_timeout(300)

@@ -41,7 +41,7 @@ async def main():
         await talk()
         missions = await ev("return s.story.missions.map(m => ({ id: m.id, title: m.title, town: m.town, year: m.year, steps: m.steps.map(x => x.t) })).concat(s.story.favours.map(m => ({ id: m.id, title: m.title + ' (favour)', town: m.town, year: m.year, fav: true, steps: m.steps.map(x => x.t) })))")
         past = next(m for m in missions if m['year'] < 1990 and m['year'] > 1900)
-        missions += [{ 'id': 'side-' + k, 'title': t, 'town': past['town'], 'year': past['year'], 'fav': True, 'side': k, 'steps': [] } for k, t in (('cup', 'The Heirloom Cup (side)'), ('frenzy', 'Rubber Frenzy (side)'))]
+        missions += [{ 'id': 'side-' + k, 'title': t, 'town': past['town'], 'year': past['year'], 'fav': True, 'side': k, 'steps': [] } for k, t in (('cup', 'The Heirloom Cup (side)'), ('frenzy', 'Smash-Up (side)'))]
         rows = []
         for m in missions:
             if ONLY and m['id'] not in ONLY and not any(o in m['id'] for o in ONLY): continue

@@ -4,25 +4,25 @@ import { eraOf } from './storyplot.js';
 
 const car = (len, wid, max, acc, turn, hp, extra = {}) => ({ len, wid, max, acc, turn, hp, grip: 6, ...extra });
 export const VEHICLES = {
-  heirloom: car(50, 23, 14.5, 9.5, 2.9, 14, { name: 'the Heirloom', seats: 4 }),
-  hatch: car(42, 21, 11.5, 7.5, 3.0, 5, { name: 'hatchback' }),
-  saloon: car(48, 22, 12.5, 7.5, 2.8, 6, { name: 'saloon' }),
-  sports: car(46, 22, 15, 11, 3.0, 4, { name: 'sports car', grip: 5 }),
-  van: car(54, 24, 10, 6, 2.4, 8, { name: 'van' }),
-  bus: car(84, 26, 8, 4, 1.7, 14, { name: 'bus', grip: 7 }),
-  police: car(48, 22, 13.2, 9, 2.9, 9, { name: 'police car' }),
-  classic: car(46, 21, 10.5, 6, 2.7, 6, { name: 'family saloon' }),
-  vintage: car(44, 20, 8, 4.5, 2.4, 5, { name: 'motor car' }),
-  lorry: car(58, 23, 6.5, 3.5, 2.0, 9, { name: 'motor lorry' }),
-  cart: car(62, 20, 4.6, 3.5, 2.2, 5, { name: 'horse and cart', horse: 1 }),
-  carriage: car(66, 21, 6.2, 4, 2.2, 6, { name: 'carriage', horse: 1 }),
-  wagon: car(76, 23, 4.0, 3, 1.8, 8, { name: 'wagon', horse: 2 }),
-  taxi: car(48, 22, 12, 7.5, 2.8, 7, { name: 'taxi', cab: true }),
-  cab: car(62, 20, 6.6, 4.4, 2.3, 6, { name: 'hansom cab', horse: 1, cab: true }),
-  tram: car(92, 25, 5.5, 2.2, 0.9, 99, { name: 'tram', grip: 9, heavy: true }),
-  eraser: car(54, 24, 12.3, 8, 2.9, 99, { name: 'Redaction van' }),
-  erasercoach: car(66, 22, 12.3, 8, 2.9, 99, { name: 'grey carriage', horse: 1 }),
-  engine1: car(50, 23, 13.5, 9, 3.0, 99, { name: 'Engine No. 1' }),
+  heirloom: car(50, 23, 14.5, 9.5, 2.9, 14, { drift: 0.75, eng: 'v8', name: 'the Heirloom', seats: 4 }),
+  hatch: car(42, 21, 11.5, 7.5, 3.0, 5, { drift: 0.55, eng: 'car', name: 'hatchback' }),
+  saloon: car(48, 22, 12.5, 7.5, 2.8, 6, { drift: 0.55, eng: 'car', name: 'saloon' }),
+  sports: car(46, 22, 15, 11, 3.0, 4, { drift: 1.0, eng: 'sport', name: 'sports car', grip: 5 }),
+  van: car(54, 24, 10, 6, 2.4, 8, { drift: 0.3, eng: 'van', name: 'van' }),
+  bus: car(84, 26, 8, 4, 1.7, 14, { drift: 0.1, eng: 'diesel', name: 'bus', grip: 7 }),
+  police: car(48, 22, 13.2, 9, 2.9, 9, { drift: 0.8, eng: 'car', name: 'police car' }),
+  classic: car(46, 21, 10.5, 6, 2.7, 6, { drift: 0.5, eng: 'car', name: 'family saloon' }),
+  vintage: car(44, 20, 8, 4.5, 2.4, 5, { drift: 0.25, eng: 'old', name: 'motor car' }),
+  lorry: car(58, 23, 6.5, 3.5, 2.0, 9, { drift: 0.15, eng: 'old', name: 'motor lorry' }),
+  cart: car(62, 20, 4.6, 3.5, 2.2, 5, { drift: 0, eng: 'none', name: 'horse and cart', horse: 1 }),
+  carriage: car(66, 21, 6.2, 4, 2.2, 6, { drift: 0, eng: 'none', name: 'carriage', horse: 1 }),
+  wagon: car(76, 23, 4.0, 3, 1.8, 8, { drift: 0, eng: 'none', name: 'wagon', horse: 2 }),
+  taxi: car(48, 22, 12, 7.5, 2.8, 7, { drift: 0.5, eng: 'diesel', name: 'taxi', cab: true }),
+  cab: car(62, 20, 6.6, 4.4, 2.3, 6, { drift: 0, eng: 'none', name: 'hansom cab', horse: 1, cab: true }),
+  tram: car(92, 25, 5.5, 2.2, 0.9, 99, { drift: 0, eng: 'tram', name: 'tram', grip: 9, heavy: true }),
+  eraser: car(54, 24, 12.3, 8, 2.9, 99, { drift: 0.4, eng: 'van', name: 'grey van' }),
+  erasercoach: car(66, 22, 12.3, 8, 2.9, 99, { drift: 0, eng: 'none', name: 'grey carriage', horse: 1 }),
+  engine1: car(50, 23, 13.5, 9, 3.0, 99, { drift: 0.8, eng: 'v8', name: 'Engine No. 1' }),
 };
 const CAR_COLORS = ['#c8443a', '#3a6ac8', '#e8e8e4', '#2a2a2e', '#3a9a5a', '#e0b030', '#8a8e94', '#7a3ac8', '#d86a3a', '#2a8a9a'];
 const OLD_COLORS = ['#1c1c20', '#4a1a1a', '#1a2a4a', '#1a3a2a', '#3a2a1a'];
@@ -239,7 +239,7 @@ export function drawMarker(g, t, color = '#ffd84a', r = 26, glyph = '') {
   }
 }
 
-/** One of Blank's men on foot. */
+/** One of Hargreaves's men on foot. */
 export const ERASER_LOOK = { female: false, skin: '#d0ccc8', hair: '#7a7a7e', top: '#8a8e94', hat: '#8a8e94', badge: '#f08aa0', r: 1 };
 
 // ---------------- Portraits for the three people who are not in anybody's file ----------------

@@ -45,12 +45,12 @@ estate car that runs on register ink to stop him.
   somebody might be, carry (sometimes without a bump), collect, race, chase a van, tail one unseen, defend a
   convoy, catch a runner on foot, travel, and lose the police. On top of those: a rival racing you to the
   door, roadblocks, clocks in the road worth five seconds, loads that fall off, and a finale that drags you
-  through four centuries in one chase. Blank's Erasers hunt you while the clock runs. Fail and you restart
+  through four centuries in one chase. Hargreaves's men in grey hunt you while the clock runs. Fail and you restart
   from the act you failed; do it briskly and you get a medal.
-- **Side jobs**: family favours, an odd-jobs board, cab fares, the sixty-second **Rubber Frenzy**, the
+- **Side jobs**: family favours, an odd-jobs board, cab fares, the sixty-second **Smash-Up**, the
   **Heirloom Cup** (a timed lap of any town in any year), and the **Foundling File**: a page of the
   villain's own record hidden in every era, which opens one last mission after the story ends.
-- **Drive anything.** The Heirloom is yours, and can be upgraded and resprayed at Dot's workbench; everything
+- **Drive anything.** The Heirloom is yours, and can be upgraded and resprayed at Dorothy's workbench; everything
   else can be borrowed, from hatchbacks to hay carts. Borrow a taxi or a hansom and you are for hire.
 - **Fly to other countries.** The airport (a steamer quay before 1950) sells tickets to every town the story
   has opened, and draws the journey on a map.

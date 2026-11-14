@@ -8514,31 +8514,44 @@ const pause = (ms, signal) => new Promise((res, rej) => { const t = setTimeout(r
  * public servers are often busy, so this is patient: it tries again, and may take a minute. Only the town's
  * name is sent. Map data © OpenStreetMap contributors (ODbL).
  */
-async function fetchNet(town, timeoutMs = 80000) {
+async function fetchNet(town, timeoutMs = 80000, onState = () => {}) {
   const had = cachedNet(town);
-  if (had !== undefined) return had;
+  if (had !== undefined) { onState({ stage: had ? 'done' : 'none' }); return had; }
+  onState({ stage: 'find' });
   const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), timeoutMs);
   const keepIt = v => { try { localStorage.setItem(cacheKey(town), v); } catch (e) { /* full: fetch again next time */ } };
   try {
     const q = [town.name, town.nation || town.country].filter(Boolean).join(', ');
     // where is it? (two free gazetteers built on OpenStreetMap; the second is only asked if the first fails)
     let lat = null, lon = null;
-    try { const g = await getJson('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=' + encodeURIComponent(q), { headers: { Accept: 'application/json' } }, ctl.signal); if (g && g.length) { lat = +g[0].lat; lon = +g[0].lon; } else if (g) { keepIt('none'); return null; } } catch (e) { if (ctl.signal.aborted) throw e; }
-    if (lat == null) { const g = await getJson('https://photon.komoot.io/api/?limit=1&q=' + encodeURIComponent(q), {}, ctl.signal); const c = g && g.features && g.features[0] && g.features[0].geometry && g.features[0].geometry.coordinates; if (!c) { keepIt('none'); return null; } lon = +c[0]; lat = +c[1]; }
-    if (!isFinite(lat) || !isFinite(lon)) return null;
+    try { const g = await getJson('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=' + encodeURIComponent(q), { headers: { Accept: 'application/json' } }, ctl.signal); if (g && g.length) { lat = +g[0].lat; lon = +g[0].lon; } else if (g) { keepIt('none'); onState({ stage: 'none' }); return null; } } catch (e) { if (ctl.signal.aborted) throw e; }
+    if (lat == null) { const g = await getJson('https://photon.komoot.io/api/?limit=1&q=' + encodeURIComponent(q), {}, ctl.signal); const c = g && g.features && g.features[0] && g.features[0].geometry && g.features[0].geometry.coordinates; if (!c) { keepIt('none'); onState({ stage: 'none' }); return null; } lon = +c[0]; lat = +c[1]; }
+    if (!isFinite(lat) || !isFinite(lon)) { onState({ stage: 'none' }); return null; }
     // and what streets has it? One server at a time, waiting longer between tries when they say they are busy.
     const body = { method: 'POST', body: 'data=' + encodeURIComponent(osmQuery(lat, lon)), headers: { 'Content-Type': 'application/x-www-form-urlencoded' } };
     const hosts = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter', 'https://overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter', 'https://overpass-api.de/api/interpreter'];
     let json = null;
     for (let i = 0; i < hosts.length && !json; i++) {
-      try { json = await getJson(hosts[i], body, ctl.signal); }
-      catch (e) { if (ctl.signal.aborted) throw e; await pause(3000 + i * 3000, ctl.signal); }
+      onState({ stage: 'ask', n: i + 1 });
+      try {
+        const r = await fetch(hosts[i], { ...body, signal: ctl.signal });
+        if (!r.ok) throw new Error('http ' + r.status);
+        if (r.body && r.body.getReader) {
+          // read it as it comes, so there is something to show
+          const rd = r.body.getReader(), dec = new TextDecoder();
+          let txt = '', bytes = 0;
+          for (;;) { const { done, value } = await rd.read(); if (done) break; bytes += value.length; txt += dec.decode(value, { stream: true }); onState({ stage: 'read', bytes }); }
+          json = JSON.parse(txt + dec.decode());
+        } else json = await r.json();
+      } catch (e) { if (ctl.signal.aborted) throw e; json = null; onState({ stage: 'busy', n: i + 1 }); await pause(3000 + i * 3000, ctl.signal); }
     }
-    if (!json) return null;
+    if (!json) { onState({ stage: 'fail' }); return null; }
+    onState({ stage: 'build' });
     const net = netFromOsm(json, lat, lon);
     keepIt(net ? JSON.stringify(packNet(net)) : 'none');
+    onState({ stage: net ? 'done' : 'none' });
     return net;
-  } catch (e) { return null; } finally { clearTimeout(timer); }
+  } catch (e) { onState({ stage: 'fail' }); return null; } finally { clearTimeout(timer); }
 }
 
 return { finishNet, makeNet, osmQuery, netFromOsm, packNet, unpackNet, cachedNet, fetchNet, NET_VERSION };
@@ -9784,7 +9797,7 @@ function mountStoryUi() {
         $('stMore').textContent = '';
         timer = setInterval(() => {
           frame++;
-          if (shown < full.length) { shown = Math.min(full.length, shown + 3); txt.textContent = full.slice(0, shown); if (shown >= full.length) reveal(); }
+          if (shown < full.length) { shown = Math.min(full.length, shown + 3); txt.textContent = full.slice(0, shown); if (o.blip && frame % 2 === 0 && /[a-z]/i.test(full[shown - 1] || '')) o.blip(); if (shown >= full.length) reveal(); }
           if (o.portrait) o.portrait(face, shown < full.length ? frame : (frame % 40 === 0 ? 7 : 0));
         }, 28);
         if (o.portrait) o.portrait(face, 0);
@@ -9985,31 +9998,123 @@ const storyOpen = () => !!S;
 const storyState = () => S;
 
 // ---------------- Sound ----------------
-let AC = null;
-function beep(freq = 440, dur = 0.06, type = 'square', vol = 0.04, slide = 0) {
+// Everything is made here from oscillators and noise: no files. Two volume knobs, effects and music, each
+// with its own switch in the pause menu (and remembered).
+let AC = null, sfxOut = null, musicOut = null, noiseBuf = null;
+const soundOn = k => { try { return localStorage.getItem('a3d:' + k) !== '0'; } catch (e) { return true; } };
+function audio() {
+  if (AC) return AC;
   try {
-    if ((S && S.bot) || (typeof document !== 'undefined' && document.hidden)) return;
-    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
-    const o = AC.createOscillator(), g = AC.createGain();
-    o.type = type; o.frequency.value = freq;
-    if (slide) o.frequency.linearRampToValueAtTime(Math.max(30, freq + slide), AC.currentTime + dur);
-    g.gain.value = vol; g.gain.exponentialRampToValueAtTime(0.0005, AC.currentTime + dur);
-    o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime + dur);
+    AC = new (window.AudioContext || window.webkitAudioContext)();
+    sfxOut = AC.createGain(); musicOut = AC.createGain();
+    sfxOut.gain.value = soundOn('sfx') ? 1 : 0; musicOut.gain.value = soundOn('music') ? 1 : 0;
+    sfxOut.connect(AC.destination); musicOut.connect(AC.destination);
+    const n = AC.sampleRate, d = (noiseBuf = AC.createBuffer(1, n, n)).getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+  } catch (e) { AC = null; }
+  return AC;
+}
+function setSound(k, on) { try { localStorage.setItem('a3d:' + k, on ? '1' : '0'); } catch (e) { /* no storage */ } if (audio()) (k === 'sfx' ? sfxOut : musicOut).gain.setTargetAtTime(on ? 1 : 0, AC.currentTime, 0.05); }
+const muted = () => (S && S.bot) || (typeof document !== 'undefined' && document.hidden);
+function beep(freq = 440, dur = 0.06, type = 'square', vol = 0.04, slide = 0, at = 0) {
+  try {
+    if (muted() || !audio()) return;
+    const o = AC.createOscillator(), g = AC.createGain(), t = AC.currentTime + at;
+    o.type = type; o.frequency.setValueAtTime(freq, t);
+    if (slide) o.frequency.linearRampToValueAtTime(Math.max(30, freq + slide), t + dur);
+    g.gain.setValueAtTime(vol * 1.8, t); g.gain.exponentialRampToValueAtTime(0.0005, t + dur);
+    o.connect(g); g.connect(sfxOut); o.start(t); o.stop(t + dur + 0.02);
+  } catch (e) { /* no sound */ }
+}
+// A burst of noise through a filter: crashes, thuds, leaves, a snare.
+function noise(dur = 0.2, vol = 0.1, freq = 900, q = 0.8, type = 'lowpass', out = null, at = 0) {
+  try {
+    if (muted() || !audio()) return;
+    const src = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain(), t = AC.currentTime + at;
+    src.buffer = noiseBuf; src.loop = true; f.type = type; f.frequency.value = freq; f.Q.value = q;
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0005, t + dur);
+    src.connect(f); f.connect(g); g.connect(out || sfxOut); src.start(t, Math.random() * 0.5); src.stop(t + dur + 0.02);
   } catch (e) { /* no sound */ }
 }
 const sfx = {
-  pick: () => { beep(880, 0.05); setTimeout(() => beep(1320, 0.09), 50); },
-  cash: () => [660, 880, 1100, 1320].forEach((f, i) => setTimeout(() => beep(f, 0.08, 'square', 0.035), i * 60)),
-  pass: () => [523, 659, 784, 1046, 1318].forEach((f, i) => setTimeout(() => beep(f, 0.14, 'square', 0.04), i * 110)),
-  fail: () => [392, 330, 262, 196].forEach((f, i) => setTimeout(() => beep(f, 0.2, 'sawtooth', 0.035), i * 150)),
-  bump: () => beep(110, 0.1, 'sawtooth', 0.06, -50),
-  door: () => beep(180, 0.05, 'triangle', 0.05),
-  talk: () => beep(300 + Math.random() * 200, 0.03, 'square', 0.02),
-  jump: () => { beep(200, 0.7, 'sawtooth', 0.05, 1800); setTimeout(() => beep(1600, 0.5, 'sine', 0.05, -1200), 300); },
-  siren: () => beep(700, 0.25, 'sine', 0.025, 300),
-  ring: () => { beep(1400, 0.05, 'square', 0.03); setTimeout(() => beep(1400, 0.05, 'square', 0.03), 90); },
+  pick: () => { beep(880, 0.06, 'square', 0.035); beep(1320, 0.1, 'square', 0.035, 0, 0.055); },
+  cash: () => [660, 880, 1100, 1320].forEach((f, i) => beep(f, 0.09, 'square', 0.035, 0, i * 0.06)),
+  pass: () => [523, 659, 784, 1046, 1318, 1568].forEach((f, i) => beep(f, 0.16, 'square', 0.04, 0, i * 0.11)),
+  fail: () => [392, 330, 262, 196].forEach((f, i) => beep(f, 0.22, 'sawtooth', 0.035, 0, i * 0.15)),
+  bump: (hard = 0.5) => { noise(0.12 + hard * 0.2, 0.1 + hard * 0.16, 500 + hard * 900, 0.7); beep(90, 0.14, 'sine', 0.12 + hard * 0.1, -40); },
+  crash: () => { noise(0.45, 0.28, 1400, 0.6); noise(0.2, 0.2, 3800, 1.2, 'bandpass', null, 0.04); beep(70, 0.3, 'sine', 0.2, -35); },
+  boom: () => { noise(0.7, 0.3, 700, 0.5); beep(110, 0.5, 'sine', 0.22, -75); },
+  leaves: () => { noise(0.3, 0.14, 3200, 0.9, 'highpass'); beep(160, 0.08, 'triangle', 0.08, -60); },
+  door: () => { beep(180, 0.05, 'triangle', 0.06); noise(0.05, 0.05, 700); },
+  talk: () => {},
+  blip: (hz = 300) => beep(hz * (0.94 + Math.random() * 0.12), 0.045, 'square', 0.022),
+  page: () => noise(0.09, 0.05, 4200, 1.4, 'bandpass'),
+  jump: () => { beep(200, 0.8, 'sawtooth', 0.06, 2200); noise(0.9, 0.12, 2400, 0.7, 'bandpass'); beep(1600, 0.6, 'sine', 0.05, -1300, 0.3); },
+  wind: k => beep(220 + k * 900, 0.09, 'sawtooth', 0.012 + k * 0.02),
+  siren: () => { beep(740, 0.24, 'square', 0.02); beep(590, 0.24, 'square', 0.02, 0, 0.26); },
+  ring: () => { beep(1400, 0.05, 'square', 0.03); beep(1400, 0.05, 'square', 0.03, 0, 0.09); },
+  horn: () => { beep(392, 0.22, 'sawtooth', 0.05); beep(494, 0.22, 'sawtooth', 0.04); },
 };
 
+// ---------------- Music ----------------
+// Two original eight-bit tunes, written out below as notes: a jaunty one for getting about, and a driving one
+// in the minor for when a clock is running or somebody is after you. Lead, harmony, bass and drums are all
+// oscillators; the year you are in changes the instruments and the pace.
+const NOTE = (() => { const n = {}, names = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']; for (let o = 1; o <= 7; o++) names.forEach((nm, i) => { n[nm + o] = 440 * Math.pow(2, (i - 9) / 12 + (o - 4)); }); return n; })();
+const TUNES = {
+  roam: { bpm: 126, chords: ['C', 'G', 'Am', 'F', 'C', 'G', 'FG', 'C'], lead: [
+    'E5:2 E5:2 G5:2 C6:4 B5:2 A5:2 G5:2', 'D5:2 D5:2 G5:2 B5:4 A5:2 G5:2 D5:2', 'C5:2 E5:2 A5:2 C6:4 B5:2 A5:2 E5:2', 'F5:4 A5:2 G5:2 F5:2 E5:2 D5:4',
+    'E5:2 E5:2 G5:2 C6:4 D6:2 E6:2 C6:2', 'D6:4 B5:2 G5:2 A5:2 B5:2 D6:4', 'C6:2 A5:2 F5:2 A5:2 B5:2 G5:2 D5:2 G5:2', 'C6:6 G5:2 E5:2 G5:2 C6:4',
+    'G5:4 E5:2 C5:2 E5:2 G5:2 C6:4', 'B5:4 G5:2 D5:2 G5:2 B5:2 D6:4', 'A5:4 E5:2 C5:2 E5:2 A5:2 C6:4', 'A5:2 F5:2 C5:2 F5:2 A5:2 G5:2 F5:2 D5:2',
+    'G5:4 E5:2 C5:2 E5:2 G5:2 E6:4', 'D6:2 B5:2 G5:2 B5:2 D6:2 B5:2 A5:2 B5:2', 'C6:2 A5:2 F5:2 A5:2 D6:2 B5:2 G5:2 B5:2', 'C6:8 -:4 G5:2 C6:2'],
+    chords2: ['C', 'G', 'Am', 'F', 'C', 'G', 'FG', 'C', 'C', 'G', 'Am', 'F', 'C', 'G', 'FG', 'C'] },
+  chase: { bpm: 152, chords: ['Am', 'F', 'C', 'G', 'Am', 'F', 'E', 'E'], lead: [
+    'A4:2 C5:2 E5:2 A5:2 G5:2 E5:2 C5:2 E5:2', 'F4:2 A4:2 C5:2 F5:2 E5:2 C5:2 A4:2 C5:2', 'G4:2 C5:2 E5:2 G5:2 E5:2 C5:2 G4:2 C5:2', 'G4:2 B4:2 D5:2 G5:2 F5:2 D5:2 B4:2 D5:2',
+    'A5:4 G5:2 E5:2 A5:4 C6:4', 'A5:4 F5:2 C5:2 F5:4 A5:4', 'G#5:2 B5:2 E5:2 G#5:2 B5:4 G#5:4', 'E5:2 G#5:2 B5:2 E6:2 D6:2 B5:2 G#5:2 E5:2'] },
+};
+const CHORD = { C: ['C3', 'E4', 'G4', 'C5'], G: ['G2', 'D4', 'G4', 'B4'], Am: ['A2', 'E4', 'A4', 'C5'], F: ['F2', 'C4', 'F4', 'A4'], E: ['E2', 'E4', 'G#4', 'B4'] };
+for (const t of Object.values(TUNES)) {
+  // flatten each tune into sixteenth-note slots: what starts on each one
+  t.slots = [];
+  t.lead.forEach((bar, b) => { let k = 0; for (const tok of bar.split(' ')) { const [nm, len] = tok.split(':'); t.slots[b * 16 + k] = nm === '-' ? null : { f: NOTE[nm], len: +len }; k += +len; } });
+  t.bars = t.lead.length;
+  t.chordAt = (bar, six) => { const c = (t.chords2 || t.chords)[bar % (t.chords2 || t.chords).length]; return c === 'FG' ? (six < 8 ? 'F' : 'G') : c; };
+}
+const music = { tune: 'roam', want: 'roam', step: 0, next: 0, on: false };
+function tone(f, t, dur, type, vol) {
+  const o = AC.createOscillator(), g = AC.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t);
+  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.008); g.gain.setValueAtTime(vol, t + dur * 0.7); g.gain.exponentialRampToValueAtTime(0.0005, t + dur);
+  o.connect(g); g.connect(musicOut); o.start(t); o.stop(t + dur + 0.02);
+}
+/** Called every frame: schedules the next quarter of a second of music. */
+function musicTick(want, year) {
+  try {
+    if (!AC || !soundOn('music') || muted() || AC.state !== 'running') { music.next = 0; return; }
+    music.want = want;
+    if (music.next < AC.currentTime - 0.2) { music.next = AC.currentTime + 0.06; music.step = 0; music.tune = want; }
+    const old = year < 1900, mid = year < 1950;
+    while (music.next < AC.currentTime + 0.25) {
+      const tu = TUNES[music.tune], six = music.step % 16, bar = Math.floor(music.step / 16) % tu.bars, t = music.next;
+      const spb = 60 / (tu.bpm * (old ? 0.8 : mid ? 0.9 : 1)) / 4, sw = mid && !old && six % 2 ? spb * 0.28 : 0;   // a little swing between the wars
+      const sl = tu.slots[bar * 16 + six], ch = CHORD[tu.chordAt(bar, six)];
+      if (sl) tone(sl.f, t + sw, sl.len * spb * 0.92, old ? 'triangle' : 'square', old ? 0.06 : 0.034);
+      if (six % 4 === 0) tone(NOTE[ch[0]] , t, spb * 3.4, 'triangle', 0.075);                                     // bass on the beat
+      else if (six % 4 === 2) tone(NOTE[ch[0]] * 1.5, t + sw, spb * 1.6, 'triangle', 0.05);                        // and its fifth between
+      if (!old && six % 2 === 1) tone(NOTE[ch[1 + ((six >> 1) % 3)]], t + sw, spb * 0.9, 'square', 0.012);         // a quiet arpeggio underneath
+      if (old && six % 4 === 2) tone(NOTE[ch[2]], t, spb * 1.8, 'triangle', 0.03);
+      if (!old) {                                                                                                   // drums
+        if (six % 8 === 0) { const o = AC.createOscillator(), g = AC.createGain(); o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(45, t + 0.1); g.gain.setValueAtTime(0.16, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.13); o.connect(g); g.connect(musicOut); o.start(t); o.stop(t + 0.15); }
+        if (six % 8 === 4) noise(0.09, 0.05, 1800, 0.7, 'highpass', musicOut, t - AC.currentTime);
+        if (six % 2 === 0 && music.tune === 'chase') noise(0.025, 0.018, 7000, 1, 'highpass', musicOut, t - AC.currentTime);
+      }
+      music.next += spb; music.step++;
+      if (music.step % 16 === 0 && music.tune !== music.want) { music.tune = music.want; music.step = 0; }       // change tune on the bar
+    }
+  } catch (e) { /* no sound */ }
+}
+
+if (typeof document !== 'undefined') for (const ev of ['pointerdown', 'keydown']) document.addEventListener(ev, () => { try { if (S && audio() && AC.state === 'suspended' && !document.hidden) AC.resume(); } catch (e) { /* no sound */ } }, true);
 // No sound from a tab nobody is looking at.
 if (typeof document !== 'undefined') document.addEventListener('visibilitychange', () => { try { if (AC) { if (document.hidden) AC.suspend(); else AC.resume(); } } catch (e) { /* no sound */ } });
 // An engine note for whatever you are driving: each kind of vehicle has its own voice, and it changes gear.
@@ -10025,11 +10130,11 @@ const ENGINES = {
 let eng = null, squeal = null;
 function engineNote(on, frac, kind = 'car', thr = 0) {
   try {
-    if (!AC) return;
+    if (!audio()) return;
     if (!eng) {
       const o = AC.createOscillator(), o2 = AC.createOscillator(), g2 = AC.createGain(), f = AC.createBiquadFilter(), g = AC.createGain(), out = AC.createGain(), lfo = AC.createOscillator(), lg = AC.createGain();
       f.type = 'lowpass'; g.gain.value = 1; out.gain.value = 0; lg.gain.value = 0;
-      o.connect(f); o2.connect(g2); g2.connect(f); f.connect(g); g.connect(out); out.connect(AC.destination);
+      o.connect(f); o2.connect(g2); g2.connect(f); f.connect(g); g.connect(out); out.connect(sfxOut);
       lfo.connect(lg); lg.connect(g.gain);
       o.start(); o2.start(); lfo.start();
       eng = { o, o2, g2, f, g, out, lfo, lg };
@@ -10050,13 +10155,13 @@ function engineNote(on, frac, kind = 'car', thr = 0) {
 // Tyres letting go: filtered noise, louder the further sideways you are.
 function tyreSqueal(amount) {
   try {
-    if (!AC) return;
+    if (!audio()) return;
     if (!squeal) {
       const n = AC.sampleRate, buf = AC.createBuffer(1, n, n), d = buf.getChannelData(0);
       for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
       const src = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain();
       src.buffer = buf; src.loop = true; f.type = 'bandpass'; f.frequency.value = 1700; f.Q.value = 5; g.gain.value = 0;
-      src.connect(f); f.connect(g); g.connect(AC.destination); src.start();
+      src.connect(f); f.connect(g); g.connect(sfxOut); src.start();
       squeal = { f, g };
     }
     squeal.g.gain.setTargetAtTime(amount * 0.05, AC.currentTime, 0.05);
@@ -10074,7 +10179,7 @@ function openStory({ data, rootId, store, key, onClose }) {
   const ui = mountStoryUi();
   S = {
     data, tree, story, ui, store, key: (key || 'a3d') + ':story:' + rootId, onClose, t: 0, last: performance.now(), raf: 0,
-    save: null, city: null, mini: null, player: null, heirloom: null, vehicles: [], peds: [], items: [], floats: [], sparks: [], skids: [], nets: new Map(), asked: new Set(),
+    save: null, city: null, mini: null, player: null, heirloom: null, vehicles: [], peds: [], items: [], floats: [], sparks: [], skids: [], flames: [], nets: new Map(), streets: new Map(),
     mission: null, step: null, busy: false, heat: 0, heatCalm: 0, bust: 0, dial: null, target: null, near: null,
     view: { x: 0, y: 0, z: 1, w: 1, h: 1 }, spawnT: 0, names: [], flash: 0, looks: new Map(), ringT: 0, paused: false,
     clock: 9, rain: 0, rainT: 0, rainRoll: -1, critters: [], burials: [], glitch: 0,
@@ -10091,22 +10196,18 @@ function openStory({ data, rootId, store, key, onClose }) {
   const hero = tree.people.get(rootId);
   S.player = { x: 0, y: 0, ang: 0, vehicle: null, hearts: 3, walk: 0, look: lookSummary(lookFor(hero)), down: 0, invuln: 0, moving: false };
   enterTown(story.towns.get(save.town), save.year, save.fresh ? 'start' : 'load');
-  if (realStreets() && S.city.source !== 'osm' && cachedNet(S.city.town) === undefined) {
-    // First time in this town: fetch its real streets before anything starts. The map servers can be slow,
-    // so say so, and let the player go on with a made-up town; the real one is then used the next time
-    // they arrive (or from the pause menu, once it is in).
+  if (needsStreets(S.city.town)) {
+    // First time in this town: fetch its real streets before anything starts, and show how that is going.
     const tok = S, town0 = S.city.town, others = [...story.towns.values()].filter(t => t.id !== town0.id);
-    let waiting = true;
-    const rest = () => { (async () => { for (const t of others) { await new Promise(r => setTimeout(r, 2500)); if (S !== tok) return; await fetchStreets(t); } })(); };
-    const go = () => { if (!waiting || S !== tok) return; waiting = false; ui.closePanel(); S.busy = false; };
     S.busy = true;
-    ui.panel(`<h2>🗺 Fetching the real streets of ${escapeText(town0.name)}</h2><p>The game is downloading ${escapeText(town0.name)}'s actual street plan and street names from OpenStreetMap, to draw in its own style. This happens once for each town and is then kept on this device.</p><p>The free map servers are often busy, so it can take up to a minute. Only the town's name is sent.</p><div class="foot"><button data-go="skip">Play now with made-up streets</button></div><p><small>If you play now, the real streets are used the next time you arrive in ${escapeText(town0.name)}. Map data © OpenStreetMap contributors.</small></p>`, { skip: go, close: go });
-    fetchStreets(town0).then(got => {
+    waitForStreets(town0, false).then(how => {
       if (S !== tok) return;
-      if (got && waiting) { enterTown(town0, save.year, save.fresh ? 'start' : 'load'); go(); ui.toast(`These are the real streets of ${town0.name}. © OpenStreetMap contributors`, 5200); }
-      else if (got) ui.toast(`The real streets of ${town0.name} have arrived. They will be used the next time you get here, or now from the pause menu.`, 8000);
-      else { const was = waiting; go(); if (was) ui.toast(`Could not reach the map servers, so ${town0.name} is made up for now.`, 5200); S.asked.delete(town0.id); }
-      rest();
+      if (how === 'got') { enterTown(town0, save.year, save.fresh ? 'start' : 'load'); ui.toast(`These are the real streets of ${town0.name}. © OpenStreetMap contributors`, 5200); }
+      else if (how === 'none') ui.toast(`Could not get the real streets of ${town0.name}, so it is made up for now.`, 5200);
+      else S.streets.get(town0.id)?.promise.then(got => { if (S === tok && got) ui.toast(`The real streets of ${town0.name} have arrived. They will be used the next time you get here, or now from the pause menu.`, 8000); });
+      S.busy = false;
+      // and the other towns in the story, one at a time, so they are ready when you get there
+      (async () => { for (const t of others) { await new Promise(r => setTimeout(r, 2500)); if (S !== tok) return; await fetchStreets(t); } })();
     });
   }
   // Hooks for the headless test (tests/story-smoke.py): jump to the current target, finish a step, travel.
@@ -10175,9 +10276,10 @@ function outsider(id) {
 async function say(who, text, options) {
   const sp = speaker(who);
   const body = sp.person ? voiceLine(sp.person, text) : plainText(text);
-  sfx.talk();
+  const paper = sp.letter || sp.note, voice = who === 'dot' ? 330 : who === 'blank' ? 150 : (sp.look && sp.look.female ? 300 : 170) + (hashString('voice' + who) % 90);
+  if (paper) sfx.page();
   return S.ui.say({
-    who: sp.who, sub: sp.sub, text: body, options, letter: sp.letter,
+    who: sp.who, sub: sp.sub, text: body, options, letter: sp.letter, blip: paper ? null : () => sfx.blip(voice),
     portrait: (ctx, frame) => { if (sp.look) { drawPortrait(ctx, sp.look, 96, frame); drawPortraitExtras(ctx, who, sp.look, 96); } else drawPortraitExtras(ctx, sp.letter ? 'letter' : 'note', null, 96); },
   });
 }
@@ -10223,17 +10325,60 @@ function makeVehicle(type, x, y, ang, extra = {}) {
 }
 // Real street plans come from OpenStreetMap, once per town, and are kept on this device. Off: every town is drawn.
 const realStreets = () => { try { return localStorage.getItem('a3d:realstreets') !== '0'; } catch (e) { return false; } };
-/** Fetch a town's real streets if we have not got them. Resolves true if a new plan arrived. */
-async function fetchStreets(town) {
+/** Fetch a town's real streets if we have not got them. Resolves true if a new plan arrived. One fetch per town; S.streets has how each is getting on. */
+function fetchStreets(town) {
   const tok = S;
-  if (!realStreets() || S.asked.has(town.id)) return false;
-  S.asked.add(town.id);
+  if (!realStreets()) return Promise.resolve(false);
   const cur = S.nets.get(town.id);
-  if ((cur && cur.source === 'osm') || cachedNet(town) === null) return false;
-  const net = await fetchNet(town);
-  if (S !== tok || !net) return false;
-  S.nets.set(town.id, net);
-  return true;
+  if ((cur && cur.source === 'osm') || cachedNet(town) === null) return Promise.resolve(false);
+  let rec = S.streets.get(town.id);
+  if (rec && (rec.state.stage !== 'fail' || S.t - rec.t0 < 20)) return rec.promise;
+  rec = { state: { stage: 'find' }, t0: S.t, wall: performance.now(), promise: null };
+  S.streets.set(town.id, rec);
+  rec.promise = fetchNet(town, 80000, st => { rec.state = st; }).then(net => { if (S !== tok || !net) return false; S.nets.set(town.id, net); return true; });
+  return rec.promise;
+}
+const needsStreets = town => realStreets() && S.nets.get(town.id)?.source !== 'osm' && cachedNet(town) === undefined;
+/**
+ * A card that shows the real streets of a town arriving, with a way out. Resolves 'got' when they are in,
+ * 'skip' if the player would rather not wait, 'none' if they cannot be had.
+ */
+function waitForStreets(town, arriving) {
+  const tok = S, ui = S.ui, name = escapeText(town.name);
+  return new Promise(resolve => {
+    let over = false, timer = 0;
+    const end = how => { if (over) return; over = true; clearInterval(timer); if (S === tok) ui.closePanel(); resolve(how); };
+    const p = fetchStreets(town), rec = S.streets.get(town.id);
+    ui.panel(`<h2>🗺 Fetching the real streets of ${name}</h2><p>Downloading ${name}'s actual street plan and street names from OpenStreetMap, to draw in the game's own style. Once for each town; after that it is kept on this device. Only the town's name is sent.</p>
+      <div style="height:16px;border:2.5px solid #2d2438;border-radius:9px;background:#e6dcc4;overflow:hidden;margin:10px 0 6px"><div id="stLoadBar" style="height:100%;width:4%;background:#f2b230;transition:width .25s"></div></div>
+      <p id="stLoadMsg" style="margin:0 0 4px"><b>Finding ${name} on the map…</b></p><p><small id="stLoadSub">The free map servers are often busy. It can take up to a minute.</small></p>
+      <div class="foot"><button data-go="skip">${arriving ? 'Go now' : 'Play now'} with made-up streets</button></div><p><small>If you do not wait, the real streets are used the next time you arrive in ${name}. Map data © OpenStreetMap contributors.</small></p>`, { skip: () => end('skip'), close: () => end('skip') });
+    const show = () => {
+      if (S !== tok) { end('skip'); return; }
+      const st = rec ? rec.state : { stage: 'none' }, el = rec ? (performance.now() - rec.wall) / 1000 : 0, bar = document.getElementById('stLoadBar'), msg = document.getElementById('stLoadMsg'), sub = document.getElementById('stLoadSub');
+      if (!bar || !msg) return;
+      let pct = 5, text = `Finding ${name} on the map…`;
+      if (st.stage === 'ask') { pct = 10 + 58 * (1 - Math.exp(-el / 22)); text = `Asking the map server for ${name}'s streets…` + (st.n > 1 ? ` (try ${st.n})` : ''); }
+      else if (st.stage === 'busy') { pct = 10 + 58 * (1 - Math.exp(-el / 22)); text = `The map server is busy. Trying again in a moment… (try ${st.n})`; }
+      else if (st.stage === 'read') { pct = 70 + 25 * Math.min(1, st.bytes / 900000); text = `Downloading the streets: ${Math.round(st.bytes / 1024)} KB`; }
+      else if (st.stage === 'build') { pct = 97; text = 'Drawing the town…'; }
+      else if (st.stage === 'done') { pct = 100; text = 'Done.'; }
+      bar.style.width = pct.toFixed(0) + '%'; msg.innerHTML = `<b>${text}</b>`;
+      if (sub) sub.textContent = `${Math.round(el)} seconds so far. The free map servers are often busy; it can take up to a minute.`;
+    };
+    timer = setInterval(show, 250); show();
+    p.then(got => end(got || S.nets.get(town.id)?.source === 'osm' ? 'got' : 'none'));
+  });
+}
+// Two lines of fire on the road behind the Heirloom where it lands in another year.
+function fireTracks(v) {
+  const st = VEHICLES[v.type], sx = -Math.sin(v.ang) * st.wid * 0.38, sy = Math.cos(v.ang) * st.wid * 0.38;
+  for (let d = 0; d < 13 * T; d += 9) for (const sg of [1, -1]) {
+    const x = v.x - Math.cos(v.ang) * (d + st.len * 0.3) + sx * sg, y = v.y - Math.sin(v.ang) * (d + st.len * 0.3) + sy * sg;
+    S.flames.push({ x: x + (Math.random() - 0.5) * 4, y: y + (Math.random() - 0.5) * 4, born: S.t + Math.random() * 0.15, life: 1.6 + (1 - d / (13 * T)) * 3.2 + Math.random() * 0.6, r: 7 + Math.random() * 5 });
+    if (d % 27 === 0) S.skids.push({ x1: x, y1: y, x2: x - Math.cos(v.ang) * 27, y2: y - Math.sin(v.ang) * 27, t: S.t });
+  }
+  S.shake = 0.7;
 }
 function parkHeirloom(x, y) {
   const c = S.city, h = S.heirloom, n = c.nearNode(x, y), nb = c.nodes[n].nb;
@@ -10253,7 +10398,7 @@ function enterTown(town, year, where) {
   S.mini = renderMiniMap(S.city, 2);
   const c = S.city;
   S.vehicles = [];
-  S.peds = []; S.items = []; S.floats = []; S.sparks = []; S.skids = []; S.incident = null;
+  S.peds = []; S.items = []; S.floats = []; S.sparks = []; S.skids = []; S.flames = []; S.incident = null;
   const h = S.heirloom || { type: 'heirloom', x: 0, y: 0, ang: 0, vx: 0, vy: 0, speed: 0, hp: VEHICLES.heirloom.hp, color: paintFor('heirloom'), ai: null, hitCd: 0, charge: 0, stuck: 0 };
   S.heirloom = h; h.charge = 0;
   if (S.save.paint) h.color = S.save.paint;
@@ -10388,13 +10533,25 @@ function driveVehicle(v, ctrl, dt) {
   const wet = 1 - 0.38 * S.rain * (v === S.heirloom && up('tyres') ? 0.25 : 1);
   // grip: the handbrake lets the back end go (more on a quick car, hardly at all on a bus); so does a hard turn flat out
   const flatOut = Math.abs(ctrl.steer) > 0.7 && Math.abs(v.speed) > st.max * T * 0.8 ? 1 - 0.4 * drift : 1;
-  const k = 1 - Math.exp(-(hand ? st.grip * (0.5 - 0.38 * drift) : ctrl.brake ? st.grip * 0.45 : st.grip * flatOut) * wet * dt);
+  const k = 1 - Math.exp(-(v.fling > 0 ? st.grip * 0.1 : hand ? st.grip * (0.5 - 0.38 * drift) : ctrl.brake ? st.grip * 0.45 : st.grip * flatOut) * wet * dt);   // thrown by a crash, the tyres are not gripping at all
   v.vx += (Math.cos(v.ang) * v.speed - v.vx) * k; v.vy += (Math.sin(v.ang) * v.speed - v.vy) * k;
   let hit = 0;
+  const mine = v === S.player.vehicle, sp0 = Math.hypot(v.vx, v.vy) || 1;
+  if (mine && sp0 > 4 * T) fellTrees(v, dt);
+  // How square-on a knock is decides what it costs: a glancing touch slides along the wall, a head-on one
+  // takes four fifths of the speed, throws the car back and sets it spinning.
+  const knock = (comp, flip) => {
+    const frac = Math.abs(comp) / sp0, hard = Math.abs(comp) > 5 * T;
+    hit = Math.max(hit, Math.abs(comp));
+    v.speed *= 1 - 0.8 * frac;
+    flip(hard ? -0.42 : -0.12);
+    if (mine && hard) { v.fling = 0.25 + 0.3 * frac; v.spin = clamp(angDiff(Math.atan2(v.vy, v.vx), v.ang) * 3.2, -5.5, 5.5) * frac; }
+  };
   const nx = v.x + v.vx * dt;
-  if (vehicleSolid(v, nx, v.y, v.ang)) { hit = Math.max(hit, Math.abs(v.vx)); v.vx *= -0.25; v.speed *= 0.45; } else v.x = nx;
+  if (vehicleSolid(v, nx, v.y, v.ang)) knock(v.vx, k => { v.vx *= k; }); else v.x = nx;
   const ny = v.y + v.vy * dt;
-  if (vehicleSolid(v, v.x, ny, v.ang)) { hit = Math.max(hit, Math.abs(v.vy)); v.vy *= -0.25; v.speed *= 0.45; } else v.y = ny;
+  if (vehicleSolid(v, v.x, ny, v.ang)) knock(v.vy, k => { v.vy *= k; }); else v.y = ny;
+  if (v.fling > 0) { v.fling -= dt; const na = v.ang + (v.spin || 0) * dt; if (!vehicleSolid(v, v.x, v.y, na)) v.ang = na; v.spin *= 1 - 2.2 * dt; }
   // how far sideways it is going, and the marks that leaves
   v.slip = Math.abs(-v.vx * Math.sin(v.ang) + v.vy * Math.cos(v.ang)) / T;
   if (v.slip > 2.2 && !st.horse && !rough && Math.hypot(v.vx, v.vy) > 3 * T) {
@@ -10408,10 +10565,34 @@ function driveVehicle(v, ctrl, dt) {
   if (hit > 3.5 * T) wallHit(v, hit);
   return hit;
 }
+// Anything going fast enough goes through a tree instead of stopping at it: the tree comes down, the car
+// loses a third of its speed and is knocked a little off its line.
+function fellTrees(v, dt) {
+  const c = S.city, st = VEHICLES[v.type], o = st.len * 0.3, r = st.wid * 0.5;
+  for (const sg of [1, -1]) {
+    const px = v.x + v.vx * dt + Math.cos(v.ang) * o * sg, py = v.y + v.vy * dt + Math.sin(v.ang) * o * sg;
+    for (let ty = Math.floor((py - r) / T); ty <= Math.floor((py + r) / T); ty++) for (let tx = Math.floor((px - r) / T); tx <= Math.floor((px + r) / T); tx++) {
+      if (c.at(tx, ty) !== G.TREE || tx < 2 || ty < 2 || tx > c.W - 3 || ty > c.H - 3) continue;
+      c.tiles[ty * c.W + tx] = G.GRASS;
+      c.chunks.delete(Math.floor(tx / 16) + ',' + Math.floor(ty / 16));
+      const cxp = (tx + 0.5) * T, cyp = (ty + 0.5) * T;
+      spark(cxp, cyp, 16, '#4fa84a'); spark(cxp, cyp, 6, '#8a5a2a'); sfx.leaves();
+      float(cxp, cyp - 20, 'TIMBER!', '#bfe8a0');
+      v.speed *= 0.66; v.vx *= 0.66; v.vy *= 0.66;
+      const side = (cxp - v.x) * -Math.sin(v.ang) + (cyp - v.y) * Math.cos(v.ang) > 0 ? -1 : 1;
+      v.vx += -Math.sin(v.ang) * side * 2.2 * T; v.vy += Math.cos(v.ang) * side * 2.2 * T;
+      S.shake = Math.max(S.shake || 0, 0.45);
+      if (S.step) S.step.trees = (S.step.trees || 0) + 1;
+      bump('trees');
+    }
+  }
+}
 function wallHit(v, hit) {
   if (v !== S.player.vehicle) return;
   if (S.step) S.step.walls = (S.step.walls || 0) + 1;
-  sfx.bump(); spark(v.x + Math.cos(v.ang) * 20, v.y + Math.sin(v.ang) * 20, 6);
+  if (hit > 9 * T) sfx.crash(); else sfx.bump(clamp(hit / (10 * T), 0.2, 1));
+  spark(v.x + Math.cos(v.ang) * 20, v.y + Math.sin(v.ang) * 20, 6 + Math.round(hit / (2 * T)));
+  S.shake = Math.max(S.shake || 0, clamp(hit / (11 * T), 0.15, 1));
   gentleBump(hit);
   if (v !== S.heirloom && hit > 7 * T) damage(v, 1);
 }
@@ -10562,12 +10743,13 @@ function collideVehicles() {
     const other = A === pv ? B : A;
     const nudge = (other.ai === 'flee' || (other.ai === 'hunt' && other.prey)) && Math.abs(pv.speed) > 2.5 * T;  // touching the one you are chasing always counts
     if (!nudge && vn < (other.ai === 'flee' ? 1.1 : 2.2) * T) continue;
-    sfx.bump(); spark((A.x + B.x) / 2, (A.y + B.y) / 2, 8);
+    if (vn > 8 * T) sfx.crash(); else sfx.bump(clamp(vn / (9 * T), 0.2, 1));
+    spark((A.x + B.x) / 2, (A.y + B.y) / 2, 8); S.shake = Math.max(S.shake || 0, clamp(vn / (12 * T), 0.1, 0.8));
     if (other.ai === 'hunt') {
       const mine = Math.abs(pv.speed) >= Math.abs(other.speed);
       if (((mine && vn > 2.2 * T) || (other.prey && Math.abs(pv.speed) > 3 * T)) && other.hitCd <= 0) {   // anything going for the convoy only needs a shove
         other.hp -= 1 + 0.5 * up('bar'); other.hitCd = 0.8; other.speed *= 0.3; other.ramCd = Math.max(other.ramCd || 0, 1.5);
-        float(other.x, other.y - 30, other.hp > 0 ? 'CRUNCH!' : 'RUBBED OUT! +£15', '#f08aa0');
+        float(other.x, other.y - 30, other.hp > 0 ? 'CRUNCH!' : 'OFF THE ROAD! +£15', '#f08aa0'); if (other.hp <= 0) sfx.boom();
         if (other.hp <= 0) { other.dead = true; other.ai = null; S.save.cash += 15; sfx.cash(); if (S.step && S.step.step.t === 'frenzy') S.step.k++; if (bump('erasers') >= 5) badge('rubber'); }
       } else if (!mine && !(other.ramCd > 0)) {
         other.ramCd = 2.2;
@@ -10731,8 +10913,8 @@ function updateHeat(dt) {
         const v = spawnAi(c.year >= 1950 ? 'police' : 'vintage', P, 'cop', { minPlayer: 9 * T });
         if (c.year < 1950) v.color = '#101014';
       }
-      if (Math.random() < 0.5) sfx.siren();
     }
+    if (c.year >= 1930 && (S.sirenT = (S.sirenT || 0) - dt) <= 0 && S.vehicles.some(v => v.ai === 'cop' && Math.hypot(v.x - (P.vehicle || P).x, v.y - (P.vehicle || P).y) < 22 * T)) { S.sirenT = 0.56; sfx.siren(); }
     // nicked if they have you boxed in
     const px = P.vehicle || P, slow = P.vehicle ? Math.abs(P.vehicle.speed) < 2.6 * T : true;
     let close = false;
@@ -11272,19 +11454,18 @@ function openDepartures() {
     go: id => { const t = S.story.towns.get(id), fare = fareBetween(c.town, t); if (S.save.cash < fare) return; S.ui.closePanel(); S.save.cash -= fare; if (t.country !== c.town.country) badge('abroad'); travel(t, c.year, 'hub'); },
   });
 }
-function travel(town, year, where) {
+function travel(town, year, where, waited) {
   const tok = S, c = S.city, jump = where === 'jump';
   S.busy = true;
+  if (!jump && !waited && town.id !== c.town.id && needsStreets(town)) { waitForStreets(town, true).then(() => { if (S === tok) travel(town, year, where, true); }); return; }
   S.transit = { jump, t: 0, dur: jump ? 1.5 : 2.6, from: c.town, to: town, y0: c.year, y1: year, air: c.air, abroad: town.country !== c.town.country, swapped: false,
-    swap: () => { if (S === tok) enterTown(town, year, where); }, done: () => { if (S === tok) { const after = S.transit.after; S.transit = null; S.busy = false; after?.(); } } };
+    swap: () => { if (S === tok) { enterTown(town, year, where); if (jump) fireTracks(S.heirloom); } }, done: () => { if (S === tok) { const after = S.transit.after; S.transit = null; S.busy = false; after?.(); } } };
   if (jump) sfx.jump(); else sfx.door();
-  if (!jump && town.id !== c.town.id) { const tr = S.transit; tr.pending = true; tr.held = 0; fetchStreets(town).then(() => { tr.pending = false; }); }
 }
 // Drawn over everything while a journey is under way.
 function drawTransit(g, w, h, dpr, dt) {
   const tr = S.transit;
   tr.t += dt;
-  if (tr.pending && !tr.swapped && tr.t / tr.dur > 0.44 && tr.held < 10) { tr.t -= dt; tr.held += dt; }   // hold the journey while the streets arrive
   const k = clamp(tr.t / tr.dur, 0, 1);
   if (k >= 0.5 && !tr.swapped) { tr.swapped = true; tr.swap(); }
   const font = (px, f = '"Press Start 2P", monospace') => { g.font = `${Math.round(px * dpr)}px ${f}`; };
@@ -11407,11 +11588,13 @@ function openPause() {
   S.ui.panel(`<h2>Relative Speed</h2><p>${escapeText(nextStory()?.brief || 'Free roam: every town, every year.')}</p>
     ${S.ui.touch ? '<p>Left thumb steers and walks. GO talks, gets in and out and starts jobs. CAR calls the Heirloom.</p>' : k('WASD / arrows', 'walk, drive') + k('E', 'talk, get in or out, start a job') + k('Space', 'handbrake: hold it into a corner to slide the back round') + k('T', 'time dial') + k('H', 'call the Heirloom (£10)') + k('B', 'read the mission again') + k('M', 'town map') + k('P', 'pedigree') }
     <p><b>The case so far</b> <small>${tally().text}</small></p>${fragsGot() || S.save.idx > S.story.missions.findIndex(m => m.id === 'blank-and-void') ? `<p>📄 <b>The Foundling File</b> ${fragsGot()} of ${S.story.frags.length} pages <small>${S.story.frags.map(f => (S.save.frags || []).includes(f.id) ? '✔' : `${escapeText(S.story.towns.get(f.town).name)} ${f.year}`).join(' · ')}</small></p>` : ''}${S.story.missions.map((m, i) => i < S.save.idx ? `<div class="row" style="padding:3px 0;border:0"><span>✔ ${escapeText(m.title)} <b style="color:#c8901a">${'★'.repeat((S.save.medals || {})[m.id] || 0)}</b><small>${escapeText(m.act)} · ${escapeText(S.story.towns.get(m.town).name)}, ${m.year}</small></span>${m.town === S.city.town.id && m.year === S.city.year && !S.mission && m.steps.some(x => x.t !== 'travel' && x.t !== 'talk') ? `<button class="alt" data-go="replay:${i}">Replay</button>` : ''}</div>` : i === S.save.idx ? `<div class="row need" style="padding:5px 8px"><span>▶ ${escapeText(m.title)}<small>${escapeText(m.act)} · ${escapeText(S.story.towns.get(m.town).name)}, ${m.year}</small></span></div>` : '').join('')}${S.save.idx < S.story.missions.length - 1 ? `<p>…and ${S.story.missions.length - S.save.idx - 1} more to come.</p>` : ''}
-    <div class="foot"><button data-go="close">Resume</button><button class="alt" data-go="easy">Timers: ${S.save.easy ? 'generous' : 'normal'}</button><button class="alt" data-go="streets">Streets: ${realStreets() ? 'real (OpenStreetMap)' : 'made up'}</button>${realStreets() && S.city.source !== 'osm' && S.nets.get(S.city.town.id)?.source === 'osm' && !S.mission ? '<button class="alt" data-go="realnow">Switch to the real streets now</button>' : ''}<button class="alt" data-go="quit">Save and leave</button><button class="alt" data-go="reset">Restart the story</button></div>`, {
+    <div class="foot"><button data-go="close">Resume</button><button class="alt" data-go="easy">Timers: ${S.save.easy ? 'generous' : 'normal'}</button><button class="alt" data-go="music">Music: ${soundOn('music') ? 'on' : 'off'}</button><button class="alt" data-go="sfx">Sound effects: ${soundOn('sfx') ? 'on' : 'off'}</button><button class="alt" data-go="streets">Streets: ${realStreets() ? 'real (OpenStreetMap)' : 'made up'}</button>${realStreets() && S.city.source !== 'osm' && S.nets.get(S.city.town.id)?.source === 'osm' && !S.mission ? '<button class="alt" data-go="realnow">Switch to the real streets now</button>' : ''}<button class="alt" data-go="quit">Save and leave</button><button class="alt" data-go="reset">Restart the story</button></div>`, {
     close: () => S.ui.closePanel(),
     easy: () => { S.save.easy = !S.save.easy; persist(); openPause(); },
+    music: () => { setSound('music', !soundOn('music')); openPause(); },
+    sfx: () => { setSound('sfx', !soundOn('sfx')); if (soundOn('sfx')) sfx.pick(); openPause(); },
     realnow: () => { S.ui.closePanel(); enterTown(S.city.town, S.city.year, 'hub'); S.ui.toast(`The real streets of ${S.city.town.name}. © OpenStreetMap contributors`, 4200); },
-    streets: () => { try { localStorage.setItem('a3d:realstreets', realStreets() ? '0' : '1'); } catch (e) { /* no storage */ } S.nets.clear(); S.asked.clear(); S.ui.closePanel(); S.ui.toast(realStreets() ? 'Real streets from OpenStreetMap, from the next town you enter. Only the town\'s name is sent.' : 'Made-up streets from the next town you enter. Nothing is looked up.', 6000); if (realStreets()) fetchStreets(S.city.town); },
+    streets: () => { try { localStorage.setItem('a3d:realstreets', realStreets() ? '0' : '1'); } catch (e) { /* no storage */ } S.nets.clear(); S.streets.clear(); S.ui.closePanel(); S.ui.toast(realStreets() ? 'Real streets from OpenStreetMap, from the next town you enter. Only the town\'s name is sent.' : 'Made-up streets from the next town you enter. Nothing is looked up.', 6000); if (realStreets()) fetchStreets(S.city.town); },
     replay: i => { S.ui.closePanel(); startMission(S.story.missions[+i]); },
     quit: () => { S.ui.closePanel(); closeStory(); },
     reset: () => { S.ui.panel('<h2>Restart the story?</h2><p>Your cash, proofs and progress for this person will be wiped.</p><div class="foot"><button data-go="yes">Restart</button><button class="alt" data-go="close">Keep playing</button></div>', {
@@ -11644,6 +11827,12 @@ function updatePlayer(dt) {
   if (v === S.heirloom) {
     const st = statsOf(v), armed = S.dial != null && S.dial !== S.city.year;
     if (armed && Math.abs(v.speed) > st.max * T * (0.84 - 0.05 * up('wind'))) v.charge = Math.min(1, v.charge + dt / (2.0 - 0.4 * up('wind'))); else v.charge = Math.max(0, v.charge - dt / 1.7);
+    if (v.charge > 0.12) {
+      // the tyres catch as the Engine winds up
+      const bx = -Math.cos(v.ang) * st.len * 0.36, by = -Math.sin(v.ang) * st.len * 0.36, sx = -Math.sin(v.ang) * st.wid * 0.38, sy = Math.cos(v.ang) * st.wid * 0.38;
+      for (const sg of [1, -1]) if (Math.random() < 0.35 + v.charge * 0.65) S.flames.push({ x: v.x + bx + sx * sg + (Math.random() - 0.5) * 5, y: v.y + by + sy * sg + (Math.random() - 0.5) * 5, born: S.t, life: 0.35 + v.charge * 0.9, r: 4 + v.charge * 6 });
+      if ((S.windT = (S.windT || 0) - dt) <= 0) { S.windT = 0.11; sfx.wind(v.charge); }
+    }
     if (v.charge >= 1) {
       const cost = inkFor(S.city.year, S.dial);
       v.charge = 0;
@@ -11833,6 +12022,7 @@ function render() {
   const lead = P.vehicle ? 0.22 : 0;
   const tx = pp.x + (P.vehicle ? P.vehicle.vx * lead : 0), ty = pp.y + (P.vehicle ? P.vehicle.vy * lead : 0);
   V.x += (tx - V.x) * 0.14; V.y += (ty - V.y) * 0.14;
+  if (S.shake > 0.02) { V.x += (Math.random() - 0.5) * S.shake * 16; V.y += (Math.random() - 0.5) * S.shake * 16; S.shake *= 0.86; } else S.shake = 0;
   const z = V.z, t = S.t;
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.imageSmoothingEnabled = true;
@@ -11844,6 +12034,16 @@ function render() {
     g.lineCap = 'round'; g.lineWidth = 3.4;
     for (const k of S.skids) { const a = 0.34 * Math.max(0, 1 - (S.t - k.t) / 22); if (a <= 0 || Math.abs(k.x1 - V.x) * z > w || Math.abs(k.y1 - V.y) * z > h) continue; g.strokeStyle = `rgba(20,16,24,${a.toFixed(2)})`; g.beginPath(); g.moveTo(k.x1, k.y1); g.lineTo(k.x2, k.y2); g.stroke(); }
     if (S.t - S.skids[0].t > 22) S.skids.shift();
+  }
+  if (S.flames.length) {
+    for (const f of S.flames) {
+      const age = t - f.born; if (age < 0 || age > f.life) continue;
+      const a = 1 - age / f.life, fl = 0.7 + 0.3 * Math.sin(t * 23 + f.x), up = age * 14;
+      g.fillStyle = `rgba(255,96,24,${(a * 0.75).toFixed(2)})`; g.beginPath(); g.ellipse(f.x, f.y - up * 0.5, f.r * fl, f.r * fl * 1.25, 0, 0, 7); g.fill();
+      g.fillStyle = `rgba(255,214,72,${a.toFixed(2)})`; g.beginPath(); g.ellipse(f.x, f.y - up * 0.3, f.r * fl * 0.55, f.r * fl * 0.75, 0, 0, 7); g.fill();
+    }
+    if (S.flames.length > 40 && S.flames[0].born + S.flames[0].life < t) S.flames = S.flames.filter(f => f.born + f.life > t);
+    else if (S.flames.length <= 40 && S.flames.every(f => f.born + f.life < t)) S.flames = [];
   }
   // markers on the ground
   const tgt = S.target;
@@ -11966,6 +12166,7 @@ function loop(now) {
     if (!S) return;
     const pv = s.player.vehicle, quiet = s.ui.panelOpen || s.ui.dialogOpen || s.busy || !!s.bot || document.hidden;
     engineNote(!!pv && !VEHICLES[pv.type].horse && !quiet, pv ? Math.min(1, Math.abs(pv.speed) / (VEHICLES[pv.type].max * T)) : 0, pv ? VEHICLES[pv.type].eng : 'car', pv ? pv.thr || 0 : 0);
+    musicTick(s.transit ? music.tune : (s.step && (s.step.timer != null || ['chase', 'escape', 'defend', 'catch', 'frenzy'].includes(s.step.step.t))) || s.heat >= 1 ? 'chase' : 'roam', s.city.year);
     tyreSqueal(pv && !quiet && !VEHICLES[pv.type].horse ? clamp(((pv.slip || 0) - 2.2) / 5, 0, 1) : 0);
     if (pv && VEHICLES[pv.type].horse && !quiet && Math.abs(pv.speed) > T) { s.clop = (s.clop || 0) - dt * Math.abs(pv.speed) / T; if (s.clop <= 0) { s.clop = 1.6; beep(180 + Math.random() * 40, 0.03, 'triangle', 0.035); } }
     s.frameDt = dt;

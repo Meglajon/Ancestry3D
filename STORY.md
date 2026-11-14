@@ -189,6 +189,15 @@ round the town after a girl with a basket, and drive him up to the church. Slowl
 - **The handbrake.** Space lets the back of the car go: hold it into a corner and slide round, leaving
   skid marks. Quick cars slide a long way; vans and buses hardly at all. Every kind of vehicle has its own
   engine note and changes gear.
+- **Crashes.** A glancing touch slides along the wall. A head-on one takes four fifths of your speed,
+  throws the car back and spins it. Anything going fast enough goes straight through a tree, which comes
+  down ("TIMBER!") and costs a third of your speed.
+- **Sound.** Crashes, pick-ups, sirens, a tyre squeal, an engine voice for every kind of vehicle, and a
+  blip for every word anybody says, pitched to who is talking. Two original eight-bit tunes: a jaunty one
+  for getting about and a driving one in the minor when a clock is running or somebody is after you; the
+  instruments and pace change with the year. Music and sound effects each have a switch in the pause menu.
+- **Time-jump fire.** The tyres catch as the dial winds up, and you land in the new year with two lines
+  of fire on the road behind you.
 - **The time dial.** Locked until *Spare Parts* is done. Then: pick a year, hold the Heirloom at full speed until the dial fills, and arrive on the
   same street in a different century. Ink is charged by the year.
 

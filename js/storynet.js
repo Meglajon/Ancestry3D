@@ -236,29 +236,42 @@ const pause = (ms, signal) => new Promise((res, rej) => { const t = setTimeout(r
  * public servers are often busy, so this is patient: it tries again, and may take a minute. Only the town's
  * name is sent. Map data © OpenStreetMap contributors (ODbL).
  */
-export async function fetchNet(town, timeoutMs = 80000) {
+export async function fetchNet(town, timeoutMs = 80000, onState = () => {}) {
   const had = cachedNet(town);
-  if (had !== undefined) return had;
+  if (had !== undefined) { onState({ stage: had ? 'done' : 'none' }); return had; }
+  onState({ stage: 'find' });
   const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), timeoutMs);
   const keepIt = v => { try { localStorage.setItem(cacheKey(town), v); } catch (e) { /* full: fetch again next time */ } };
   try {
     const q = [town.name, town.nation || town.country].filter(Boolean).join(', ');
     // where is it? (two free gazetteers built on OpenStreetMap; the second is only asked if the first fails)
     let lat = null, lon = null;
-    try { const g = await getJson('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=' + encodeURIComponent(q), { headers: { Accept: 'application/json' } }, ctl.signal); if (g && g.length) { lat = +g[0].lat; lon = +g[0].lon; } else if (g) { keepIt('none'); return null; } } catch (e) { if (ctl.signal.aborted) throw e; }
-    if (lat == null) { const g = await getJson('https://photon.komoot.io/api/?limit=1&q=' + encodeURIComponent(q), {}, ctl.signal); const c = g && g.features && g.features[0] && g.features[0].geometry && g.features[0].geometry.coordinates; if (!c) { keepIt('none'); return null; } lon = +c[0]; lat = +c[1]; }
-    if (!isFinite(lat) || !isFinite(lon)) return null;
+    try { const g = await getJson('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=' + encodeURIComponent(q), { headers: { Accept: 'application/json' } }, ctl.signal); if (g && g.length) { lat = +g[0].lat; lon = +g[0].lon; } else if (g) { keepIt('none'); onState({ stage: 'none' }); return null; } } catch (e) { if (ctl.signal.aborted) throw e; }
+    if (lat == null) { const g = await getJson('https://photon.komoot.io/api/?limit=1&q=' + encodeURIComponent(q), {}, ctl.signal); const c = g && g.features && g.features[0] && g.features[0].geometry && g.features[0].geometry.coordinates; if (!c) { keepIt('none'); onState({ stage: 'none' }); return null; } lon = +c[0]; lat = +c[1]; }
+    if (!isFinite(lat) || !isFinite(lon)) { onState({ stage: 'none' }); return null; }
     // and what streets has it? One server at a time, waiting longer between tries when they say they are busy.
     const body = { method: 'POST', body: 'data=' + encodeURIComponent(osmQuery(lat, lon)), headers: { 'Content-Type': 'application/x-www-form-urlencoded' } };
     const hosts = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter', 'https://overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter', 'https://overpass-api.de/api/interpreter'];
     let json = null;
     for (let i = 0; i < hosts.length && !json; i++) {
-      try { json = await getJson(hosts[i], body, ctl.signal); }
-      catch (e) { if (ctl.signal.aborted) throw e; await pause(3000 + i * 3000, ctl.signal); }
+      onState({ stage: 'ask', n: i + 1 });
+      try {
+        const r = await fetch(hosts[i], { ...body, signal: ctl.signal });
+        if (!r.ok) throw new Error('http ' + r.status);
+        if (r.body && r.body.getReader) {
+          // read it as it comes, so there is something to show
+          const rd = r.body.getReader(), dec = new TextDecoder();
+          let txt = '', bytes = 0;
+          for (;;) { const { done, value } = await rd.read(); if (done) break; bytes += value.length; txt += dec.decode(value, { stream: true }); onState({ stage: 'read', bytes }); }
+          json = JSON.parse(txt + dec.decode());
+        } else json = await r.json();
+      } catch (e) { if (ctl.signal.aborted) throw e; json = null; onState({ stage: 'busy', n: i + 1 }); await pause(3000 + i * 3000, ctl.signal); }
     }
-    if (!json) return null;
+    if (!json) { onState({ stage: 'fail' }); return null; }
+    onState({ stage: 'build' });
     const net = netFromOsm(json, lat, lon);
     keepIt(net ? JSON.stringify(packNet(net)) : 'none');
+    onState({ stage: net ? 'done' : 'none' });
     return net;
-  } catch (e) { return null; } finally { clearTimeout(timer); }
+  } catch (e) { onState({ stage: 'fail' }); return null; } finally { clearTimeout(timer); }
 }

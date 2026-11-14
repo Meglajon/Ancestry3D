@@ -401,8 +401,11 @@ function renderChunk(city, cx, cy) {
   const isV = x => xs.some(v => x === v || x === v + 1), isH = y => ys.some(v => y === v || y === v + 1);
   g.translate(-cx * CHUNK * TILE, -cy * CHUNK * TILE); // everything below is in world pixels
   g.lineCap = 'round';
+  const trees = [];
   for (let ty = cy * CHUNK; ty < (cy + 1) * CHUNK; ty++) for (let tx = cx * CHUNK; tx < (cx + 1) * CHUNK; tx++) {
-    const t = city.at(tx, ty), X = tx * TILE, Y = ty * TILE, n = hsh(tx, ty), m = hsh(ty + 31, tx + 17);
+    const t0 = city.at(tx, ty), isTree = t0 === G.TREE, t = isTree && zone[ty * city.W + tx] ? G.FIELD : t0;
+    const X = tx * TILE, Y = ty * TILE, n = hsh(tx, ty), m = hsh(ty + 31, tx + 17);
+    if (isTree) trees.push([X, Y]);
     if (t === G.ROAD || t === G.PAVE) {
       g.fillStyle = gr.road; g.fillRect(X, Y, TILE, TILE);
       if (t === G.PAVE) continue;
@@ -446,9 +449,9 @@ function renderChunk(city, cx, cy) {
       g.fillStyle = (tx + ty) % 2 && n > 0.35 ? gr.grass : n > 0.82 ? gr.grass2 : gr.grass; g.fillRect(X, Y, TILE, TILE);
       if (n > 0.62) { g.strokeStyle = gr.grass2; g.lineWidth = 2; g.beginPath(); const px = X + 6 + m * 18, py = Y + 10 + n * 14; g.moveTo(px, py); g.lineTo(px - 2, py - 6); g.moveTo(px + 4, py); g.lineTo(px + 4, py - 7); g.moveTo(px + 8, py); g.lineTo(px + 10, py - 6); g.stroke(); }
       if (m > 0.9) { g.fillStyle = ['#fff6d8', '#ffd84a', '#f58ab0', '#b79aff'][Math.floor(n * 4)]; for (let k = 0; k < 3; k++) { g.beginPath(); g.arc(X + 6 + hsh(tx + k, ty * 7) * 20, Y + 6 + hsh(tx * 7, ty + k) * 20, 2.2, 0, 7); g.fill(); } }
-      if (t === G.TREE) { g.fillStyle = 'rgba(45,36,56,0.22)'; g.beginPath(); g.ellipse(X + 21, Y + 22, 16, 13, 0, 0, 7); g.fill(); }
     }
   }
+  for (const [X, Y] of trees) { g.fillStyle = 'rgba(45,36,56,0.22)'; g.beginPath(); g.ellipse(X + 21, Y + 22, 16, 13, 0, 0, 7); g.fill(); }
   // each block: a ring of pavement with a kerb, and a hedge, wall or fence round the gardens
   for (const b of city.blocks) {
     if (b.x1 < cx * CHUNK - 1 || b.x0 > (cx + 1) * CHUNK + 1 || b.y1 < cy * CHUNK - 1 || b.y0 > (cy + 1) * CHUNK + 1) continue;

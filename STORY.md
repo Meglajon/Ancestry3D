@@ -188,6 +188,15 @@ meet a relative he has something to say. ("She has my chin. Do you see it? That 
   flask of tea.
 
 **The world**
+- **Drawn like a picture book.** Ink outlines, flat bright colours, windows that light up at night, smoke
+  from the chimneys, striped awnings over the shops and cloud shadows drifting across the roofs.
+- **Housing that changes with the year**: thatched cottages with cabbage patches and a well, terraces,
+  back-to-back courts, semis with front gardens, blocks of flats with a car park. Back gardens have washing
+  lines, privies and coal bunkers, or sheds, trampolines and paddling pools, depending on when you look.
+- **Street furniture by era**: horse troughs, pumps and barrels; then post boxes, benches and telegraph
+  poles; then bus stops, bins, bikes, planters and zebra crossings.
+- **A beach** along the east side of every town, with boats, groynes, and nets, deckchairs or parasols
+  according to the year; and **farmland** of wheat, cabbages, pasture and plough round the edges.
 - **Same streets, every year.** Each town gets a street plan from its name, the same in every era: tarmac
   turns to setts and then to mud, slate to thatch, and the outer blocks back into fields.
 - **Streets named after your family.** High Street, Market Street and Church Lane are always there; the

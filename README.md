@@ -51,6 +51,8 @@ estate car that runs on register ink to stop him.
 - **Travel in time.** Set the dial, hold the Heirloom at full speed and you arrive on the same street in
   another century. Every town keeps its street plan in every year; the further back, the more of it is
   fields. Landmarks come and go: a windmill, gasworks, trams, a war memorial, a supermarket.
+- **A cartoon town that changes with the year**: ink outlines and bright colours; cottages, terraces, courts,
+  semis and flats; back gardens, street furniture, a beach and farmland, all dressed for the period.
 - **Streets named after your family**, a clock with night lighting, and rain.
 - **Mind the law.** Police cars after 1900, constables on foot before.
 - **Meet the family.** The people on the pavements are the people in your file who lived in that town in

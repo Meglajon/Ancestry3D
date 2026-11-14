@@ -7752,7 +7752,11 @@ function buildStory(data, rootId, opts = {}) {
       brief: `Find ${relLine}, in ${c.town.name}, ${c.year}.`,
       intro: [{ who: 'dot', text: `A note in Dot's hand, pinned where you would see it: "${c.name}, your ${c.rel}${c.job ? ', ' + c.job.toLowerCase() : ''}. Try the house first. If ${c.he} is out, ${c.he} will be at ${N[spots[1]]}, and failing that ${N[spots[2]]}. Be polite. ${cap(c.he)} ${c.he === 'they' ? 'have' : 'has'} never heard of you."` }],
       steps: [{ t: 'search', spots, miss: { 0: `Nobody in. A neighbour thinks ${c.he} went up to ${N[spots[1]]}.`, 1: `Not here. "Try ${N[spots[2]]}," says somebody, without looking up.`, 2: `Not here either. "Gone to ${N[spots[1]]}, I should think."` }, text: `Find ${c.first}` },
-        { t: 'talk', who: c.id, at: '@found', greet: true, quiz, text: `Talk to ${c.first}`, lines: [`Family, you say. There's a grey fellow been round all week saying the same, and asking after the parish book. I trust nobody who can't tell me something only kin would know.`] }],
+        // no two meetings in a row go the same way
+        ...(isFinale || i % 3 === 0 ? [] : i % 3 === 1
+          ? [{ t: 'catch', from: '@found', label: 'grey clerk', drop: 'a form, in triplicate, that would have signed away the lot', time: 50, text: `A grey clerk is at ${c.first}'s elbow with a paper to sign. He has seen you. See him off`, bark: { who: c.id, text: `He says it's only a form. I never sign what I can't read, and I can't read that.` } }]
+          : [{ t: 'carry', from: '@found', to: 'home', n: 1, label: 'passenger', passenger: c.first, who: c.id, gentle: true, text: `${c.first} has come over faint: somebody in grey has been at ${c.him} with questions all morning. Drive ${c.him} home, gently`, bark: { who: c.id, text: `I don't know you from Adam, but you've a kind face and a strange cart. Go steady.` } }]),
+        { t: 'talk', who: c.id, at: !isFinale && i % 3 === 2 ? 'home' : '@found', greet: true, quiz, text: `Talk to ${c.first}`, lines: [`Family, you say. There's a grey fellow been round all week saying the same, and asking after the parish book. I trust nobody who can't tell me something only kin would know.`] }],
       outro: [{ who: c.id, text: isFinale
         ? `Then you're mine, sure enough, though how is past my wits. There's nobody behind me in any book, you know. I'm where it starts.`
         : `Then you're one of ours, though I can't think how. Come home with me. You look half starved and wholly lost.` }],
@@ -7802,7 +7806,7 @@ function buildStory(data, rootId, opts = {}) {
       set = { title: air ? 'Final Call' : 'The Last Boat', brief: `${c.first} is leaving${dest && dest !== c.town.nation ? ' for ' + dest : ''}${when(emig?.date)}. The ${w.boat} will not wait.`,
         ask: `Everything I own is in two trunks and the ${w.boat} ${air ? 'leaves within the hour' : 'sails on the tide'}${dest && dest !== c.town.nation ? ' for «' + dest + '»' : ''}. Every ${air ? 'taxi' : 'carter'} in town has been paid by some grey gentleman to be busy. Get the trunks to «${N.hub}», then come back for me.`,
         steps: [{ t: 'carry', from: 'home', to: 'hub', n: 2, label: 'trunks', timed: 1.2, text: `Get both trunks to ${N.hub}`, bark: { who: c.id, text: `Don't look back at the house. It's bad luck to look back.` } },
-          { t: 'carry', from: 'home', to: 'hub', n: 1, label: 'traveller', passenger: c.first, timed: 1.0, text: `Now ${c.first}. The ${w.boat} is about to leave` },
+          { t: 'carry', from: 'home', to: 'hub', n: 1, label: 'traveller', passenger: c.first, who: c.id, timed: 1.0, text: `Now ${c.first}. The ${w.boat} is about to leave` },
           { t: 'chase', from: 'hub', hp: 4 + Math.min(3, i), label: `the ${w.van}`, drop: 'the passenger list', text: `Erasers have the passenger list. Stop the ${w.van}` }],
         done: `${c.name}, on the passenger list in black and white. Wherever ${c.he} went, ${c.he} went on the record.`,
         proof: proof('passage', c, `Passage of ${c.name}`, [emig?.date ? cap(datePhrase(emig.date)) : String(c.year), dest && 'bound for ' + dest].filter(Boolean).join(', ') || 'Passenger list') };
@@ -7810,7 +7814,7 @@ function buildStory(data, rootId, opts = {}) {
       set = { title: 'The King\'s Shilling', brief: `${c.first} has orders, and somebody has been at the muster roll.`,
         ask: `I'm to report and the muster roll's gone missing with my name on it. No roll, no record, and a man with no record never served. Run these dispatches round and then get me to «${N.hub}» before the column moves off.`,
         steps: [{ t: 'race', stops: ['police', 'hall', 'church', 'post', 'home'], timed: 1.1, text: 'Carry the dispatches round the town' },
-          { t: 'carry', from: 'home', to: 'hub', n: 1, label: 'soldier', passenger: c.first, timed: 1.0, text: `Get ${c.first} to ${N.hub} before the column leaves` }],
+          { t: 'carry', from: 'home', to: 'hub', n: 1, label: 'soldier', passenger: c.first, who: c.id, timed: 1.0, text: `Get ${c.first} to ${N.hub} before the column leaves` }],
         done: `${c.name}, on the muster roll. Served, counted and remembered.`,
         proof: proof('service', c, `Service record of ${c.name}`, c.job || 'Muster roll') };
     } else if (kind === 'census') {
@@ -7868,18 +7872,18 @@ function buildStory(data, rootId, opts = {}) {
         birth: [
           { t: 'search', spots: ['infirmary', 'church', 'market'], miss: { 0: `"The midwife? Out on a call. She was heading for ${N.church}."`, 1: `"You've missed her. She went to ${N.market} for carbolic."`, 2: `"Not here. Try ${N.church}."` }, text: 'Find the midwife. She is out on her rounds' },
           { t: 'carry', from: '@found', to: 'home', n: 1, label: 'midwife', passenger: 'the midwife', timed: 1.05, blocks: 1, tokens: 2, text: 'Rush the midwife to the house. The Erasers have blocked the street', bark: { name: 'The midwife', text: `I've delivered half this town and I'll not be late for this one. Whatever this thing is, make it go.` } },
-          { t: 'collect', around: 'hall', radius: 14, n: 6, label: 'register pages', timed: 1.4, hunt: 1, text: `Blank's men have scattered the birth register. Collect every page near ${N.hall}` },
+          { t: 'collect', around: 'hall', radius: 14, n: 6, label: 'register pages', timed: 1.6, hunt: 1, text: `Blank's men have scattered the birth register. Collect every page near ${N.hall}` },
           { t: 'goto', at: 'hall', timed: 1.3, rival: 0.4, text: `Get the pages back to ${N.hall} before Blank's clerk gets there with a rubber` },
         ],
         emig: [
           { t: 'carry', from: 'home', to: 'hub', n: 2, label: 'trunks', timed: 1.25, spill: true, tokens: 2, text: `Get both trunks to ${N.hub}`, bark: { who: c.id, text: `Don't look back at the house. It's bad luck to look back.` } },
-          { t: 'carry', from: 'home', to: 'hub', n: 1, label: 'traveller', passenger: c.first, timed: 1.1, switch: { to: 'post', name: c.first, text: 'The tickets! I left the tickets at the post office!' }, text: `Now ${c.first}. The ${w.boat} is about to leave` },
+          { t: 'carry', from: 'home', to: 'hub', n: 1, label: 'traveller', passenger: c.first, who: c.id, timed: 1.1, switch: { to: 'post', name: c.first, text: 'The tickets! I left the tickets at the post office!' }, text: `Now ${c.first}. The ${w.boat} is about to leave` },
           { t: 'goto', at: 'hub', timed: 1.15, blocks: 1, text: `Tickets in hand. Get to ${N.hub} before they take the gangway up` },
           { t: 'chase', from: 'hub', hp, label: van, drop: 'the passenger list', text: `Erasers have the passenger list. Stop ${van}` },
         ],
         arms: [
           { t: 'race', stops: ['police', 'hall', 'church', 'post', 'home'], timed: 1.15, tokens: 3, hunt: 1, text: 'Carry the dispatches round the town' },
-          { t: 'carry', from: 'home', to: 'hub', n: 1, label: 'soldier', passenger: c.first, timed: 1.05, rival: true, text: `Get ${c.first} to ${N.hub} before the column leaves` },
+          { t: 'carry', from: 'home', to: 'hub', n: 1, label: 'soldier', passenger: c.first, who: c.id, timed: 1.05, rival: true, text: `Get ${c.first} to ${N.hub} before the column leaves` },
           { t: 'catch', from: 'hub', label: 'Eraser clerk', drop: 'the muster roll', text: 'A grey clerk is striking names off the muster roll. Catch him' },
         ],
         census: [
@@ -10426,7 +10430,7 @@ function enterStep(step) {
   const off = pt => { const r = roadNear(pt.x, pt.y); return Math.max(0, dist(r, pt) / T - 2) * 3; };
   if (step.t === 'goto') tiles = manh(pp, lotPt(step.at)) + off(lotPt(step.at));
   else if (step.t === 'carry') { const a = lotPt(step.from), b = lotPt(step.to); tiles = manh(pp, a) + (manh(a, b) + (off(a) + off(b)) * 2) * (step.n * 2 - 1); stops = step.n * 2; S.mission.total = manh(a, b);
-    if (step.passenger) { const sp = freeSpotNear(a.x, a.y - 0.2 * T, 0); const giver = S.peds.find(p => p.npc && p.name && p.name.split(' ')[0] === step.passenger); st.pass = { stepPed: true, x: sp.x + 14, y: sp.y, ang: Math.PI / 2, walk: 0, down: 0, look: giver?.look || strangerLook(Math.random, c.year), name: step.passenger }; S.peds.push(st.pass); } }
+    if (step.passenger) { const sp = freeSpotNear(a.x, a.y - 0.2 * T, 0); const giver = S.peds.find(p => p.npc && p.name && p.name.split(' ')[0] === step.passenger); st.pass = { stepPed: true, x: sp.x + 14, y: sp.y, ang: Math.PI / 2, walk: 0, down: 0, look: step.who && S.tree.people.has(step.who) ? lookSummary(personLook(step.who)) : giver?.look || strangerLook(Math.random, c.year), name: step.passenger }; S.peds.push(st.pass); } }
   else if (step.t === 'race') { let prev = pp; for (const s of step.stops) { const l = lotPt(s); tiles += manh(prev, l) + off(l) * 2; prev = l; } stops = step.stops.length; }
   else if (step.t === 'collect') {
     const l = lotPt(step.around), kind = /sheep|pigs|truants/.test(step.label) ? step.label : /tubs|crates|barrels/.test(step.label) ? 'load' : 'page';
@@ -10659,9 +10663,9 @@ function updateIncident(dt) {
 // A grey vehicle racing you to the same door.
 function startRival(dest, pace) {
   const st = S.step, P = S.player, pp = P.vehicle || P;
-  const type = S.city.year < 1900 ? 'erasercoach' : 'eraser', c = S.city, from = { x: clamp(2 * dest.x - pp.x, c.xs[0] * T, (c.xs[c.xs.length - 1] + 1) * T), y: clamp(2 * dest.y - pp.y, c.ys[0] * T, (c.ys[c.ys.length - 1] + 1) * T) };  // from the far side of where you are both going
+  const type = S.city.year < 1900 ? 'erasercoach' : 'eraser', c = S.city, far = Math.max(1, 16 * T / Math.max(1, dist(pp, dest))), from = { x: clamp(dest.x + (dest.x - pp.x) * far, c.xs[0] * T, (c.xs[c.xs.length - 1] + 1) * T), y: clamp(dest.y + (dest.y - pp.y) * far, c.ys[0] * T, (c.ys[c.ys.length - 1] + 1) * T) };  // from the far side of where you are both going
   const secs = (st.timer ?? manh(pp, dest) / 5 + 14) * (pace === true ? 0.8 : 0.8 * 0.44 / pace);
-  st.rival = spawnAi(type, from, 'lead', { dest, pace: clamp((manh(from, dest) + 4) / secs / VEHICLES[type].max, 0.16, 0.6) });
+  st.rival = spawnAi(type, from, 'lead', { dest, pace: clamp((manh(from, dest) + 4) / Math.max(secs, 12) / VEHICLES[type].max, 0.1, 0.6) });
   hintOnce('rival', 'A grey one is racing you there from the other side of town. Get there first, or get in its way.', 5200);
 }
 // Grey vans drawn across the road near where you are going.

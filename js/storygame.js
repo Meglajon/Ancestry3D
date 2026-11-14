@@ -797,7 +797,7 @@ function enterStep(step) {
   const off = pt => { const r = roadNear(pt.x, pt.y); return Math.max(0, dist(r, pt) / T - 2) * 3; };
   if (step.t === 'goto') tiles = manh(pp, lotPt(step.at)) + off(lotPt(step.at));
   else if (step.t === 'carry') { const a = lotPt(step.from), b = lotPt(step.to); tiles = manh(pp, a) + (manh(a, b) + (off(a) + off(b)) * 2) * (step.n * 2 - 1); stops = step.n * 2; S.mission.total = manh(a, b);
-    if (step.passenger) { const sp = freeSpotNear(a.x, a.y - 0.2 * T, 0); const giver = S.peds.find(p => p.npc && p.name && p.name.split(' ')[0] === step.passenger); st.pass = { stepPed: true, x: sp.x + 14, y: sp.y, ang: Math.PI / 2, walk: 0, down: 0, look: giver?.look || strangerLook(Math.random, c.year), name: step.passenger }; S.peds.push(st.pass); } }
+    if (step.passenger) { const sp = freeSpotNear(a.x, a.y - 0.2 * T, 0); const giver = S.peds.find(p => p.npc && p.name && p.name.split(' ')[0] === step.passenger); st.pass = { stepPed: true, x: sp.x + 14, y: sp.y, ang: Math.PI / 2, walk: 0, down: 0, look: step.who && S.tree.people.has(step.who) ? lookSummary(personLook(step.who)) : giver?.look || strangerLook(Math.random, c.year), name: step.passenger }; S.peds.push(st.pass); } }
   else if (step.t === 'race') { let prev = pp; for (const s of step.stops) { const l = lotPt(s); tiles += manh(prev, l) + off(l) * 2; prev = l; } stops = step.stops.length; }
   else if (step.t === 'collect') {
     const l = lotPt(step.around), kind = /sheep|pigs|truants/.test(step.label) ? step.label : /tubs|crates|barrels/.test(step.label) ? 'load' : 'page';
@@ -1030,9 +1030,9 @@ function updateIncident(dt) {
 // A grey vehicle racing you to the same door.
 function startRival(dest, pace) {
   const st = S.step, P = S.player, pp = P.vehicle || P;
-  const type = S.city.year < 1900 ? 'erasercoach' : 'eraser', c = S.city, from = { x: clamp(2 * dest.x - pp.x, c.xs[0] * T, (c.xs[c.xs.length - 1] + 1) * T), y: clamp(2 * dest.y - pp.y, c.ys[0] * T, (c.ys[c.ys.length - 1] + 1) * T) };  // from the far side of where you are both going
+  const type = S.city.year < 1900 ? 'erasercoach' : 'eraser', c = S.city, far = Math.max(1, 16 * T / Math.max(1, dist(pp, dest))), from = { x: clamp(dest.x + (dest.x - pp.x) * far, c.xs[0] * T, (c.xs[c.xs.length - 1] + 1) * T), y: clamp(dest.y + (dest.y - pp.y) * far, c.ys[0] * T, (c.ys[c.ys.length - 1] + 1) * T) };  // from the far side of where you are both going
   const secs = (st.timer ?? manh(pp, dest) / 5 + 14) * (pace === true ? 0.8 : 0.8 * 0.44 / pace);
-  st.rival = spawnAi(type, from, 'lead', { dest, pace: clamp((manh(from, dest) + 4) / secs / VEHICLES[type].max, 0.16, 0.6) });
+  st.rival = spawnAi(type, from, 'lead', { dest, pace: clamp((manh(from, dest) + 4) / Math.max(secs, 12) / VEHICLES[type].max, 0.1, 0.6) });
   hintOnce('rival', 'A grey one is racing you there from the other side of town. Get there first, or get in its way.', 5200);
 }
 // Grey vans drawn across the road near where you are going.

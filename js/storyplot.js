@@ -260,6 +260,7 @@ function spice(job) {
   }
   return job;
 }
+const NUM = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty'];
 function quizFor(c, cast, rnd) {
   const opts = (right, pool) => {
     const wrong = [...new Set(pool.filter(x => x && x !== right))];
@@ -447,22 +448,37 @@ export function buildStory(data, rootId, opts = {}) {
     const base = { act, town: c.town.id, year: c.year, chapter: i };
     const relLine = `${c.name}, your ${c.rel}`;
     const quiz = quizFor(c, cast, rnd);
+    // If you have already been born by this year, they know a child of your name, and it is not you.
+    // (Unless this is the very year, and the chapter is about you being born: then you are still on the way.)
+    const age = hero.byKnown && c.year >= hero.by && !(c.year === hero.by && c.set === 'birth') ? c.year - hero.by : null;
+    const kidWord = c.gen === 1 ? (hero.sex === 'M' ? 'son' : hero.sex === 'F' ? 'daughter' : 'child') : c.gen === 2 ? (hero.sex === 'M' ? 'grandson' : hero.sex === 'F' ? 'granddaughter' : 'grandchild') : (hero.sex === 'M' ? 'great-grandson' : hero.sex === 'F' ? 'great-granddaughter' : 'great-grandchild');
+    const ageWord = age == null ? '' : age === 0 ? 'a babe in arms' : age === 1 ? 'a year old' : `${NUM[age] || age} years old`;
+    const [hHe, hHim] = PRON[hero.sex] || PRON.U;
+    const young = age != null && age < 16;       // old enough, and they simply would not believe it was you grown up
+    const knowsNote = age == null ? `${cap(c.he)} ${c.he === 'they' ? 'have' : 'has'} never heard of you.`
+      : young ? `Mind: ${c.he} ${c.he === 'they' ? 'have' : 'has'} a ${kidWord} called ${hero.first} already, ${ageWord}, and as far as ${c.he} ${c.he === 'they' ? 'know' : 'knows'} that is not you. Do not try to explain.`
+        : `Mind: ${c.he} ${c.he === 'they' ? 'know' : 'knows'} ${hero.first} perfectly well, and ${hero.first} is ${ageWord}. You are a good deal older than that. Do not try to explain.`;
+    const knowsLine = age == null ? `Family, you say. There's a grey fellow been round all week saying the same, and asking after the parish book. I trust nobody who can't tell me something only kin would know.`
+      : young ? `${hero.first}? My ${hero.first} is ${ageWord}, and ${age < 3 ? 'asleep indoors' : age < 11 ? 'out playing in the street' : 'supposed to be at school'}. You've a look of ${hHim}, I'll give you that. But there's a grey fellow been round all week asking after the parish book, and I trust nobody who can't tell me something only kin would know.`
+        : `You've the very look of my ${hero.first}, only ${hHe} is ${ageWord} and you are not. A cousin, is it? There's a grey fellow been round all week asking after the parish book, and I trust nobody who can't tell me something only kin would know.`;
+    const knowsOutro = age == null ? `Then you're one of ours, though I can't think how. Come home with me. You look half starved and wholly lost.`
+      : `Then you're family, right enough, though I can't work out where you fit. You've even the name of my ${kidWord}. Come home with me. You look half starved and wholly lost.`;
     // 1. Meet them. They are never at home.
     const workLot = { haul: 'works', cloth: 'works', craft: 'works', farm: 'farm', sea: 'hub', rail: 'hub', shop: 'market', care: 'infirmary', school: 'school', arms: 'police', desk: 'hall' }[c.group] || 'church';
     const spots = [...new Set(['home', workLot, 'pub', 'church'])].slice(0, 3);
     add({
       ...base, id: `meet-${i}`, title: isFinale ? 'Brick Wall' : `Meeting ${c.first}`, giver: { who: 'dot', at: 'phone' },
       brief: `Find ${relLine}, in ${c.town.name}, ${c.year}.`,
-      intro: [{ who: 'dot', text: `A note in Dorothy's hand, pinned where you would see it: "${c.name}, your ${c.rel}${c.job ? ', ' + c.job.toLowerCase() : ''}. Try the house first. If ${c.he} is out, ${c.he} will be at ${N[spots[1]]}, and failing that ${N[spots[2]]}. Be polite. ${cap(c.he)} ${c.he === 'they' ? 'have' : 'has'} never heard of you."` }],
+      intro: [{ who: 'dot', text: `A note in Dorothy's hand, pinned where you would see it: "${c.name}, your ${c.rel}${c.job ? ', ' + c.job.toLowerCase() : ''}. Try the house first. If ${c.he} is out, ${c.he} will be at ${N[spots[1]]}, and failing that ${N[spots[2]]}. Be polite. ${knowsNote}"` }],
       steps: [{ t: 'search', spots, miss: { 0: `Nobody in. A neighbour thinks ${c.he} went up to ${N[spots[1]]}.`, 1: `Not here. "Try ${N[spots[2]]}," says somebody, without looking up.`, 2: `Not here either. "Gone to ${N[spots[1]]}, I should think."` }, text: `Find ${c.first}` },
         // no two meetings in a row go the same way
         ...(isFinale || i % 3 === 0 ? [] : i % 3 === 1
           ? [{ t: 'catch', from: '@found', label: 'grey clerk', drop: 'a form, in triplicate, that would have signed away the lot', time: 50, text: `A grey clerk is at ${c.first}'s elbow with a paper to sign. He has seen you. See him off`, bark: { who: c.id, text: `He says it's only a form. I never sign what I can't read, and I can't read that.` } }]
           : [{ t: 'carry', from: '@found', to: 'home', n: 1, label: 'passenger', passenger: c.first, who: c.id, gentle: true, text: `${c.first} has come over faint: somebody in grey has been at ${c.him} with questions all morning. Drive ${c.him} home, gently`, bark: { who: c.id, text: `I don't know you from Adam, but you've a kind face and a strange cart. Go steady.` } }]),
-        { t: 'talk', who: c.id, at: !isFinale && i % 3 === 2 ? 'home' : '@found', greet: true, quiz, text: `Talk to ${c.first}`, lines: [`Family, you say. There's a grey fellow been round all week saying the same, and asking after the parish book. I trust nobody who can't tell me something only kin would know.`] }],
+        { t: 'talk', who: c.id, at: !isFinale && i % 3 === 2 ? 'home' : '@found', greet: true, quiz, text: `Talk to ${c.first}`, lines: [knowsLine] }],
       outro: [{ who: c.id, text: isFinale
         ? `Then you're mine, sure enough, though how is past my wits. There's nobody behind me in any book, you know. I'm where it starts.`
-        : `Then you're one of ours, though I can't think how. Come home with me. You look half starved and wholly lost.` }],
+        : knowsOutro }],
       reward: { cash: 80 + i * 10 },
     });
     // 2. A day's work

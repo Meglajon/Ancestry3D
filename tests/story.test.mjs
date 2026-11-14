@@ -36,6 +36,11 @@ function check(story, label) {
     if (m.reward.proof) assert.ok(story.proofs.includes(m.reward.proof));
   });
   assert.equal(new Set(story.proofs.map(p => p.id)).size, story.proofs.length, label + ': duplicate proofs');
+  // nobody tells you that you are a stranger in a year when you were already born
+  if (story.hero.byKnown) for (const m of story.missions) if (/^meet-/.test(m.id) && m.year > story.hero.by) {
+    const all = [...m.intro.map(l => l.text), ...m.steps.flatMap(st => st.lines || []), ...m.outro.map(l => l.text)].join(' ');
+    assert.ok(!/never heard of you/.test(all) && all.includes(story.hero.first), `${label}: ${m.id} in ${m.year} forgets ${story.hero.first} was born in ${story.hero.by}`);
+  }
   // the Foundling File: a page in each era the story visits, and the mission it opens
   assert.equal(new Set(story.frags.map(f => f.town + ':' + f.year)).size, story.frags.length, label + ': two pages in one place');
   for (const f of story.frags) assert.ok(story.towns.has(f.town) && LOTS.has(f.lot) && f.text && story.missions.some(m => m.town === f.town && m.year === f.year), `${label}: page ${f.id}`);

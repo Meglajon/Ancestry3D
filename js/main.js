@@ -12,6 +12,7 @@ import { createFight } from './fight.js';
 import { createMissions } from './missions.js';
 import { computeTraits } from './traits.js';
 import { openViz, vizOpen, vizView } from './viz.js';
+import { openStory, closeStory, storyOpen, storyState } from './storygame.js';
 
 const $ = id => document.getElementById(id);
 const store = {
@@ -276,6 +277,7 @@ function updateGenInfo() {
   if (!S.data || !S.rootId) return;
   const n = countAncestors(S.data, S.rootId, S.maxGen) - 1;
   const root = S.data.individuals.get(S.rootId);
+  $('storyInfo').textContent = `You play as ${displayName(root)}. The plot is the same for every family; the people, towns, years, jobs and events come from this file.`;
   $('genInfo').textContent = S.tab === 'viz'
     ? `${n} ancestor${n === 1 ? '' : 's'} of ${displayName(root)} within ${S.maxGen} generations.`
     : `You play as ${displayName(root)}. ${n} ancestor${n === 1 ? '' : 's'} will be waiting.${n > 1500 ? ' That is a lot; fewer generations will run faster on a phone.' : ''}`;
@@ -329,9 +331,10 @@ const VIZ_NOTES = {
   tree: 'A tree with you as the trunk that grows back in time, generation by generation, along a timeline. Record it as a video.',
 };
 function setTab(tab) {
-  S.tab = tab === 'viz' ? 'viz' : 'play';
+  S.tab = tab === 'viz' || tab === 'story' ? tab : 'play';
   store.set('a3d:tab', S.tab);
   document.body.classList.toggle('tab-viz', S.tab === 'viz');
+  document.body.classList.toggle('tab-story', S.tab === 'story');
   $('tabs').querySelectorAll('button').forEach(b => { const on = b.dataset.tab === S.tab; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); });
   updateGenInfo();
 }
@@ -355,6 +358,23 @@ $('btnViz').onclick = () => {
   store.set(S.fileKey + ':root', S.rootId);
   S.vizOpen = true;
   openViz({ kind: S.vizKind, scope: S.vizScope, data: S.data, rootId: S.rootId, maxGen: S.maxGen, onClose: () => { S.vizOpen = false; } });
+};
+
+// Story mode: "Relative Speed", a top-down driving story played through this family's towns and years.
+$('btnStory').onclick = () => {
+  if (!S.data || !S.rootId) return;
+  sfx.select();
+  store.set(S.fileKey + ':root', S.rootId);
+  $('storyInfo').style.color = '';
+  try {
+    S.storyOpen = true;
+    openStory({ data: S.data, rootId: S.rootId, store, key: S.fileKey, onClose: () => { S.storyOpen = false; } });
+  } catch (err) {
+    console.error(err);
+    S.storyOpen = false;
+    $('storyInfo').textContent = `Could not start the story: ${err.message}`;
+    $('storyInfo').style.color = '#ff6a3a';
+  }
 };
 
 // ---------------- Building the level ----------------
@@ -1272,7 +1292,7 @@ function loop(now) {
   requestAnimationFrame(loop);
   const dt = Math.min(0.05, (now - lastT) / 1000);
   lastT = now;
-  if (!S.world || !S.running || S.vizOpen) return;
+  if (!S.world || !S.running || S.vizOpen || S.storyOpen) return;
   const t = now / 1000;
   if (!S.paused) {
     movePlayer(dt);
@@ -1330,7 +1350,7 @@ async function buildAttract() {
   const spin = now => {
     if (S.running) { attractLoop = false; return; }
     requestAnimationFrame(spin);
-    if (S.vizOpen) return;
+    if (S.vizOpen || S.storyOpen) return;
     const t = (now - t0) / 1000;
     if (S.world.flat) {
       // the garden drifting slowly round the plaza
@@ -1364,4 +1384,4 @@ setTab(store.get('a3d:tab'));
 S.booted = true;
 buildAttract();
 // expose for debugging / tests
-window.__A3D = { S, setTab, openViz, vizOpen, vizView, scene, camera, renderer, startGame, loadText, openDialog, setWaypoint, openMap, closeMap, applyStyle };
+window.__A3D = { S, setTab, openViz, vizOpen, vizView, openStory, closeStory, storyOpen, storyState, scene, camera, renderer, startGame, loadText, openDialog, setWaypoint, openMap, closeMap, applyStyle };

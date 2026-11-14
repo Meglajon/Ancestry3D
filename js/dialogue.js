@@ -139,6 +139,13 @@ function say(voice, tpl) {
 }
 const pickR = (voice, arr) => arr[Math.floor(voice.rnd() * arr.length)];
 
+// Story mode: any line spoken in this person's own dialect and period. «Names» in guillemets are left alone.
+export function voiceLine(person, text) {
+  const vals = [];
+  const marked = String(text).replace(/«([^»]*)»/g, (m, v) => { vals.push(v); return MARK + (vals.length - 1) + MARK; });
+  return say(makeVoice(person), { text: marked, vals });
+}
+
 // ---------------- jobs and history ----------------
 
 const isNorthMill = k => ['lancashire', 'manchester', 'yorkshire', 'sheffield'].includes(k);

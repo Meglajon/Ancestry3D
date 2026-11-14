@@ -28,6 +28,56 @@ middle of a courtyard where every ancestor stands on the ground as a 3D person y
 - **Find people**: dialogue options set a waypoint to their parents or back to their child. The map
   (Tab / M / MAP) shows the whole tree from above; search by name or tap someone to set a waypoint.
 
+### Story mode: Relative Speed
+
+The **Story** tab is a different game on the same family: a top-down driving story in the spirit of the
+mid-90s city crime games, played through the towns and years your ancestors actually lived in. A crooked heir
+hunter is rubbing your family out of the parish registers one generation at a time, and you have a battered
+estate car that runs on register ink to stop him.
+
+- **The plot is the same for everyone; the details are yours.** Up to seven ancestors get a chapter: you meet
+  them (and must prove you are family by answering a question from the file), do a day's work at their real
+  trade, and then play a mission built on a real event: their wedding, the birth of the child you descend
+  from, a family photograph of the children by name, a census night, an emigration, a burial, their service
+  or their baptism. Each one wins a proof for your pedigree. Their brothers, sisters, children and spouses
+  offer optional favours.
+- **Missions in three or four acts**, built from twelve kinds of task: drive, talk, search the places
+  somebody might be, carry (sometimes without a bump), collect, race, chase a van, tail one unseen, defend a
+  convoy, catch a runner on foot, travel, and lose the police. On top of those: a rival racing you to the
+  door, roadblocks, clocks in the road worth five seconds, loads that fall off, and a finale that drags you
+  through four centuries in one chase. Blank's Erasers hunt you while the clock runs. Fail and you restart
+  from the act you failed; do it briskly and you get a medal.
+- **Side jobs**: family favours, an odd-jobs board, cab fares, the sixty-second **Rubber Frenzy**, the
+  **Heirloom Cup** (a timed lap of any town in any year), and the **Foundling File**: a page of the
+  villain's own record hidden in every era, which opens one last mission after the story ends.
+- **Drive anything.** The Heirloom is yours, and can be upgraded and resprayed at Dot's workbench; everything
+  else can be borrowed, from hatchbacks to hay carts. Borrow a taxi or a hansom and you are for hire.
+- **Fly to other countries.** The airport (a steamer quay before 1950) sells tickets to every town the story
+  has opened, and draws the journey on a map.
+- **Travel in time.** Set the dial, hold the Heirloom at full speed and you arrive on the same street in
+  another century. Every town keeps its street plan in every year; the further back, the more of it is
+  fields. Landmarks come and go: a windmill, gasworks, trams, a war memorial, a supermarket.
+- **A cartoon town that changes with the year**: ink outlines and bright colours; cottages, terraces, courts,
+  semis and flats; back gardens, street furniture, a beach and farmland, all dressed for the period.
+- **Streets named after your family**, a clock with night lighting, and rain.
+- **Mind the law.** Police cars after 1900, constables on foot before.
+- **Meet the family.** The people on the pavements are the people in your file who lived in that town in
+  that year; they will tell you their life so far. The churchyard graves carry real names, there are three
+  lost photographs to find in every town and era with the file's own notes on the back, and running over
+  your own ancestor causes a paradox.
+
+The whole plot, and how each part is filled in from the GEDCOM, is in [STORY.md](STORY.md).
+
+| Story controls | Keyboard | Touch |
+|---|---|---|
+| Walk / drive | WASD or arrows (Shift runs) | left thumb |
+| Talk, get in or out, start a job, buy tickets | E | GO |
+| Handbrake | Space | BRAKE |
+| Time dial | T | ⏱ Dial |
+| Call the Heirloom to you | H | CAR |
+| Town map / pedigree / menu | M / P / Esc | 🗺 / 📜 / ☰ |
+| Try a failed mission again | R | GO |
+
 ### Looks
 
 | Look | What you get |
@@ -152,13 +202,22 @@ js/fight.js         Fight back mode: angry ancestors, their weapons, chasing, he
 js/missions.js      missions: what ancestors ask you to find, and checking when you've found it
 js/textures.js      procedural pixel-art textures and portraits
 js/main.js          renderer, controls, cameras, jumping, interaction, dialogue box, HUDs, map
+js/storyplot.js     Story mode plot: chooses the cast, towns and years from the file and writes every mission
+js/storycity.js     Story mode towns: one street plan per town, dressed for any year; ground, buildings, minimap
+js/storyart.js      Story mode drawings: vehicles of every era, people, pick-ups, markers
+js/storyui.js       Story mode HUD, dialogue box, panels, keyboard and touch input
+js/storymap.js      Story mode journeys: a small world map and where each region sits on it
+js/storygame.js     Story mode game: driving, traffic, the law, missions, tickets, the time dial, saving
 sample/demo.ged     fictional demo family (regenerate with npm run demo)
 tools/              demo generator and single-file builder
-tests/              parser/layout tests (npm test) and a headless browser smoke test
+tests/              parser, layout and story tests (npm test), headless browser smoke tests (smoke.py for the
+                    3D looks, story-smoke.py steps through the whole story, story-bot.py drives every
+                    mission for real and reports time, clock margin and collisions) and a stand-in three.js for offline runs
 ```
 
 ```
-npm test            # parser, dates, layout spacing (incl. a 2,047-person tree, couples mode and every layout)
+npm test            # parser, dates, layout spacing (incl. a 2,047-person tree, couples mode and every layout),
+                    # and the story: every person in the demo file as hero, plus awkward trees
 npm run build       # writes index.html (self-contained) and dist/artifact.html
 ```
 

@@ -186,7 +186,10 @@ round the town after a girl with a basket, and drive him up to the church. Slowl
   (the owner will have something to say). Before 1900 that means carts, carriages, wagons and hansom cabs.
 - **Tickets.** The airport (a quay before 1950) sells tickets to every town the story has opened; the
   journey is drawn on a map. The Heirloom travels as freight.
-- **The time dial.** Pick a year, hold the Heirloom at full speed until the dial fills, and arrive on the
+- **The handbrake.** Space lets the back of the car go: hold it into a corner and slide round, leaving
+  skid marks. Quick cars slide a long way; vans and buses hardly at all. Every kind of vehicle has its own
+  engine note and changes gear.
+- **The time dial.** Locked until *Spare Parts* is done. Then: pick a year, hold the Heirloom at full speed until the dial fills, and arrive on the
   same street in a different century. Ink is charged by the year.
 
 **Missions**
@@ -224,19 +227,29 @@ round the town after a girl with a basket, and drive him up to the church. Slowl
 **The world**
 - **Drawn like a picture book.** Ink outlines, flat bright colours, windows that light up at night, smoke
   from the chimneys, striped awnings over the shops and cloud shadows drifting across the roofs.
-- **Housing that changes with the year**: thatched cottages with cabbage patches and a well, terraces,
-  back-to-back courts, semis with front gardens, blocks of flats with a car park. Back gardens have washing
-  lines, privies and coal bunkers, or sheds, trampolines and paddling pools, depending on when you look.
+- **The real streets of the real town.** The first time you arrive anywhere, the game looks the town up
+  by name and downloads its actual street plan, street names, rivers and parks from OpenStreetMap, then
+  draws them in its own style: in Leeds you drive up Briggate and along The Headrow, over Leeds Bridge.
+  Each town is fetched once and kept on your device; only the town's name is sent. The free map servers
+  can be slow, so the first start offers "play now with made-up streets" while it waits. A switch in the
+  pause menu turns the whole thing off. Map data © OpenStreetMap contributors.
+- **Or a town drawn from its name.** Offline, or for a place that cannot be found, the town is made up
+  the way British market towns grew: a market place, old roads winding out of it in every direction,
+  lanes joining them in broken rings, closes off the newer streets, and a river with a bridge wherever a
+  road meets it. No grid, and about a kilometre across.
+- **Housing that changes with the year**: thatched cottages with cabbage patches, terraces, semis with
+  gaps between and blocks of flats, facing every built-up street. Back gardens have washing lines, privies
+  and coal bunkers, or sheds, trampolines and paddling pools, depending on when you look.
 - **Street furniture by era**: horse troughs, pumps and barrels; then post boxes, benches and telegraph
-  poles; then bus stops, bins, bikes, planters and zebra crossings.
-- **A beach** along the east side of every town, with boats, groynes, and nets, deckchairs or parasols
-  according to the year; and **farmland** of wheat, cabbages, pasture and plough round the edges.
-- **Same streets, every year.** Each town gets a street plan from its name, the same in every era: tarmac
-  turns to setts and then to mud, slate to thatch, and the outer blocks back into fields.
-- **Streets named after your family.** High Street, Market Street and Church Lane are always there; the
-  rest take the commonest surnames in your tree (and local forms abroad: *Rue*, *Via*, *-straße*).
-- **Landmarks by era**: a windmill before 1850, gasworks from 1840 to 1975, trams on the High Street from
-  1895 to 1958, allotments after 1900, a war memorial after 1920, a supermarket and car park after 1985.
+  poles; then bus stops, bins, bikes and planters.
+- **Farmland** of wheat, cabbages, pasture and plough round the edge of town, and woods beyond.
+- **Same streets, every year.** A town keeps its street plan in every era: tarmac turns to setts and then
+  to mud, slate to thatch, and the outer streets lose their houses to the fields.
+- **Street names.** Real towns keep their real names. Made-up towns have a High Street, a Market Street
+  and a Church Lane, and the rest take the commonest surnames in your tree (and local forms abroad: *Rue*,
+  *Via*, *-straße*).
+- **Landmarks by era**: a windmill before 1850, trams along the main street from 1895 to 1958, a war
+  memorial after 1920; an airport after 1950 and a quay or coach yard before.
 - **Day, night and weather.** A clock runs; at night every lamp, lit window and headlamp cuts its own hole
   in the dark, and before 1810 there are no street lamps at all. It rains (more in Lancashire than in
   Lisbon) and the roads get slippery. Missions set their own hour: the census is at night, the wedding in

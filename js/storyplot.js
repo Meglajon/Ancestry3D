@@ -208,6 +208,24 @@ const DAY_JOBS = {
     steps: [{ t: 'carry', from: 'farm', to: 'market', n: 2, label: 'milk churns', timed: 1.2, text: `Take the churns from ${c.farm} to ${c.market}` }] }),
   serveB: c => ({ title: 'The Mistress Is Out', ask: `The mistress is to be driven to church and the coachman's nowhere. Somebody in a grey coat stood him a drink. She notices every bump, mind. Every one.`,
     steps: [{ t: 'carry', from: 'home', to: 'church', n: 1, label: 'passenger', passenger: 'the mistress', gentle: true, timed: 1.5, text: 'Drive the mistress to church without a bump' }] }),
+  armsB: c => ({ title: 'Absent Without Leave', ask: `One of my lads has taken the shilling and then taken to his heels, in a borrowed grey coat. He was last seen by ${c.pub}. Bring him back on his own feet, if you please.`,
+    steps: [{ t: 'catch', from: 'pub', label: 'the deserter', drop: 'the deserter by the collar', text: `Catch the deserter near ${c.pub}, on foot` }] }),
+  shopB: c => ({ title: 'Five-Finger Discount', ask: `That grey article has just walked out of here with a week's takings under his hat. He went towards ${c.market}. I'd go myself, but who'd mind the shop?`,
+    steps: [{ t: 'catch', from: 'market', label: 'the thief', drop: 'the takings', text: 'Catch the thief on foot' }, { t: 'goto', at: 'home', text: 'Bring the takings back' }] }),
+  railB: c => ({ title: 'The Night Mail', ask: `The mail goes out to ${c.hub} tonight by way of ${c.farm}, and three grey ${c.year < 1900 ? 'carriages' : 'vans'} have sat outside all afternoon doing nothing. I don't care for ${c.year < 1900 ? 'carriages' : 'vans'} that do nothing.`,
+    steps: [{ t: 'defend', from: 'post', via: ['farm'], to: 'hub', hp: 9, waves: 6, text: `See the mail safe to ${c.hub}` }] }),
+  deskB: c => ({ title: 'Due Process', ask: `A grey gentleman has been in three times this week asking for a copy of every will in the district. Follow him when he leaves. I should like to know where a man like that keeps his paperwork.`,
+    steps: [{ t: 'tail', from: 'hall', via: ['market', 'works'], to: 'office', text: 'Follow the grey gentleman without being noticed' }] }),
+  careB: c => ({ title: 'The Rounds', ask: `Four calls to make before dark, and my feet gave out at dinner time. You have wheels. Physic to each door, and no dawdling at ${c.pub}.`,
+    steps: [{ t: 'race', stops: ['farm', 'school', 'pub', 'church', 'infirmary'], timed: 1.2, text: 'Do the rounds before dark' }] }),
+  schoolB: c => ({ title: 'The Treat', ask: `It is the Sunday school treat and the waggonette has not come. Take the little ones up to ${c.farm} for me. If one of them is sick, you will hear about it.`,
+    steps: [{ t: 'carry', from: 'school', to: 'farm', n: 2, label: 'children', passenger: 'the children', gentle: true, timed: 1.6, text: `Take the children to ${c.farm}, smoothly` }] }),
+  craftB: c => ({ title: 'Tools of the Trade', ask: `Some comedian in a grey apron has had my tool bag and scattered the lot between here and ${c.market}. Every one of those cost me a week's wage. Find them.`,
+    steps: [{ t: 'collect', around: 'works', radius: 15, n: 7, label: 'crates of tools', timed: 1.5, text: 'Find the scattered tools' }] }),
+  seaB: c => ({ title: 'Pots and Lines', ask: `The pots came adrift on the tide and they're strewn the length of the quay road. Fetch them in before somebody else does.`,
+    steps: [{ t: 'collect', around: 'hub', radius: 15, n: 6, label: 'crates of pots', timed: 1.5, text: `Gather the pots near ${c.hub}` }] }),
+  gentryB: c => ({ title: 'Leaving Cards', ask: `One calls, one leaves a card, one goes. Five houses before luncheon. You will hand in the cards. I shall remain in the vehicle and be seen.`,
+    steps: [{ t: 'race', stops: ['church', 'hall', 'school', 'infirmary', 'home'], timed: 1.3, text: 'Leave cards at five houses before luncheon' }] }),
   farm: c => ({ title: 'Gone Astray', ask: `Somebody in a grey coat left the gate open and every beast I own is out on the lane. Round them up, then take the cart to ${c.market} before the dealers go home.`,
     steps: [{ t: 'collect', around: 'farm', radius: 15, n: 6, label: c.year < 1800 ? 'pigs' : 'sheep', timed: 1.6, text: `Round up the strays near ${c.farm}` }, { t: 'carry', from: 'farm', to: 'market', n: 1, label: 'cart of produce', timed: 1.3, text: `Get the cart to ${c.market}` }] }),
   serve: c => ({ title: 'Below Stairs', ask: `The mistress wants the whole list fetched before she rings for tea, and she rings early when she's vexed. I can't be in four places at once. Can you?`,
@@ -309,6 +327,12 @@ export function buildStory(data, rootId, opts = {}) {
     c.bapt = findEvent(c.indi, 'CHR', 'BAPM');
     const laterTown = placeTown(childBirth?.place) || placeTown(evPlace(c.indi, 'DEAT', 'BURI'));
     c.movedTo = c.town && laterTown && laterTown.country !== c.town.country ? laterTown : null;
+    // somebody close who died while this person was grown: a parent, or the husband or wife
+    c.late = null;
+    for (const x of [c.father, c.mother, c.spouse]) {
+      const ev = x && findEvent(x, 'BURI', 'DEAT', 'CREM'), yy = ev && dateYear(ev.date);
+      if (yy != null && yy >= c.by + 16 && yy < (c.dy ?? 9999) && !proven.has('bur' + x.id)) { c.late = { indi: x, ev, year: yy }; break; }
+    }
     const avail = [];
     if (c.emig || c.movedTo) avail.push('emig');
     if (c.group === 'arms' || c.indi.events.some(e => /MIL/.test(e.tag))) avail.push('arms');
@@ -318,16 +342,18 @@ export function buildStory(data, rootId, opts = {}) {
     if (portraitYear != null && portraitYear >= 1850 && portraitYear < (c.dy ?? 9999)) avail.push('portrait');
     if (c.census) avail.push('census');
     if (c.bapt) avail.push('baptism');
+    if (c.late) avail.push('burial');
     avail.push('chase');
     c.set = isTop ? 'finale' : avail.slice().sort((a, b) => (usedSets[a] || 0) - (usedSets[b] || 0))[0];
     usedSets[c.set] = (usedSets[c.set] || 0) + 1;
     if (c.set === 'wedding') proven.add('wed' + fam.fam.id);
     if (c.set === 'birth') proven.add('birth' + c.child.id);
+    if (c.set === 'burial') proven.add('bur' + c.late.indi.id);
     // The chapter happens where and when that event did.
-    const evTown = c.set === 'wedding' ? placeTown(fam.marriage?.place) : c.set === 'birth' ? placeTown(childBirth?.place) : c.set === 'census' ? placeTown(c.census.place) : null;
+    const evTown = c.set === 'burial' ? placeTown(c.late.ev.place) : c.set === 'wedding' ? placeTown(fam.marriage?.place) : c.set === 'birth' ? placeTown(childBirth?.place) : c.set === 'census' ? placeTown(c.census.place) : null;
     c.town = town(evTown && evTown.key !== 'unknown' ? evTown : c.town || lastTown);
     lastTown = c.town;
-    let year = c.set === 'portrait' ? portraitYear : c.set === 'birth' && childBy != null ? childBy
+    let year = c.set === 'burial' ? c.late.year : c.set === 'portrait' ? portraitYear : c.set === 'birth' && childBy != null ? childBy
       : c.set === 'emig' ? dateYear(c.emig?.date) ?? Math.min(c.by + 22, (childBy ?? 9999) - 1)
         : c.set === 'census' ? dateYear(c.census.date)
           : c.set === 'arms' ? c.by + 21
@@ -421,7 +447,7 @@ export function buildStory(data, rootId, opts = {}) {
     });
     // 2. A day's work
     // The same trade twice in one family gets a different day's work the second time.
-    const jobKeys = [c.group, c.group + 'B', 'odd', 'shop', 'rail', 'serve'].filter(k => DAY_JOBS[k]);
+    const jobKeys = [c.group, c.group + 'B', 'odd', 'shop', 'rail', 'serve', 'careB', 'craftB'].filter(k => DAY_JOBS[k]);
     const jobKey = jobKeys.find(k => !usedJobs[k]) || c.group;
     if (!isFinale) usedJobs[jobKey] = true;
     c.jobKey = jobKey;
@@ -488,6 +514,14 @@ export function buildStory(data, rootId, opts = {}) {
           { t: 'chase', from: 'church', hp: 4 + Math.min(3, i), label: `the ${w.van}`, drop: 'the last page', text: `The last page is in the ${w.van}. Stop it` }],
         done: `${c.name}, baptised${when(bapt.date)}. Back in the book.`,
         proof: proof('baptism', c, `Baptism of ${c.name}`, [bapt.date && cap(datePhrase(bapt.date)), placeTown(bapt.place)?.name || c.town.name].filter(Boolean).join(', ')) };
+    } else if (kind === 'burial') {
+      const L = c.late, who = displayName(L.indi), rel = L.indi.id === c.spouse?.id ? (L.indi.sex === 'M' ? 'husband' : 'wife') : L.indi.sex === 'M' ? 'father' : 'mother';
+      set = { title: 'Set in Stone', brief: `${who} is to be buried${when(L.ev.date)}, and somebody has been to see the mason.`,
+        ask: `We bury my ${rel} today. «${who}». The mason has the stone cut and paid for, and there's a grey fellow been round offering him double to leave the name off it. Fetch the stone from «${N.works}» to the churchyard, and go gently. It is the last thing we shall ever give ${L.indi.sex === 'F' ? 'her' : 'him'}.`,
+        steps: [{ t: 'carry', from: 'works', to: 'church', n: 1, label: 'headstone', gentle: true, timed: 1.7, text: `Carry the headstone from ${N.works} to ${N.church}, gently` },
+          { t: 'catch', from: 'church', label: 'Eraser with a chisel', drop: 'the chisel', text: 'An Eraser is at the stone with a chisel. Catch him' }],
+        done: `${who}, laid to rest and named in stone. They cannot rub out granite.`,
+        proof: proof('burial', { id: L.indi.id }, `Burial of ${who}`, [L.ev.date && cap(datePhrase(L.ev.date)), placeTown(L.ev.place)?.name || c.town.name].filter(Boolean).join(', ')) };
     } else if (kind === 'portrait') {
       const kids = c.kids.filter(k => (birthYear(k) ?? 0) <= c.year).slice(0, 6), names = kids.map(firstName);
       set = { title: 'Watch the Birdie', brief: `A likeness of the whole ${c.child?.surname || c.surname} family, ${c.year}. If anybody can find the children.`,
@@ -508,7 +542,7 @@ export function buildStory(data, rootId, opts = {}) {
     }
     if (set) add({
       ...base, id: `proof-${i}`, title: set.title, giver: { who: c.id, at: 'home' }, brief: set.brief,
-      hour: { wedding: 10.5, birth: 2.5, emig: 6, arms: 7, census: 20.2, baptism: 11, chase: 22.5, portrait: 15 }[kind],
+      hour: { wedding: 10.5, birth: 2.5, emig: 6, arms: 7, census: 20.2, baptism: 11, chase: 22.5, portrait: 15, burial: 14.5 }[kind],
       intro: [{ who: c.id, text: set.ask }], steps: set.steps,
       outro: [{ who: 'dot', text: `${set.done} Proof ${proofs.length} of ${chapters.length + 1}.` + (chapters[i + 1] && chapters[i + 1] !== finale ? ` Next: ${chapters[i + 1].name}, your ${chapters[i + 1].rel}, ${chapters[i + 1].town.name}, ${chapters[i + 1].year}.` : '') }],
       reward: { cash: pay + 120, proof: set.proof },
@@ -645,7 +679,7 @@ export function buildStory(data, rootId, opts = {}) {
     for (const [x, how, sib] of cands.slice(0, 2)) {
       taken.add(x.id);
       const job = x.events.filter(e => e.tag === 'OCCU' && e.value).map(e => e.value.trim())[0] || '';
-      const g = jobGroup(job), order = [g, g + 'B', 'shop', 'rail', 'serve', 'farmB', 'sea', 'clothB', 'serveB', 'haulB', 'desk', 'odd'].filter(k => DAY_JOBS[k] && !used.has(k));
+      const g = jobGroup(job), order = [g, g + 'B', 'shop', 'careB', 'rail', 'craftB', 'serve', 'farmB', 'shopB', 'sea', 'clothB', 'schoolB', 'serveB', 'haulB', 'seaB', 'desk', 'odd'].filter(k => DAY_JOBS[k] && !used.has(k));
       const key = order.find(k => !usedFav.has(k)) || order[0] || 'odd';
       used.add(key); usedFav.add(key);
       const N = names(c.town, c.year), first = firstName(x), m = x.sex === 'M', f = x.sex === 'F';

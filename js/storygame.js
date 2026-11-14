@@ -34,9 +34,11 @@ const BADGES = {
   jump: ['First jump', 'Turned the years back'], abroad: ['Passport stamped', 'Travelled to another country'], clean: ['Not a scratch', 'A fragile delivery without one bump'],
   reunion: ['Family reunion', 'Met 25 people from your file'], respects: ['Paid your respects', 'Visited 10 family graves'], snaps: ['Family album', 'Found 9 lost photographs'],
   paradox: ['Paradox', 'Ran over your own ancestor and lived'], cabbie: ['The Knowledge', 'Five fares in a row'], rubber: ['Rubbed out', 'Put five Eraser vans off the road'],
-  favours: ['Good turns', 'Five favours for the family'],
+  favours: ['Good turns', 'Five favours for the family'], streets: ['Street cred', 'Saved five street names from the rubber'],
   centuries: ['Century hopper', 'Visited four different eras'], fitted: ['Fully fitted', 'Every upgrade on the Heirloom'], proven: ['Proven', 'Lodged every proof'],
 };
+const SILAS = ['Is that one of ours? I mean yours. I mean ours.', 'She has my chin. Do you see it? That is my chin.', 'I had no idea there were so many. Do they all come at Christmas?',
+  'I should like to write that one down. In ink. I have given up pencil.', 'Nobody ever told me families were so loud.', 'May we stop? I think that gentleman is my great-great-great-uncle and I have nothing to give him.'];
 const up = id => (S.save.up && S.save.up[id]) || 0;
 function statsOf(v) {
   const st = VEHICLES[v.type];
@@ -244,7 +246,7 @@ function enterTown(town, year, where) {
   S.mini = renderMiniMap(S.city, 2);
   const c = S.city;
   S.vehicles = [];
-  S.peds = []; S.items = []; S.floats = []; S.sparks = [];
+  S.peds = []; S.items = []; S.floats = []; S.sparks = []; S.incident = null;
   const h = S.heirloom || { type: 'heirloom', x: 0, y: 0, ang: 0, vx: 0, vy: 0, speed: 0, hp: VEHICLES.heirloom.hp, color: paintFor('heirloom'), ai: null, hitCd: 0, charge: 0, stuck: 0 };
   S.heirloom = h; h.charge = 0;
   if (S.save.paint) h.color = S.save.paint;
@@ -599,7 +601,7 @@ function knockDown(p, v) {
   moveWalker(p, Math.cos(a) * 26, Math.sin(a) * 26);
   sfx.bump();
   if (v !== S.player.vehicle) { float(p.x, p.y - 22, quip(), '#fff'); return; }
-  if (p.runner) { p.caught = true; return; }
+  if (p.runner || p.vandal) { p.caught = true; return; }
   offence(p.cop ? 1 : 0.5);
   if (p.rid && S.tree.people.has(p.rid) && S.tree.people.get(p.rid).gen > 0) {
     // your own ancestor: history objects
@@ -751,7 +753,7 @@ async function startMission(def) {
 }
 function clearStep() {
   const st = S.step;
-  if (st) { S.items = S.items.filter(i => !i.step); if (st.target) st.target.gone = true; if (st.convoy) { st.convoy.gone = true; for (const v of S.vehicles) if (v.prey === st.convoy) v.gone = true; } S.peds = S.peds.filter(p => !p.stepPed); }
+  if (st) { S.items = S.items.filter(i => !i.step); if (st.target) st.target.gone = true; if (st.convoy) { st.convoy.gone = true; for (const v of S.vehicles) if (v.prey === st.convoy) v.gone = true; } S.peds = S.peds.filter(p => !p.stepPed || p.vandal); }
   S.step = null;
 }
 function nextStep() {
@@ -884,26 +886,68 @@ function updateMission(dt) {
     }
   } else if (s.t === 'catch') {
     const r = st.runner;
-    r.think -= dt;
-    if (r.think <= 0) {
-      r.think = 0.28;
-      let best = r.ang, bs = -1e9;
-      for (let k = 0; k < 8; k++) {
-        const a = k * Math.PI / 4, nx = r.x + Math.cos(a) * 1.2 * T, ny = r.y + Math.sin(a) * 1.2 * T;
-        if (circleSolid(nx, ny, 9)) continue;
-        const open = circleSolid(r.x + Math.cos(a) * 3 * T, r.y + Math.sin(a) * 3 * T, 9) ? -2.5 * T : 0;
-        const sc = Math.hypot(nx - pp.x, ny - pp.y) + open - Math.abs(angDiff(a, r.ang)) * 5;
-        if (sc > bs) { bs = sc; best = a; }
-      }
-      r.ang = best;
-    }
-    const scared = dist(r, pp) < 9 * T ? 1 : 0.45;
-    moveWalker(r, Math.cos(r.ang) * r.sp * scared * dt, Math.sin(r.ang) * r.sp * scared * dt, 8); r.walk += dt * 16 * scared;
+    fleeStep(r, pp, dt);
     if (r.caught || (!pv && dist(r, P) < 0.95 * T)) { r.down = 3; float(r.x, r.y - 22, 'Got him!', '#ffd84a'); sfx.cash(); st.runner = null; r.stepPed = false; r.runner = false; r.sp = 1.6 * T; r.dir = 0; r.cross = 0; S.ui.toast(`You have ${s.drop || 'the page'}.`, 2400); nextStep(); }
   } else if (s.t === 'travel') {
     if (S.city.town.id === s.town && S.city.year === s.year) nextStep();
   } else if (s.t === 'escape') {
     if (S.heat <= 0) nextStep();
+  }
+}
+// Somebody on foot who does not want to be caught: away from you, and not into a dead end if he can help it.
+function fleeStep(r, pp, dt) {
+  r.think -= dt;
+  if (r.think <= 0) {
+    r.think = 0.28;
+    let best = r.ang, bs = -1e9;
+    for (let k = 0; k < 8; k++) {
+      const a = k * Math.PI / 4, nx = r.x + Math.cos(a) * 1.2 * T, ny = r.y + Math.sin(a) * 1.2 * T;
+      if (circleSolid(nx, ny, 9)) continue;
+      const open = circleSolid(r.x + Math.cos(a) * 3 * T, r.y + Math.sin(a) * 3 * T, 9) ? -2.5 * T : 0;
+      const sc = Math.hypot(nx - pp.x, ny - pp.y) + open - Math.abs(angDiff(a, r.ang)) * 5;
+      if (sc > bs) { bs = sc; best = a; }
+    }
+    r.ang = best;
+  }
+  const scared = dist(r, pp) < 9 * T ? 1 : 0.45;
+  moveWalker(r, Math.cos(r.ang) * r.sp * scared * dt, Math.sin(r.ang) * r.sp * scared * dt, 8); r.walk += dt * 16 * scared;
+}
+// Now and then, when you are between jobs, an Eraser turns up to rub a street name off the map.
+function updateIncident(dt) {
+  const c = S.city, P = S.player, pp = P.vehicle || P, inc = S.incident;
+  if (!inc) {
+    if (S.mission || S.busy || S.save.idx < 3) return;
+    S.incT = (S.incT ?? 45 + Math.random() * 40) - dt;
+    if (S.incT > 0) return;
+    S.incT = 80 + Math.random() * 70;
+    for (let tries = 0; tries < 12; tries++) {
+      const i = Math.floor(Math.random() * c.xs.length), j = Math.floor(Math.random() * c.ys.length), horiz = Math.random() < 0.5;
+      const x = (c.xs[i] + 2.5) * T, y = (c.ys[j] + 2.5) * T, d = Math.hypot(x - pp.x, y - pp.y), name = horiz ? c.streets.h[j] : c.streets.v[i];
+      if (d < 9 * T || d > 24 * T || circleSolid(x, y, 9) || /^—/.test(name)) continue;
+      const r = { stepPed: true, vandal: true, x, y, ang: 0, sp: 4.7 * T, walk: 0, down: 0, look: ERASER_LOOK, name: 'Eraser', think: 0 };
+      S.peds.push(r);
+      S.incident = { r, horiz, idx: horiz ? j : i, name, t: 50, alerted: false, rub: 0 };
+      S.ui.toast(`An Eraser is rubbing ${name} off the map! Catch him before the name is gone.`, 5200);
+      return;
+    }
+    return;
+  }
+  const r = inc.r, d = dist(r, pp);
+  const end = () => { S.peds = S.peds.filter(p => p !== r); S.incident = null; };
+  if (S.mission) { end(); return; }
+  inc.t -= dt;
+  if (d < 6.5 * T) inc.alerted = true;
+  if (inc.alerted) fleeStep(r, pp, dt);
+  else if ((inc.rub -= dt) <= 0) { inc.rub = 1.3; float(r.x, r.y - 20, 'rub rub', '#f08aa0'); }
+  if (r.caught || (!P.vehicle && d < 0.95 * T)) {
+    r.down = 3; r.stepPed = false; r.vandal = false; r.sp = 1.6 * T; r.dir = 0; r.cross = 0; S.incident = null;
+    earn(30); S.ui.toast(`${inc.name} is saved. The parish is grateful to the tune of £30.`, 4200);
+    if (bump('saved') >= 5) badge('streets');
+  } else if (inc.t <= 0) {
+    (inc.horiz ? c.streets.h : c.streets.v)[inc.idx] = '— — —';
+    c.chunks.clear();
+    S.ui.toast(`Too late. ${inc.name} has been rubbed off the map, and nobody can remember what it was called.`, 5200);
+    end();
   }
 }
 // After the first chapter, Blank's men come looking for you while the clock is running.
@@ -1253,7 +1297,7 @@ function updatePlayer(dt) {
   driveVehicle(v, ctrl, dt);
   P.x = v.x; P.y = v.y; P.ang = v.ang;
   // knock people over
-  if (Math.abs(v.speed) > 2.4 * T) for (const p of S.peds) if (!p.npc && (!p.stepPed || p.runner) && !(p.down > 0) && nearCar(v, p, 5)) knockDown(p, v);
+  if (Math.abs(v.speed) > 2.4 * T) for (const p of S.peds) if (!p.npc && (!p.stepPed || p.runner || p.vandal) && !(p.down > 0) && nearCar(v, p, 5)) knockDown(p, v);
   // the Parish Engine
   if (v === S.heirloom) {
     const st = statsOf(v), armed = S.dial != null && S.dial !== S.city.year;
@@ -1315,10 +1359,12 @@ function update(dt) {
     const met = S.save.met || (S.save.met = []);
     if (met.includes(p.rid)) continue;
     met.push(p.rid); float(p.x, p.y - 44, `Met ${p.name.split(' ')[0]}`, '#7be07b'); sfx.pick();
+    if (S.save.idx >= S.story.missions.length && met.length % 3 === 0) { const q = SILAS[(met.length / 3) % SILAS.length]; setTimeout(() => S && S.ui.toast(`Silas, from the back seat: "${q}"`, 5200), 1400); }
     if (met.length % 10 === 0) { earn(50); S.ui.toast(`${met.length} of the family met. A reunion bonus: £50.`); }
     if (met.length >= 25) badge('reunion');
   }
   updateAmbush(dt);
+  updateIncident(dt);
   S.clock = (S.clock + dt / 50) % 24;
   const roll = Math.floor(S.clock / 4);
   if (roll !== S.rainRoll) { S.rainRoll = roll; const wetness = { med: 0.07, stucco: 0.1, flatroof: 0.03, veranda: 0.12 }[c.town.house] ?? 0.3; S.rainT = Math.random() < wetness ? 0.45 + Math.random() * 0.55 : 0; }
@@ -1495,7 +1541,7 @@ function miniMap(pp, tgt) {
   if (!S.mission) dot(c.lots.market, '#7be07b', 3);
   if (S.player.vehicle !== S.heirloom) dot(S.heirloom, '#e8c040', 3.5);
   for (const v of S.vehicles) if (v.ai === 'cop') dot(v, '#4a7aff', 3); else if (v.ai === 'hunt') dot(v, '#f08aa0', 3);
-  for (const p of S.peds) if (p.cop) dot(p, '#4a7aff', 2.5); else if (p.favour && !S.mission) dot(p, '#7be07b', 3);
+  for (const p of S.peds) if (p.cop) dot(p, '#4a7aff', 2.5); else if (p.favour && !S.mission) dot(p, '#7be07b', 3); else if (p.vandal) dot(p, '#f08aa0', 3.5);
   for (const i of S.items) if (i.step) dot(i, '#fff', 2);
   if (tgt) dot(tgt, S.step?.step.t === 'chase' ? '#ff5a4a' : tgt.type ? '#8ab4ff' : '#ffd84a', 4.5, '#fff');
   m.fillStyle = '#fff'; m.strokeStyle = '#000'; m.lineWidth = 2;

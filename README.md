@@ -45,21 +45,27 @@ estate car that runs on register ink to stop him.
   somebody might be, carry (sometimes without a bump), collect, race, chase a van, tail one unseen, defend a
   convoy, catch a runner on foot, travel, and lose the police. On top of those: a rival racing you to the
   door, roadblocks, clocks in the road worth five seconds, loads that fall off, and a finale that drags you
-  through four centuries in one chase. Blank's Erasers hunt you while the clock runs. Fail and you restart
+  through four centuries in one chase. Hargreaves's men in grey hunt you while the clock runs. Fail and you restart
   from the act you failed; do it briskly and you get a medal.
-- **Side jobs**: family favours, an odd-jobs board, cab fares, the sixty-second **Rubber Frenzy**, the
+- **Side jobs**: family favours, an odd-jobs board, cab fares, the sixty-second **Smash-Up**, the
   **Heirloom Cup** (a timed lap of any town in any year), and the **Foundling File**: a page of the
   villain's own record hidden in every era, which opens one last mission after the story ends.
-- **Drive anything.** The Heirloom is yours, and can be upgraded and resprayed at Dot's workbench; everything
+- **Drive anything.** The Heirloom is yours, and can be upgraded and resprayed at Dorothy's workbench; everything
   else can be borrowed, from hatchbacks to hay carts. Borrow a taxi or a hansom and you are for hire.
 - **Fly to other countries.** The airport (a steamer quay before 1950) sells tickets to every town the story
   has opened, and draws the journey on a map.
 - **Travel in time.** Set the dial, hold the Heirloom at full speed and you arrive on the same street in
   another century. Every town keeps its street plan in every year; the further back, the more of it is
   fields. Landmarks come and go: a windmill, gasworks, trams, a war memorial, a supermarket.
-- **A cartoon town that changes with the year**: ink outlines and bright colours; cottages, terraces, courts,
-  semis and flats; back gardens, street furniture, a beach and farmland, all dressed for the period.
-- **Streets named after your family**, a clock with night lighting, and rain.
+- **The real streets of the real town.** Each town in the story is looked up by name and its actual street
+  plan, street names, rivers and parks downloaded from OpenStreetMap, then drawn in the game's own cartoon
+  style. Fetched once per town and kept on the device; only the town's name is sent; can be switched off in
+  the pause menu. Offline, towns are made up instead: winding roads out of a market place, lanes, closes
+  and a river. Map data © OpenStreetMap contributors (ODbL).
+- **A cartoon town that changes with the year**: ink outlines and bright colours; cottages, terraces, semis
+  and flats along every street; back gardens, street furniture and farmland, all dressed for the period.
+- A clock with night lighting, rain, a handbrake that slides the car, and an engine note for every kind of
+  vehicle.
 - **Mind the law.** Police cars after 1900, constables on foot before.
 - **Meet the family.** The people on the pavements are the people in your file who lived in that town in
   that year; they will tell you their life so far. The churchyard graves carry real names, there are three
@@ -203,7 +209,8 @@ js/missions.js      missions: what ancestors ask you to find, and checking when 
 js/textures.js      procedural pixel-art textures and portraits
 js/main.js          renderer, controls, cameras, jumping, interaction, dialogue box, HUDs, map
 js/storyplot.js     Story mode plot: chooses the cast, towns and years from the file and writes every mission
-js/storycity.js     Story mode towns: one street plan per town, dressed for any year; ground, buildings, minimap
+js/storynet.js      Story mode street plans: drawn from a town's name, or read from OpenStreetMap and kept
+js/storycity.js     Story mode towns: builds a town on a street plan for any year; ground, buildings, minimap
 js/storyart.js      Story mode drawings: vehicles of every era, people, pick-ups, markers
 js/storyui.js       Story mode HUD, dialogue box, panels, keyboard and touch input
 js/storymap.js      Story mode journeys: a small world map and where each region sits on it

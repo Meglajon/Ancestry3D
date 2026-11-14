@@ -41,7 +41,7 @@ async def main():
         await talk()
         missions = await ev("return s.story.missions.map(m => ({ id: m.id, title: m.title, town: m.town, year: m.year, steps: m.steps.map(x => x.t) })).concat(s.story.favours.map(m => ({ id: m.id, title: m.title + ' (favour)', town: m.town, year: m.year, fav: true, steps: m.steps.map(x => x.t) })))")
         past = next(m for m in missions if m['year'] < 1990 and m['year'] > 1900)
-        missions += [{ 'id': 'side-' + k, 'title': t, 'town': past['town'], 'year': past['year'], 'fav': True, 'side': k, 'steps': [] } for k, t in (('cup', 'The Heirloom Cup (side)'), ('frenzy', 'Rubber Frenzy (side)'))]
+        missions += [{ 'id': 'side-' + k, 'title': t, 'town': past['town'], 'year': past['year'], 'fav': True, 'side': k, 'steps': [] } for k, t in (('cup', 'The Heirloom Cup (side)'), ('frenzy', 'Smash-Up (side)'))]
         rows = []
         for m in missions:
             if ONLY and m['id'] not in ONLY and not any(o in m['id'] for o in ONLY): continue
@@ -60,12 +60,13 @@ async def main():
                     await page.wait_for_timeout(120)
                     await talk()
                     st = await ev("return { m: !!s.mission, busy: s.busy, step: s.step ? s.step.step.t : null, t: s.t, tele: s.tele.length, fail: s.tele.filter(x => x.fail).map(x => x.fail).pop() || null, dlg: s.ui.dialogOpen }")
-                    if os.environ.get('TRACE') and tick % 4 == 0: print('   ', await ev("const T = 32, st = s.step, pp = s.player.vehicle || s.player, f = o => o ? [Math.round(o.x / T), Math.round(o.y / T)] : null; return JSON.stringify({ t: +s.t.toFixed(0), yr: s.city.year, hp: st && st.target && st.target.hp, step: st && st.step.t, me: f(pp), veh: !!s.player.vehicle, sp: Math.round(Math.hypot(pp.vx || 0, pp.vy || 0) / T), loaded: st && st.loaded, timer: st && st.timer && +st.timer.toFixed(0), rival: st && f(st.rival), heat: +s.heat.toFixed(1), cops: s.vehicles.filter(v => v.ai === 'cop').length + s.peds.filter(q => q.cop).length, goal: st && f(s.debug.target()) })"))
+                    if os.environ.get('TRACE') and tick % 4 == 0: print('   ', await ev("const T = 32, st = s.step, pp = s.player.vehicle || s.player, f = o => o ? [Math.round(o.x / T), Math.round(o.y / T)] : null; return JSON.stringify({ t: +s.t.toFixed(0), yr: s.city.year, hp: st && st.target && st.target.hp, step: st && st.step.t, me: f(pp), veh: !!s.player.vehicle, sp: Math.round(Math.hypot(pp.vx || 0, pp.vy || 0) / T), loaded: st && st.loaded, timer: st && st.timer && +st.timer.toFixed(0), rival: st && f(st.rival), heat: +s.heat.toFixed(1), sus: st && st.sus != null ? +st.sus.toFixed(2) : undefined, lost: st && st.lost != null ? +st.lost.toFixed(1) : undefined, tgt: st && f(st.target || st.convoy), cvhp: st && st.convoy ? st.convoy.hp : undefined, hunters: s.vehicles.filter(v => v.ai === 'hunt').map(v => [Math.round(v.x / T), Math.round(v.y / T), v.hp]), cops: s.vehicles.filter(v => v.ai === 'cop').length + s.peds.filter(q => q.cop).length, goal: st && f(s.debug.target()) })"))
                     if os.environ.get('SHOTS') and tick % int(os.environ['SHOTS']) == 3: await page.screenshot(path=f"/tmp/diag/bot-{m['id']}-{tick:03}.png")
                     if st['step'] == 'travel': await ev("s.debug.finishStep();")
                     if st['fail']: state = 'FAIL: ' + st['fail']; break
                     if not st['m'] and not st['busy'] and not st['dlg']: state = 'ok'; break
                     if st['t'] - t0 > 420: break
+                if state == 'timeout': print('   stuck:', await ev("const st = s.step, pp = s.player.vehicle || s.player, T = 32; return JSON.stringify({ busy: s.busy, dlg: s.ui.dialogOpen, panel: s.ui.panelOpen, transit: !!s.transit, step: st && st.step.t, timer: st && st.timer, k: st && st.k, n: st && st.n, me: [Math.round(pp.x / T), Math.round(pp.y / T)], veh: !!s.player.vehicle, walk: s.bot && s.bot.walk, items: s.items.filter(i => i.step).map(i => [Math.round(i.x / T), Math.round(i.y / T), s.city.at(Math.floor(i.x / T), Math.floor(i.y / T))]), t: s.t })"))
                 tele = await ev("return s.tele")
                 dur = (await ev("return s.t")) - t0
                 if state == 'ok': break

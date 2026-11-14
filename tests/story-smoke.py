@@ -105,6 +105,28 @@ async def run(b, name, vp, mobile):
     print(name, 'end', end)
     await page.wait_for_timeout(800)
     await shot('8-end')
+    # a family favour, start to finish
+    fav = await page.evaluate(f"(() => {{ const s = {S}; const f = s.story.favours[0]; if (!f) return null; s.debug.go(f.town, f.year); return f.title; }})()")
+    if fav:
+        await page.wait_for_timeout(900)
+        await page.evaluate(f"(() => {{ const s = {S}; const n = s.peds.find(p => p.favour); s.player.vehicle = null; s.player.x = n.x + 24; s.player.y = n.y; }})()")
+        await page.wait_for_timeout(300)
+        await page.keyboard.press('e'); await page.wait_for_timeout(400)
+        for n in range(14):
+            await talk_through(page)
+            if not await page.evaluate(f"!!{S}.mission"): break
+            await page.evaluate(f"(() => {{ const s = {S}; if (s.mission && !s.busy) s.debug.warp(); }})()"); await page.wait_for_timeout(350)
+            await page.evaluate(f"(() => {{ const s = {S}; if (s.mission && !s.busy && s.step && !s.step.done) s.debug.finishStep(); }})()"); await page.wait_for_timeout(450)
+        done = await page.evaluate(f"({S}.save.favours || []).length")
+        print(name, 'favour', fav, 'done', done)
+        assert done == 1, done
+    # the workbench
+    await page.evaluate(f"(() => {{ const s = {S}; s.debug.go(s.story.home.id, s.story.now); }})()"); await page.wait_for_timeout(900)
+    await page.evaluate(f"(() => {{ const s = {S}; const l = s.city.lots.garage; s.heirloom.x = l.x + 260; s.player.vehicle = null; s.player.x = l.x + 4; s.player.y = l.y + 6; }})()"); await page.wait_for_timeout(300)
+    await page.keyboard.press('e'); await page.wait_for_timeout(300); await shot('9-workbench')
+    await page.click('#stPanel [data-go="buy:engine"]')
+    assert await page.evaluate(f"{S}.save.up.engine") == 1
+    await page.keyboard.press('Escape'); await page.wait_for_timeout(200)
     # panels
     await page.evaluate(f"{S}.ui.input.queue.push('pedigree')"); await page.wait_for_timeout(300); await shot('9-pedigree')
     await page.evaluate(f"{S}.ui.input.queue.push('pedigree')"); await page.wait_for_timeout(200)

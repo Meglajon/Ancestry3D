@@ -424,6 +424,7 @@ export function buildStory(data, rootId, opts = {}) {
     const jobKeys = [c.group, c.group + 'B', 'odd', 'shop', 'rail', 'serve'].filter(k => DAY_JOBS[k]);
     const jobKey = jobKeys.find(k => !usedJobs[k]) || c.group;
     if (!isFinale) usedJobs[jobKey] = true;
+    c.jobKey = jobKey;
     const job = (DAY_JOBS[jobKey] || DAY_JOBS.odd)(ctx);
     if (!isFinale) add({
       ...base, id: `work-${i}`, title: job.title, giver: { who: c.id, at: c.group === 'farm' ? 'farm' : ['haul', 'cloth', 'craft'].includes(c.group) ? 'works' : c.group === 'sea' ? 'hub' : 'home' },
@@ -626,9 +627,44 @@ export function buildStory(data, rootId, opts = {}) {
   });
   missions.forEach((m, i) => { m.index = i; });
 
+  // ---- Family favours: optional jobs for brothers, sisters and children of each chapter's ancestor ----
+  const favours = [];
+  const taken = new Set([rootId, ...chapters.map(c => c.id)]), usedFav = new Set();
+  for (const c of chapters) {
+    const meet = missions.find(m => m.chapter === c.index);
+    if (!meet) continue;
+    const own = c.indi.famc && data.families.get(c.indi.famc);
+    const sibs = own ? own.children.filter(id => id !== c.id).map(id => [data.individuals.get(id), c.sex === 'F' ? 'sister' : 'brother', true]) : [];
+    const kids = c.kids.filter(k => !c.child || k.id !== c.child.id).map(k => [k, 'child', false]);
+    const cands = [...sibs, ...kids, ...(c.spouse ? [[c.spouse, 'spouse', false]] : [])].filter(([x]) => {
+      if (!x || taken.has(x.id)) return false;
+      const by = birthYear(x), dy = deathYear(x);
+      return by != null && c.year - by >= 15 && c.year - by <= 80 && (dy == null || dy > c.year);
+    }).sort((a, b) => (b[0].events.some(e => e.tag === 'OCCU') ? 1 : 0) - (a[0].events.some(e => e.tag === 'OCCU') ? 1 : 0));
+    const used = new Set([c.jobKey]);
+    for (const [x, how, sib] of cands.slice(0, 2)) {
+      taken.add(x.id);
+      const job = x.events.filter(e => e.tag === 'OCCU' && e.value).map(e => e.value.trim())[0] || '';
+      const g = jobGroup(job), order = [g, g + 'B', 'shop', 'rail', 'serve', 'farmB', 'sea', 'clothB', 'serveB', 'haulB', 'desk', 'odd'].filter(k => DAY_JOBS[k] && !used.has(k));
+      const key = order.find(k => !usedFav.has(k)) || order[0] || 'odd';
+      used.add(key); usedFav.add(key);
+      const N = names(c.town, c.year), first = firstName(x), m = x.sex === 'M', f = x.sex === 'F';
+      const tmpl = DAY_JOBS[key]({ ...N, year: c.year, first, jobL: job.toLowerCase() });
+      const rel = sib ? (m ? 'brother' : f ? 'sister' : 'kin') : how === 'child' ? (m ? 'son' : f ? 'daughter' : 'child') : (m ? 'husband' : f ? 'wife' : 'spouse');
+      favours.push({
+        id: `favour-${c.index}-${x.id}`, odd: true, favour: true, act: 'Family favour', title: tmpl.title, town: c.town.id, year: c.year, after: meet.index,
+        giver: { who: x.id, at: 'home' }, brief: `${displayName(x)}, ${c.first}'s ${rel}, could use a hand.`,
+        intro: [{ who: x.id, text: `You're the one «${c.first}» has been telling everybody about. I'm «${displayName(x)}», ${c.he === 'she' ? 'her' : c.he === 'he' ? 'his' : 'their'} ${rel}${job ? ', «' + job.toLowerCase() + '»' : ''}. Since you're stopping: ` + tmpl.ask }],
+        steps: tmpl.steps,
+        outro: [{ who: x.id, text: `That's a kindness I'll not forget. Mind, I couldn't tell you what you are to me. Something with a deal of greats in it, I'd say.` }],
+        reward: { cash: 140 + c.index * 35 },
+      });
+    }
+  }
+
   return {
     title: 'Relative Speed', hero, villain: { name: 'Silas Blank', firm: 'Blank & Void, Probate Genealogists' }, mentor: { name: 'Dot Quill' },
-    benefactor, home, now: present, towns, chapters, missions, proofs, tree, surname, foreign,
+    benefactor, home, now: present, towns, chapters, missions, favours, proofs, tree, surname, foreign,
   };
 }
 

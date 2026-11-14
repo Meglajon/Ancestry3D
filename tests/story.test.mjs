@@ -33,11 +33,18 @@ function check(story, label) {
     if (m.reward.proof) assert.ok(story.proofs.includes(m.reward.proof));
   });
   assert.equal(new Set(story.proofs.map(p => p.id)).size, story.proofs.length, label + ': duplicate proofs');
+  for (const f of story.favours) {
+    assert.ok(story.towns.has(f.town) && f.steps.length && f.title && f.after >= 0, `${label}: favour ${f.id}`);
+    assert.ok(!story.tree.people.has(f.giver.who) || !story.chapters.some(c => c.id === f.giver.who), `${label}: favour from a chapter ancestor`);
+    for (const l of [...f.intro, ...f.outro]) assert.ok(!/undefined|null|NaN/.test(l.text), `${label}: favour line "${l.text}"`);
+    for (const s of f.steps) for (const k of [s.at, s.from, s.to, s.around, ...(s.stops || [])]) if (k) assert.ok(LOTS.has(k), `${label}: favour lot ${k}`);
+  }
 }
 
 const data = parseGedcom(readFileSync(new URL('../sample/demo.ged', import.meta.url), 'utf8'));
 const demo = buildStory(data, '@I1@', { now: 2026 });
 check(demo, 'demo');
+console.log('favours:', demo.favours.map(f => `${f.title} for ${f.brief}`).join(' | '));
 console.log(`demo story: ${demo.missions.length} missions, ${demo.chapters.length} chapters, ${demo.proofs.length} proofs, ${demo.towns.size} towns`);
 console.log(demo.chapters.map(c => `${c.name} (${c.rel}) ${c.town.name} ${c.year} [${c.set}]`).join('\n'));
 assert.ok(demo.chapters.length >= 5);

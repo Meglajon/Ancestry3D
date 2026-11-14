@@ -11,6 +11,7 @@ import { buildTown, TILE, G, DIRS, laneOffset, drawGround, drawTall, renderMiniM
 import { VEHICLES, trafficMix, trafficCount, paintFor, drawVehicle, drawSmoke, strangerLook, lookSummary, drawPerson, drawItem, drawMarker, FIXED_LOOKS, drawPortraitExtras, drawCritter, ERASER_LOOK } from './storyart.js';
 import { mountStoryUi, escapeText } from './storyui.js';
 import { resolvePlace } from './places.js';
+import { drawRouteMap } from './storymap.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const angDiff = (a, b) => { let d = a - b; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2; return d; };
@@ -33,6 +34,7 @@ const BADGES = {
   jump: ['First jump', 'Turned the years back'], abroad: ['Passport stamped', 'Travelled to another country'], clean: ['Not a scratch', 'A fragile delivery without one bump'],
   reunion: ['Family reunion', 'Met 25 people from your file'], respects: ['Paid your respects', 'Visited 10 family graves'], snaps: ['Family album', 'Found 9 lost photographs'],
   paradox: ['Paradox', 'Ran over your own ancestor and lived'], cabbie: ['The Knowledge', 'Five fares in a row'], rubber: ['Rubbed out', 'Put five Eraser vans off the road'],
+  favours: ['Good turns', 'Five favours for the family'],
   centuries: ['Century hopper', 'Visited four different eras'], fitted: ['Fully fitted', 'Every upgrade on the Heirloom'], proven: ['Proven', 'Lodged every proof'],
 };
 const up = id => (S.save.up && S.save.up[id]) || 0;
@@ -164,7 +166,21 @@ function speaker(who) {
   if (who === 'letter') return { who: 'A letter', sub: '', letter: true };
   if (who === 'note') return { who: '', sub: '', note: true };
   const p = S.tree.people.get(who), ch = S.story.chapters.find(c => c.id === who);
-  return { who: p ? displayName(p.indi) : 'Somebody', sub: [ch ? 'your ' + ch.rel : '', p ? lifespan(p.indi) : ''].filter(Boolean).join(' · '), look: personLook(who), person: p };
+  if (!p && S.data.individuals.has(who)) { const o = outsider(who); return { who: displayName(o.person.indi), sub: [kinOf(S.data, S.tree, who), lifespan(o.person.indi)].filter(Boolean).join(' · '), look: o.portrait, person: o.person }; }
+  return { who: p ? displayName(p.indi) : 'Somebody', sub: [ch ? 'your ' + ch.rel : p ? kinOf(S.data, S.tree, who) : '', p ? lifespan(p.indi) : ''].filter(Boolean).join(' · '), look: personLook(who), person: p };
+}
+// Somebody in the file who is not a direct ancestor: a voice, a face and a figure for them.
+function outsider(id) {
+  const key = 'o:' + id + ':' + S.city.year;
+  if (S.looks.has(key)) return S.looks.get(key);
+  const indi = S.data.individuals.get(id), rnd = seededRandom(hashString('out' + id));
+  const L = strangerLook(rnd, S.city.year, indi.sex === 'F');
+  const o = {
+    person: { id, indi, traits: { place: resolvePlace((indi.events.find(e => e.tag === 'BIRT' && e.place) || {}).place || ''), edu: 1, dressYear: S.city.year, estBirthYear: S.city.year - 30 } },
+    look: L, portrait: { female: L.female, skin: L.skin, skinShade: L.skin, hair: L.hair, longHair: !!L.female, top: L.shawl || L.top, collar: null, hat: L.hat ? { kind: L.female ? 'bonnet' : 'flat', color: L.hat } : null },
+  };
+  S.looks.set(key, o);
+  return o;
 }
 async function say(who, text, options) {
   const sp = speaker(who);
@@ -190,7 +206,7 @@ async function runLines(lines) {
 // ---------------- Towns ----------------
 function lotPt(kind, who) {
   const giver = S.mission?.def.giver.who;
-  return S.city.lot(kind, who || (S.tree.people.has(giver) ? giver : S.story.hero.id));
+  return S.city.lot(kind, who || (giver && S.data.individuals.has(giver) ? giver : S.story.hero.id));
 }
 function freeSpotNear(x, y, r = 1) {
   const c = S.city;
@@ -299,6 +315,13 @@ function spawnNpcs() {
   };
   if (c.town.id === st.home.id && c.year === st.now && (S.save.idx > 0 || (S.mission && S.mission.i >= 1))) add('dot', 'garage', false);
   for (const ch of st.chapters) if (ch.town.id === c.town.id && ch.year === c.year && S.save.idx > (st.missions.find(m => m.chapter === ch.index)?.index ?? 1e9)) add(ch.id, 'home', false);
+  // family favours: brothers, sisters and children of the people whose chapters you have reached
+  if (!S.mission) for (const f of st.favours) {
+    if (f.town !== c.town.id || f.year !== c.year || (S.save.favours || []).includes(f.id) || S.save.idx <= f.after) continue;
+    if (S.peds.some(p => p.npc && p.who === f.giver.who)) continue;
+    const l = c.lot('home', f.giver.who), sp = freeSpotNear(l.x, l.y, 0), o = outsider(f.giver.who);
+    S.peds.push({ npc: true, who: f.giver.who, favour: f, x: sp.x, y: sp.y, ang: Math.PI / 2, look: o.look, walk: 0, down: 0, name: displayName(o.person.indi) });
+  }
   if (here(next) && next.giver.who !== 'auto' && !S.mission) {
     const who = next.giver.who;
     const ex = S.peds.find(p => p.npc && p.who === who);
@@ -784,6 +807,7 @@ function enterStep(step) {
     S.ui.toast(`${name}: "${sp && sp.person ? voiceLine(sp.person, step.bark.text) : plainText(step.bark.text)}"`, 5200);
   }
   if (step.timed) st.timer = Math.round(14 + tiles / 5.0 * step.timed + stops * 3.5);
+  if (st.timer != null && S.save.easy) st.timer = Math.round(st.timer * 1.6);
   st.timer0 = st.timer;
 }
 function stepTarget() {
@@ -946,6 +970,7 @@ async function passMission() {
   if (def.reward.proof && !S.save.proofs.includes(def.reward.proof.id)) S.save.proofs.push(def.reward.proof.id);
   if (!def.odd) S.save.idx = Math.max(S.save.idx, def.index + 1);
   if (S.save.proofs.length >= S.story.proofs.length) badge('proven');
+  if (def.favour) { (S.save.favours || (S.save.favours = [])).push(def.id); if (S.save.favours.length >= 5) badge('favours'); }
   S.player.hearts = 3; S.heat = 0;
   S.ui.banner(def.id === 'case-closed' ? 'CASE CLOSED' : 'MISSION PASSED', `+£${cash}` + (def.reward.proof ? ` · Proof: ${def.reward.proof.title}` : ''), '#7be07b', 3600);
   sfx.pass();
@@ -954,6 +979,8 @@ async function passMission() {
 }
 function failMission(reason, quiet) {
   if (!S.mission) return;
+  const failed = S.mission.def;
+  S.retry = !failed.fare && !quiet ? { def: failed, until: S.t + 25, town: S.city.town.id, year: S.city.year } : null;
   clearStep();
   S.mission = null;
   if (!quiet) { S.ui.banner('MISSION FAILED', reason, '#ff5a4a', 3000); sfx.fail(); }
@@ -1018,26 +1045,15 @@ function drawTransit(g, w, h, dpr, dt) {
     g.globalAlpha = Math.min(1, a * 2); font(64); g.lineWidth = 8 * dpr; g.strokeStyle = '#0a2a3a'; g.strokeText(String(y), w / 2, h / 2); g.fillStyle = '#fff'; g.fillText(String(y), w / 2, h / 2);
     g.globalAlpha = 1;
   } else {
-    const a = k < 0.15 ? k / 0.15 : k > 0.85 ? (1 - k) / 0.15 : 1;
+    const a = k < 0.12 ? k / 0.12 : k > 0.88 ? (1 - k) / 0.12 : 1;
     g.globalAlpha = a;
-    g.fillStyle = '#e8dcbc'; g.fillRect(0, 0, w, h);
-    g.strokeStyle = 'rgba(120,96,60,0.25)'; g.lineWidth = dpr; for (let x = 0; x < w; x += 60 * dpr) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); } for (let y = 0; y < h; y += 60 * dpr) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
-    const ax = w * 0.2, bx = w * 0.8, ay = h * 0.58, by = h * 0.5, arc = tr.abroad ? h * 0.3 : h * 0.12;
-    const pt = u => [ax + (bx - ax) * u, ay + (by - ay) * u - Math.sin(u * Math.PI) * arc];
-    const u = clamp((k - 0.15) / 0.7, 0, 1);
-    g.strokeStyle = '#a8322a'; g.lineWidth = 4 * dpr; g.setLineDash([10 * dpr, 9 * dpr]); g.beginPath();
-    for (let i = 0; i <= 40; i++) { const [x, y] = pt(u * i / 40); if (i) g.lineTo(x, y); else g.moveTo(x, y); }
-    g.stroke(); g.setLineDash([]);
-    for (const [x, y, t] of [[ax, ay, tr.from], [bx, by, tr.to]]) {
-      g.fillStyle = '#2a2218'; g.beginPath(); g.arc(x, y, 8 * dpr, 0, 7); g.fill();
-      font(20, '"Fredoka", "Nunito", sans-serif'); g.fillStyle = '#2a2218'; g.fillText(t.name, x, y + 30 * dpr);
-      font(13, '"Nunito", sans-serif'); g.fillStyle = '#6a5a40'; g.fillText(t.nation || '', x, y + 52 * dpr);
-    }
-    const [px, py] = pt(u), [qx, qy] = pt(Math.min(1, u + 0.01));
-    g.save(); g.translate(px, py); g.rotate(Math.atan2(qy - py, qx - px)); font(30, 'sans-serif'); g.fillStyle = '#2a2218';
-    g.fillText(tr.abroad ? (tr.air ? '✈' : '⛴') : tr.y0 >= 1840 ? '🚂' : '🐎', 0, 0); g.restore();
-    font(16); g.fillStyle = '#8a2a1a'; g.fillText(tr.abroad ? (tr.air ? 'DEPARTURES' : 'EMBARKED') : 'ALL ABOARD', w / 2, h * 0.16);
-    font(13, '"Nunito", sans-serif'); g.fillStyle = '#6a5a40'; g.fillText(`${tr.y0} · the Heirloom travels as freight`, w / 2, h * 0.16 + 30 * dpr);
+    const icon = tr.abroad ? (tr.air ? '✈' : '⛴') : tr.y0 >= 1840 ? '🚂' : '🐎';
+    drawRouteMap(g, w, h, dpr, tr.from, tr.to, clamp((k - 0.12) / 0.76, 0, 1), icon);
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    font(16); g.lineWidth = 6 * dpr; g.strokeStyle = 'rgba(244,236,216,0.9)';
+    const head = tr.abroad ? (tr.air ? 'DEPARTURES' : 'EMBARKED') : 'ALL ABOARD';
+    g.strokeText(head, w / 2, h * 0.1); g.fillStyle = '#8a2a1a'; g.fillText(head, w / 2, h * 0.1);
+    font(13, '"Nunito", sans-serif'); g.lineWidth = 4 * dpr; g.strokeText(`${tr.y0} · the Heirloom travels as freight`, w / 2, h * 0.1 + 28 * dpr); g.fillStyle = '#4a3a20'; g.fillText(`${tr.y0} · the Heirloom travels as freight`, w / 2, h * 0.1 + 28 * dpr);
     g.globalAlpha = 1;
   }
   if (k >= 1) tr.done();
@@ -1100,8 +1116,10 @@ function openPause() {
   const k = (a, b) => `<p><kbd>${a}</kbd> ${b}</p>`;
   S.ui.panel(`<h2>Relative Speed</h2><p>${escapeText(S.story.missions[S.save.idx]?.brief || 'Free roam: every town, every year.')}</p>
     ${S.ui.touch ? '<p>Left thumb steers and walks. GO talks, gets in and out and starts jobs. CAR calls the Heirloom.</p>' : k('WASD / arrows', 'walk, drive') + k('E', 'talk, get in or out, start a job') + k('Space', 'handbrake') + k('T', 'time dial') + k('H', 'call the Heirloom (£10)') + k('M', 'town map') + k('P', 'pedigree') }
-    <div class="foot"><button data-go="close">Resume</button><button class="alt" data-go="quit">Save and leave</button><button class="alt" data-go="reset">Restart the story</button></div>`, {
+    <p><b>The case so far</b></p>${S.story.missions.map((m, i) => i < S.save.idx ? `<div class="row" style="padding:3px 0;border:0"><span>✔ ${escapeText(m.title)}<small>${escapeText(m.act)}</small></span></div>` : i === S.save.idx ? `<div class="row need" style="padding:5px 8px"><span>▶ ${escapeText(m.title)}<small>${escapeText(m.act)} · ${escapeText(S.story.towns.get(m.town).name)}, ${m.year}</small></span></div>` : '').join('')}${S.save.idx < S.story.missions.length - 1 ? `<p>…and ${S.story.missions.length - S.save.idx - 1} more to come.</p>` : ''}
+    <div class="foot"><button data-go="close">Resume</button><button class="alt" data-go="easy">Timers: ${S.save.easy ? 'generous' : 'normal'}</button><button class="alt" data-go="quit">Save and leave</button><button class="alt" data-go="reset">Restart the story</button></div>`, {
     close: () => S.ui.closePanel(),
+    easy: () => { S.save.easy = !S.save.easy; persist(); openPause(); },
     quit: () => { S.ui.closePanel(); closeStory(); },
     reset: () => { S.ui.panel('<h2>Restart the story?</h2><p>Your cash, proofs and progress for this person will be wiped.</p><div class="foot"><button data-go="yes">Restart</button><button class="alt" data-go="close">Keep playing</button></div>', {
       close: () => S.ui.closePanel(),
@@ -1163,6 +1181,7 @@ function findNear() {
     for (const p of S.peds) if (p.npc && within(p, 1.8, 3)) {
       const next = nextStory();
       if (p.giver && isHere(next)) return { label: p.phone ? 'Read the note' : `Talk to ${p.name.split(' ')[0]}`, go: () => startMission(next) };
+      if (p.favour) return { label: `Help ${p.name.split(' ')[0]}`, go: () => startMission(p.favour) };
       if (getIn && carD < dist(p, P) - 10) continue; // standing at the car door, not talking to them
       if (!pv && p.who !== 'dot') return { label: `Chat with ${p.name.split(' ')[0]}`, go: () => chat(p.who) };
       if (!pv && p.who === 'dot') return { label: 'Dot and her workbench', go: () => openWorkshop(dotLine()) };
@@ -1256,10 +1275,11 @@ function handleQueue() {
     if (ui.dialogOpen) { if (act === 'action' || act === 'space' || /^opt/.test(act)) ui._advance?.(act); continue; }
     if (ui.panelOpen) { if (act === 'pause' || act === 'dial' || act === 'pedigree' || act === 'map') ui._panelClose?.(); continue; }
     if (S.busy) continue;
-    if (act === 'action') S.near?.go();
+    if (act === 'action') { const r = S.retry; if ((!S.near || !S.near.label) && S.ui.touch && r && !S.mission && S.t < r.until && r.town === S.city.town.id && r.year === S.city.year) { S.retry = null; startMission(r.def); } else S.near?.go(); }
     else if (act === 'dial') openDial();
     else if (act === 'pedigree') openPedigree();
     else if (act === 'pause') openPause();
+    else if (act === 'retry') { const r = S.retry; if (r && !S.mission && S.t < r.until && r.town === S.city.town.id && r.year === S.city.year) { S.retry = null; startMission(r.def); } }
     else if (act === 'map') openMap();
     else if (act === 'call') callHeirloom();
   }
@@ -1367,7 +1387,8 @@ function hud() {
     else obj = `<small>Next: ${escapeText(n.title)}</small>${guide(n.town, n.year)}`;
   }
   ui.objective(obj);
-  ui.hint(S.busy || ui.panelOpen || ui.dialogOpen || !S.near || !S.near.label ? '' : (ui.touch ? 'GO: ' : 'E: ') + S.near.label);
+  const again = S.retry && !S.mission && S.t < S.retry.until && S.retry.town === c.town.id && S.retry.year === c.year;
+  ui.hint(S.busy || ui.panelOpen || ui.dialogOpen ? '' : S.near && S.near.label ? (ui.touch ? 'GO: ' : 'E: ') + S.near.label + (again && !ui.touch ? '   ·   R: try again' : '') : again ? (ui.touch ? 'GO: try again' : 'R: try again') : '');
   const h = S.heirloom;
   if (S.dial != null && S.dial !== c.year) ui.dial(`DIAL ${S.dial} · INK £${inkFor(c.year, S.dial)}<i><b style="width:${Math.round(h.charge * 100)}%"></b></i>`); else ui.dial('');
 }
@@ -1425,6 +1446,7 @@ function render() {
   for (const k in c.lots) { const l = c.lots[k]; if (k !== 'phone' && Math.abs(l.x - pp.x) < 11 * T && Math.abs(l.y - pp.y) < 8 * T) label(l.x, l.y - 4, l.name.replace(/^the /, '').replace(/^./, ch => ch.toUpperCase()), '#ffe9a8', 11); }
   for (const p of S.peds) {
     if (p.npc && p.giver && !S.mission) { const y = p.y - 34 - Math.abs(Math.sin(t * 3)) * 6; label(p.x, y, '!', '#ffd84a', 26); }
+    else if (p.npc && p.favour && !S.mission) { const y = p.y - 34 - Math.abs(Math.sin(t * 3 + 1)) * 5; label(p.x, y, '?', '#7be07b', 24); }
     if (p.name && dist(p, pp) < (p.npc ? 6 : 2.6) * T && p.look) { label(p.x, p.y - 20, p.name, '#fff', 11); if (p.sub && dist(p, pp) < 2.6 * T) label(p.x, p.y - 32, p.sub, '#d8d2c0', 9); }
   }
   if (!P.vehicle) for (const gv of c.graves) if (gv.who && Math.hypot((gv.x + 0.5) * T - P.x, (gv.y + 0.5) * T - P.y) < 1.6 * T) { label((gv.x + 0.5) * T, gv.y * T - 6, gv.who.name, '#e8e4d8', 10); label((gv.x + 0.5) * T, gv.y * T + 5, gv.who.life, '#b8b4a8', 9); }
@@ -1473,7 +1495,7 @@ function miniMap(pp, tgt) {
   if (!S.mission) dot(c.lots.market, '#7be07b', 3);
   if (S.player.vehicle !== S.heirloom) dot(S.heirloom, '#e8c040', 3.5);
   for (const v of S.vehicles) if (v.ai === 'cop') dot(v, '#4a7aff', 3); else if (v.ai === 'hunt') dot(v, '#f08aa0', 3);
-  for (const p of S.peds) if (p.cop) dot(p, '#4a7aff', 2.5);
+  for (const p of S.peds) if (p.cop) dot(p, '#4a7aff', 2.5); else if (p.favour && !S.mission) dot(p, '#7be07b', 3);
   for (const i of S.items) if (i.step) dot(i, '#fff', 2);
   if (tgt) dot(tgt, S.step?.step.t === 'chase' ? '#ff5a4a' : tgt.type ? '#8ab4ff' : '#ffd84a', 4.5, '#fff');
   m.fillStyle = '#fff'; m.strokeStyle = '#000'; m.lineWidth = 2;

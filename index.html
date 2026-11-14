@@ -7735,6 +7735,7 @@ function buildStory(data, rootId, opts = {}) {
     const jobKeys = [c.group, c.group + 'B', 'odd', 'shop', 'rail', 'serve'].filter(k => DAY_JOBS[k]);
     const jobKey = jobKeys.find(k => !usedJobs[k]) || c.group;
     if (!isFinale) usedJobs[jobKey] = true;
+    c.jobKey = jobKey;
     const job = (DAY_JOBS[jobKey] || DAY_JOBS.odd)(ctx);
     if (!isFinale) add({
       ...base, id: `work-${i}`, title: job.title, giver: { who: c.id, at: c.group === 'farm' ? 'farm' : ['haul', 'cloth', 'craft'].includes(c.group) ? 'works' : c.group === 'sea' ? 'hub' : 'home' },
@@ -7937,9 +7938,44 @@ function buildStory(data, rootId, opts = {}) {
   });
   missions.forEach((m, i) => { m.index = i; });
 
+  // ---- Family favours: optional jobs for brothers, sisters and children of each chapter's ancestor ----
+  const favours = [];
+  const taken = new Set([rootId, ...chapters.map(c => c.id)]), usedFav = new Set();
+  for (const c of chapters) {
+    const meet = missions.find(m => m.chapter === c.index);
+    if (!meet) continue;
+    const own = c.indi.famc && data.families.get(c.indi.famc);
+    const sibs = own ? own.children.filter(id => id !== c.id).map(id => [data.individuals.get(id), c.sex === 'F' ? 'sister' : 'brother', true]) : [];
+    const kids = c.kids.filter(k => !c.child || k.id !== c.child.id).map(k => [k, 'child', false]);
+    const cands = [...sibs, ...kids, ...(c.spouse ? [[c.spouse, 'spouse', false]] : [])].filter(([x]) => {
+      if (!x || taken.has(x.id)) return false;
+      const by = birthYear(x), dy = deathYear(x);
+      return by != null && c.year - by >= 15 && c.year - by <= 80 && (dy == null || dy > c.year);
+    }).sort((a, b) => (b[0].events.some(e => e.tag === 'OCCU') ? 1 : 0) - (a[0].events.some(e => e.tag === 'OCCU') ? 1 : 0));
+    const used = new Set([c.jobKey]);
+    for (const [x, how, sib] of cands.slice(0, 2)) {
+      taken.add(x.id);
+      const job = x.events.filter(e => e.tag === 'OCCU' && e.value).map(e => e.value.trim())[0] || '';
+      const g = jobGroup(job), order = [g, g + 'B', 'shop', 'rail', 'serve', 'farmB', 'sea', 'clothB', 'serveB', 'haulB', 'desk', 'odd'].filter(k => DAY_JOBS[k] && !used.has(k));
+      const key = order.find(k => !usedFav.has(k)) || order[0] || 'odd';
+      used.add(key); usedFav.add(key);
+      const N = names(c.town, c.year), first = firstName(x), m = x.sex === 'M', f = x.sex === 'F';
+      const tmpl = DAY_JOBS[key]({ ...N, year: c.year, first, jobL: job.toLowerCase() });
+      const rel = sib ? (m ? 'brother' : f ? 'sister' : 'kin') : how === 'child' ? (m ? 'son' : f ? 'daughter' : 'child') : (m ? 'husband' : f ? 'wife' : 'spouse');
+      favours.push({
+        id: `favour-${c.index}-${x.id}`, odd: true, favour: true, act: 'Family favour', title: tmpl.title, town: c.town.id, year: c.year, after: meet.index,
+        giver: { who: x.id, at: 'home' }, brief: `${displayName(x)}, ${c.first}'s ${rel}, could use a hand.`,
+        intro: [{ who: x.id, text: `You're the one «${c.first}» has been telling everybody about. I'm «${displayName(x)}», ${c.he === 'she' ? 'her' : c.he === 'he' ? 'his' : 'their'} ${rel}${job ? ', «' + job.toLowerCase() + '»' : ''}. Since you're stopping: ` + tmpl.ask }],
+        steps: tmpl.steps,
+        outro: [{ who: x.id, text: `That's a kindness I'll not forget. Mind, I couldn't tell you what you are to me. Something with a deal of greats in it, I'd say.` }],
+        reward: { cash: 140 + c.index * 35 },
+      });
+    }
+  }
+
   return {
     title: 'Relative Speed', hero, villain: { name: 'Silas Blank', firm: 'Blank & Void, Probate Genealogists' }, mentor: { name: 'Dot Quill' },
-    benefactor, home, now: present, towns, chapters, missions, proofs, tree, surname, foreign,
+    benefactor, home, now: present, towns, chapters, missions, favours, proofs, tree, surname, foreign,
   };
 }
 
@@ -8977,7 +9013,7 @@ function mountStoryUi() {
 
   const input = { keys: new Set(), stick: { x: 0, y: 0, active: false }, queue: [], brake: false, touch };
   const press = act => { input.queue.push(act); };
-  const KEYMAP = { KeyE: 'action', Enter: 'action', KeyT: 'dial', KeyH: 'call', KeyP: 'pedigree', Escape: 'pause', KeyF: 'action', KeyM: 'map', Tab: 'map' };
+  const KEYMAP = { KeyE: 'action', Enter: 'action', KeyT: 'dial', KeyH: 'call', KeyP: 'pedigree', Escape: 'pause', KeyF: 'action', KeyM: 'map', Tab: 'map', KeyR: 'retry' };
   const GAME_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'ShiftLeft', 'ShiftRight', 'Tab', 'KeyM', ...Object.keys(KEYMAP)]);
   const typing = () => ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName);
   const onKey = e => {
@@ -9105,6 +9141,93 @@ function mountStoryUi() {
 return { mountStoryUi, escapeText };
 })();
 
+// ---- storymap.js ----
+const __m_storymap = (() => {
+// Story mode journeys: a small hand-drawn map of the world, enough to draw a dotted line from one town
+// in the family tree to another. Places are positioned by the region the main game's gazetteer puts them in.
+const { hashString } = __m_ancestry;
+// [longitude, latitude] for each region key in places.js
+const GEO = {
+  lancashire: [-2.7, 53.8], manchester: [-2.24, 53.48], liverpool: [-2.98, 53.4], yorkshire: [-1.55, 53.8], sheffield: [-1.47, 53.38], hull: [-0.33, 53.74],
+  northeast: [-1.6, 54.97], cumbria: [-3.1, 54.6], cheshire: [-2.6, 53.2], potteries: [-2.18, 53.0], blackcountry: [-2.08, 52.5], midlands: [-1.9, 52.45],
+  eastmidlands: [-1.15, 52.95], lincolnshire: [-0.54, 53.23], cotswolds: [-1.9, 51.8], westcountry: [-3.5, 50.75], cornwall: [-5.0, 50.3], bristol: [-2.6, 51.45],
+  london: [-0.12, 51.5], southeast: [0.5, 51.2], eastanglia: [1.2, 52.6], england: [-1.5, 52.6], wales: [-3.8, 52.4], southwales: [-3.4, 51.7],
+  lowlands: [-3.6, 55.6], glasgow: [-4.25, 55.86], edinburgh: [-3.19, 55.95], highlands: [-5.0, 57.3], ireland: [-8.0, 53.2], dublin: [-6.26, 53.35], ulster: [-6.6, 54.7],
+  isleofman: [-4.5, 54.2], channel: [-2.2, 49.3], usa: [-77, 40], canada: [-79, 45], australia: [147, -35], newzealand: [174, -41], southafrica: [24, -30],
+  germany: [10, 51], netherlands: [5, 52.2], belgium: [4.4, 50.8], france: [2.3, 47.5], scandinavia: [14, 60], italy: [12.5, 42.5], spain: [-3.7, 40.4], portugal: [-8.5, 39.6],
+  greece: [23, 38.5], easteurope: [21, 51], russia: [37.6, 55.7], mena: [40, 30], northafrica: [10, 32], southasia: [78, 22], eastasia: [112, 32], seasia: [103, 10],
+  westafrica: [-2, 8], africa: [25, 0], caribbean: [-76.8, 18.1], latinamerica: [-58, -20], unknown: [-1.5, 52.6],
+};
+// Coastlines, very roughly.
+const LAND = [
+  [[-5.7, 50.1], [-3.5, 50.2], [-1.8, 50.6], [0.3, 50.8], [1.4, 51.2], [0.9, 51.5], [1.7, 52.6], [0.3, 53.0], [-0.1, 53.6], [-1.2, 54.6], [-1.6, 55.6], [-3.0, 56.0], [-2.0, 57.6], [-3.3, 58.6], [-5.0, 58.6], [-5.8, 57.6], [-5.5, 56.4], [-4.9, 55.5], [-3.4, 54.9], [-3.1, 53.4], [-4.5, 53.3], [-4.2, 52.3], [-5.2, 51.8], [-3.2, 51.4], [-4.3, 51.2]],
+  [[-10, 51.6], [-8.2, 51.8], [-6.2, 52.2], [-6.0, 53.4], [-5.6, 54.6], [-6.3, 55.2], [-8.2, 55.3], [-8.6, 54.3], [-10, 54.2], [-9.6, 53.2], [-10.4, 52.2]],
+  [[-9.3, 36.9], [-6, 36.2], [-0.5, 37.6], [3.2, 41.9], [6, 43.1], [9, 44.3], [12.3, 41.7], [15.6, 38], [18.4, 40.2], [13.6, 45.6], [19.5, 41.8], [23, 36.5], [26.5, 40.8], [29, 41.2], [40, 43], [50, 46], [60, 55], [60, 68], [40, 67], [30, 70], [20, 69.5], [12, 65], [5.5, 61.5], [7.5, 58], [11, 59], [12.5, 56], [10, 57.5], [8.3, 54.9], [7, 53.5], [4.5, 52.2], [2.5, 51], [1.5, 50.2], [-1.6, 49.6], [-4.7, 48.4], [-1.2, 46.2], [-1.8, 43.4], [-9.2, 43.2]],
+  [[-17, 14.7], [-13, 27], [-6, 35.8], [10, 37.3], [11, 33.5], [20, 32.5], [32, 31.3], [35, 28], [43, 11.5], [51, 11.8], [40, -4], [40.5, -15], [35, -24.5], [26, -34], [18.5, -34.3], [12, -17], [9, 3], [-8, 4.4]],
+  [[29, 41.2], [36, 36.5], [35.5, 31], [43.5, 12.6], [52, 17], [58.5, 23], [56.5, 26.5], [66.5, 25.3], [72.8, 19], [77.5, 8], [80.2, 13.2], [88.5, 21.8], [94, 16.5], [98.5, 8.5], [103.5, 1.5], [101, 13], [109, 11.5], [106, 20], [114, 22.3], [122, 30], [119, 38.5], [126.5, 34.5], [129.5, 41], [140, 48], [143, 59], [162, 60], [170, 66], [180, 68], [180, 72], [110, 76], [70, 73], [60, 68], [60, 55], [50, 46], [40, 43]],
+  [[-168, 66], [-156, 71], [-125, 70], [-95, 72], [-80, 73], [-62, 60], [-55, 52], [-66, 45], [-70, 42], [-76, 35], [-81, 25], [-83, 30], [-90, 29], [-97, 26], [-95, 18.5], [-88, 16], [-83, 10], [-79, 9], [-85, 11], [-95, 16], [-105, 20], [-110, 23.5], [-117, 32.5], [-124.5, 40], [-124, 48.5], [-135, 58.5], [-152, 58], [-165, 61]],
+  [[-79, 9], [-72, 12], [-60, 8.5], [-50, 0], [-35, -6], [-39, -17], [-48, -27], [-57, -37], [-66, -45], [-69, -54], [-74, -50], [-71, -30], [-70, -18], [-80, -5]],
+  [[114, -22], [122, -18], [130, -12], [136, -12], [142, -11], [146, -19], [153, -27], [150, -37], [144, -38.5], [138, -35], [131, -31.5], [124, -33.5], [115, -34.5]],
+  [[172.7, -34.5], [178.5, -37.7], [175, -41.5], [171, -44], [166.5, -46], [170, -43], [172.7, -40.7], [174, -39]],
+  [[130, 31.5], [136, 34], [141, 36], [141.5, 41], [140, 43], [145, 44], [141, 45.5], [139.5, 39], [136, 36], [132, 34.5]],
+  [[-85, 22], [-80, 23.2], [-74.2, 20.3], [-77.5, 19.8]], [[-78.4, 18.5], [-76.2, 18.2], [-77.2, 17.7]],
+  [[-24, 65.5], [-18, 66.5], [-13.5, 65], [-18, 63.4], [-22.5, 63.8]],
+];
+
+/** Where a town sits on the map. Towns in the same region are nudged apart so a short hop still shows. */
+function townGeo(town) {
+  const base = GEO[town.key] || GEO.unknown, h = hashString(town.id) >>> 0;
+  const far = Math.abs(base[0]) > 12 || base[1] < 45 ? 3 : 0.42;
+  return [base[0] + ((h % 1000) / 1000 - 0.5) * far, base[1] + (((h >> 10) % 1000) / 1000 - 0.5) * far * 0.7];
+}
+
+/**
+ * Draw the map with the journey from one town to another; u (0..1) is how far along the traveller is.
+ * Returns nothing; the caller draws titles over it.
+ */
+function drawRouteMap(g, w, h, dpr, from, to, u, icon) {
+  const A = townGeo(from), B = townGeo(to);
+  const lat0 = (A[1] + B[1]) / 2, kx = Math.cos(lat0 * Math.PI / 180);
+  // the short way round the world
+  let dl = B[0] - A[0];
+  if (dl > 180) dl -= 360; else if (dl < -180) dl += 360;
+  const lon0 = A[0] + dl / 2;
+  const span = Math.max(Math.abs(dl) * kx, Math.abs(B[1] - A[1]) * 1.25, 2.2) * 1.75;
+  const sc = Math.min(w, h * 1.5) / span;
+  const X = lon => { let d = lon - lon0; if (d > 180) d -= 360; else if (d < -180) d += 360; return w / 2 + d * kx * sc; };
+  const Y = lat => h * 0.54 - (lat - lat0) * sc;
+  g.fillStyle = '#b9d2d6'; g.fillRect(0, 0, w, h);
+  g.strokeStyle = 'rgba(255,255,255,0.3)'; g.lineWidth = dpr;
+  const step = span > 60 ? 20 : span > 20 ? 10 : span > 6 ? 2 : 1;
+  for (let lon = Math.floor((lon0 - span) / step) * step; lon < lon0 + span; lon += step) { g.beginPath(); g.moveTo(X(lon), 0); g.lineTo(X(lon), h); g.stroke(); }
+  for (let lat = Math.floor((lat0 - span) / step) * step; lat < lat0 + span; lat += step) { g.beginPath(); g.moveTo(0, Y(lat)); g.lineTo(w, Y(lat)); g.stroke(); }
+  g.fillStyle = '#e4d6ac'; g.strokeStyle = '#8a7648'; g.lineWidth = 1.5 * dpr; g.lineJoin = 'round';
+  for (const poly of LAND) {
+    g.beginPath();
+    let px = null;
+    poly.forEach(([lon, lat], i) => { const x = X(lon), y = Y(lat); if (i && Math.abs(x - px) > w * 0.9) g.moveTo(x, y); else if (i) g.lineTo(x, y); else g.moveTo(x, y); px = x; });
+    g.closePath(); g.fill(); g.stroke();
+  }
+  const ax = X(A[0]), ay = Y(A[1]), bx = ax + dl * kx * sc, by = Y(B[1]);
+  const arc = Math.min(h * 0.22, Math.hypot(bx - ax, by - ay) * 0.28);
+  const pt = v => [ax + (bx - ax) * v, ay + (by - ay) * v - Math.sin(v * Math.PI) * arc];
+  g.strokeStyle = '#a8322a'; g.lineWidth = 4 * dpr; g.setLineDash([10 * dpr, 9 * dpr]); g.beginPath();
+  for (let i = 0; i <= 40; i++) { const [x, y] = pt(u * i / 40); if (i) g.lineTo(x, y); else g.moveTo(x, y); }
+  g.stroke(); g.setLineDash([]);
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  for (const [x, y, t, below] of [[ax, ay, from, ay >= by], [bx, by, to, by > ay]]) {
+    g.fillStyle = '#2a2218'; g.beginPath(); g.arc(x, y, 7 * dpr, 0, 7); g.fill(); g.fillStyle = '#f4ecd8'; g.beginPath(); g.arc(x, y, 3 * dpr, 0, 7); g.fill();
+    const ly = y + (below ? 30 : -34) * dpr;
+    g.font = `700 ${Math.round(20 * dpr)}px "Fredoka", "Nunito", sans-serif`; g.lineWidth = 5 * dpr; g.strokeStyle = 'rgba(244,236,216,0.9)'; g.strokeText(t.name, x, ly); g.fillStyle = '#2a2218'; g.fillText(t.name, x, ly);
+    g.font = `700 ${Math.round(13 * dpr)}px "Nunito", sans-serif`; g.strokeText(t.nation || '', x, ly + 20 * dpr); g.fillStyle = '#6a5a40'; g.fillText(t.nation || '', x, ly + 20 * dpr);
+  }
+  const [px, py] = pt(u), [qx, qy] = pt(Math.min(1, u + 0.01));
+  g.save(); g.translate(px, py); g.rotate(Math.atan2(qy - py, qx - px)); g.font = `${Math.round(30 * dpr)}px sans-serif`; g.fillStyle = '#2a2218'; g.fillText(icon, 0, 0); g.restore();
+}
+
+return { townGeo, drawRouteMap };
+})();
+
 // ---- storygame.js ----
 const __m_storygame = (() => {
 // Story mode ("Relative Speed"): a top-down driving game played across the towns and years of your own
@@ -9120,6 +9243,7 @@ const { buildTown, TILE, G, DIRS, laneOffset, drawGround, drawTall, renderMiniMa
 const { VEHICLES, trafficMix, trafficCount, paintFor, drawVehicle, drawSmoke, strangerLook, lookSummary, drawPerson, drawItem, drawMarker, FIXED_LOOKS, drawPortraitExtras, drawCritter, ERASER_LOOK } = __m_storyart;
 const { mountStoryUi, escapeText } = __m_storyui;
 const { resolvePlace } = __m_places;
+const { drawRouteMap } = __m_storymap;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const angDiff = (a, b) => { let d = a - b; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2; return d; };
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -9141,6 +9265,7 @@ const BADGES = {
   jump: ['First jump', 'Turned the years back'], abroad: ['Passport stamped', 'Travelled to another country'], clean: ['Not a scratch', 'A fragile delivery without one bump'],
   reunion: ['Family reunion', 'Met 25 people from your file'], respects: ['Paid your respects', 'Visited 10 family graves'], snaps: ['Family album', 'Found 9 lost photographs'],
   paradox: ['Paradox', 'Ran over your own ancestor and lived'], cabbie: ['The Knowledge', 'Five fares in a row'], rubber: ['Rubbed out', 'Put five Eraser vans off the road'],
+  favours: ['Good turns', 'Five favours for the family'],
   centuries: ['Century hopper', 'Visited four different eras'], fitted: ['Fully fitted', 'Every upgrade on the Heirloom'], proven: ['Proven', 'Lodged every proof'],
 };
 const up = id => (S.save.up && S.save.up[id]) || 0;
@@ -9272,7 +9397,21 @@ function speaker(who) {
   if (who === 'letter') return { who: 'A letter', sub: '', letter: true };
   if (who === 'note') return { who: '', sub: '', note: true };
   const p = S.tree.people.get(who), ch = S.story.chapters.find(c => c.id === who);
-  return { who: p ? displayName(p.indi) : 'Somebody', sub: [ch ? 'your ' + ch.rel : '', p ? lifespan(p.indi) : ''].filter(Boolean).join(' · '), look: personLook(who), person: p };
+  if (!p && S.data.individuals.has(who)) { const o = outsider(who); return { who: displayName(o.person.indi), sub: [kinOf(S.data, S.tree, who), lifespan(o.person.indi)].filter(Boolean).join(' · '), look: o.portrait, person: o.person }; }
+  return { who: p ? displayName(p.indi) : 'Somebody', sub: [ch ? 'your ' + ch.rel : p ? kinOf(S.data, S.tree, who) : '', p ? lifespan(p.indi) : ''].filter(Boolean).join(' · '), look: personLook(who), person: p };
+}
+// Somebody in the file who is not a direct ancestor: a voice, a face and a figure for them.
+function outsider(id) {
+  const key = 'o:' + id + ':' + S.city.year;
+  if (S.looks.has(key)) return S.looks.get(key);
+  const indi = S.data.individuals.get(id), rnd = seededRandom(hashString('out' + id));
+  const L = strangerLook(rnd, S.city.year, indi.sex === 'F');
+  const o = {
+    person: { id, indi, traits: { place: resolvePlace((indi.events.find(e => e.tag === 'BIRT' && e.place) || {}).place || ''), edu: 1, dressYear: S.city.year, estBirthYear: S.city.year - 30 } },
+    look: L, portrait: { female: L.female, skin: L.skin, skinShade: L.skin, hair: L.hair, longHair: !!L.female, top: L.shawl || L.top, collar: null, hat: L.hat ? { kind: L.female ? 'bonnet' : 'flat', color: L.hat } : null },
+  };
+  S.looks.set(key, o);
+  return o;
 }
 async function say(who, text, options) {
   const sp = speaker(who);
@@ -9298,7 +9437,7 @@ async function runLines(lines) {
 // ---------------- Towns ----------------
 function lotPt(kind, who) {
   const giver = S.mission?.def.giver.who;
-  return S.city.lot(kind, who || (S.tree.people.has(giver) ? giver : S.story.hero.id));
+  return S.city.lot(kind, who || (giver && S.data.individuals.has(giver) ? giver : S.story.hero.id));
 }
 function freeSpotNear(x, y, r = 1) {
   const c = S.city;
@@ -9407,6 +9546,13 @@ function spawnNpcs() {
   };
   if (c.town.id === st.home.id && c.year === st.now && (S.save.idx > 0 || (S.mission && S.mission.i >= 1))) add('dot', 'garage', false);
   for (const ch of st.chapters) if (ch.town.id === c.town.id && ch.year === c.year && S.save.idx > (st.missions.find(m => m.chapter === ch.index)?.index ?? 1e9)) add(ch.id, 'home', false);
+  // family favours: brothers, sisters and children of the people whose chapters you have reached
+  if (!S.mission) for (const f of st.favours) {
+    if (f.town !== c.town.id || f.year !== c.year || (S.save.favours || []).includes(f.id) || S.save.idx <= f.after) continue;
+    if (S.peds.some(p => p.npc && p.who === f.giver.who)) continue;
+    const l = c.lot('home', f.giver.who), sp = freeSpotNear(l.x, l.y, 0), o = outsider(f.giver.who);
+    S.peds.push({ npc: true, who: f.giver.who, favour: f, x: sp.x, y: sp.y, ang: Math.PI / 2, look: o.look, walk: 0, down: 0, name: displayName(o.person.indi) });
+  }
   if (here(next) && next.giver.who !== 'auto' && !S.mission) {
     const who = next.giver.who;
     const ex = S.peds.find(p => p.npc && p.who === who);
@@ -9892,6 +10038,7 @@ function enterStep(step) {
     S.ui.toast(`${name}: "${sp && sp.person ? voiceLine(sp.person, step.bark.text) : plainText(step.bark.text)}"`, 5200);
   }
   if (step.timed) st.timer = Math.round(14 + tiles / 5.0 * step.timed + stops * 3.5);
+  if (st.timer != null && S.save.easy) st.timer = Math.round(st.timer * 1.6);
   st.timer0 = st.timer;
 }
 function stepTarget() {
@@ -10054,6 +10201,7 @@ async function passMission() {
   if (def.reward.proof && !S.save.proofs.includes(def.reward.proof.id)) S.save.proofs.push(def.reward.proof.id);
   if (!def.odd) S.save.idx = Math.max(S.save.idx, def.index + 1);
   if (S.save.proofs.length >= S.story.proofs.length) badge('proven');
+  if (def.favour) { (S.save.favours || (S.save.favours = [])).push(def.id); if (S.save.favours.length >= 5) badge('favours'); }
   S.player.hearts = 3; S.heat = 0;
   S.ui.banner(def.id === 'case-closed' ? 'CASE CLOSED' : 'MISSION PASSED', `+£${cash}` + (def.reward.proof ? ` · Proof: ${def.reward.proof.title}` : ''), '#7be07b', 3600);
   sfx.pass();
@@ -10062,6 +10210,8 @@ async function passMission() {
 }
 function failMission(reason, quiet) {
   if (!S.mission) return;
+  const failed = S.mission.def;
+  S.retry = !failed.fare && !quiet ? { def: failed, until: S.t + 25, town: S.city.town.id, year: S.city.year } : null;
   clearStep();
   S.mission = null;
   if (!quiet) { S.ui.banner('MISSION FAILED', reason, '#ff5a4a', 3000); sfx.fail(); }
@@ -10126,26 +10276,15 @@ function drawTransit(g, w, h, dpr, dt) {
     g.globalAlpha = Math.min(1, a * 2); font(64); g.lineWidth = 8 * dpr; g.strokeStyle = '#0a2a3a'; g.strokeText(String(y), w / 2, h / 2); g.fillStyle = '#fff'; g.fillText(String(y), w / 2, h / 2);
     g.globalAlpha = 1;
   } else {
-    const a = k < 0.15 ? k / 0.15 : k > 0.85 ? (1 - k) / 0.15 : 1;
+    const a = k < 0.12 ? k / 0.12 : k > 0.88 ? (1 - k) / 0.12 : 1;
     g.globalAlpha = a;
-    g.fillStyle = '#e8dcbc'; g.fillRect(0, 0, w, h);
-    g.strokeStyle = 'rgba(120,96,60,0.25)'; g.lineWidth = dpr; for (let x = 0; x < w; x += 60 * dpr) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); } for (let y = 0; y < h; y += 60 * dpr) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
-    const ax = w * 0.2, bx = w * 0.8, ay = h * 0.58, by = h * 0.5, arc = tr.abroad ? h * 0.3 : h * 0.12;
-    const pt = u => [ax + (bx - ax) * u, ay + (by - ay) * u - Math.sin(u * Math.PI) * arc];
-    const u = clamp((k - 0.15) / 0.7, 0, 1);
-    g.strokeStyle = '#a8322a'; g.lineWidth = 4 * dpr; g.setLineDash([10 * dpr, 9 * dpr]); g.beginPath();
-    for (let i = 0; i <= 40; i++) { const [x, y] = pt(u * i / 40); if (i) g.lineTo(x, y); else g.moveTo(x, y); }
-    g.stroke(); g.setLineDash([]);
-    for (const [x, y, t] of [[ax, ay, tr.from], [bx, by, tr.to]]) {
-      g.fillStyle = '#2a2218'; g.beginPath(); g.arc(x, y, 8 * dpr, 0, 7); g.fill();
-      font(20, '"Fredoka", "Nunito", sans-serif'); g.fillStyle = '#2a2218'; g.fillText(t.name, x, y + 30 * dpr);
-      font(13, '"Nunito", sans-serif'); g.fillStyle = '#6a5a40'; g.fillText(t.nation || '', x, y + 52 * dpr);
-    }
-    const [px, py] = pt(u), [qx, qy] = pt(Math.min(1, u + 0.01));
-    g.save(); g.translate(px, py); g.rotate(Math.atan2(qy - py, qx - px)); font(30, 'sans-serif'); g.fillStyle = '#2a2218';
-    g.fillText(tr.abroad ? (tr.air ? '✈' : '⛴') : tr.y0 >= 1840 ? '🚂' : '🐎', 0, 0); g.restore();
-    font(16); g.fillStyle = '#8a2a1a'; g.fillText(tr.abroad ? (tr.air ? 'DEPARTURES' : 'EMBARKED') : 'ALL ABOARD', w / 2, h * 0.16);
-    font(13, '"Nunito", sans-serif'); g.fillStyle = '#6a5a40'; g.fillText(`${tr.y0} · the Heirloom travels as freight`, w / 2, h * 0.16 + 30 * dpr);
+    const icon = tr.abroad ? (tr.air ? '✈' : '⛴') : tr.y0 >= 1840 ? '🚂' : '🐎';
+    drawRouteMap(g, w, h, dpr, tr.from, tr.to, clamp((k - 0.12) / 0.76, 0, 1), icon);
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    font(16); g.lineWidth = 6 * dpr; g.strokeStyle = 'rgba(244,236,216,0.9)';
+    const head = tr.abroad ? (tr.air ? 'DEPARTURES' : 'EMBARKED') : 'ALL ABOARD';
+    g.strokeText(head, w / 2, h * 0.1); g.fillStyle = '#8a2a1a'; g.fillText(head, w / 2, h * 0.1);
+    font(13, '"Nunito", sans-serif'); g.lineWidth = 4 * dpr; g.strokeText(`${tr.y0} · the Heirloom travels as freight`, w / 2, h * 0.1 + 28 * dpr); g.fillStyle = '#4a3a20'; g.fillText(`${tr.y0} · the Heirloom travels as freight`, w / 2, h * 0.1 + 28 * dpr);
     g.globalAlpha = 1;
   }
   if (k >= 1) tr.done();
@@ -10208,8 +10347,10 @@ function openPause() {
   const k = (a, b) => `<p><kbd>${a}</kbd> ${b}</p>`;
   S.ui.panel(`<h2>Relative Speed</h2><p>${escapeText(S.story.missions[S.save.idx]?.brief || 'Free roam: every town, every year.')}</p>
     ${S.ui.touch ? '<p>Left thumb steers and walks. GO talks, gets in and out and starts jobs. CAR calls the Heirloom.</p>' : k('WASD / arrows', 'walk, drive') + k('E', 'talk, get in or out, start a job') + k('Space', 'handbrake') + k('T', 'time dial') + k('H', 'call the Heirloom (£10)') + k('M', 'town map') + k('P', 'pedigree') }
-    <div class="foot"><button data-go="close">Resume</button><button class="alt" data-go="quit">Save and leave</button><button class="alt" data-go="reset">Restart the story</button></div>`, {
+    <p><b>The case so far</b></p>${S.story.missions.map((m, i) => i < S.save.idx ? `<div class="row" style="padding:3px 0;border:0"><span>✔ ${escapeText(m.title)}<small>${escapeText(m.act)}</small></span></div>` : i === S.save.idx ? `<div class="row need" style="padding:5px 8px"><span>▶ ${escapeText(m.title)}<small>${escapeText(m.act)} · ${escapeText(S.story.towns.get(m.town).name)}, ${m.year}</small></span></div>` : '').join('')}${S.save.idx < S.story.missions.length - 1 ? `<p>…and ${S.story.missions.length - S.save.idx - 1} more to come.</p>` : ''}
+    <div class="foot"><button data-go="close">Resume</button><button class="alt" data-go="easy">Timers: ${S.save.easy ? 'generous' : 'normal'}</button><button class="alt" data-go="quit">Save and leave</button><button class="alt" data-go="reset">Restart the story</button></div>`, {
     close: () => S.ui.closePanel(),
+    easy: () => { S.save.easy = !S.save.easy; persist(); openPause(); },
     quit: () => { S.ui.closePanel(); closeStory(); },
     reset: () => { S.ui.panel('<h2>Restart the story?</h2><p>Your cash, proofs and progress for this person will be wiped.</p><div class="foot"><button data-go="yes">Restart</button><button class="alt" data-go="close">Keep playing</button></div>', {
       close: () => S.ui.closePanel(),
@@ -10271,6 +10412,7 @@ function findNear() {
     for (const p of S.peds) if (p.npc && within(p, 1.8, 3)) {
       const next = nextStory();
       if (p.giver && isHere(next)) return { label: p.phone ? 'Read the note' : `Talk to ${p.name.split(' ')[0]}`, go: () => startMission(next) };
+      if (p.favour) return { label: `Help ${p.name.split(' ')[0]}`, go: () => startMission(p.favour) };
       if (getIn && carD < dist(p, P) - 10) continue; // standing at the car door, not talking to them
       if (!pv && p.who !== 'dot') return { label: `Chat with ${p.name.split(' ')[0]}`, go: () => chat(p.who) };
       if (!pv && p.who === 'dot') return { label: 'Dot and her workbench', go: () => openWorkshop(dotLine()) };
@@ -10364,10 +10506,11 @@ function handleQueue() {
     if (ui.dialogOpen) { if (act === 'action' || act === 'space' || /^opt/.test(act)) ui._advance?.(act); continue; }
     if (ui.panelOpen) { if (act === 'pause' || act === 'dial' || act === 'pedigree' || act === 'map') ui._panelClose?.(); continue; }
     if (S.busy) continue;
-    if (act === 'action') S.near?.go();
+    if (act === 'action') { const r = S.retry; if ((!S.near || !S.near.label) && S.ui.touch && r && !S.mission && S.t < r.until && r.town === S.city.town.id && r.year === S.city.year) { S.retry = null; startMission(r.def); } else S.near?.go(); }
     else if (act === 'dial') openDial();
     else if (act === 'pedigree') openPedigree();
     else if (act === 'pause') openPause();
+    else if (act === 'retry') { const r = S.retry; if (r && !S.mission && S.t < r.until && r.town === S.city.town.id && r.year === S.city.year) { S.retry = null; startMission(r.def); } }
     else if (act === 'map') openMap();
     else if (act === 'call') callHeirloom();
   }
@@ -10475,7 +10618,8 @@ function hud() {
     else obj = `<small>Next: ${escapeText(n.title)}</small>${guide(n.town, n.year)}`;
   }
   ui.objective(obj);
-  ui.hint(S.busy || ui.panelOpen || ui.dialogOpen || !S.near || !S.near.label ? '' : (ui.touch ? 'GO: ' : 'E: ') + S.near.label);
+  const again = S.retry && !S.mission && S.t < S.retry.until && S.retry.town === c.town.id && S.retry.year === c.year;
+  ui.hint(S.busy || ui.panelOpen || ui.dialogOpen ? '' : S.near && S.near.label ? (ui.touch ? 'GO: ' : 'E: ') + S.near.label + (again && !ui.touch ? '   ·   R: try again' : '') : again ? (ui.touch ? 'GO: try again' : 'R: try again') : '');
   const h = S.heirloom;
   if (S.dial != null && S.dial !== c.year) ui.dial(`DIAL ${S.dial} · INK £${inkFor(c.year, S.dial)}<i><b style="width:${Math.round(h.charge * 100)}%"></b></i>`); else ui.dial('');
 }
@@ -10533,6 +10677,7 @@ function render() {
   for (const k in c.lots) { const l = c.lots[k]; if (k !== 'phone' && Math.abs(l.x - pp.x) < 11 * T && Math.abs(l.y - pp.y) < 8 * T) label(l.x, l.y - 4, l.name.replace(/^the /, '').replace(/^./, ch => ch.toUpperCase()), '#ffe9a8', 11); }
   for (const p of S.peds) {
     if (p.npc && p.giver && !S.mission) { const y = p.y - 34 - Math.abs(Math.sin(t * 3)) * 6; label(p.x, y, '!', '#ffd84a', 26); }
+    else if (p.npc && p.favour && !S.mission) { const y = p.y - 34 - Math.abs(Math.sin(t * 3 + 1)) * 5; label(p.x, y, '?', '#7be07b', 24); }
     if (p.name && dist(p, pp) < (p.npc ? 6 : 2.6) * T && p.look) { label(p.x, p.y - 20, p.name, '#fff', 11); if (p.sub && dist(p, pp) < 2.6 * T) label(p.x, p.y - 32, p.sub, '#d8d2c0', 9); }
   }
   if (!P.vehicle) for (const gv of c.graves) if (gv.who && Math.hypot((gv.x + 0.5) * T - P.x, (gv.y + 0.5) * T - P.y) < 1.6 * T) { label((gv.x + 0.5) * T, gv.y * T - 6, gv.who.name, '#e8e4d8', 10); label((gv.x + 0.5) * T, gv.y * T + 5, gv.who.life, '#b8b4a8', 9); }
@@ -10581,7 +10726,7 @@ function miniMap(pp, tgt) {
   if (!S.mission) dot(c.lots.market, '#7be07b', 3);
   if (S.player.vehicle !== S.heirloom) dot(S.heirloom, '#e8c040', 3.5);
   for (const v of S.vehicles) if (v.ai === 'cop') dot(v, '#4a7aff', 3); else if (v.ai === 'hunt') dot(v, '#f08aa0', 3);
-  for (const p of S.peds) if (p.cop) dot(p, '#4a7aff', 2.5);
+  for (const p of S.peds) if (p.cop) dot(p, '#4a7aff', 2.5); else if (p.favour && !S.mission) dot(p, '#7be07b', 3);
   for (const i of S.items) if (i.step) dot(i, '#fff', 2);
   if (tgt) dot(tgt, S.step?.step.t === 'chase' ? '#ff5a4a' : tgt.type ? '#8ab4ff' : '#ffd84a', 4.5, '#fff');
   m.fillStyle = '#fff'; m.strokeStyle = '#000'; m.lineWidth = 2;

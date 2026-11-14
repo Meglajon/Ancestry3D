@@ -603,7 +603,7 @@ export function residentsOf(data, town, year, limit = 40) {
 }
 
 /** A repeatable odd job for cash, flavoured for the year. */
-export function oddJob(town, year, seed) {
+export function oddJob(town, year, seed, fare = false) {
   const rnd = seededRandom(seed);
   const e = eraOf(year);
   const goods = { modern: ['parcels', 'takeaways', 'flat-pack wardrobes', 'boxes of records'], retro: ['crates of pop', 'sacks of coal', 'wireless sets', 'bundles of newspapers'], vintage: ['milk churns', 'sacks of coal', 'crates of ale', 'telegrams'],
@@ -614,9 +614,9 @@ export function oddJob(town, year, seed) {
   if (to === from) to = spots[(spots.indexOf(from) + 3) % spots.length];
   const label = goods[Math.floor(rnd() * goods.length)];
   const n = 1 + Math.floor(rnd() * 3);
-  const person = rnd() < 0.3;
+  const person = fare || rnd() < 0.3;
   return {
-    id: 'odd-' + seed, odd: true, act: 'Odd job', title: person ? 'Fare' : 'Carrier', town: town.id, year, giver: { who: 'board' }, brief: '', intro: [], outro: [],
+    id: 'odd-' + seed, odd: true, fare, act: 'Odd job', title: person ? 'Fare' : 'Carrier', town: town.id, year, giver: { who: 'board' }, brief: '', intro: [], outro: [],
     steps: [person
       ? { t: 'carry', from, to, n: 1, label: 'fare', passenger: 'your fare', timed: 1.2, text: `Take your fare from ${lotName(from, town, year)} to ${lotName(to, town, year)}` }
       : { t: 'carry', from, to, n, label, timed: 1.35, text: `Carry ${n === 1 ? 'the ' + label : n + ' loads of ' + label} from ${lotName(from, town, year)} to ${lotName(to, town, year)}` }],

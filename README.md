@@ -38,17 +38,25 @@ estate car that runs on register ink to stop him.
 - **The plot is the same for everyone; the details are yours.** Up to seven ancestors get a chapter: you meet
   them (and must prove you are family by answering a question from the file), do a day's work at their real
   trade, and then play a mission built on a real event: their wedding, the birth of the child you descend
-  from, a census night, an emigration, their service or their baptism. Each one wins a proof for your pedigree.
-- **Drive anything.** The Heirloom is yours; everything else can be borrowed, from hatchbacks to hay carts.
+  from, a family photograph of the children by name, a census night, an emigration, a burial, their service
+  or their baptism. Each one wins a proof for your pedigree. Their brothers, sisters, children and spouses
+  offer optional favours.
+- **Eleven kinds of mission task**: drive, talk, carry (sometimes without a bump), collect, race, chase a
+  van, tail one unseen, defend a convoy, catch a runner on foot, travel, and lose the police. Blank's
+  Erasers hunt you while the clock runs.
+- **Drive anything.** The Heirloom is yours, and can be upgraded and resprayed at Dot's workbench; everything
+  else can be borrowed, from hatchbacks to hay carts. Borrow a taxi or a hansom and you are for hire.
 - **Fly to other countries.** The airport (a steamer quay before 1950) sells tickets to every town the story
-  has opened.
+  has opened, and draws the journey on a map.
 - **Travel in time.** Set the dial, hold the Heirloom at full speed and you arrive on the same street in
-  another century. Every town keeps its street plan in every year; the further back, the more of it is fields.
-- **Earn your fare.** Missions pay cash; the £ board in every market place has odd jobs in every year.
+  another century. Every town keeps its street plan in every year; the further back, the more of it is
+  fields. Landmarks come and go: a windmill, gasworks, trams, a war memorial, a supermarket.
+- **Streets named after your family**, a clock with night lighting, and rain.
 - **Mind the law.** Police cars after 1900, constables on foot before.
-- **Meet the neighbours.** The people on the pavements are the people in your file who lived in that town in
-  that year, and there are three lost photographs to find in every town and era, with the file's own notes
-  written on the back.
+- **Meet the family.** The people on the pavements are the people in your file who lived in that town in
+  that year; they will tell you their life so far. The churchyard graves carry real names, there are three
+  lost photographs to find in every town and era with the file's own notes on the back, and running over
+  your own ancestor causes a paradox.
 
 The whole plot, and how each part is filled in from the GEDCOM, is in [STORY.md](STORY.md).
 
@@ -60,6 +68,7 @@ The whole plot, and how each part is filled in from the GEDCOM, is in [STORY.md]
 | Time dial | T | ⏱ Dial |
 | Call the Heirloom to you | H | CAR |
 | Town map / pedigree / menu | M / P / Esc | 🗺 / 📜 / ☰ |
+| Try a failed mission again | R | GO |
 
 ### Looks
 
@@ -189,6 +198,7 @@ js/storyplot.js     Story mode plot: chooses the cast, towns and years from the 
 js/storycity.js     Story mode towns: one street plan per town, dressed for any year; ground, buildings, minimap
 js/storyart.js      Story mode drawings: vehicles of every era, people, pick-ups, markers
 js/storyui.js       Story mode HUD, dialogue box, panels, keyboard and touch input
+js/storymap.js      Story mode journeys: a small world map and where each region sits on it
 js/storygame.js     Story mode game: driving, traffic, the law, missions, tickets, the time dial, saving
 sample/demo.ged     fictional demo family (regenerate with npm run demo)
 tools/              demo generator and single-file builder

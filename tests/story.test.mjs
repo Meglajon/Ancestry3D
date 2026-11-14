@@ -95,7 +95,7 @@ function check(story, label) {
   assert.ok(again && again.nodes.length === net.nodes.length && again.ways.length === net.ways.length && again.ways.some(w => w.name === 'Kirkgate'), 'a kept plan comes back the same');
   assert.equal(netFromOsm({ elements: [] }, lat0, lon0), null);
   assert.equal(netFromOsm(null, lat0, lon0), null);
-  assert.ok(/highway/.test(osmQuery(lat0, lon0)) && /around:\d+,53\.8/.test(osmQuery(lat0, lon0)));
+  assert.ok(/highway/.test(osmQuery(lat0, lon0)) && /\[bbox:53\.79\d+,-1\.56\d+,53\.80\d+,-1\.53\d+\]/.test(osmQuery(lat0, lon0)), osmQuery(lat0, lon0));
   console.log(`ok street plans: drawn and OpenStreetMap (${net.nodes.length} points, ${net.ways.length} roads)`);
 }
 

@@ -156,10 +156,11 @@ export function makeNet(town) {
 
 const ROADS = { trunk: 0, trunk_link: 0, primary: 0, primary_link: 0, secondary: 0, secondary_link: 0, tertiary: 0, tertiary_link: 0, unclassified: 1, residential: 1, living_street: 1, pedestrian: 1, road: 1 };
 
-/** The Overpass question that fetches a town's streets, water and parks. */
+/** The Overpass question that fetches a town's streets, water and parks: everything in a box round its middle. */
 export function osmQuery(lat, lon, radius = OSM_RADIUS) {
-  const a = `(around:${Math.round(radius * 1.25)},${lat.toFixed(5)},${lon.toFixed(5)})`;
-  return `[out:json][timeout:25];(way["highway"~"^(${Object.keys(ROADS).join('|')})$"]${a};way["waterway"~"^(river|canal)$"]${a};way["natural"="water"]${a};way["leisure"~"^(park|garden|recreation_ground)$"]${a};);out body;>;out skel qt;`;
+  const r = radius * 1.25, dla = r / 110540, dlo = r / (111320 * Math.cos(lat * Math.PI / 180));
+  const box = [lat - dla, lon - dlo, lat + dla, lon + dlo].map(v => v.toFixed(5)).join(',');
+  return `[out:json][timeout:40][bbox:${box}];(way["highway"~"^(${Object.keys(ROADS).join('|')})$"];way["waterway"~"^(river|canal)$"];way["natural"="water"];way["leisure"~"^(park|garden|recreation_ground)$"];);out body;>;out skel qt;`;
 }
 
 /**
@@ -227,13 +228,15 @@ const cacheKey = town => 'a3d:streets:' + NET_VERSION + ':' + town.id;
 export function cachedNet(town) {
   try { const hit = localStorage.getItem(cacheKey(town)); if (hit == null) return undefined; if (hit === 'none') return null; return unpackNet(JSON.parse(hit)) || undefined; } catch (e) { return undefined; }
 }
-const getJson = async (url, opts, signal) => { const r = await fetch(url, { ...opts, signal }); if (!r.ok) throw new Error('http ' + r.status); return r.json(); };
+const getJson = async (url, opts, signal) => { const r = await fetch(url, { ...opts, signal }); if (!r.ok) { const e = new Error('http ' + r.status); e.status = r.status; throw e; } return r.json(); };
+const pause = (ms, signal) => new Promise((res, rej) => { const t = setTimeout(res, ms); signal.addEventListener('abort', () => { clearTimeout(t); rej(new Error('aborted')); }, { once: true }); });
 /**
  * The real streets of a town, from OpenStreetMap: looked up by name, fetched once and kept on this device.
- * Resolves to a plan, or null if the town cannot be found or there is no connection. Only the town's name
- * is sent. Map data © OpenStreetMap contributors (ODbL).
+ * Resolves to a plan, or null if the town cannot be found or the map servers cannot be reached in time. The
+ * public servers are often busy, so this is patient: it tries again, and may take a minute. Only the town's
+ * name is sent. Map data © OpenStreetMap contributors (ODbL).
  */
-export async function fetchNet(town, timeoutMs = 12000) {
+export async function fetchNet(town, timeoutMs = 80000) {
   const had = cachedNet(town);
   if (had !== undefined) return had;
   const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), timeoutMs);
@@ -242,13 +245,17 @@ export async function fetchNet(town, timeoutMs = 12000) {
     const q = [town.name, town.nation || town.country].filter(Boolean).join(', ');
     // where is it? (two free gazetteers built on OpenStreetMap; the second is only asked if the first fails)
     let lat = null, lon = null;
-    try { const g = await getJson('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=' + encodeURIComponent(q), { headers: { Accept: 'application/json' } }, ctl.signal); if (g && g.length) { lat = +g[0].lat; lon = +g[0].lon; } else if (g) { keepIt('none'); return null; } } catch (e) { /* try the other */ }
+    try { const g = await getJson('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=' + encodeURIComponent(q), { headers: { Accept: 'application/json' } }, ctl.signal); if (g && g.length) { lat = +g[0].lat; lon = +g[0].lon; } else if (g) { keepIt('none'); return null; } } catch (e) { if (ctl.signal.aborted) throw e; }
     if (lat == null) { const g = await getJson('https://photon.komoot.io/api/?limit=1&q=' + encodeURIComponent(q), {}, ctl.signal); const c = g && g.features && g.features[0] && g.features[0].geometry && g.features[0].geometry.coordinates; if (!c) { keepIt('none'); return null; } lon = +c[0]; lat = +c[1]; }
     if (!isFinite(lat) || !isFinite(lon)) return null;
-    // and what streets has it?
+    // and what streets has it? One server at a time, waiting longer between tries when they say they are busy.
     const body = { method: 'POST', body: 'data=' + encodeURIComponent(osmQuery(lat, lon)), headers: { 'Content-Type': 'application/x-www-form-urlencoded' } };
+    const hosts = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter', 'https://overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter', 'https://overpass-api.de/api/interpreter'];
     let json = null;
-    for (const host of ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter']) { try { json = await getJson(host, body, ctl.signal); break; } catch (e) { if (ctl.signal.aborted) throw e; } }
+    for (let i = 0; i < hosts.length && !json; i++) {
+      try { json = await getJson(hosts[i], body, ctl.signal); }
+      catch (e) { if (ctl.signal.aborted) throw e; await pause(3000 + i * 3000, ctl.signal); }
+    }
     if (!json) return null;
     const net = netFromOsm(json, lat, lon);
     keepIt(net ? JSON.stringify(packNet(net)) : 'none');

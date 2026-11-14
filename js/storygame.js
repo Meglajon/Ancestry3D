@@ -168,18 +168,22 @@ export function openStory({ data, rootId, store, key, onClose }) {
   const hero = tree.people.get(rootId);
   S.player = { x: 0, y: 0, ang: 0, vehicle: null, hearts: 3, walk: 0, look: lookSummary(lookFor(hero)), down: 0, invuln: 0, moving: false };
   enterTown(story.towns.get(save.town), save.year, save.fresh ? 'start' : 'load');
-  if (realStreets() && S.city.source !== 'osm') {
-    // look up the real streets before anything starts; if they come, lay the town out again on them
+  if (realStreets() && S.city.source !== 'osm' && cachedNet(S.city.town) === undefined) {
+    // First time in this town: fetch its real streets before anything starts. The map servers can be slow,
+    // so say so, and let the player go on with a made-up town; the real one is then used the next time
+    // they arrive (or from the pause menu, once it is in).
     const tok = S, town0 = S.city.town, others = [...story.towns.values()].filter(t => t.id !== town0.id);
+    let waiting = true;
+    const rest = () => { (async () => { for (const t of others) { await new Promise(r => setTimeout(r, 2500)); if (S !== tok) return; await fetchStreets(t); } })(); };
+    const go = () => { if (!waiting || S !== tok) return; waiting = false; ui.closePanel(); S.busy = false; };
     S.busy = true;
-    ui.toast(`Looking up the real streets of ${town0.name}…`, 12000);
+    ui.panel(`<h2>🗺 Fetching the real streets of ${escapeText(town0.name)}</h2><p>The game is downloading ${escapeText(town0.name)}'s actual street plan and street names from OpenStreetMap, to draw in its own style. This happens once for each town and is then kept on this device.</p><p>The free map servers are often busy, so it can take up to a minute. Only the town's name is sent.</p><div class="foot"><button data-go="skip">Play now with made-up streets</button></div><p><small>If you play now, the real streets are used the next time you arrive in ${escapeText(town0.name)}. Map data © OpenStreetMap contributors.</small></p>`, { skip: go, close: go });
     fetchStreets(town0).then(got => {
       if (S !== tok) return;
-      if (got && !S.mission) enterTown(town0, save.year, save.fresh ? 'start' : 'load');
-      ui.toast(got ? `The real streets of ${town0.name}. © OpenStreetMap contributors` : '', got ? 4200 : 1);
-      S.busy = false;
-      // and the other towns in the story, one at a time, so they are ready when you get there
-      (async () => { for (const t of others) { await new Promise(r => setTimeout(r, 1600)); if (S !== tok) return; await fetchStreets(t); } })();
+      if (got && waiting) { enterTown(town0, save.year, save.fresh ? 'start' : 'load'); go(); ui.toast(`These are the real streets of ${town0.name}. © OpenStreetMap contributors`, 5200); }
+      else if (got) ui.toast(`The real streets of ${town0.name} have arrived. They will be used the next time you get here, or now from the pause menu.`, 8000);
+      else { const was = waiting; go(); if (was) ui.toast(`Could not reach the map servers, so ${town0.name} is made up for now.`, 5200); S.asked.delete(town0.id); }
+      rest();
     });
   }
   // Hooks for the headless test (tests/story-smoke.py): jump to the current target, finish a step, travel.
@@ -1449,9 +1453,10 @@ function openPause() {
   S.ui.panel(`<h2>Relative Speed</h2><p>${escapeText(nextStory()?.brief || 'Free roam: every town, every year.')}</p>
     ${S.ui.touch ? '<p>Left thumb steers and walks. GO talks, gets in and out and starts jobs. CAR calls the Heirloom.</p>' : k('WASD / arrows', 'walk, drive') + k('E', 'talk, get in or out, start a job') + k('Space', 'handbrake: hold it into a corner to slide the back round') + k('T', 'time dial') + k('H', 'call the Heirloom (£10)') + k('M', 'town map') + k('P', 'pedigree') }
     <p><b>The case so far</b> <small>${tally().text}</small></p>${fragsGot() || S.save.idx > S.story.missions.findIndex(m => m.id === 'blank-and-void') ? `<p>📄 <b>The Foundling File</b> ${fragsGot()} of ${S.story.frags.length} pages <small>${S.story.frags.map(f => (S.save.frags || []).includes(f.id) ? '✔' : `${escapeText(S.story.towns.get(f.town).name)} ${f.year}`).join(' · ')}</small></p>` : ''}${S.story.missions.map((m, i) => i < S.save.idx ? `<div class="row" style="padding:3px 0;border:0"><span>✔ ${escapeText(m.title)} <b style="color:#c8901a">${'★'.repeat((S.save.medals || {})[m.id] || 0)}</b><small>${escapeText(m.act)} · ${escapeText(S.story.towns.get(m.town).name)}, ${m.year}</small></span>${m.town === S.city.town.id && m.year === S.city.year && !S.mission && m.steps.some(x => x.t !== 'travel' && x.t !== 'talk') ? `<button class="alt" data-go="replay:${i}">Replay</button>` : ''}</div>` : i === S.save.idx ? `<div class="row need" style="padding:5px 8px"><span>▶ ${escapeText(m.title)}<small>${escapeText(m.act)} · ${escapeText(S.story.towns.get(m.town).name)}, ${m.year}</small></span></div>` : '').join('')}${S.save.idx < S.story.missions.length - 1 ? `<p>…and ${S.story.missions.length - S.save.idx - 1} more to come.</p>` : ''}
-    <div class="foot"><button data-go="close">Resume</button><button class="alt" data-go="easy">Timers: ${S.save.easy ? 'generous' : 'normal'}</button><button class="alt" data-go="streets">Streets: ${realStreets() ? 'real (OpenStreetMap)' : 'made up'}</button><button class="alt" data-go="quit">Save and leave</button><button class="alt" data-go="reset">Restart the story</button></div>`, {
+    <div class="foot"><button data-go="close">Resume</button><button class="alt" data-go="easy">Timers: ${S.save.easy ? 'generous' : 'normal'}</button><button class="alt" data-go="streets">Streets: ${realStreets() ? 'real (OpenStreetMap)' : 'made up'}</button>${realStreets() && S.city.source !== 'osm' && S.nets.get(S.city.town.id)?.source === 'osm' && !S.mission ? '<button class="alt" data-go="realnow">Switch to the real streets now</button>' : ''}<button class="alt" data-go="quit">Save and leave</button><button class="alt" data-go="reset">Restart the story</button></div>`, {
     close: () => S.ui.closePanel(),
     easy: () => { S.save.easy = !S.save.easy; persist(); openPause(); },
+    realnow: () => { S.ui.closePanel(); enterTown(S.city.town, S.city.year, 'hub'); S.ui.toast(`The real streets of ${S.city.town.name}. © OpenStreetMap contributors`, 4200); },
     streets: () => { try { localStorage.setItem('a3d:realstreets', realStreets() ? '0' : '1'); } catch (e) { /* no storage */ } S.nets.clear(); S.asked.clear(); S.ui.closePanel(); S.ui.toast(realStreets() ? 'Real streets from OpenStreetMap, from the next town you enter. Only the town\'s name is sent.' : 'Made-up streets from the next town you enter. Nothing is looked up.', 6000); if (realStreets()) fetchStreets(S.city.town); },
     replay: i => { S.ui.closePanel(); startMission(S.story.missions[+i]); },
     quit: () => { S.ui.closePanel(); closeStory(); },

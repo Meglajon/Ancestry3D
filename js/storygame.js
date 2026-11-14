@@ -89,6 +89,7 @@ export function openStory({ data, rootId, store, key, onClose }) {
     finishStep() { const st = S.step; if (!st) return; const s = st.step; if (s.t === 'talk') return; if (s.t === 'chase' && st.target) { st.target.hp = 0; return; } if (s.t === 'escape') { S.heat = 0; return; } if (s.t === 'travel') { enterTown(S.story.towns.get(s.town), s.year, 'hub'); return; } nextStep(); },
     intoHeirloom() { const P = S.player; if (P.vehicle) return; P.x = S.heirloom.x; P.y = S.heirloom.y; enterVehicle(S.heirloom); },
     go(townId, year) { enterTown(S.story.towns.get(townId), year, 'hub'); },
+    travel(townId, year, where) { travel(S.story.towns.get(townId), year, where); },
     startNext() { const n = nextStory(); if (n && isHere(n) && !S.mission) startMission(n); },
   };
   const onResize = () => S && S.ui.resize();
@@ -169,7 +170,7 @@ function roadNear(x, y) {
 }
 function makeVehicle(type, x, y, ang, extra = {}) {
   const rnd = seededRandom(hashString(type + Math.round(x) + ':' + Math.round(y) + S.vehicles.length));
-  const v = { type, x, y, ang, vx: 0, vy: 0, speed: 0, hp: VEHICLES[type].hp, color: paintFor(type, rnd), ai: null, hitCd: 0, charge: 0, stuck: 0, ...extra };
+  const v = { id: (S.vid = (S.vid || 0) + 1), type, x, y, ang, vx: 0, vy: 0, speed: 0, hp: VEHICLES[type].hp, color: paintFor(type, rnd), ai: null, hitCd: 0, charge: 0, stuck: 0, ...extra };
   S.vehicles.push(v);
   return v;
 }
@@ -223,7 +224,7 @@ function enterTown(town, year, where) {
   spawnNpcs();
   for (let i = 0; i < 14; i++) spawnWalker(true);
   S.ui.where(town.name + (town.nation && town.nation !== town.name ? ', ' + town.nation : ''), `${year} · ${ERA_NAMES[c.era]}`);
-  if (old) S.ui.banner(town.name, `${year} · ${ERA_NAMES[c.era]}`, '#ffe9a8', 2600);
+  if (old) { const show = () => S && S.ui.banner(town.name, `${year} · ${ERA_NAMES[c.era]}`, '#ffe9a8', 2600); if (S.transit) S.transit.after = show; else show(); }
   persist();
 }
 
@@ -354,11 +355,16 @@ function aiDrive(v, dt) {
   if (!fast && !(v.push > 0)) {
     const reach = st.len / 2 + 1.5 * T + Math.abs(v.speed) * 0.45;
     const test = (ox, oy, rad) => { const rx = ox - v.x, ry = oy - v.y, f = rx * fx + ry * fy, l = -rx * fy + ry * fx; return f > 0 && f < reach + rad && Math.abs(l) < 0.5 * T + rad * 0.5; };
-    for (const o of S.vehicles) if (o !== v && test(o.x, o.y, VEHICLES[o.type].len * 0.3)) { blocked = true; break; }
+    for (const o of S.vehicles) {
+      if (o === v || !test(o.x, o.y, VEHICLES[o.type].len * 0.3)) continue;
+      // two cars waiting for each other across a junction: the older one goes
+      if (o.ai === 'traffic' && Math.abs(o.speed) < 0.4 * T && Math.abs(angDiff(o.ang, v.ang)) > 0.8 && v.id < o.id) continue;
+      blocked = true; break;
+    }
     if (!blocked && !P.vehicle && test(P.x, P.y, 6)) blocked = true;
     if (!blocked) for (const p of S.peds) if (!p.npc && test(p.x, p.y, 4) && S.city.at(Math.floor(p.x / T), Math.floor(p.y / T)) === G.ROAD) { blocked = true; break; }
   }
-  if (blocked) { v.stuck += dt; if (v.stuck > 7) { v.push = 1.6; v.stuck = 0; } } else v.stuck = Math.max(0, v.stuck - dt * 2);
+  if (blocked) { v.stuck += dt; if (v.stuck > 4.5) { v.push = 1.6; v.stuck = 0; } } else v.stuck = Math.max(0, v.stuck - dt * 2);
   if (v.push > 0) v.push -= dt;
   const thr = blocked ? 0 : v.speed < cruise ? 1 : v.speed > cruise * 1.15 ? -0.6 : 0;
   const hit = driveVehicle(v, { thr, steer: clamp(da * 2.6, -1, 1), brake: blocked }, dt);
@@ -757,16 +763,52 @@ function openDepartures() {
   });
 }
 function travel(town, year, where) {
-  const tok = S;
+  const tok = S, c = S.city, jump = where === 'jump';
   S.busy = true;
-  S.ui.fade(true, where === 'jump' ? '#eaffff' : '#000');
-  if (where === 'jump') sfx.jump(); else sfx.door();
-  setTimeout(() => {
-    if (S !== tok) return;
-    enterTown(town, year, where);
-    S.ui.fade(false, where === 'jump' ? '#eaffff' : '#000');
-    S.busy = false;
-  }, where === 'jump' ? 420 : 700);
+  S.transit = { jump, t: 0, dur: jump ? 1.5 : 2.6, from: c.town, to: town, y0: c.year, y1: year, air: c.air, abroad: town.country !== c.town.country, swapped: false,
+    swap: () => { if (S === tok) enterTown(town, year, where); }, done: () => { if (S === tok) { const after = S.transit.after; S.transit = null; S.busy = false; after?.(); } } };
+  if (jump) sfx.jump(); else sfx.door();
+}
+// Drawn over everything while a journey is under way.
+function drawTransit(g, w, h, dpr, dt) {
+  const tr = S.transit;
+  tr.t += dt;
+  const k = clamp(tr.t / tr.dur, 0, 1);
+  if (k >= 0.5 && !tr.swapped) { tr.swapped = true; tr.swap(); }
+  const font = (px, f = '"Press Start 2P", monospace') => { g.font = `${Math.round(px * dpr)}px ${f}`; };
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  if (tr.jump) {
+    const a = Math.sin(k * Math.PI);
+    g.fillStyle = `rgba(224,250,255,${Math.min(1, a * 1.6)})`; g.fillRect(0, 0, w, h);
+    g.strokeStyle = `rgba(60,150,200,${a * 0.6})`; g.lineWidth = 2 * dpr;
+    for (let i = 0; i < 26; i++) { const an = i / 26 * Math.PI * 2 + tr.t * 0.6, r0 = (0.08 + ((tr.t * 1.6 + i * 0.37) % 1) * 0.9) * Math.max(w, h); g.beginPath(); g.moveTo(w / 2 + Math.cos(an) * r0, h / 2 + Math.sin(an) * r0); g.lineTo(w / 2 + Math.cos(an) * r0 * 1.25, h / 2 + Math.sin(an) * r0 * 1.25); g.stroke(); }
+    const e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2, y = Math.round(tr.y0 + (tr.y1 - tr.y0) * e);
+    g.globalAlpha = Math.min(1, a * 2); font(64); g.lineWidth = 8 * dpr; g.strokeStyle = '#0a2a3a'; g.strokeText(String(y), w / 2, h / 2); g.fillStyle = '#fff'; g.fillText(String(y), w / 2, h / 2);
+    g.globalAlpha = 1;
+  } else {
+    const a = k < 0.15 ? k / 0.15 : k > 0.85 ? (1 - k) / 0.15 : 1;
+    g.globalAlpha = a;
+    g.fillStyle = '#e8dcbc'; g.fillRect(0, 0, w, h);
+    g.strokeStyle = 'rgba(120,96,60,0.25)'; g.lineWidth = dpr; for (let x = 0; x < w; x += 60 * dpr) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); } for (let y = 0; y < h; y += 60 * dpr) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
+    const ax = w * 0.2, bx = w * 0.8, ay = h * 0.58, by = h * 0.5, arc = tr.abroad ? h * 0.3 : h * 0.12;
+    const pt = u => [ax + (bx - ax) * u, ay + (by - ay) * u - Math.sin(u * Math.PI) * arc];
+    const u = clamp((k - 0.15) / 0.7, 0, 1);
+    g.strokeStyle = '#a8322a'; g.lineWidth = 4 * dpr; g.setLineDash([10 * dpr, 9 * dpr]); g.beginPath();
+    for (let i = 0; i <= 40; i++) { const [x, y] = pt(u * i / 40); if (i) g.lineTo(x, y); else g.moveTo(x, y); }
+    g.stroke(); g.setLineDash([]);
+    for (const [x, y, t] of [[ax, ay, tr.from], [bx, by, tr.to]]) {
+      g.fillStyle = '#2a2218'; g.beginPath(); g.arc(x, y, 8 * dpr, 0, 7); g.fill();
+      font(20, '"Fredoka", "Nunito", sans-serif'); g.fillStyle = '#2a2218'; g.fillText(t.name, x, y + 30 * dpr);
+      font(13, '"Nunito", sans-serif'); g.fillStyle = '#6a5a40'; g.fillText(t.nation || '', x, y + 52 * dpr);
+    }
+    const [px, py] = pt(u), [qx, qy] = pt(Math.min(1, u + 0.01));
+    g.save(); g.translate(px, py); g.rotate(Math.atan2(qy - py, qx - px)); font(30, 'sans-serif'); g.fillStyle = '#2a2218';
+    g.fillText(tr.abroad ? (tr.air ? '✈' : '⛴') : tr.y0 >= 1840 ? '🚂' : '🐎', 0, 0); g.restore();
+    font(16); g.fillStyle = '#8a2a1a'; g.fillText(tr.abroad ? (tr.air ? 'DEPARTURES' : 'EMBARKED') : 'ALL ABOARD', w / 2, h * 0.16);
+    font(13, '"Nunito", sans-serif'); g.fillStyle = '#6a5a40'; g.fillText(`${tr.y0} · the Heirloom travels as freight`, w / 2, h * 0.16 + 30 * dpr);
+    g.globalAlpha = 1;
+  }
+  if (k >= 1) tr.done();
 }
 function openDial() {
   const c = S.city, u = unlocked(), want = wanted();
@@ -794,7 +836,9 @@ function openMap() {
   g.drawImage(S.mini, 0, 0, c.W * sc, c.H * sc);
   g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '700 12px "Fredoka", "Nunito", sans-serif';
   const tag = (o, text, col) => { const x = o.x / T * sc, y = o.y / T * sc; g.lineWidth = 3; g.strokeStyle = 'rgba(0,0,0,0.85)'; g.strokeText(text, x, y); g.fillStyle = col; g.fillText(text, x, y); };
-  for (const k in c.lots) if (k !== 'phone') tag({ x: c.lots[k].x, y: c.lots[k].y - 1.6 * T }, c.lots[k].name.replace(/^the /, ''), '#fff');
+  const SHORT = { church: 'Church', hall: c.year >= 1837 ? 'Records' : 'Vestry', pub: 'Pub', works: 'Works', farm: 'Farm', school: 'School', hub: c.air ? 'Airport' : 'Quay', garage: c.year >= 1950 ? 'Lock-up' : 'Barn', market: 'Market', infirmary: c.year >= 1948 ? 'Hospital' : 'Infirmary', police: c.year >= 1900 ? 'Police' : 'Watch', post: 'Post', office: c.era === 'modern' ? 'Blank & Void' : 'Counting ho.' };
+  g.font = '700 11px "Fredoka", "Nunito", sans-serif';
+  for (const k in c.lots) if (SHORT[k]) tag({ x: c.lots[k].x, y: c.lots[k].y - (k === 'garage' ? -1.2 : 1.8) * T }, SHORT[k], '#fff');
   const dot = (o, col, r = 6) => { g.fillStyle = col; g.strokeStyle = '#000'; g.lineWidth = 2; g.beginPath(); g.arc(o.x / T * sc, o.y / T * sc, r, 0, 7); g.fill(); g.stroke(); };
   dot(S.heirloom, '#e8c040');
   if (S.target) dot(S.target, '#ffd84a', 8);
@@ -853,22 +897,22 @@ function leaveVehicle(force) {
 function findNear() {
   const P = S.player, pv = P.vehicle, pp = pv || P, c = S.city, slow = !pv || Math.abs(pv.speed) < 2 * T;
   const within = (o, a, b) => Math.hypot(o.x - pp.x, o.y - pp.y) < (pv ? b : a) * T;
+  // the nearest vehicle you could get into
+  let car = null, carD = 1.9 * T;
+  if (!pv) for (const v of S.vehicles) { const d = dist(v, P) - VEHICLES[v.type].len * 0.25; if (d < carD && v.ai !== 'flee' && v.ai !== 'cop' && !v.dead) { carD = d; car = v; } }
+  const getIn = car && { label: car === S.heirloom ? 'Get in the Heirloom' : `Borrow the ${VEHICLES[car.type].name}`, go: () => enterVehicle(car) };
   if (!S.mission && slow) {
     for (const p of S.peds) if (p.npc && within(p, 1.8, 3)) {
       const next = nextStory();
       if (p.giver && isHere(next)) return { label: p.phone ? 'Read the note' : `Talk to ${p.name.split(' ')[0]}`, go: () => startMission(next) };
+      if (getIn && carD < dist(p, P) - 10) continue; // standing at the car door, not talking to them
       if (!pv && p.who !== 'dot') return { label: `Chat with ${p.name.split(' ')[0]}`, go: () => chat(p.who) };
       if (!pv && p.who === 'dot') return { label: 'Talk to Dot', go: () => dotHint() };
     }
     if (within(c.lots.market, 1.8, 3)) return { label: 'Odd jobs board (£)', go: () => startMission(oddJob(c.town, c.year, hashString(c.town.id + c.year) + (S.save.oddN = (S.save.oddN || 0) + 1))) };
   }
   if (slow && within(c.lots.hub, 2, 3.2) && !(S.step && S.step.loaded)) return { label: c.air ? 'Departures ✈' : 'Tickets ⚓', go: openDepartures };
-  if (!pv) {
-    let best = null, bd = 1.9 * T;
-    for (const v of S.vehicles) { const d = dist(v, P) - VEHICLES[v.type].len * 0.25; if (d < bd && v.ai !== 'flee' && v.ai !== 'cop' && !v.dead) { bd = d; best = v; } }
-    if (best) return { label: best === S.heirloom ? 'Get in the Heirloom' : `Borrow the ${VEHICLES[best.type].name}`, go: () => enterVehicle(best) };
-    return null;
-  }
+  if (!pv) return getIn || null;
   return slow ? { label: '', go: () => leaveVehicle() } : null;
 }
 async function chat(who) {
@@ -951,6 +995,7 @@ function handleQueue() {
 function update(dt) {
   const P = S.player, c = S.city;
   S.t += dt;
+  if (S.transit) return;
   // a story mission that starts itself
   const next = nextStory();
   if (!S.mission && !S.busy && next && next.giver.who === 'auto' && isHere(next)) { startMission(next); return; }
@@ -964,6 +1009,8 @@ function update(dt) {
   if (!S || S.busy) return;
   // population
   const pp = P.vehicle || P;
+  const vr = Math.hypot(S.view.w, S.view.h) / 2 / S.view.z;
+  for (const v of S.vehicles) if (v.dead && v !== P.vehicle) { v.deadT = (v.deadT || 0) + dt; if (v.deadT > 12 && dist(v, pp) > vr) v.gone = true; }
   S.vehicles = S.vehicles.filter(v => !v.gone && (v === S.heirloom || v === P.vehicle || v === S.step?.target || v.ai === 'cop' || dist(v, pp) < (v.ai ? 40 : 60) * T));
   S.peds = S.peds.filter(p => p.npc || p.stepPed || p.cop || dist(p, pp) < 34 * T);
   S.spawnT -= dt;
@@ -973,6 +1020,7 @@ function update(dt) {
   for (const s of S.sparks) { s.t -= dt; s.x += s.vx * dt; s.y += s.vy * dt; }
   S.sparks = S.sparks.filter(s => s.t > 0);
   if (S.flash > 0) S.flash -= dt;
+  if ((S.saveT = (S.saveT || 0) + dt) > 15) { S.saveT = 0; persist(); }
   // the phone box rings until you answer it
   if (S.step?.step.t === 'goto' && S.step.step.at === 'phone') { S.ringT -= dt; if (S.ringT <= 0) { S.ringT = 1.6; const l = c.lot('phone'); float(l.x, l.y - 18, 'RING RING', '#ffd84a'); if (dist(l, pp) < 12 * T) sfx.ring(); } }
   for (const it of S.items) if (it.photo && dist(it, pp) < 1.2 * T) {
@@ -1094,6 +1142,7 @@ function render() {
   if (S.flash > 0) { g.fillStyle = `rgba(200,240,255,${S.flash})`; g.fillRect(0, 0, w, h); }
   if (S.heat > 0 && Math.floor(t * 3) % 2) { g.fillStyle = 'rgba(60,110,255,0.07)'; g.fillRect(0, 0, w, h); }
   miniMap(pp, tgt);
+  if (S.transit) drawTransit(g, w, h, dpr, S.frameDt || 0.016);
 }
 function miniMap(pp, tgt) {
   const m = S.ui.mini, c = S.city, R = 66, sc = 2.6;
@@ -1134,6 +1183,7 @@ function loop(now) {
     const pv = s.player.vehicle, quiet = s.ui.panelOpen || s.ui.dialogOpen || s.busy;
     engineNote(!!pv && !VEHICLES[pv.type].horse && !quiet, pv ? Math.min(1, Math.abs(pv.speed) / (VEHICLES[pv.type].max * T)) : 0);
     if (pv && VEHICLES[pv.type].horse && !quiet && Math.abs(pv.speed) > T) { s.clop = (s.clop || 0) - dt * Math.abs(pv.speed) / T; if (s.clop <= 0) { s.clop = 1.6; beep(180 + Math.random() * 40, 0.03, 'triangle', 0.035); } }
+    s.frameDt = dt;
     hud();
     render();
   } catch (e) {

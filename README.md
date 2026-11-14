@@ -192,7 +192,8 @@ js/storyui.js       Story mode HUD, dialogue box, panels, keyboard and touch inp
 js/storygame.js     Story mode game: driving, traffic, the law, missions, tickets, the time dial, saving
 sample/demo.ged     fictional demo family (regenerate with npm run demo)
 tools/              demo generator and single-file builder
-tests/              parser/layout tests (npm test) and a headless browser smoke test
+tests/              parser, layout and story tests (npm test), headless browser smoke tests (smoke.py for the
+                    3D looks, story-smoke.py plays the whole story) and a stand-in three.js for offline test runs
 ```
 
 ```

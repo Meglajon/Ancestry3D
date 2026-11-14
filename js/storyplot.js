@@ -632,7 +632,7 @@ export function buildStory(data, rootId, opts = {}) {
           { t: 'goto', at: 'hall', timed: 1.1, blocks: 2, text: `Get to ${N.hall}. They have blocked the road` },
           { t: 'catch', from: 'hall', label: 'grey clerk', drop: 'the torn page', text: 'A clerk in grey has the page under his coat. Run him down on foot', bark: { name: 'The clerk', text: `It's only a name! You've hundreds!` } },
           { t: 'chase', from: 'hall', hp: hp + 1, label: van, drop: 'the parish book', text: `Stop ${van} and get the book back` },
-          { t: 'escape', heat: 2, text: `${cap(w.law)} think it was you who took it. Lose them` },
+          { t: 'escape', heat: 1.3, text: `${cap(w.law)} think it was you who took it. Lose them` },
           { t: 'goto', at: 'hall', text: `Put the book back where it belongs, at ${N.hall}` },
         ],
       }[kind];
@@ -721,7 +721,7 @@ export function buildStory(data, rootId, opts = {}) {
       steps: [{ t: 'goto', at: 'office', text: 'Go to the offices of Hargreaves & Lowe' },
         { t: 'collect', around: 'office', radius: 15, n: 7, label: 'ledger pages', timed: 1.35, text: 'They are throwing the ledger out of the windows. Grab every page' },
         { t: 'catch', from: 'office', label: 'the office boy', drop: 'page one', time: 45, text: 'The office boy has page one. After him' },
-        { t: 'escape', heat: 2, text: 'The alarm has gone. Lose the police' },
+        { t: 'escape', heat: 1.3, text: 'The alarm has gone. Lose the police' },
         { t: 'goto', at: 'garage', timed: 1.4, blocks: 1, hunt: 2, text: `Take the ledger back to ${H.garage}. They will try to stop you` }],
       outro: [{ who: 'dot', text: `I ought to tell you. He was my apprentice. The brightest I ever had, and the loneliest. I showed him my first Engine one Friday, and on the Monday the pair of them were gone.` },
         { who: 'dot', text: `Page one, in his own hand: "HARGREAVES, Silas. Foundling. Left at the door of the parish of ${f.town.name}. No name given." Oh, I see. He isn't only erasing your family, ${hero.first}. He's been looking for his own.` },

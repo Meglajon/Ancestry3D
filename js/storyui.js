@@ -206,7 +206,7 @@ export function mountStoryUi() {
         $('stMore').textContent = '';
         timer = setInterval(() => {
           frame++;
-          if (shown < full.length) { shown = Math.min(full.length, shown + 3); txt.textContent = full.slice(0, shown); if (shown >= full.length) reveal(); }
+          if (shown < full.length) { shown = Math.min(full.length, shown + 3); txt.textContent = full.slice(0, shown); if (o.blip && frame % 2 === 0 && /[a-z]/i.test(full[shown - 1] || '')) o.blip(); if (shown >= full.length) reveal(); }
           if (o.portrait) o.portrait(face, shown < full.length ? frame : (frame % 40 === 0 ? 7 : 0));
         }, 28);
         if (o.portrait) o.portrait(face, 0);

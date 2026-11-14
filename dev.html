@@ -329,6 +329,14 @@ body.island .tabs button.on { background: var(--i-orange); color: #fff; }
 body.tab-viz .vizOnly { display: block; }
 body.tab-viz span.vizOnly { display: inline; }
 body.tab-viz .playOnly { display: none !important; }
+.storyOnly { display: none; }
+body.tab-story .storyOnly { display: block; }
+body.tab-story span.storyOnly { display: inline; }
+body.tab-story .playOnly, body.tab-story .noStory { display: none !important; }
+.storyPitch { font-size: 21px; line-height: 1.15; color: var(--ink); margin: 0 0 8px; }
+.storyPitch b { color: var(--gold); font-weight: normal; }
+body.island .storyPitch { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 15px; line-height: 1.35; color: var(--i-brown); }
+body.island .storyPitch b { color: var(--i-orange); font-weight: 800; }
 .help i { font-style: normal; color: var(--gold); }
 body.island .help i { color: var(--i-orange); }
 
@@ -483,7 +491,7 @@ body.island #verseList label.verse input { accent-color: var(--i-green); }
     <div class="logo" id="logo">ANCESTRY<br>3D</div>
     <div class="tagline" id="tagline">WALK AMONG YOUR ANCESTORS</div>
     <div class="tabs" id="tabs" role="tablist">
-      <button role="tab" data-tab="play" class="on" aria-selected="true">Play</button><button role="tab" data-tab="viz" aria-selected="false">Visualisation</button>
+      <button role="tab" data-tab="play" class="on" aria-selected="true">Play</button><button role="tab" data-tab="story" aria-selected="false">Story</button><button role="tab" data-tab="viz" aria-selected="false">Visualisation</button>
     </div>
     <div class="card playOnly">
       <h2>Look</h2>
@@ -512,10 +520,10 @@ body.island #verseList label.verse input { accent-color: var(--i-green); }
     </div>
 
     <div class="card hidden" id="cardSetup">
-      <h2>2. <span class="playOnly">Who are you playing?</span><span class="vizOnly">Whose family?</span></h2>
+      <h2>2. <span class="playOnly">Who are you playing?</span><span class="storyOnly">Who is the hero?</span><span class="vizOnly">Whose family?</span></h2>
       <input type="search" id="rootSearch" placeholder="Search names…" autocomplete="off">
       <div class="people" id="rootList"></div>
-      <div class="field">
+      <div class="field noStory">
         <div class="lbl"><span><span class="playOnly">Generations to walk back</span><span class="vizOnly">Generations to show</span></span> <b id="genVal">8</b></div>
         <input type="range" id="genRange" min="2" max="14" value="8">
         <div class="note" id="genInfo"></div>
@@ -534,6 +542,12 @@ body.island #verseList label.verse input { accent-color: var(--i-green); }
         <span class="tl">Keep couples together<small>Husbands and wives stand side by side where their family lines meet.</small></span>
       </label>
       <button class="btn go" id="btnStart">Enter ▶</button>
+      </div>
+      <div class="storyOnly">
+        <p class="storyPitch"><b>Relative Speed.</b> A crooked heir hunter is rubbing your ancestors out of the registers, one generation at a time. You have a battered estate car that runs on parish ink, and every year your family ever lived through to drive it in.</p>
+        <p class="storyPitch">Top-down driving, missions for cash, tickets to the countries your people came from, and a time dial for the years they lived in. Your progress is saved on this device.</p>
+        <div class="note" id="storyInfo"></div>
+        <button class="btn go" id="btnStory">Start the story ▶</button>
       </div>
       <div class="vizOnly">
         <div class="field">

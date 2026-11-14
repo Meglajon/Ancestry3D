@@ -5,7 +5,7 @@ import { parseGedcom } from '../js/gedcom.js';
 import { buildStory, placeTown, residentsOf, oddJob, fareBetween, inkCost, eraOf, jobGroup } from '../js/storyplot.js';
 
 const LOTS = new Set(['church', 'hall', 'pub', 'works', 'farm', 'school', 'hub', 'garage', 'market', 'infirmary', 'police', 'post', 'office', 'phone', 'home']);
-const STEPS = new Set(['goto', 'talk', 'carry', 'collect', 'chase', 'race', 'travel', 'escape']);
+const STEPS = new Set(['goto', 'talk', 'carry', 'collect', 'chase', 'race', 'travel', 'escape', 'tail', 'defend', 'catch']);
 function check(story, label) {
   assert.ok(story.missions.length >= 4, label + ': too few missions');
   assert.equal(story.missions[0].id, 'final-notice');
@@ -23,7 +23,9 @@ function check(story, label) {
     for (const s of m.steps) {
       assert.ok(STEPS.has(s.t), `${label}: ${m.id} step ${s.t}`);
       assert.ok(s.text && !/undefined|null|NaN/.test(s.text), `${label}: ${m.id} step text "${s.text}"`);
-      for (const k of [s.at, s.from, s.to, s.around, ...(s.stops || [])]) if (k) assert.ok(LOTS.has(k), `${label}: ${m.id} lot ${k}`);
+      if (s.bark) assert.ok(s.bark.text && (s.bark.name || s.bark.who), `${label}: ${m.id} bark`);
+      if (s.names) assert.equal(s.names.length, s.n, `${label}: ${m.id} names`);
+      for (const k of [s.at, s.from, s.to, s.around, ...(s.stops || []), ...(s.via || [])]) if (k) assert.ok(LOTS.has(k), `${label}: ${m.id} lot ${k}`);
       if (s.t === 'travel') assert.ok(story.towns.has(s.town));
       if (s.quiz) { assert.ok(s.quiz.options.length >= 3 && s.quiz.answer >= 0 && s.quiz.answer < s.quiz.options.length); assert.equal(new Set(s.quiz.options).size, s.quiz.options.length, `${label}: quiz repeats an option`); }
       for (const line of s.lines || []) assert.ok(!/undefined|null|NaN/.test(line), `${label}: ${m.id} "${line}"`);

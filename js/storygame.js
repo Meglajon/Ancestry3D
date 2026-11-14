@@ -125,8 +125,8 @@ export function openStory({ data, rootId, store, key, onClose }) {
   enterTown(story.towns.get(save.town), save.year, save.fresh ? 'start' : 'load');
   // Hooks for the headless test (tests/story-smoke.py): jump to the current target, finish a step, travel.
   S.debug = {
-    warp() { if (S.step?.step.need === 'heirloom' || ['carry', 'chase'].includes(S.step?.step.t)) this.intoHeirloom(); const t = stepTarget() || idleTarget(); if (!t) return; const P = S.player, sp = freeSpotNear(t.x, t.y, 0); if (P.vehicle) { const r = roadNear(t.x, t.y); P.vehicle.x = r.x; P.vehicle.y = r.y; P.vehicle.speed = P.vehicle.vx = P.vehicle.vy = 0; P.x = r.x; P.y = r.y; } else { P.x = sp.x; P.y = sp.y; } S.view.x = P.x; S.view.y = P.y; },
-    finishStep() { const st = S.step; if (!st) return; const s = st.step; if (s.t === 'talk') return; if (s.t === 'chase' && st.target) { st.target.hp = 0; return; } if (s.t === 'escape') { S.heat = 0; return; } if (s.t === 'travel') { enterTown(S.story.towns.get(s.town), s.year, 'hub'); return; } nextStep(); },
+    warp() { if (['tail', 'defend', 'catch'].includes(S.step?.step.t)) return; if (S.step?.step.need === 'heirloom' || ['carry', 'chase'].includes(S.step?.step.t)) this.intoHeirloom(); const t = stepTarget() || idleTarget(); if (!t) return; const P = S.player, sp = freeSpotNear(t.x, t.y, 0); if (P.vehicle) { const r = roadNear(t.x, t.y); P.vehicle.x = r.x; P.vehicle.y = r.y; P.vehicle.speed = P.vehicle.vx = P.vehicle.vy = 0; P.x = r.x; P.y = r.y; } else { P.x = sp.x; P.y = sp.y; } S.view.x = P.x; S.view.y = P.y; },
+    finishStep() { const st = S.step; if (!st) return; const s = st.step; if (s.t === 'talk') return; if (s.t === 'tail' && st.target) { st.target.arrived = true; st.grace = 9; return; } if (s.t === 'defend' && st.convoy) { st.convoy.arrived = true; return; } if (s.t === 'catch' && st.runner) { st.runner.caught = true; return; } if (s.t === 'chase' && st.target) { st.target.hp = 0; return; } if (s.t === 'escape') { S.heat = 0; return; } if (s.t === 'travel') { enterTown(S.story.towns.get(s.town), s.year, 'hub'); return; } nextStep(); },
     intoHeirloom() { const P = S.player; if (P.vehicle) return; P.x = S.heirloom.x; P.y = S.heirloom.y; enterVehicle(S.heirloom); },
     go(townId, year) { enterTown(S.story.towns.get(townId), year, 'hub'); },
     travel(townId, year, where) { travel(S.story.towns.get(townId), year, where); },
@@ -398,6 +398,10 @@ function aiDrive(v, dt) {
   const st = VEHICLES[v.type], P = S.player;
   if (!v.wp || !v.wp.length) planLeg(v);
   let tgt = v.wp[0];
+  if (v.ai === 'lead' && Math.hypot(v.dest.x - v.x, v.dest.y - v.y) < 3.4 * T) {
+    if (v.route && v.route.length) { v.dest = v.route.shift(); planLeg(v); tgt = v.wp[0]; }
+    else { v.ai = null; v.arrived = true; return; }
+  }
   const fast = v.ai === 'flee' || v.ai === 'cop' || v.ai === 'hunt' || v.ai === 'lead';
   if (v.ramCd > 0) v.ramCd -= dt;
   if (v.ai === 'cop' || v.ai === 'hunt') { const pp = v.prey && !v.prey.dead ? v.prey : P.vehicle || P; if (Math.hypot(pp.x - v.x, pp.y - v.y) < 5.5 * T) tgt = pp; }
@@ -463,7 +467,8 @@ function spawnAi(type, nearPt, ai, extra = {}) {
   const [i, j] = best;
   const dirs = [0, 1, 2, 3].filter(d => hasNode(i + DIRS[d][0], j + DIRS[d][1]));
   const far = d => { const n = nodeC(i + DIRS[d][0], j + DIRS[d][1]); return Math.hypot(n.x - P.x, n.y - P.y); };
-  dirs.sort((a, b) => ai === 'flee' ? far(b) - far(a) : far(a) - far(b));
+  const toDest = d => { const n = nodeC(i + DIRS[d][0], j + DIRS[d][1]); return Math.hypot(n.x - extra.dest.x, n.y - extra.dest.y); };
+  dirs.sort((a, b) => ai === 'lead' ? toDest(a) - toDest(b) : ai === 'flee' ? far(b) - far(a) : far(a) - far(b));
   const d = dirs[0], p = lanePt(i, j, d, 1);
   for (const o of S.vehicles) if (o.ai === 'traffic' && Math.hypot(o.x - p.x, o.y - p.y) < 3 * T) o.gone = true;
   return makeVehicle(type, p.x, p.y, Math.atan2(DIRS[d][1], DIRS[d][0]), { ai, dir: d, ni: i + DIRS[d][0], nj: j + DIRS[d][1], ...extra });
@@ -484,14 +489,16 @@ function collideVehicles() {
     const wa = hb ? 0 : ha ? 1 : A.parked ? 0.8 : 0.5, wb = ha ? 0 : hb ? 1 : 1 - wa + (B.parked ? 0.3 : 0);
     A.vx -= nx * vn * wb * 1.1; A.vy -= ny * vn * wb * 1.1; B.vx += nx * vn * wa * 1.1; B.vy += ny * vn * wa * 1.1;
     A.speed = A.vx * Math.cos(A.ang) + A.vy * Math.sin(A.ang); B.speed = B.vx * Math.cos(B.ang) + B.vy * Math.sin(B.ang);
+    const hunter = A.ai === 'hunt' && B.convoy ? A : B.ai === 'hunt' && A.convoy ? B : null;
+    if (hunter && !(hunter.ramCd > 0)) { const cv = hunter === A ? B : A; hunter.ramCd = 3.8; hunter.speed *= 0.3; cv.hp -= 1; float(cv.x, cv.y - 30, 'RAMMED!', '#ff5a4a'); spark((A.x + B.x) / 2, (A.y + B.y) / 2, 8); }
     if (A !== pv && B !== pv) continue;
     const other = A === pv ? B : A;
     if (vn < (other.ai === 'flee' ? 1.1 : 2.2) * T) continue;
     sfx.bump(); spark((A.x + B.x) / 2, (A.y + B.y) / 2, 8);
     if (other.ai === 'hunt') {
       const mine = Math.abs(pv.speed) >= Math.abs(other.speed);
-      if (mine && vn > 3 * T && other.hitCd <= 0) {
-        other.hp -= 1 + 0.5 * up('bar'); other.hitCd = 0.8;
+      if (mine && vn > 2.2 * T && other.hitCd <= 0) {
+        other.hp -= 1 + 0.5 * up('bar'); other.hitCd = 0.8; other.speed *= 0.3; other.ramCd = Math.max(other.ramCd || 0, 1.5);
         float(other.x, other.y - 30, other.hp > 0 ? 'CRUNCH!' : 'RUBBED OUT! +£15', '#f08aa0');
         if (other.hp <= 0) { other.dead = true; other.ai = null; S.save.cash += 15; sfx.cash(); if (bump('erasers') >= 5) badge('rubber'); }
       } else if (!mine && !(other.ramCd > 0)) {
@@ -499,8 +506,8 @@ function collideVehicles() {
         if (S.step?.timer != null) { S.step.timer = Math.max(1, S.step.timer - 4); float(pv.x, pv.y - 34, '−4 seconds', '#ff5a4a'); }
         gentleBump(vn + 3 * T);
       }
-    } else if (other.ai === 'lead') {
-      if (S.step) S.step.spotted = 1;
+    } else if (other.ai === 'lead' || other.convoy) {
+      if (S.step && S.step.step.t === 'tail') S.step.spotted = 1;
     } else if (other.ai === 'flee') {
       if (other.hitCd <= 0) { other.hp -= 1 + 0.5 * up('bar'); other.speed *= 0.6; other.hitCd = 0.9; float(other.x, other.y - 30, other.hp > 0 ? 'CRUNCH!' : 'GOT IT!', '#ffd84a'); if (S.step) S.step.hits = (S.step.hits || 0) + 1; }
     } else {
@@ -569,8 +576,8 @@ function knockDown(p, v) {
   moveWalker(p, Math.cos(a) * 26, Math.sin(a) * 26);
   sfx.bump();
   if (v !== S.player.vehicle) { float(p.x, p.y - 22, quip(), '#fff'); return; }
-  offence(p.cop ? 1 : 0.5);
   if (p.runner) { p.caught = true; return; }
+  offence(p.cop ? 1 : 0.5);
   if (p.rid && S.tree.people.has(p.rid) && S.tree.people.get(p.rid).gen > 0) {
     // your own ancestor: history objects
     const fine = Math.min(S.save.cash, 50);
@@ -721,7 +728,7 @@ async function startMission(def) {
 }
 function clearStep() {
   const st = S.step;
-  if (st) { S.items = S.items.filter(i => !i.step); if (st.target) st.target.gone = true; S.peds = S.peds.filter(p => !p.stepPed); }
+  if (st) { S.items = S.items.filter(i => !i.step); if (st.target) st.target.gone = true; if (st.convoy) { st.convoy.gone = true; for (const v of S.vehicles) if (v.prey === st.convoy) v.gone = true; } S.peds = S.peds.filter(p => !p.stepPed); }
   S.step = null;
 }
 function nextStep() {
@@ -749,7 +756,7 @@ function enterStep(step) {
       const tt = c.at(Math.floor(x / T), Math.floor(y / T));
       if (circleSolid(x, y, 14) || (tt !== G.ROAD && tt !== G.PAVE && tt !== G.PLAZA && tt !== G.YARD && tt !== G.GRASS && tt !== G.FIELD && tt !== G.APRON)) continue;
       if (S.items.some(i => Math.hypot(i.x - x, i.y - y) < 2.5 * T)) continue;
-      S.items.push({ step: true, x, y, kind, n: S.items.length });
+      S.items.push({ step: true, x, y, kind: step.names ? 'truants' : kind, n: S.items.length, label: step.names ? step.names[S.items.filter(i => i.step).length] : null });
     }
     st.n = S.items.filter(i => i.step).length;
     tiles = manh(pp, l) + st.n * step.radius * 1.5;
@@ -758,6 +765,24 @@ function enterStep(step) {
     st.target = spawnAi(step.boss ? 'engine1' : horse ? 'erasercoach' : 'eraser', lotPt(step.from), 'flee', { fast: !!step.fast });
     st.target.hp = step.hp; st.maxHp = step.hp; st.timer = 70 + step.hp * 14;
   } else if (step.t === 'escape') { S.heat = Math.max(S.heat, step.heat); S.heatCalm = 0; }
+  else if (step.t === 'tail') {
+    const troute = [...(step.via || []), step.to].map(k => lotPt(k));
+    st.target = spawnAi(c.year < 1900 ? 'erasercoach' : 'eraser', lotPt(step.from), 'lead', { dest: troute.shift(), route: troute, pace: 0.5 });
+    st.sus = 0; st.lost = 0; st.grace = 5;
+  } else if (step.t === 'defend') {
+    const type = c.year < 1900 ? 'wagon' : c.year < 1950 ? 'lorry' : 'van';
+    const route = [...(step.via || []), step.to].map(k => lotPt(k));
+    st.convoy = spawnAi(type, lotPt(step.from), 'lead', { dest: route.shift(), route, pace: 2.7 / VEHICLES[type].max, convoy: true });
+    st.convoy.color = '#e8dfc4'; st.convoy.hp = step.hp || 10; st.maxHp = st.convoy.hp; st.sent = 0; st.wave = 6;
+  } else if (step.t === 'catch') {
+    const l = lotPt(step.from), sp = freeSpotNear(l.x, l.y, 1);
+    st.runner = { stepPed: true, runner: true, x: sp.x, y: sp.y, ang: 0, sp: (step.speed || 4.8) * T, walk: 0, down: 0, look: ERASER_LOOK, name: step.label, think: 0 };
+    S.peds.push(st.runner); st.timer = step.time || 60;
+  }
+  if (step.bark) {
+    const sp = step.bark.who ? speaker(step.bark.who) : null, name = step.bark.name || (sp ? sp.who.split(' ')[0] : '');
+    S.ui.toast(`${name}: "${sp && sp.person ? voiceLine(sp.person, step.bark.text) : plainText(step.bark.text)}"`, 5200);
+  }
   if (step.timed) st.timer = Math.round(14 + tiles / 5.0 * step.timed + stops * 3.5);
   st.timer0 = st.timer;
 }
@@ -767,7 +792,9 @@ function stepTarget() {
   if (s.t === 'goto' || s.t === 'talk') return lotPt(s.at, S.tree.people.has(s.who) ? s.who : undefined);
   if (s.t === 'carry') return lotPt(st.loaded ? s.to : s.from);
   if (s.t === 'race') return lotPt(s.stops[st.k]);
-  if (s.t === 'chase') return st.target;
+  if (s.t === 'chase' || s.t === 'tail') return st.target;
+  if (s.t === 'defend') return st.convoy;
+  if (s.t === 'catch') return st.runner;
   if (s.t === 'collect') { let best = null, bd = 1e9; const pp = S.player.vehicle || S.player; for (const i of S.items) if (i.step) { const d = dist(i, pp); if (d < bd) { bd = d; best = i; } } return best; }
   if (s.t === 'travel') return travelTarget(s.town, s.year);
   return null;
@@ -809,6 +836,46 @@ function updateMission(dt) {
     const v = st.target;
     if (v.hp <= 0 && !st.stopped) { st.stopped = 0.01; v.ai = null; v.dead = true; S.ui.toast(`You have ${s.drop}.`, 2600); sfx.cash(); }
     if (st.stopped) { st.stopped += dt; st.timer = null; if (st.stopped > 1.3) { v.ai = null; st.target = null; nextStep(); } }
+  } else if (s.t === 'tail') {
+    const v = st.target, d = dist(v, pp);
+    if (st.grace > 0) st.grace -= dt;
+    else {
+      st.sus = d < (s.min || 3.4) * T ? st.sus + dt * 0.5 : Math.max(0, st.sus - dt * 0.22);
+      st.lost = d > (s.max || 15) * T ? st.lost + dt : Math.max(0, st.lost - dt);
+    }
+    st.far = d > (s.max || 15) * T * 0.8; st.close = d < (s.min || 3.4) * T * 1.3;
+    if (st.spotted || st.sus >= 1) failMission('They spotted you.');
+    else if (st.lost > 5) failMission('You lost them.');
+    else if (v.arrived) { st.target = null; v.parked = true; nextStep(); }
+  } else if (s.t === 'defend') {
+    const cv = st.convoy;
+    if (cv.hp <= 0) { cv.dead = true; failMission('The registers are gone.'); return; }
+    if (cv.arrived) { for (const v of S.vehicles) if (v.prey === cv) { v.ai = null; v.dead = true; } st.convoy = null; cv.parked = true; cv.convoy = false; sfx.cash(); nextStep(); return; }
+    st.wave -= dt;
+    const alive = S.vehicles.filter(v => v.prey === cv && v.ai === 'hunt').length;
+    if (st.wave <= 0 && alive < 2 && st.sent < (s.waves || 6)) {
+      st.wave = 9; st.sent++;
+      const a = Math.random() * 7, h = spawnAi(S.city.year < 1900 ? 'erasercoach' : 'eraser', { x: cv.x + Math.cos(a) * 11 * T, y: cv.y + Math.sin(a) * 11 * T }, 'hunt', { prey: cv });
+      h.hp = 2;
+    }
+  } else if (s.t === 'catch') {
+    const r = st.runner;
+    r.think -= dt;
+    if (r.think <= 0) {
+      r.think = 0.28;
+      let best = r.ang, bs = -1e9;
+      for (let k = 0; k < 8; k++) {
+        const a = k * Math.PI / 4, nx = r.x + Math.cos(a) * 1.2 * T, ny = r.y + Math.sin(a) * 1.2 * T;
+        if (circleSolid(nx, ny, 9)) continue;
+        const open = circleSolid(r.x + Math.cos(a) * 3 * T, r.y + Math.sin(a) * 3 * T, 9) ? -2.5 * T : 0;
+        const sc = Math.hypot(nx - pp.x, ny - pp.y) + open - Math.abs(angDiff(a, r.ang)) * 5;
+        if (sc > bs) { bs = sc; best = a; }
+      }
+      r.ang = best;
+    }
+    const scared = dist(r, pp) < 9 * T ? 1 : 0.45;
+    moveWalker(r, Math.cos(r.ang) * r.sp * scared * dt, Math.sin(r.ang) * r.sp * scared * dt, 8); r.walk += dt * 16 * scared;
+    if (r.caught || (!pv && dist(r, P) < 0.95 * T)) { r.down = 3; float(r.x, r.y - 22, 'Got him!', '#ffd84a'); sfx.cash(); st.runner = null; r.stepPed = false; r.runner = false; r.sp = 1.6 * T; r.dir = 0; r.cross = 0; S.ui.toast(`You have ${s.drop || 'the page'}.`, 2400); nextStep(); }
   } else if (s.t === 'travel') {
     if (S.city.town.id === s.town && S.city.year === s.year) nextStep();
   } else if (s.t === 'escape') {
@@ -1146,7 +1213,7 @@ function updatePlayer(dt) {
     const m = Math.hypot(kx, ky);
     P.moving = m > 0.1;
     if (P.moving) {
-      const sp = (k.has('ShiftLeft') || k.has('ShiftRight') ? 6.2 : 4.7) * T * Math.min(1, m);
+      const sp = (k.has('ShiftLeft') || k.has('ShiftRight') || (inp.stick.active && m > 0.9) ? 6.4 : 5.0) * T * Math.min(1, m);
       moveWalker(P, kx / m * sp * dt, ky / m * sp * dt);
       P.ang = Math.atan2(ky, kx); P.walk += dt * 13;
     }
@@ -1167,7 +1234,7 @@ function updatePlayer(dt) {
   driveVehicle(v, ctrl, dt);
   P.x = v.x; P.y = v.y; P.ang = v.ang;
   // knock people over
-  if (Math.abs(v.speed) > 2.4 * T) for (const p of S.peds) if (!p.npc && !p.stepPed && !(p.down > 0) && nearCar(v, p, 5)) knockDown(p, v);
+  if (Math.abs(v.speed) > 2.4 * T) for (const p of S.peds) if (!p.npc && (!p.stepPed || p.runner) && !(p.down > 0) && nearCar(v, p, 5)) knockDown(p, v);
   // the Parish Engine
   if (v === S.heirloom) {
     const st = statsOf(v), armed = S.dial != null && S.dial !== S.city.year;
@@ -1285,7 +1352,9 @@ function hud() {
     if (s.t === 'carry') text += ` <b>${st.loaded ? '▶ deliver' : '▶ collect'}${s.n > 1 ? ` ${Math.min(st.k + 1, s.n)}/${s.n}` : ''}</b>`;
     if (s.t === 'collect') text += ` <b>${st.k}/${st.n}</b>`;
     if (s.t === 'race') text += ` <b>${st.k}/${s.stops.length}</b>`;
-    if (s.t === 'chase' && st.target) text += ` <b>${'■'.repeat(Math.max(0, st.target.hp))}${'□'.repeat(Math.max(0, st.maxHp - st.target.hp))}</b>`;
+    if (s.t === 'tail') text += ` <b>${st.close ? 'too close! ' : st.far ? 'falling behind! ' : ''}${'!'.repeat(Math.ceil(st.sus * 5))}</b>`;
+    if (s.t === 'defend' && st.convoy) text += ` <b>${'■'.repeat(Math.max(0, Math.ceil(st.convoy.hp)))}${'□'.repeat(Math.max(0, st.maxHp - Math.ceil(st.convoy.hp)))}</b>`;
+    if (s.t === 'chase' && st.target) text += ` <b>${'■'.repeat(Math.max(0, Math.ceil(st.target.hp)))}${'□'.repeat(Math.max(0, st.maxHp - Math.ceil(st.target.hp)))}</b>`;
     if (s.gentle && st.loaded) text += ` <b>${'♦'.repeat(3 - st.bumps)}</b>`;
     if (s.need === 'heirloom' && P.vehicle !== S.heirloom) text += ' <b>(in the Heirloom)</b>';
     if (st.needWheels) text += ' <b>(you need wheels for this)</b>';
@@ -1336,7 +1405,8 @@ function render() {
     if (v.dead || (v.ai === 'flee' && v.hp <= 2)) at(v.x, v.y, 0, () => drawSmoke(g, t, v.dead ? 1 : 0.6));
   }
   if (!P.vehicle && !(P.invuln > 0 && Math.floor(t * 12) % 2)) at(P.x, P.y, P.ang, () => drawPerson(g, { look: P.look, walk: P.moving ? P.walk : 0, down: P.down > 0 ? 0.3 : 0 }, t));
-  if (S.step?.target) { const v = S.step.target; at(v.x, v.y, 0, () => drawMarker(g, t, '#ff5a4a', 34)); }
+  if (S.step?.target) { const v = S.step.target; at(v.x, v.y, 0, () => drawMarker(g, t, S.step.step.t === 'tail' ? '#8ab4ff' : '#ff5a4a', 34)); }
+  if (S.step?.convoy) { const v = S.step.convoy; at(v.x, v.y, 0, () => drawMarker(g, t, '#7be07b', 38)); }
   for (const s of S.sparks) { g.fillStyle = s.col; g.globalAlpha = clamp(s.t * 3, 0, 1); g.fillRect(s.x - 2, s.y - 2, 4, 4); }
   g.globalAlpha = 1;
   g.setTransform(1, 0, 0, 1, 0, 0);
@@ -1358,6 +1428,7 @@ function render() {
     if (p.name && dist(p, pp) < (p.npc ? 6 : 2.6) * T && p.look) { label(p.x, p.y - 20, p.name, '#fff', 11); if (p.sub && dist(p, pp) < 2.6 * T) label(p.x, p.y - 32, p.sub, '#d8d2c0', 9); }
   }
   if (!P.vehicle) for (const gv of c.graves) if (gv.who && Math.hypot((gv.x + 0.5) * T - P.x, (gv.y + 0.5) * T - P.y) < 1.6 * T) { label((gv.x + 0.5) * T, gv.y * T - 6, gv.who.name, '#e8e4d8', 10); label((gv.x + 0.5) * T, gv.y * T + 5, gv.who.life, '#b8b4a8', 9); }
+  for (const it of S.items) if (it.label && Math.abs(it.x - pp.x) < 14 * T && Math.abs(it.y - pp.y) < 10 * T) label(it.x, it.y - 18, it.label, '#ffe9a8', 11);
   for (const f of S.floats) { g.globalAlpha = clamp(f.t, 0, 1); label(f.x, f.y, f.text, f.col, 12); }
   g.globalAlpha = 1;
   g.setTransform(1, 0, 0, 1, 0, 0);
@@ -1366,7 +1437,7 @@ function render() {
     const sx = (tgt.x - V.x) * z + w / 2, sy = (tgt.y - V.y) * z + h / 2, m = 46 * dpr;
     if (sx < m || sy < m || sx > w - m || sy > h - m) {
       const a = Math.atan2(sy - h / 2, sx - w / 2), r = Math.min((w / 2 - m) / Math.abs(Math.cos(a) || 1e-6), (h / 2 - m) / Math.abs(Math.sin(a) || 1e-6));
-      const ax = w / 2 + Math.cos(a) * r, ay = h / 2 + Math.sin(a) * r, col = tgt.type ? '#ff5a4a' : '#ffd84a';
+      const ax = w / 2 + Math.cos(a) * r, ay = h / 2 + Math.sin(a) * r, col = S.step?.step.t === 'chase' ? '#ff5a4a' : tgt.type ? '#8ab4ff' : '#ffd84a';
       g.save(); g.translate(ax, ay); g.rotate(a); g.fillStyle = col; g.strokeStyle = '#000'; g.lineWidth = 3 * dpr; g.beginPath(); g.moveTo(16 * dpr, 0); g.lineTo(-10 * dpr, -11 * dpr); g.lineTo(-4 * dpr, 0); g.lineTo(-10 * dpr, 11 * dpr); g.closePath(); g.stroke(); g.fill(); g.restore();
       g.font = `700 ${12 * dpr}px "Fredoka", sans-serif`; g.textAlign = 'center'; g.fillStyle = '#fff'; g.strokeStyle = '#000'; g.lineWidth = 3 * dpr;
       const dtl = Math.round(Math.hypot(tgt.x - pp.x, tgt.y - pp.y) / T * 4) + 'm';
@@ -1404,7 +1475,7 @@ function miniMap(pp, tgt) {
   for (const v of S.vehicles) if (v.ai === 'cop') dot(v, '#4a7aff', 3); else if (v.ai === 'hunt') dot(v, '#f08aa0', 3);
   for (const p of S.peds) if (p.cop) dot(p, '#4a7aff', 2.5);
   for (const i of S.items) if (i.step) dot(i, '#fff', 2);
-  if (tgt) dot(tgt, tgt.type ? '#ff5a4a' : '#ffd84a', 4.5, '#fff');
+  if (tgt) dot(tgt, S.step?.step.t === 'chase' ? '#ff5a4a' : tgt.type ? '#8ab4ff' : '#ffd84a', 4.5, '#fff');
   m.fillStyle = '#fff'; m.strokeStyle = '#000'; m.lineWidth = 2;
   m.translate(R, R); m.rotate(S.player.ang); m.beginPath(); m.moveTo(7, 0); m.lineTo(-5, -5); m.lineTo(-2, 0); m.lineTo(-5, 5); m.closePath(); m.stroke(); m.fill();
   m.restore();
@@ -1428,7 +1499,7 @@ function loop(now) {
     hud();
     render();
   } catch (e) {
-    console.error(e);
+    console.error(e.stack || e);
     s.err = (s.err || 0) + 1;
     if (s.err < 3) s.ui.toast('Something went wrong: ' + e.message, 6000);
   }

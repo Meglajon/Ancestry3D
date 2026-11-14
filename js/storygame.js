@@ -1188,6 +1188,10 @@ async function passMission() {
   S.ui.banner(def.id === 'case-closed' ? 'CASE CLOSED' : def.frenzy ? `${m.score || 0} OFF THE ROAD` : def.cup ? `LAP ${lap.toFixed(1)}s` : 'MISSION PASSED', (medal ? '★'.repeat(medal) + '☆'.repeat(3 - medal) + ' · ' : '') + `+£${cash}` + (def.reward.proof ? ` · Proof: ${def.reward.proof.title}` : ''), '#7be07b', 3600);
   sfx.pass();
   persist(); spawnNpcs();
+  // what comes next, so there is always a reason to go on
+  const nx = !def.odd && def.reward.proof ? S.story.missions[S.save.idx] : null, nch = nx && nx.chapter != null && nx.chapter !== def.chapter ? S.story.chapters[nx.chapter] : null;
+  if (nch) setTimeout(() => S === tok && !S.mission && S.ui.toast(`Proof ${S.save.proofs.length} of ${S.story.proofs.length} lodged. Next link in the chain: ${nch.name}, your ${nch.rel}. ${nch.town.name}, ${nch.year}.`, 7000), 3900);
+  else if (nx && nx.id !== 'case-closed' && def.reward.proof) setTimeout(() => S === tok && !S.mission && S.ui.toast(`Proof ${S.save.proofs.length} of ${S.story.proofs.length} lodged. Dot wants a word: ${nx.title}.`, 6000), 3900);
   if (def.id === 'case-closed') setTimeout(() => S === tok && S.ui.toast('Every town and every year is open. Go and meet the family.', 6000), 3800);
 }
 function failMission(reason, quiet) {
@@ -1198,6 +1202,8 @@ function failMission(reason, quiet) {
   clearStep();
   S.mission = null;
   if (!quiet) { S.ui.banner('MISSION FAILED', reason, '#ff5a4a', 3000); sfx.fail(); }
+  const fc = S.fails || (S.fails = {}); fc[failed.id] = (fc[failed.id] || 0) + 1;
+  if (fc[failed.id] === 2 && !S.save.easy && !failed.frenzy && !failed.cup) setTimeout(() => S && S.ui.toast('Twice now. The pause menu can make every timer generous, and nobody need know.', 6500), 3200);
   spawnNpcs();
 }
 

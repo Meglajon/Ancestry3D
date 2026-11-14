@@ -28,7 +28,7 @@ async def main():
         await page.route('**/*', route)
         await page.goto('http://localhost:8765/dev.html'); await page.wait_for_timeout(800)
         await page.click('#tabs [data-tab="story"]'); await page.click('#btnDemo'); await page.wait_for_selector('#cardSetup:not(.hidden)')
-        await page.evaluate("localStorage.clear()"); await page.click('#btnStory'); await page.wait_for_selector('#story'); await page.wait_for_timeout(600)
+        await page.evaluate("localStorage.clear(); localStorage.setItem('a3d:nocut', '1')"); await page.click('#btnStory'); await page.wait_for_selector('#story'); await page.wait_for_timeout(600)
         ev = lambda js: page.evaluate(f"(() => {{ const s = {S}; {js} }})()")
         async def talk():
             for _ in range(60):

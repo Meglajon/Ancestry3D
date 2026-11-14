@@ -7710,7 +7710,7 @@ function buildStory(data, rootId, opts = {}) {
     steps: [
       { t: 'goto', at: 'phone', foot: true, text: present >= 1925 ? `Answer ${H.phone}` : `Read the note on ${H.phone}` },
       { t: 'talk', who: 'dot', at: 'phone', text: present >= 1925 ? `Answer ${H.phone}` : `Read the note on ${H.phone}`, lines: [
-        `Is that ${hero.first}? ${benefactor === hero ? 'The ' + surname + ' heir' : cap(benefactor.first) + '\'s ' + (benefactor.gen ? 'great-'.repeat(Math.max(0, benefactor.gen - 2)) + (benefactor.gen > 1 ? 'grandchild' : 'child') : 'heir')}? Thank heavens. Dorothy Pickering, County Archivist, retired.`,
+        `Is that ${hero.first}? ${benefactor === hero ? 'The ' + surname + ' heir' : cap(benefactor.first) + '\'s ' + (benefactor.gen ? 'great-'.repeat(Math.max(0, benefactor.gen - 2)) + (benefactor.gen > 1 ? 'grandchild' : 'child') : 'heir')}? Thank heavens. Dorothy Pickering: County Archivist, retired, and family, though not from any year you would know.`,
         `Don't sign anything. Silas Hargreaves doesn't find heirs. He removes them. Names are going out of the registers like chalk off a slate, and yours is next in the queue.`,
         `Come to my lock-up behind ${H.pub}. Tell nobody. Oh, and I do hope you can drive.`] },
       { t: 'goto', at: 'garage', text: `Go to ${H.garage}` },
@@ -9350,6 +9350,8 @@ const VEHICLES = {
   erasercoach: car(66, 22, 12.3, 8, 2.9, 99, { drift: 0, eng: 'none', name: 'grey carriage', horse: 1 }),
   engine1: car(50, 23, 13.5, 9, 3.0, 99, { drift: 0.8, eng: 'v8', name: 'Engine No. 1' }),
 };
+// Everything on wheels was a fifth too quick to steer comfortably. All slowed by the same amount, so nothing changes places.
+for (const v of Object.values(VEHICLES)) { v.max *= 0.8; v.acc *= 0.86; }
 const CAR_COLORS = ['#c8443a', '#3a6ac8', '#e8e8e4', '#2a2a2e', '#3a9a5a', '#e0b030', '#8a8e94', '#7a3ac8', '#d86a3a', '#2a8a9a'];
 const OLD_COLORS = ['#1c1c20', '#4a1a1a', '#1a2a4a', '#1a3a2a', '#3a2a1a'];
 const HORSES = ['#6a4428', '#3a2618', '#8a5a34', '#c8b8a0', '#2a2220'];
@@ -9656,6 +9658,7 @@ const CSS = `
 #story .st-btn { position: absolute; pointer-events: auto; width: 64px; height: 64px; border-radius: 50%; border: 3px solid rgba(0,0,0,0.6); font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 14px; color: #1a1a1a; background: rgba(255,216,74,0.92); }
 #story .st-btn.b2 { background: rgba(232,90,74,0.92); color: #fff; }
 #story .st-btn.sm { width: 46px; height: 46px; font-size: 12px; background: rgba(240,236,220,0.9); }
+#story.cut .st-menu, #story.cut .st-obj, #story.cut #stMini, #story.cut .st-touch, #story.cut .st-toast, #story.cut .st-hint, #story.cut #stCash, #story.cut #stStat, #story.cut #stWhere, #story.cut #stHint, #story.cut #stToast, #story.cut #stObj, #story.cut #stDial { opacity: 0; pointer-events: none; }
 #story .st-menu { position: absolute; right: calc(12px + env(safe-area-inset-right, 0px)); top: calc(152px + env(safe-area-inset-top, 0px)); pointer-events: auto; display: flex; gap: 6px; }
 #story .st-menu button { font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 13px; color: #1a1a1a; background: rgba(240,236,220,0.92); border: 2px solid #1a1a1a; border-radius: 8px; padding: 5px 9px; cursor: pointer; }
 @media (max-width: 700px) {
@@ -10254,6 +10257,7 @@ function personLook(id) {
   return S.looks.get(id);
 }
 function speaker(who) {
+  if (who === 'lowe') return { who: 'Mr Lowe', sub: 'Hargreaves & Lowe, Solicitors', look: FIXED_LOOKS.eraser };
   if (who === 'dot') return { who: 'Dorothy Pickering', sub: 'County Archivist, retired', look: FIXED_LOOKS.dot };
   if (who === 'blank') return { who: 'Silas Hargreaves', sub: 'Hargreaves & Lowe', look: FIXED_LOOKS.blank };
   if (who === 'letter') return { who: 'A letter', sub: '', letter: true };
@@ -10997,8 +11001,8 @@ function nextStep() {
   clearStep();
   m.i++;
   if (m.i >= m.def.steps.length) { passMission(); return; }
-  if (m.i === 1) hintOnce('brief', S.ui.touch ? 'Tap 📋 at any time to read the mission again.' : 'Press B (or 📋) at any time to read the mission again.', 5200);
-  if (m.def.id === 'final-notice' && m.i === 0) hintOnce('walk', S.ui.touch ? 'Left thumb walks. Follow the yellow arrow. GO talks, gets in and out and starts jobs.' : 'WASD or the arrow keys to walk (Shift to run). Follow the yellow arrow. E talks, gets in and out and starts jobs.', 8000);
+  if (m.i === 1 && m.def.id !== 'final-notice') hintOnce('brief', S.ui.touch ? 'Tap 📋 at any time to read the mission again.' : 'Press B (or 📋) at any time to read the mission again.', 5200);
+  if (false) hintOnce('walk', S.ui.touch ? 'Left thumb walks. Follow the yellow arrow. GO talks, gets in and out and starts jobs.' : 'WASD or the arrow keys to walk (Shift to run). Follow the yellow arrow. E talks, gets in and out and starts jobs.', 8000);
   spawnNpcs();
   enterStep(m.def.steps[m.i]);
 }
@@ -11062,7 +11066,7 @@ function enterStep(step) {
     const sp = step.bark.who ? speaker(step.bark.who) : null, name = step.bark.name || (sp ? sp.who.split(' ')[0] : '');
     S.ui.toast(`${name}: "${sp && sp.person ? voiceLine(sp.person, step.bark.text) : plainText(step.bark.text)}"`, 5200);
   }
-  if (step.timed) st.timer = Math.round(14 + tiles / (c.source === 'osm' ? 3.9 : 4.7) * step.timed + stops * 5);   // real streets twist more than drawn ones
+  if (step.timed) st.timer = Math.round(14 + tiles / (c.source === 'osm' ? 3.2 : 3.8) * step.timed + stops * 5);   // real streets twist more than drawn ones
   if (step.tokens && st.timer != null) {
     // clocks left about the streets: each one is five more seconds, if you care to go out of your way
     const dest = stepTarget() || pp, x0 = Math.min(pp.x, dest.x) - 9 * T, x1 = Math.max(pp.x, dest.x) + 9 * T, y0 = Math.min(pp.y, dest.y) - 9 * T, y1 = Math.max(pp.y, dest.y) + 9 * T;
@@ -11467,6 +11471,36 @@ function travel(town, year, where, waited) {
   if (jump) sfx.jump(); else sfx.door();
 }
 // Drawn over everything while a journey is under way.
+// The opening scene's dressing: black bars, a caption, and whoever is speaking, large, with a face to match.
+let cutFace = null;
+function drawCut(g, w, h, dpr) {
+  const cu = S.cut, bar = Math.round(h * 0.12), k = clamp((S.t - cu.t0) / 0.8, 0, 1);
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.fillStyle = '#0b080c'; g.fillRect(0, 0, w, bar * k); g.fillRect(0, h - bar * k, w, bar * k);
+  g.fillStyle = 'rgba(11,8,12,0.28)'; g.fillRect(0, bar, w, h - 2 * bar);
+  if (cu.caption) { g.font = `${Math.round(15 * dpr)}px "Press Start 2P", monospace`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#ffd84a'; g.fillText(cu.caption.toUpperCase(), w / 2, bar * 0.52); }
+  g.font = `700 ${Math.round(12 * dpr)}px "Nunito", sans-serif`; g.textAlign = 'right'; g.fillStyle = 'rgba(255,255,255,0.6)'; g.fillText(S.ui.touch ? 'tap to go on' : 'E: go on   ·   Esc: skip', w - 14 * dpr, h - bar * 0.5);
+  if (!cu.who || cu.who === 'note' || cu.who === 'letter') return;
+  const sp = speaker(cu.who), size = 16 * Math.max(6, Math.round(Math.min(h * 0.46, w * 0.3) / 16)), u = size / 16;
+  if (!cutFace) cutFace = document.createElement('canvas');
+  if (cutFace.width !== size) cutFace.width = cutFace.height = size;
+  const f = cutFace.getContext('2d'), talking = S.ui.dialogOpen ? Math.floor(S.t * 9) : 0;
+  drawPortrait(f, sp.look, size, talking); drawPortraitExtras(f, cu.who, sp.look, size);
+  // the face they are making
+  f.strokeStyle = sp.look.hair === '#dcdcd4' ? '#8a8a84' : '#241a16'; f.lineWidth = u * 0.7; f.lineCap = 'round';
+  const brow = (x0, y0, x1, y1) => { f.beginPath(); f.moveTo(x0 * u, y0 * u); f.lineTo(x1 * u, y1 * u); f.stroke(); };
+  if (cu.mood === 'angry') { brow(4.6, 4.7, 7.3, 5.7); brow(11.4, 4.7, 8.7, 5.7); }
+  else if (cu.mood === 'worried') { brow(4.6, 5.5, 7.2, 4.6); brow(11.4, 5.5, 8.8, 4.6); f.fillStyle = '#9ad4f0'; f.fillRect(12.3 * u, 5 * u, 0.7 * u, 1.3 * u); }
+  else if (cu.mood === 'set') { brow(4.6, 5, 7.2, 5.1); brow(11.4, 5, 8.8, 5.1); }
+  else if (cu.mood === 'grin') { brow(4.6, 5.3, 7.2, 4.7); brow(11.4, 4.6, 8.8, 5.4); f.fillStyle = '#fff'; f.fillRect(5.6 * u, 9.3 * u, 4.8 * u, 1.3 * u); f.strokeStyle = '#241a16'; f.lineWidth = u * 0.3; f.strokeRect(5.6 * u, 9.3 * u, 4.8 * u, 1.3 * u); for (let i = 1; i < 4; i++) { f.beginPath(); f.moveTo((5.6 + i * 1.2) * u, 9.3 * u); f.lineTo((5.6 + i * 1.2) * u, 10.6 * u); f.stroke(); } }
+  const x = cu.side ? w - size - 28 * dpr : 28 * dpr, y = Math.max(bar + 8 * dpr, h * 0.72 - size) + Math.sin(S.t * 2.2) * 3 * dpr, slide = clamp((S.t - (cu.since || 0)) / 0.25, 0, 1);
+  if (cu.shown !== cu.who + cu.side) { cu.shown = cu.who + cu.side; cu.since = S.t; }
+  g.imageSmoothingEnabled = false;
+  g.fillStyle = '#ffd84a'; g.fillRect(x - 5 * dpr + (cu.side ? 1 : -1) * (1 - slide) * 60, y - 5 * dpr, size + 10 * dpr, size + 10 * dpr);
+  g.fillStyle = '#2d2438'; g.fillRect(x - 2 * dpr + (cu.side ? 1 : -1) * (1 - slide) * 60, y - 2 * dpr, size + 4 * dpr, size + 4 * dpr);
+  g.drawImage(cutFace, x + (cu.side ? 1 : -1) * (1 - slide) * 60, y);
+  g.imageSmoothingEnabled = true;
+}
 function drawTransit(g, w, h, dpr, dt) {
   const tr = S.transit;
   tr.t += dt;
@@ -11710,7 +11744,7 @@ function enterVehicle(v) {
   v.ai = null; v.parked = false; v.wp = null;
   P.vehicle = v; sfx.door();
   if (VEHICLES[v.type].cab && !S.mission && !S.busy) { hintOnce('fares', 'You are a cab driver now. Take each fare where they want to go, quickly; get out to go off duty.', 6500); startFare(0); }
-  hintOnce('drive', S.ui.touch ? 'Push the stick the way you want to go. BRAKE is the handbrake. GO gets you out.' : 'W accelerates, S brakes and reverses, A and D steer. Space is the handbrake. E gets you out.');
+  if (!(S.mission && S.mission.def.id === 'final-notice')) hintOnce('drive', S.ui.touch ? 'Push the stick the way you want to go. BRAKE is the handbrake. GO gets you out.' : 'W accelerates, S brakes and reverses, A and D steer. Space is the handbrake. E gets you out.');
 }
 function startFare(streak) {
   const c = S.city;
@@ -11851,7 +11885,9 @@ function handleQueue() {
   const ui = S.ui, q = ui.input.queue;
   while (q.length) {
     const act = q.shift();
+    if (S.cut && act === 'pause') { S.cut.skip = true; ui._advance?.('action'); ui._advance?.('action'); continue; }   // Esc skips the opening
     if (ui.dialogOpen) { if (act === 'action' || act === 'space' || /^opt/.test(act)) ui._advance?.(act); continue; }
+    if (S.cut) continue;
     if (ui.panelOpen) { if (act === 'pause' || act === 'dial' || act === 'pedigree' || act === 'map' || act === 'brief') ui._panelClose?.(); continue; }
     if (S.busy) continue;
     if (act === 'action') { const r = S.retry; if ((!S.near || !S.near.label) && S.ui.touch && r && !S.mission && S.t < r.until && r.town === S.city.town.id && r.year === S.city.year) { S.retry = null; startMission(r.def, r); } else S.near?.go(); }
@@ -11870,6 +11906,7 @@ function update(dt) {
   if (S.transit) return;
   // a story mission that starts itself
   const next = nextStory();
+  if (!S.mission && !S.busy && S.save.idx === 0 && !S.save.seenCut && isHere(next) && !S.bot && (() => { try { return localStorage.getItem('a3d:nocut') !== '1'; } catch (e) { return true; } })()) { S.save.seenCut = 1; openingScene(); return; }
   if (!S.mission && !S.busy && next && next.giver.who === 'auto' && isHere(next) && S.t > (S.failT || -9) + 3.5) { const r = S.retry && S.retry.def === next ? S.retry : undefined; S.retry = null; startMission(next, r); return; }
   if (S.bot && S.step && !S.busy) {
     // the test driver gets in and out of the car by itself, and side-steps when it walks into a wall
@@ -11915,7 +11952,7 @@ function update(dt) {
   updateIncident(dt);
   S.clock = (S.clock + dt / 50) % 24;
   const roll = Math.floor(S.clock / 4);
-  if (roll !== S.rainRoll) { S.rainRoll = roll; const wetness = { med: 0.07, stucco: 0.1, flatroof: 0.03, veranda: 0.12 }[c.town.house] ?? 0.3; S.rainT = Math.random() < wetness ? 0.45 + Math.random() * 0.55 : 0; }
+  if (roll !== S.rainRoll) { S.rainRoll = roll; const wetness = { med: 0.07, stucco: 0.1, flatroof: 0.03, veranda: 0.12 }[c.town.house] ?? 0.3; S.rainT = 0; }   // clear skies: the rain was hard to see and no help to anybody
   S.rain += (S.rainT - S.rain) * Math.min(1, dt * 0.25);
   if (S.glitch > 0) S.glitch -= dt;
   updateCritters(dt);
@@ -11969,7 +12006,53 @@ function idleTarget() {
   if (isHere(n)) return S.peds.find(p => p.npc && p.giver) || null;
   return travelTarget(n.town, n.year);
 }
+// The opening: who is doing this to your family, why, and who is on your side. Played once, in the town itself,
+// with the camera in close, the lights down, and faces big enough to see what they think.
+async function openingScene() {
+  const tok = S, st = S.story, c = S.city, sur = st.surname, hero = st.hero, ben = st.benefactor || hero, clock0 = S.clock;
+  const estate = ben === hero ? `the ${sur} estate` : `the estate of ${ben.name}`;
+  const at = k => { const l = c.lot(k); return { x: l.x, y: l.y - 1.5 * T }; };
+  S.busy = true; S.clock = 22.5;
+  S.cut = { x: at('office').x, y: at('office').y, who: null, mood: '', side: 0, caption: `${c.town.name}. Tonight.`, t0: S.t };
+  S.ui.root.classList.add('cut');
+  const shot = async (where, who, mood, side, text, caption) => {
+    if (S !== tok || !S.cut || S.cut.skip) return;
+    Object.assign(S.cut, { ...(where ? at(where) : {}), who, mood, side, caption: caption || '' });
+    await say(who, text);
+  };
+  await new Promise(r => setTimeout(r, 1400));
+  await shot('office', 'note', '', 0, `The offices of Hargreaves & Lowe, Solicitors. The lights are on late.`, 'Hargreaves & Lowe, Solicitors');
+  await shot('office', 'blank', 'grin', 0, `Another one, Mr Lowe. ${cap(estate)}. A fortune, and nobody has come forward to claim it.`);
+  await shot('office', 'lowe', 'worried', 1, `But there are heirs, Mr Hargreaves. The ${sur} family. Hundreds of them, going back four hundred years. It is all written down in the parish registers.`);
+  await shot('office', 'blank', 'angry', 0, `Then we take them OUT of the registers. One name at a time. One generation at a time. All the way back to the very first ${sur}.`);
+  await shot('office', 'lowe', 'worried', 1, `If nobody was ever born... and nobody was ever married...`);
+  await shot('office', 'blank', 'grin', 0, `...then there never was a ${sur} family. And the money comes to the only people left to ask for it. Us. Start the time engine, Mr Lowe. We are going to erase a family from history.`);
+  await shot('garage', 'note', '', 0, `Across town, in a lock-up behind the pub, somebody has been listening.`, 'Meanwhile');
+  await shot('garage', 'dot', 'angry', 0, `Not while I'm breathing, Silas Hargreaves.`);
+  await shot('garage', 'dot', 'worried', 0, `I'm a ${sur} too, you see. From a good way further down the family tree than anybody alive today. If he rubs out that line, I am never born. Nor is anybody I love.`);
+  await shot('garage', 'dot', 'set', 0, `He has a time machine. So have I: she's old, she's yellow, and she needs a driver. I'm too old to drive her. But I know who isn't.`);
+  if (S === tok && S.cut && !S.cut.skip) { Object.assign(S.cut, { x: S.player.x, y: S.player.y, who: null, caption: `${hero.name}. That's you.` }); await say('note', `You are ${hero.first}. You have one very old car, one month, and four hundred years of family depending on you. Go back through time, one ancestor at a time, and prove every one of them existed before Hargreaves can rub them out.`); }
+  if (S !== tok) return;
+  S.cut = null; S.clock = clock0; S.ui.root.classList.remove('cut'); S.busy = false; S.failT = S.t - 3; persist();
+  S.ui.banner('RELATIVE SPEED', `Save the ${sur} family`, '#ffd84a', 3200);
+}
+const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
+// The first mission is the lesson: one instruction at a time, kept on screen until it has been done.
+function lesson() {
+  const m = S.mission, P = S.player, touch = S.ui.touch;
+  if (!m || m.def.id !== 'final-notice' || S.busy || S.cut) { if (S.lessonKey) { S.lessonKey = null; S.ui.toast('', 1); } return; }
+  const near = S.near && S.near.label;
+  let key = 'i' + m.i, tip = '';
+  if (m.i === 0) tip = touch ? 'WALK: push the left stick. Follow the yellow arrow to the phone box.' : 'WALK: use W A S D or the arrow keys (hold Shift to run). Follow the yellow arrow to the phone box.';
+  else if (m.i === 1 || m.i === 3) { key += near ? 'n' : ''; tip = near ? (touch ? 'TALK: tap GO.' : 'TALK: press E. E is how you talk to people, answer things and get in and out of cars.') : 'Walk right up to the yellow marker.'; }
+  else if (m.i === 2) tip = touch ? 'MISSION: tap the clipboard at the top right at any time to read what you are doing. Now follow the arrow to the lock-up.' : 'MISSION: press B at any time to read what you are meant to be doing. Now follow the yellow arrow to the lock-up.';
+  else if (m.i === 4 && !P.vehicle) { key += 'f'; tip = touch ? 'GET IN: walk up to the yellow car and tap GO.' : 'GET IN: walk up to the yellow car and press E.'; }
+  else if (m.i === 4) { key += 'v'; tip = touch ? 'DRIVE: push the stick the way you want to go. BRAKE is the handbrake, for sliding round corners. GO gets you out. Follow the arrow.' : 'DRIVE: W goes, S brakes and reverses, A and D steer. Space is the handbrake, for sliding round corners. E gets you out. Follow the arrow.'; }
+  else if (m.i === 5) { key += P.vehicle ? 'v' : 'f'; tip = P.vehicle ? 'CHASE: catch the grey van with the red ring and drive into it. Any touch counts. Empty the bar above it.' : 'Get back in the car: walk up to it and press ' + (touch ? 'GO.' : 'E.'); }
+  if (key !== S.lessonKey) { S.lessonKey = key; S.ui.toast(tip, 600000); }
+}
 function hud() {
+  lesson();
   const ui = S.ui, P = S.player, c = S.city, st = S.step, m = S.mission;
   ui.cash(S.save.cash);
   ui.stat(P.hearts, Math.floor(S.heat + 0.001));
@@ -12023,10 +12106,10 @@ function render() {
   const base = clamp(Math.min(w, h) / ((ui.touch ? 11.5 : 15.5) * T), 0.75 * dpr, 2.2 * dpr);
   const V = S.view;
   V.w = w; V.h = h;
-  const zt = base * (1 - 0.3 * clamp(sp, 0, 1));
+  const zt = S.cut ? base * 1.55 : base * (1 - 0.3 * clamp(sp, 0, 1));
   V.z += (zt - V.z) * 0.06; if (!V.init) { V.z = zt; V.init = true; }
   const lead = P.vehicle ? 0.22 : 0;
-  const tx = pp.x + (P.vehicle ? P.vehicle.vx * lead : 0), ty = pp.y + (P.vehicle ? P.vehicle.vy * lead : 0);
+  const tx = S.cut ? S.cut.x : pp.x + (P.vehicle ? P.vehicle.vx * lead : 0), ty = S.cut ? S.cut.y : pp.y + (P.vehicle ? P.vehicle.vy * lead : 0);
   V.x += (tx - V.x) * 0.14; V.y += (ty - V.y) * 0.14;
   if (S.shake > 0.02) { V.x += (Math.random() - 0.5) * S.shake * 16; V.y += (Math.random() - 0.5) * S.shake * 16; S.shake *= 0.86; } else S.shake = 0;
   const z = V.z, t = S.t;
@@ -12128,6 +12211,7 @@ function render() {
     g.fillStyle = `rgba(200,120,255,${0.16 * S.glitch})`; g.fillRect(0, 0, w, h);
   }
   miniMap(pp, tgt);
+  if (S.cut) drawCut(g, w, h, dpr);
   if (S.transit) drawTransit(g, w, h, dpr, S.frameDt || 0.016);
 }
 function miniMap(pp, tgt) {

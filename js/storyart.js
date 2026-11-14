@@ -17,6 +17,9 @@ export const VEHICLES = {
   cart: car(62, 20, 4.6, 3.5, 2.2, 5, { name: 'horse and cart', horse: 1 }),
   carriage: car(66, 21, 6.2, 4, 2.2, 6, { name: 'carriage', horse: 1 }),
   wagon: car(76, 23, 4.0, 3, 1.8, 8, { name: 'wagon', horse: 2 }),
+  taxi: car(48, 22, 12, 7.5, 2.8, 7, { name: 'taxi', cab: true }),
+  cab: car(62, 20, 6.6, 4.4, 2.3, 6, { name: 'hansom cab', horse: 1, cab: true }),
+  tram: car(92, 25, 5.5, 2.2, 0.9, 99, { name: 'tram', grip: 9, heavy: true }),
   eraser: car(54, 24, 12.3, 8, 2.9, 99, { name: 'Redaction van' }),
   erasercoach: car(66, 22, 12.3, 8, 2.9, 99, { name: 'grey carriage', horse: 1 }),
   engine1: car(50, 23, 13.5, 9, 3.0, 99, { name: 'Engine No. 1' }),
@@ -29,10 +32,10 @@ const WOODS = ['#8a6238', '#7a5630', '#9a7244'];
 /** What drives about in a given year: [type, weight]. */
 export function trafficMix(year) {
   return {
-    modern: [['hatch', 5], ['saloon', 4], ['van', 2], ['sports', 1], ['bus', 1]],
-    retro: [['classic', 6], ['van', 2], ['bus', 1], ['lorry', 1]],
-    vintage: [['vintage', 4], ['lorry', 2], ['cart', 3]],
-    victorian: [['cart', 5], ['carriage', 3], ['wagon', 2]],
+    modern: [['hatch', 5], ['saloon', 4], ['van', 2], ['sports', 1], ['bus', 1], ['taxi', 1]],
+    retro: [['classic', 6], ['van', 2], ['bus', 1], ['lorry', 1], ['taxi', 1]],
+    vintage: [['vintage', 4], ['lorry', 2], ['cart', 3], ['cab', 1]],
+    victorian: [['cart', 5], ['carriage', 3], ['wagon', 2], ['cab', 2]],
     georgian: [['cart', 5], ['carriage', 2], ['wagon', 3]],
     early: [['cart', 6], ['wagon', 3]],
   }[eraOf(year)];
@@ -43,6 +46,9 @@ export function paintFor(type, rnd) {
   if (type === 'eraser' || type === 'erasercoach') return '#8a8e94';
   if (type === 'engine1') return '#1a1a20';
   if (type === 'police') return '#f0f0ee';
+  if (type === 'taxi') return '#1c1c20';
+  if (type === 'cab') return '#1a3a2a';
+  if (type === 'tram') return rnd() < 0.5 ? '#7a2a2a' : '#2a5a3a';
   if (type === 'bus') return rnd() < 0.5 ? '#c8443a' : '#3a8a5a';
   if (VEHICLES[type].horse) return WOODS[Math.floor(rnd() * WOODS.length)];
   if (type === 'vintage' || type === 'lorry') return OLD_COLORS[Math.floor(rnd() * OLD_COLORS.length)];
@@ -78,6 +84,7 @@ export function drawVehicle(g, v, t) {
     else if (k === 'wagon') { g.fillStyle = body; rr(g, bx, -W / 2, bodyLen, W, 2); g.fillStyle = '#e8dfc8'; rr(g, bx + 2, -W / 2 + 1, bodyLen - 10, W - 2, 6); g.strokeStyle = 'rgba(0,0,0,0.18)'; g.lineWidth = 1; for (let i = 1; i < 4; i++) { g.beginPath(); g.moveTo(bx + 2 + i * (bodyLen - 10) / 4, -W / 2 + 1); g.lineTo(bx + 2 + i * (bodyLen - 10) / 4, W / 2 - 1); g.stroke(); } }
     else {
       const grey = k === 'erasercoach';
+      if (k === 'cab') { g.fillStyle = '#f0c030'; g.fillRect(bx + bodyLen - 9, -3, 5, 6); }
       g.fillStyle = grey ? '#8a8e94' : '#1c1c20'; rr(g, bx, -W / 2, bodyLen, W, 5); g.fillStyle = grey ? '#a4a8ae' : '#34343a'; rr(g, bx + 4, -W / 2 + 3, bodyLen - 12, W - 6, 3);
       if (grey) { g.fillStyle = '#f08aa0'; g.fillRect(bx + 7, -5, 14, 10); g.fillStyle = '#f8f4f0'; g.fillRect(bx + 15, -5, 3, 10); } else { g.fillStyle = '#c8a040'; g.fillRect(bx + bodyLen - 5, -W / 2 + 2, 2, 2); g.fillRect(bx + bodyLen - 5, W / 2 - 4, 2, 2); }
     }
@@ -95,12 +102,12 @@ export function drawVehicle(g, v, t) {
     g.fillStyle = '#f0e6a0'; g.beginPath(); g.arc(L / 2 - 2, -W / 2 + 4, 2.5, 0, 7); g.arc(L / 2 - 2, W / 2 - 4, 2.5, 0, 7); g.fill();
     return;
   }
-  const round = k === 'classic' ? 9 : k === 'van' || k === 'eraser' || k === 'bus' ? 4 : 7;
+  const round = k === 'classic' ? 9 : k === 'van' || k === 'eraser' || k === 'bus' || k === 'tram' ? 4 : 7;
   g.fillStyle = body; rr(g, -L / 2, -W / 2, L, W, round);
   if (k === 'heirloom') { g.fillStyle = '#7a5630'; g.fillRect(-L / 2 + 6, -W / 2 + 1, L * 0.62, 3); g.fillRect(-L / 2 + 6, W / 2 - 4, L * 0.62, 3); }
   if (k === 'police') { g.fillStyle = '#2a4ac8'; g.fillRect(-L / 2 + 4, -W / 2, L - 8, 3); g.fillRect(-L / 2 + 4, W / 2 - 3, L - 8, 3); }
-  const longRoof = k === 'van' || k === 'eraser' || k === 'bus' || k === 'heirloom';
-  const cx0 = longRoof ? -L / 2 + 4 : -L * 0.3, cx1 = k === 'bus' ? L / 2 - 6 : longRoof ? L * 0.26 : L * 0.2;
+  const longRoof = k === 'van' || k === 'eraser' || k === 'bus' || k === 'heirloom' || k === 'tram';
+  const cx0 = longRoof ? -L / 2 + 4 : -L * 0.3, cx1 = k === 'bus' || k === 'tram' ? L / 2 - 6 : longRoof ? L * 0.26 : L * 0.2;
   g.fillStyle = '#1c2832'; rr(g, cx0, -W / 2 + 2.5, cx1 - cx0, W - 5, 3);
   g.fillStyle = tint(body, 1.18); rr(g, cx0 + (longRoof ? 2 : 5), -W / 2 + 4, cx1 - cx0 - (longRoof ? 9 : 12), W - 8, 2);
   if (k === 'bus') { g.fillStyle = 'rgba(0,0,0,0.15)'; for (let x = cx0 + 10; x < cx1 - 10; x += 12) g.fillRect(x, -W / 2 + 4, 2, W - 8); }
@@ -115,6 +122,8 @@ export function drawVehicle(g, v, t) {
     if ((v.charge || 0) > 0.02) { g.fillStyle = `rgba(${k === 'heirloom' ? '120,220,255' : '200,120,255'},${0.25 + v.charge * 0.5})`; g.beginPath(); g.arc(-2, 0, 8 + v.charge * 10, 0, 7); g.fill(); }
   }
   if (k === 'police') { g.fillStyle = Math.floor(t * 6) % 2 ? '#3a6aff' : '#ff3a3a'; g.fillRect(-4, -5, 6, 10); }
+  if (k === 'taxi') { g.fillStyle = v.hired ? '#6a5a20' : '#f0c030'; g.fillRect(-3, -6, 7, 12); g.fillStyle = '#1c1c20'; g.fillRect(-1, -4, 3, 8); }
+  if (k === 'tram') { g.fillStyle = '#e8dfc8'; g.fillRect(-L / 2 + 3, -W / 2 + 3, L - 6, 3); g.fillRect(-L / 2 + 3, W / 2 - 6, L - 6, 3); g.strokeStyle = '#2a2a2e'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(-8, 0); g.lineTo(14, 0); g.stroke(); g.fillStyle = '#2a2a2e'; g.beginPath(); g.arc(14, 0, 2.5, 0, 7); g.fill(); }
   g.fillStyle = '#fff2b0'; g.fillRect(L / 2 - 3, -W / 2 + 2, 3, 5); g.fillRect(L / 2 - 3, W / 2 - 7, 3, 5);
   g.fillStyle = '#d82a2a'; g.fillRect(-L / 2, -W / 2 + 2, 2, 5); g.fillRect(-L / 2, W / 2 - 7, 2, 5);
 }
@@ -187,6 +196,18 @@ export function drawItem(g, kind, t, n = 0) {
   }
 }
 
+/** Small animals. kind: hen | dog | pigeon | cat. Drawn at the origin facing +x. */
+export function drawCritter(g, kind, t, n = 0, moving = false) {
+  const s = moving ? Math.sin(t * 22 + n) * 1.5 : 0;
+  g.fillStyle = 'rgba(0,0,0,0.22)'; g.beginPath(); g.ellipse(1, 2, 5, 3, 0, 0, 7); g.fill();
+  if (kind === 'hen') { g.fillStyle = n % 2 ? '#e8e0d0' : '#a8643a'; g.beginPath(); g.ellipse(0, 0, 5, 3.6, 0, 0, 7); g.fill(); g.beginPath(); g.arc(4.5, s * 0.3, 2.2, 0, 7); g.fill(); g.fillStyle = '#d83a2a'; g.fillRect(4.5, -1 + s * 0.3, 2, 2); g.fillStyle = '#e8b030'; g.fillRect(6.5, -0.5 + s * 0.3, 2, 1); }
+  else if (kind === 'pigeon') { g.fillStyle = '#8a8e98'; g.beginPath(); g.ellipse(0, 0, 4.4, 2.8, 0, 0, 7); g.fill(); g.fillStyle = '#5a6a7a'; g.beginPath(); g.arc(3.6, 0, 1.9, 0, 7); g.fill(); if (moving) { g.fillStyle = 'rgba(200,204,214,0.9)'; g.fillRect(-2, -7 - s, 4, 5); g.fillRect(-2, 2 + s, 4, 5); } }
+  else { const c = kind === 'cat' ? ['#2a2a2e', '#d88a3a', '#8a8a8a'][n % 3] : ['#8a5a34', '#2a2220', '#d8c8a0', '#6a4428'][n % 4], L = kind === 'cat' ? 6 : 8;
+    g.fillStyle = c; g.beginPath(); g.ellipse(0, 0, L, 3.4, 0, 0, 7); g.fill(); g.beginPath(); g.arc(L, 0, 3, 0, 7); g.fill();
+    g.strokeStyle = c; g.lineWidth = 1.6; g.beginPath(); g.moveTo(-L, 0); g.lineTo(-L - 5, s * 1.5 - 2); g.stroke();
+    g.fillRect(-4 + s, -5, 2, 2.5); g.fillRect(3 - s, -5, 2, 2.5); g.fillRect(-4 - s, 2.5, 2, 2.5); g.fillRect(3 + s, 2.5, 2, 2.5); }
+}
+
 /** A mission marker on the ground. */
 export function drawMarker(g, t, color = '#ffd84a', r = 26, glyph = '') {
   const ph = (t * 1.2) % 1;
@@ -200,6 +221,9 @@ export function drawMarker(g, t, color = '#ffd84a', r = 26, glyph = '') {
     g.lineWidth = 4; g.strokeStyle = 'rgba(0,0,0,0.75)'; g.strokeText(glyph, 0, y); g.fillStyle = color; g.fillText(glyph, 0, y);
   }
 }
+
+/** One of Blank's men on foot. */
+export const ERASER_LOOK = { female: false, skin: '#d0ccc8', hair: '#7a7a7e', top: '#8a8e94', hat: '#8a8e94', badge: '#f08aa0', r: 1 };
 
 // ---------------- Portraits for the three people who are not in anybody's file ----------------
 export const FIXED_LOOKS = {

@@ -352,7 +352,7 @@ export function buildStory(data, rootId, opts = {}) {
 
   // ---- Prologue (present day, home town) ----
   add({
-    id: 'final-notice', act: 'Prologue', title: 'Final Notice', town: home.id, year: present, giver: { who: 'auto' },
+    id: 'final-notice', act: 'Prologue', title: 'Final Notice', town: home.id, year: present, giver: { who: 'auto' }, hour: 9,
     brief: 'A solicitor\'s letter, a ringing phone box and a car that should not exist.',
     intro: [
       { who: 'letter', text: `FINAL NOTICE. Re: the dormant estate of ${estateOf}${benefactor.town && benefactor !== hero ? ', late of ' + benefactor.town.name : ''}. Unless a proven line of descent is lodged by the last day of the month, the estate passes to our client. No reply is necessary. Yours faithfully, S. Blank, Blank & Void, Probate Genealogists.` },
@@ -494,6 +494,7 @@ export function buildStory(data, rootId, opts = {}) {
     }
     if (set) add({
       ...base, id: `proof-${i}`, title: set.title, giver: { who: c.id, at: 'home' }, brief: set.brief,
+      hour: { wedding: 10.5, birth: 2.5, emig: 6, arms: 7, census: 20.2, baptism: 11, chase: 22.5 }[kind],
       intro: [{ who: c.id, text: set.ask }], steps: set.steps,
       outro: [{ who: 'dot', text: `${set.done} Proof ${proofs.length} of ${chapters.length + 1}.` + (chapters[i + 1] && chapters[i + 1] !== finale ? ` Next: ${chapters[i + 1].name}, your ${chapters[i + 1].rel}, ${chapters[i + 1].town.name}, ${chapters[i + 1].year}.` : '') }],
       reward: { cash: pay + 120, proof: set.proof },
@@ -502,7 +503,7 @@ export function buildStory(data, rootId, opts = {}) {
     // The Golden Door: everybody's tree passes somebody's manifest. Only if the file never leaves home.
     if (!foreign && present > 1907 && !isFinale && i === Math.min(1, chapters.length - 2)) {
       const ny = town(NEW_YORK);
-      add({ act: 'Interlude', id: 'golden-door', title: 'The Golden Door', town: ny.id, year: 1907, giver: { who: 'dot', at: 'phone' },
+      add({ act: 'Interlude', id: 'golden-door', title: 'The Golden Door', town: ny.id, year: 1907, giver: { who: 'dot', at: 'phone' }, hour: 6.2,
         brief: 'Blank has gone wholesale: Ellis Island, 1907, twelve million names.',
         intro: [{ who: 'dot', text: `A note in Dot's handwriting, pinned where you'd find it: "He's gone wholesale. Ellis Island, New York, 1907. Twelve million names on those manifests and he means to thin them out. Not your family's, perhaps, but somebody's. Go."` }],
         steps: [{ t: 'collect', around: 'hub', radius: 17, n: 8, label: 'manifest pages', timed: 1.5, text: 'Collect the ship\'s manifest pages blowing along the waterfront' },
@@ -515,7 +516,7 @@ export function buildStory(data, rootId, opts = {}) {
     if (isFinale) {
       const g = `the ${w.van}`;
       add({
-        ...base, id: 'blank-page', title: 'The Blank Page', giver: { who: c.id, at: 'home' },
+        ...base, id: 'blank-page', title: 'The Blank Page', giver: { who: c.id, at: 'home' }, hour: 18.6,
         brief: `${c.name} is the top of your tree. If ${c.his} name never goes in the book, nobody below it does either.`,
         intro: [{ who: c.id, text: `There's a gentleman at the church this hour, grey as a gravestone, turning the parson's book to my page. He said the queerest thing. He said, "Somebody has to be nobody." What did he mean by it?` },
           { who: 'dot', text: `A note, in pencil, shaking: "${hero.first}. This is it. ${c.name}${bapt?.date ? ', baptised ' + datePhrase(bapt.date) : ', ' + c.by}, ${c.town.name}. Nobody above ${c.him} in any record. Your brick wall. If that entry goes, every name under it goes, down to yours. He has my first Engine. Do not let him turn the page."` }],
@@ -535,7 +536,7 @@ export function buildStory(data, rootId, opts = {}) {
   function addLedger() {
     const f = finale;
     add({
-      act: 'Interlude', id: 'blank-and-void', title: 'Blank & Void', town: home.id, year: present, giver: { who: 'dot', at: 'garage' },
+      act: 'Interlude', id: 'blank-and-void', title: 'Blank & Void', town: home.id, year: present, giver: { who: 'dot', at: 'garage' }, hour: 23,
       brief: 'A visit to the offices of Blank & Void, Probate Genealogists. Uninvited.',
       intro: [{ who: 'dot', text: `He's ahead of us and I want to know how. Blank & Void keep an office in town. Very grey. Very shredder. Get whatever's left of his ledger, and expect company on the way out.` }],
       steps: [{ t: 'goto', at: 'office', text: 'Go to the offices of Blank & Void' },
@@ -566,7 +567,7 @@ export function buildStory(data, rootId, opts = {}) {
   }
   // ---- Epilogue ----
   add({
-    act: 'Epilogue', id: 'case-closed', title: 'Case Closed', town: home.id, year: present, giver: { who: 'dot', at: 'garage' },
+    act: 'Epilogue', id: 'case-closed', title: 'Case Closed', town: home.id, year: present, giver: { who: 'dot', at: 'garage' }, hour: 14,
     brief: 'One pedigree, proven. One extra name to write in.',
     intro: [{ who: 'dot', text: `Every link proven, ${hero.first}, from you ${finale ? 'to ' + finale.name : 'upwards'}. And one more name for the chart than we started with. Drive us to ${H.hall}, both of us. Slowly. My hip, and his nerves.` }],
     steps: [{ t: 'carry', from: 'garage', to: 'hall', n: 1, label: 'passengers', passenger: 'Dot and Silas', gentle: true, text: `Drive Dot and Silas to ${H.hall}. Gently` }],
@@ -635,4 +636,72 @@ export function townNotes(data, town, limit = 12) {
     if (text.length > 8) out.push({ name: displayName(indi), life: lifespan(indi), text: text.length > 230 ? text.slice(0, 227).replace(/\s+\S*$/, '') + '…' : text });
   }
   return out;
+}
+
+/** How somebody in the file is related to the hero, as far as the game works it out. */
+export function kinOf(data, tree, id) {
+  const p = tree.people.get(id);
+  if (p) return p.gen === 0 ? 'you' : 'your ' + relationship(p.gen, p.indi.sex);
+  const indi = data.individuals.get(id);
+  if (!indi) return '';
+  const m = indi.sex === 'M', f = indi.sex === 'F';
+  const par = parentsOf(data, id);
+  for (const pid of [par.father, par.mother]) {
+    const a = pid && tree.people.get(pid);
+    if (!a) continue;
+    const g = a.gen - 1; // the generation this person shares with someone on your line
+    if (g < 0) return 'your ' + (m ? 'son' : f ? 'daughter' : 'child');
+    if (g === 0) return 'your ' + (m ? 'brother' : f ? 'sister' : 'sibling');
+    return 'your ' + (g === 1 ? '' : g === 2 ? 'great-' : g === 3 ? 'great-great-' : (g - 1) + '× great-') + (m ? 'uncle' : f ? 'aunt' : 'uncle or aunt');
+  }
+  for (const fid of indi.fams) {
+    const fam = data.families.get(fid), sp = fam && (fam.husb === id ? fam.wife : fam.husb), a = sp && tree.people.get(sp);
+    if (a) return a.gen === 0 ? 'your ' + (m ? 'husband' : f ? 'wife' : 'spouse') : `married to your ${relationship(a.gen, a.indi.sex)}`;
+  }
+  for (const pid of [par.father, par.mother]) {
+    if (!pid) continue;
+    const pp = parentsOf(data, pid);
+    if ([pp.father, pp.mother].some(x => x && tree.people.has(x))) return 'a cousin of yours';
+  }
+  return 'in your family file';
+}
+
+/** Who lies in the churchyard: people in the file who died or were buried in this town by this year. */
+export function burialsIn(data, town, year, limit = 24) {
+  const out = [];
+  let seen = 0;
+  for (const indi of data.individuals.values()) {
+    if (seen++ > 30000) break;
+    const dy = deathYear(indi);
+    if (dy == null || dy > year) continue;
+    const place = evPlace(indi, 'BURI', 'CREM') || evPlace(indi, 'DEAT');
+    if (!place || placeTown(place)?.id !== town.id) continue;
+    out.push({ id: indi.id, name: displayName(indi), life: lifespan(indi), dy });
+  }
+  return out.sort((a, b) => b.dy - a.dy).slice(0, limit);
+}
+
+/** What somebody would tell you about themselves in a given year: only what has happened to them so far. */
+export function lifeSoFar(data, id, year) {
+  const indi = data.individuals.get(id);
+  if (!indi) return [];
+  const by = birthYear(indi), age = by != null ? year - by : null;
+  const jobs = indi.events.filter(e => e.tag === 'OCCU' && e.value && (dateYear(e.date) ?? 0) <= year).map(e => e.value.trim().toLowerCase());
+  const lines = [];
+  const birth = findEvent(indi, 'BIRT', 'CHR', 'BAPM');
+  lines.push(`«${displayName(indi)}»${age != null && age >= 0 ? `, ${age === 0 ? 'not a year old' : age + ' years old'}` : ''}${age != null && age >= 12 && jobs.length ? `, «${jobs[0]}»` : ''}.` + (birth?.place ? ` Born${birth.date ? ' ' + datePhrase(birth.date) : ''} in «${placeTown(birth.place)?.name || birth.place}».` : ''));
+  for (const fid of indi.fams) {
+    const fam = data.families.get(fid);
+    if (!fam) continue;
+    const my = dateYear(fam.events.find(e => e.tag === 'MARR')?.date);
+    const sp = data.individuals.get(fam.husb === id ? fam.wife : fam.husb);
+    const kids = fam.children.map(c => data.individuals.get(c)).filter(k => k && (birthYear(k) ?? 9999) <= year);
+    if (my != null && my > year && !kids.length) continue;
+    if (sp) lines.push(`Married to «${displayName(sp)}»${my ? ' since «' + my + '»' : ''}.` + (kids.length ? ` ${kids.length === 1 ? 'One child' : kids.length + ' children'} so far: ${kids.slice(0, 6).map(k => '«' + firstName(k) + '»').join(', ')}${kids.length > 6 ? ' and more' : ''}.` : ''));
+  }
+  const par = parentsOf(data, id), fa = par.father && data.individuals.get(par.father), mo = par.mother && data.individuals.get(par.mother);
+  if (fa || mo) lines.push(`My ${fa && mo ? 'father and mother are' : fa ? 'father is' : 'mother is'} ${[fa, mo].filter(Boolean).map(x => '«' + displayName(x) + '»').join(' and ')}.`);
+  const ev = indi.events.filter(e => ['RESI', 'CENS', 'EMIG', 'IMMI'].includes(e.tag) && e.place && (dateYear(e.date) ?? 9999) <= year).pop();
+  if (ev) lines.push(`${ev.tag === 'EMIG' ? 'I left' : ev.tag === 'IMMI' ? 'I came to' : 'Lately I have lived at'} «${ev.place.split(',')[0]}»${ev.date ? ', ' + datePhrase(ev.date) : ''}.`);
+  return lines;
 }

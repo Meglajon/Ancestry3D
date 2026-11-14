@@ -6,9 +6,9 @@ import { computeTraits } from './traits.js';
 import { lookFor } from './outfits.js';
 import { drawPortrait } from './textures.js';
 import { buildDialogue, voiceLine } from './dialogue.js';
-import { buildStory, eraOf, ERA_NAMES, eraWords, fareBetween, inkCost, residentsOf, oddJob, townNotes } from './storyplot.js';
+import { buildStory, eraOf, ERA_NAMES, eraWords, fareBetween, inkCost, residentsOf, oddJob, townNotes, kinOf, burialsIn, lifeSoFar } from './storyplot.js';
 import { buildTown, TILE, G, DIRS, laneOffset, drawGround, drawTall, renderMiniMap } from './storycity.js';
-import { VEHICLES, trafficMix, trafficCount, paintFor, drawVehicle, drawSmoke, strangerLook, lookSummary, drawPerson, drawItem, drawMarker, FIXED_LOOKS, drawPortraitExtras } from './storyart.js';
+import { VEHICLES, trafficMix, trafficCount, paintFor, drawVehicle, drawSmoke, strangerLook, lookSummary, drawPerson, drawItem, drawMarker, FIXED_LOOKS, drawPortraitExtras, drawCritter, ERASER_LOOK } from './storyart.js';
 import { mountStoryUi, escapeText } from './storyui.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -74,7 +74,12 @@ export function openStory({ data, rootId, store, key, onClose }) {
     save: null, city: null, mini: null, player: null, heirloom: null, vehicles: [], peds: [], items: [], floats: [], sparks: [],
     mission: null, step: null, busy: false, heat: 0, heatCalm: 0, bust: 0, dial: null, target: null, near: null,
     view: { x: 0, y: 0, z: 1, w: 1, h: 1 }, spawnT: 0, names: [], flash: 0, looks: new Map(), ringT: 0, paused: false,
+    clock: 9, rain: 0, rainT: 0, rainRoll: -1, critters: [], burials: [], glitch: 0,
   };
+  // the family's commonest surnames, for street names
+  const count = new Map();
+  for (const p of tree.people.values()) if (p.indi.surname) count.set(p.indi.surname, (count.get(p.indi.surname) || 0) + 1);
+  S.surnames = [...count.entries()].sort((a, b) => b[1] - a[1]).map(e => e[0]).filter(n => /^[\p{L}' -]{3,14}$/u.test(n)).slice(0, 30);
   let save = null;
   try { save = JSON.parse(store?.get(S.key) || 'null'); } catch (e) { save = null; }
   if (!save || save.v !== 1 || !story.towns.has(save.town)) save = { v: 1, cash: 40, idx: 0, proofs: [], town: story.home.id, year: story.now, oddN: 0, fresh: true };
@@ -184,7 +189,7 @@ function enterTown(town, year, where) {
   const P = S.player, old = S.city;
   const keep = where === 'jump' && P.vehicle === S.heirloom;
   if (old && S.mission && S.step?.step.t !== 'travel') failMission('You left before the job was done.');
-  S.city = buildTown(town, year);
+  S.city = buildTown(town, year, { surnames: S.surnames });
   S.mini = renderMiniMap(S.city, 2);
   const c = S.city;
   S.vehicles = [];
@@ -221,11 +226,22 @@ function enterTown(town, year, where) {
     if (!got.has(id)) S.items.push({ photo: id, n: i, x: (tx + 0.5) * T, y: (ty + 0.5) * T, kind: 'photo' });
     i++;
   }
+  for (const sp of c.parkSpots) if (hashString(town.id + sp.x) % 5 < 3) { const v = makeVehicle(mix[hashString('p' + sp.x) % mix.length][0], sp.x, sp.y, sp.ang, { parked: true }); if (VEHICLES[v.type].len > 60) v.gone = true; }
+  S.vehicles = S.vehicles.filter(v => !v.gone);
+  // a cab on the rank outside the station or the airport
+  const rank = c.lots.hub, cabType = year >= 1950 ? 'taxi' : year >= 1830 ? 'cab' : null;
+  if (cabType && !circleSolid(rank.x + 2.4 * T, rank.y, 16)) makeVehicle(cabType, rank.x + 2.4 * T, rank.y, 0, { parked: true });
+  // the tram runs up and down the High Street
+  if (c.tramJ >= 0) { const tp = lanePt(0, c.tramJ, 0, 1); makeVehicle('tram', tp.x, tp.y, 0, { ai: 'traffic', straight: true, keep: true, dir: 0, ni: 1, nj: c.tramJ }); }
+  S.burials = burialsIn(S.data, town, year);
+  c.graves.forEach((gv, i) => { gv.who = S.burials[i] || null; });
+  spawnCritters();
+  S.rainRoll = -1;
+  S.townLabel = town.name + (town.nation && town.nation !== town.name ? ', ' + town.nation : '');
   S.heat = 0; S.bust = 0;
   S.view.x = P.x; S.view.y = P.y;
   spawnNpcs();
   for (let i = 0; i < 14; i++) spawnWalker(true);
-  S.ui.where(town.name + (town.nation && town.nation !== town.name ? ', ' + town.nation : ''), `${year} · ${ERA_NAMES[c.era]}`);
   if (old) { const show = () => S && S.ui.banner(town.name, `${year} · ${ERA_NAMES[c.era]}`, '#ffe9a8', 2600); if (S.transit) S.transit.after = show; else show(); }
   persist();
 }
@@ -289,7 +305,8 @@ function driveVehicle(v, ctrl, dt) {
   const sf = clamp(Math.abs(v.speed) / (3.2 * T), 0, 1) * (v.speed < 0 ? -1 : 1);
   const newAng = v.ang + ctrl.steer * st.turn * sf * dt * (ctrl.brake ? 1.35 : 1);
   if (!vehicleSolid(v, v.x, v.y, newAng)) v.ang = newAng;
-  const k = 1 - Math.exp(-(ctrl.brake ? st.grip * 0.45 : st.grip) * dt);
+  const wet = 1 - 0.38 * S.rain;
+  const k = 1 - Math.exp(-(ctrl.brake ? st.grip * 0.45 : st.grip) * wet * dt);
   v.vx += (Math.cos(v.ang) * v.speed - v.vx) * k; v.vy += (Math.sin(v.ang) * v.speed - v.vy) * k;
   let hit = 0;
   const nx = v.x + v.vx * dt;
@@ -332,6 +349,7 @@ function planLeg(v) {
   const P = S.player, score = d => { const n = nodeC(v.ni + DIRS[d][0], v.nj + DIRS[d][1]); return Math.hypot(n.x - P.x, n.y - P.y); };
   if (v.ai === 'flee') nd = opts.slice().sort((a, b) => score(b) - score(a))[Math.random() < 0.8 ? 0 : opts.length - 1];
   else if (v.ai === 'cop') nd = opts.slice().sort((a, b) => score(a) - score(b))[0];
+  else if (v.straight) nd = opts.includes(v.dir) ? v.dir : (v.dir + 2) % 4;
   else nd = opts.includes(v.dir) && Math.random() < 0.55 ? v.dir : opts[Math.floor(Math.random() * opts.length)];
   v.nd = nd;
   v.wp = [lanePt(v.ni, v.nj, v.dir, -1), lanePt(v.ni, v.nj, nd, 1)];
@@ -421,7 +439,8 @@ function collideVehicles() {
     if (!vehicleSolid(B, B.x + nx * push, B.y + ny * push, B.ang)) { B.x += nx * push; B.y += ny * push; }
     const vn = (A.vx - B.vx) * nx + (A.vy - B.vy) * ny;
     if (vn <= 0) continue;
-    const wa = A.parked ? 0.8 : 0.5, wb = 1 - wa + (B.parked ? 0.3 : 0);
+    const ha = VEHICLES[A.type].heavy, hb = VEHICLES[B.type].heavy;
+    const wa = hb ? 0 : ha ? 1 : A.parked ? 0.8 : 0.5, wb = ha ? 0 : hb ? 1 : 1 - wa + (B.parked ? 0.3 : 0);
     A.vx -= nx * vn * wb * 1.1; A.vy -= ny * vn * wb * 1.1; B.vx += nx * vn * wa * 1.1; B.vy += ny * vn * wa * 1.1;
     A.speed = A.vx * Math.cos(A.ang) + A.vy * Math.sin(A.ang); B.speed = B.vx * Math.cos(B.ang) + B.vy * Math.sin(B.ang);
     if (A !== pv && B !== pv) continue;
@@ -496,6 +515,62 @@ function knockDown(p, v) {
   moveWalker(p, Math.cos(a) * 26, Math.sin(a) * 26);
   float(p.x, p.y - 22, p.cop ? 'Right, that\'s it!' : quip(), '#fff'); sfx.bump();
   if (v === S.player.vehicle) offence(p.cop ? 1 : 0.5);
+}
+
+// ---------------- Animals ----------------
+function spawnCritters() {
+  S.critters = [];
+  const c = S.city;
+  const add = (kind, l, n, r) => { for (let i = 0; i < n; i++) { const sp = freeSpotNear(l.x + (Math.random() - 0.5) * r * T, l.y + (Math.random() - 0.5) * r * T, 0); S.critters.push({ kind, x: sp.x, y: sp.y, hx: sp.x, hy: sp.y, ang: Math.random() * 7, n: i, t: Math.random() * 3, run: 0, walk: 0 }); } };
+  add('pigeon', { x: c.lots.market.x, y: c.lots.market.y - 4 * T }, 7, 6);
+  if (c.year < 1960) add('hen', { x: c.lots.farm.x, y: c.lots.farm.y - 2 * T }, 7, 5);
+  add('dog', c.homeFor('dog'), 1, 2); add('cat', c.homeFor('cat'), 1, 2); add('dog', c.lots.pub, 1, 3);
+  if (c.year < 1900) add('hen', c.homeFor('hens'), 3, 2);
+}
+function updateCritters(dt) {
+  const P = S.player, pp = P.vehicle || P, fast = P.vehicle ? Math.abs(P.vehicle.speed) : P.moving ? 4 * T : 0;
+  for (const k of S.critters) {
+    k.t -= dt;
+    if (fast > T && Math.hypot(k.x - pp.x, k.y - pp.y) < (k.kind === 'pigeon' ? 2.8 : 1.9) * T) { k.ang = Math.atan2(k.y - pp.y, k.x - pp.x) + (Math.random() - 0.5); k.run = k.kind === 'pigeon' ? 1.1 : 0.7; }
+    const step = sp => { const nx = k.x + Math.cos(k.ang) * sp * dt, ny = k.y + Math.sin(k.ang) * sp * dt; if (k.kind === 'pigeon' && k.run > 0 || !circleSolid(nx, ny, 4)) { k.x = nx; k.y = ny; } else k.ang += 2; };
+    if (k.run > 0) { k.run -= dt; step((k.kind === 'pigeon' ? 9 : 5.5) * T); }
+    else if (k.walk > 0) { k.walk -= dt; step((k.kind === 'dog' ? 2.2 : 1.1) * T); }
+    else if (k.t <= 0) { k.t = 0.8 + Math.random() * 2.5; k.ang = Math.atan2(k.hy - k.y, k.hx - k.x) + (Math.random() - 0.5) * 2.6; k.walk = 0.4 + Math.random(); }
+  }
+}
+
+// ---------------- Light and weather ----------------
+function darkness() {
+  const h = S.clock, base = S.city.year < 1810 ? 0.74 : 0.62;
+  const k = h < 5 ? 1 : h < 7 ? 1 - (h - 5) / 2 : h < 18.5 ? 0 : h < 20.5 ? (h - 18.5) / 2 : 1;
+  return k * base + S.rain * 0.1;
+}
+// Night is a dark sheet with holes cut in it for every lamp, lit window and headlamp.
+function drawLight(g, w, h, V, d) {
+  const sc = 0.25, lw = Math.ceil(w * sc), lh = Math.ceil(h * sc), c = S.city, P = S.player;
+  let lc = S.lightC;
+  if (!lc || lc.width !== lw || lc.height !== lh) { lc = S.lightC = document.createElement('canvas'); lc.width = lw; lc.height = lh; }
+  const x = lc.getContext('2d'), z = V.z * sc;
+  x.globalCompositeOperation = 'source-over'; x.clearRect(0, 0, lw, lh); x.fillStyle = `rgba(8,12,36,${d})`; x.fillRect(0, 0, lw, lh);
+  x.globalCompositeOperation = 'destination-out';
+  const hole = (wx, wy, r, a) => {
+    const sx = (wx - V.x) * z + lw / 2, sy = (wy - V.y) * z + lh / 2, rr = r * z;
+    if (sx < -rr || sy < -rr || sx > lw + rr || sy > lh + rr) return;
+    const gr = x.createRadialGradient(sx, sy, 0, sx, sy, rr); gr.addColorStop(0, `rgba(0,0,0,${a})`); gr.addColorStop(1, 'rgba(0,0,0,0)');
+    x.fillStyle = gr; x.fillRect(sx - rr, sy - rr, rr * 2, rr * 2);
+  };
+  if (c.year >= 1810) for (const p of c.props) if (p.t === 'lamp') hole((p.x + 0.5) * T, (p.y + 0.5) * T, 4.6 * T, 0.85);
+  for (let i = 0; i < c.homes.length; i += 2) hole(c.homes[i].x, c.homes[i].y, 1.7 * T, 0.55);
+  for (const k of ['pub', 'hub', 'police', 'infirmary', 'church', 'garage']) { const l = c.lots[k]; if (l) hole(l.x, l.y, 3.2 * T, 0.7); }
+  for (const v of S.vehicles) {
+    if (v.dead || (v.parked && v !== S.heirloom)) continue;
+    const fx = Math.cos(v.ang), fy = Math.sin(v.ang);
+    if (!VEHICLES[v.type].horse) { hole(v.x + fx * 2.2 * T, v.y + fy * 2.2 * T, 2.7 * T, 0.9); hole(v.x + fx * 4.6 * T, v.y + fy * 4.6 * T, 2.7 * T, 0.6); } else hole(v.x + fx * T, v.y + fy * T, 1.7 * T, 0.6);
+  }
+  if (!P.vehicle) hole(P.x, P.y, 2.5 * T, 0.6);
+  if (S.target) hole(S.target.x, S.target.y, 2.2 * T, 0.5);
+  for (const it of S.items) if (it.step) hole(it.x, it.y, 1.2 * T, 0.5);
+  g.drawImage(lc, 0, 0, w, h);
 }
 
 // ---------------- The law ----------------
@@ -575,6 +650,7 @@ async function startMission(def) {
   if (S !== tok) return;
   S.busy = false;
   S.mission = { def, i: -1 };
+  if (def.hour != null) S.clock = def.hour;
   if (def.title) S.ui.banner(def.title, def.act, '#ffd84a', 2000);
   spawnNpcs();
   nextStep();
@@ -876,7 +952,7 @@ function callHeirloom() {
 // ---------------- Player ----------------
 function enterVehicle(v) {
   const P = S.player;
-  if (v.ai === 'flee' || v.ai === 'cop' || v.dead) return;
+  if (v.ai === 'flee' || v.ai === 'cop' || v.dead || v.type === 'tram') return;
   if (v.ai === 'traffic') {
     const sp = freeSpotNear(v.x - Math.sin(v.ang) * 26, v.y + Math.cos(v.ang) * 26, 0);
     S.peds.push({ x: sp.x, y: sp.y, dir: 0, ang: 0, sp: 2.2 * T, walk: 0, look: strangerLook(Math.random, S.city.year), down: 0, cross: 0 });
@@ -901,7 +977,7 @@ function findNear() {
   const within = (o, a, b) => Math.hypot(o.x - pp.x, o.y - pp.y) < (pv ? b : a) * T;
   // the nearest vehicle you could get into
   let car = null, carD = 1.9 * T;
-  if (!pv) for (const v of S.vehicles) { const d = dist(v, P) - VEHICLES[v.type].len * 0.25; if (d < carD && v.ai !== 'flee' && v.ai !== 'cop' && !v.dead) { carD = d; car = v; } }
+  if (!pv) for (const v of S.vehicles) { const d = dist(v, P) - VEHICLES[v.type].len * 0.25; if (d < carD && v.ai !== 'flee' && v.ai !== 'cop' && !v.dead && v.type !== 'tram') { carD = d; car = v; } }
   const getIn = car && { label: car === S.heirloom ? 'Get in the Heirloom' : `Borrow the ${VEHICLES[car.type].name}`, go: () => enterVehicle(car) };
   if (!S.mission && slow) {
     for (const p of S.peds) if (p.npc && within(p, 1.8, 3)) {
@@ -1013,7 +1089,7 @@ function update(dt) {
   const pp = P.vehicle || P;
   const vr = Math.hypot(S.view.w, S.view.h) / 2 / S.view.z;
   for (const v of S.vehicles) if (v.dead && v !== P.vehicle) { v.deadT = (v.deadT || 0) + dt; if (v.deadT > 12 && dist(v, pp) > vr) v.gone = true; }
-  S.vehicles = S.vehicles.filter(v => !v.gone && (v === S.heirloom || v === P.vehicle || v === S.step?.target || v.ai === 'cop' || dist(v, pp) < (v.ai ? 40 : 60) * T));
+  S.vehicles = S.vehicles.filter(v => !v.gone && (v === S.heirloom || v === P.vehicle || v === S.step?.target || v.keep || v.ai === 'cop' || dist(v, pp) < (v.ai ? 40 : 60) * T));
   S.peds = S.peds.filter(p => p.npc || p.stepPed || p.cop || dist(p, pp) < 34 * T);
   S.spawnT -= dt;
   if (S.spawnT <= 0) { S.spawnT = 0.35; spawnTraffic(trafficCount(c.year)); if (S.peds.filter(p => !p.npc).length < (c.year < 1714 ? 10 : c.year < 1837 ? 14 : 22)) spawnWalker(false); }
@@ -1021,6 +1097,17 @@ function update(dt) {
   S.floats = S.floats.filter(f => f.t > 0);
   for (const s of S.sparks) { s.t -= dt; s.x += s.vx * dt; s.y += s.vy * dt; }
   S.sparks = S.sparks.filter(s => s.t > 0);
+  S.clock = (S.clock + dt / 50) % 24;
+  const roll = Math.floor(S.clock / 4);
+  if (roll !== S.rainRoll) { S.rainRoll = roll; const wetness = { med: 0.07, stucco: 0.1, flatroof: 0.03, veranda: 0.12 }[c.town.house] ?? 0.3; S.rainT = Math.random() < wetness ? 0.45 + Math.random() * 0.55 : 0; }
+  S.rain += (S.rainT - S.rain) * Math.min(1, dt * 0.25);
+  if (S.glitch > 0) S.glitch -= dt;
+  updateCritters(dt);
+  if (!P.vehicle) for (const gv of c.graves) if (gv.who && Math.hypot((gv.x + 0.5) * T - P.x, (gv.y + 0.5) * T - P.y) < 1.2 * T && !(S.save.graves || (S.save.graves = [])).includes(gv.who.id)) {
+    S.save.graves.push(gv.who.id);
+    S.ui.toast(`Here lies ${gv.who.name}${gv.who.life ? ' (' + gv.who.life + ')' : ''}, ${kinOf(S.data, S.tree, gv.who.id)}.`, 5200);
+    sfx.pick();
+  }
   if (S.flash > 0) S.flash -= dt;
   if ((S.saveT = (S.saveT || 0) + dt) > 15) { S.saveT = 0; persist(); }
   // the phone box rings until you answer it
@@ -1045,6 +1132,8 @@ function hud() {
   const ui = S.ui, P = S.player, c = S.city, st = S.step, m = S.mission;
   ui.cash(S.save.cash);
   ui.stat(P.hearts, Math.ceil(S.heat - 0.001));
+  const pq = P.vehicle || P, hh = Math.floor(S.clock), mm = Math.floor((S.clock % 1) * 6) * 10, street = c.streetAt(pq.x, pq.y);
+  ui.where(S.townLabel, `${c.year} · ${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}${S.rain > 0.3 ? ' · rain' : ''} · ${street || ERA_NAMES[c.era]}`);
   let obj = '';
   const guide = (town, year) => {
     const t = S.story.towns.get(town);
@@ -1103,6 +1192,7 @@ function render() {
   if (!S.mission) { at(c.lots.market.x, c.lots.market.y, 0, () => drawMarker(g, t, '#7be07b', 22, '£')); }
   at(c.lots.hub.x, c.lots.hub.y, 0, () => drawMarker(g, t + 0.5, '#a8d8ff', 24, c.air ? '✈' : '⚓'));
   for (const it of S.items) at(it.x, it.y, 0, () => drawItem(g, it.kind, t, it.n));
+  for (const k of S.critters) at(k.x, k.y, k.ang, () => drawCritter(g, k.kind, t, k.n, k.run > 0 || k.walk > 0));
   for (const p of S.peds) if (p.look) at(p.x, p.y, p.ang, () => drawPerson(g, p, t));
   for (const v of S.vehicles) {
     at(v.x, v.y, v.ang, () => { drawVehicle(g, v, t); });
@@ -1114,6 +1204,13 @@ function render() {
   g.globalAlpha = 1;
   g.setTransform(1, 0, 0, 1, 0, 0);
   drawTall(g, c, V, t);
+  const dark = darkness();
+  if (dark > 0.03) drawLight(g, w, h, V, dark);
+  if (S.rain > 0.03) {
+    g.strokeStyle = `rgba(205,220,240,${0.38 * S.rain})`; g.lineWidth = dpr; g.beginPath();
+    for (let i = 0, n = Math.floor(120 * S.rain); i < n; i++) { const rx = Math.random() * w, ry = Math.random() * h; g.moveTo(rx, ry); g.lineTo(rx - 6 * dpr, ry + 17 * dpr); }
+    g.stroke(); g.fillStyle = `rgba(90,110,140,${0.1 * S.rain})`; g.fillRect(0, 0, w, h);
+  }
   // labels over everything
   world();
   g.textAlign = 'center'; g.textBaseline = 'middle';
@@ -1123,6 +1220,7 @@ function render() {
     if (p.npc && p.giver && !S.mission) { const y = p.y - 34 - Math.abs(Math.sin(t * 3)) * 6; label(p.x, y, '!', '#ffd84a', 26); }
     if (p.name && dist(p, pp) < (p.npc ? 6 : 2.6) * T && p.look) { label(p.x, p.y - 20, p.name, '#fff', 11); if (p.sub && dist(p, pp) < 2.6 * T) label(p.x, p.y - 32, p.sub, '#d8d2c0', 9); }
   }
+  if (!P.vehicle) for (const gv of c.graves) if (gv.who && Math.hypot((gv.x + 0.5) * T - P.x, (gv.y + 0.5) * T - P.y) < 1.6 * T) { label((gv.x + 0.5) * T, gv.y * T - 6, gv.who.name, '#e8e4d8', 10); label((gv.x + 0.5) * T, gv.y * T + 5, gv.who.life, '#b8b4a8', 9); }
   for (const f of S.floats) { g.globalAlpha = clamp(f.t, 0, 1); label(f.x, f.y, f.text, f.col, 12); }
   g.globalAlpha = 1;
   g.setTransform(1, 0, 0, 1, 0, 0);

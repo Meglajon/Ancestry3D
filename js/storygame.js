@@ -891,6 +891,7 @@ function nextStep() {
   clearStep();
   m.i++;
   if (m.i >= m.def.steps.length) { passMission(); return; }
+  if (m.i === 1) hintOnce('brief', S.ui.touch ? 'Tap 📋 at any time to read the mission again.' : 'Press B (or 📋) at any time to read the mission again.', 5200);
   if (m.def.id === 'final-notice' && m.i === 0) hintOnce('walk', S.ui.touch ? 'Left thumb walks. Follow the yellow arrow. GO talks, gets in and out and starts jobs.' : 'WASD or the arrow keys to walk (Shift to run). Follow the yellow arrow. E talks, gets in and out and starts jobs.', 8000);
   spawnNpcs();
   enterStep(m.def.steps[m.i]);
@@ -1451,10 +1452,40 @@ function openWorkshop(intro) {
   };
   draw();
 }
+// The job in hand, to read again: what it is, what has been done, what to do now, and the briefing if you want it.
+function openBrief() {
+  const m = S.mission, def = m ? m.def : nextStory(), c = S.city;
+  if (!def) { S.ui.panel('<h2>📋 No mission</h2><p>The case is closed. Every town and every year is open: go and meet the family, or look for the £ signs, the chequered flag and the pages of the Foundling File.</p><div class="foot"><button data-go="close">Close</button></div>', { close: () => S.ui.closePanel() }); return; }
+  const esc = escapeText;
+  let body;
+  if (m) {
+    const rows = def.steps.map((st, i) => i < m.i ? `<div class="row off" style="padding:4px 0"><span>✔ ${esc(st.text)}</span></div>`
+      : i === m.i ? `<div class="row need" style="padding:6px 8px"><span>▶ <b>${esc(st.text)}</b><small>${esc(stepHelp(st))}</small></span></div>` : '').join('');
+    const left = def.steps.length - m.i - 1;
+    body = `<p>${esc(def.brief || '')}</p>${rows}${left > 0 ? `<p><small>${left === 1 ? 'One more part' : left + ' more parts'} after this.</small></p>` : ''}${S.step && S.step.timer != null ? `<p><small>The clock is stopped while you read this.</small></p>` : ''}`;
+  } else {
+    const here = isHere(def), t = S.story.towns.get(def.town), giver = def.giver.who === 'dot' ? (def.giver.at === 'phone' ? `the ${eraWords(def.year).phone}` : 'Dorothy at the lock-up') : def.giver.who === 'auto' ? '' : displayName(S.data.individuals.get(def.giver.who));
+    body = `<p>${esc(def.brief || '')}</p><p><b>To start it:</b> ${here ? (giver ? `go to ${esc(giver)} (the yellow arrow) and press ${S.ui.touch ? 'GO' : 'E'}.` : 'it starts by itself.') : esc(def.town !== c.town.id ? `Buy a ticket to ${t.name} at ${c.lots.hub.name}` + (def.year !== c.year ? `, then set the dial to ${def.year}.` : '.') : `Set the dial to ${def.year} (${S.ui.touch ? '⏱' : 'T'}) and drive the Heirloom flat out.`)}</p>`;
+  }
+  S.ui.panel(`<h2>📋 ${esc(def.title)}</h2><p><small>${esc(def.act || '')} · ${esc(S.story.towns.get(def.town)?.name || c.town.name)}, ${def.year}${m ? ` · part ${m.i + 1} of ${def.steps.length}` : ' · not started'}</small></p>${body}<div class="foot"><button data-go="close">Back to it</button>${def.intro && def.intro.length ? '<button class="alt" data-go="again">Hear the briefing again</button>' : ''}${m && !def.fare ? '<button class="alt" data-go="quit">Give up this mission</button>' : ''}</div>`, {
+    close: () => S.ui.closePanel(),
+    again: async () => { const tok = S, was = S.busy; S.ui.closePanel(); S.busy = true; await runLines(def.intro); if (S === tok) S.busy = was; },
+    quit: () => { S.ui.closePanel(); failMission('You gave it up.'); },
+  });
+}
+// One line on how to do the kind of thing a step asks for.
+function stepHelp(st) {
+  const E = S.ui.touch ? 'GO' : 'E';
+  return ({ goto: st.foot ? 'Follow the yellow arrow there, on foot.' : 'Follow the yellow arrow to the yellow ring.', talk: `Walk up to them and press ${E}.`, search: 'Each place marked ? on the map might be the one. Go to each and ask.',
+    carry: st.gentle ? 'Stop on the yellow ring to load, then on the next to unload. Three hard knocks and it is over.' : 'Stop on the yellow ring to load, then on the next to unload.', collect: 'Drive or walk over each one. They are the yellow dots on the map.',
+    race: 'Pass through each yellow ring in turn before the clock runs out.', chase: 'Catch the one with the red ring and bump into it until the bar above it is empty.', tail: 'Stay behind the one with the blue ring: not too close, not too far.',
+    defend: 'Stay with the wagon with the green ring and shove every grey one off it.', catch: 'Get out and run after them. Shift runs.', travel: 'Tickets are sold at the airport or the quay. To change the year, set the dial (T) and drive flat out.',
+    escape: 'Keep moving until the stars fade. A respray at the lock-up loses them at once.', frenzy: 'Ram every grey van you can find.' })[st.t] || '';
+}
 function openPause() {
   const k = (a, b) => `<p><kbd>${a}</kbd> ${b}</p>`;
   S.ui.panel(`<h2>Relative Speed</h2><p>${escapeText(nextStory()?.brief || 'Free roam: every town, every year.')}</p>
-    ${S.ui.touch ? '<p>Left thumb steers and walks. GO talks, gets in and out and starts jobs. CAR calls the Heirloom.</p>' : k('WASD / arrows', 'walk, drive') + k('E', 'talk, get in or out, start a job') + k('Space', 'handbrake: hold it into a corner to slide the back round') + k('T', 'time dial') + k('H', 'call the Heirloom (£10)') + k('M', 'town map') + k('P', 'pedigree') }
+    ${S.ui.touch ? '<p>Left thumb steers and walks. GO talks, gets in and out and starts jobs. CAR calls the Heirloom.</p>' : k('WASD / arrows', 'walk, drive') + k('E', 'talk, get in or out, start a job') + k('Space', 'handbrake: hold it into a corner to slide the back round') + k('T', 'time dial') + k('H', 'call the Heirloom (£10)') + k('B', 'read the mission again') + k('M', 'town map') + k('P', 'pedigree') }
     <p><b>The case so far</b> <small>${tally().text}</small></p>${fragsGot() || S.save.idx > S.story.missions.findIndex(m => m.id === 'blank-and-void') ? `<p>📄 <b>The Foundling File</b> ${fragsGot()} of ${S.story.frags.length} pages <small>${S.story.frags.map(f => (S.save.frags || []).includes(f.id) ? '✔' : `${escapeText(S.story.towns.get(f.town).name)} ${f.year}`).join(' · ')}</small></p>` : ''}${S.story.missions.map((m, i) => i < S.save.idx ? `<div class="row" style="padding:3px 0;border:0"><span>✔ ${escapeText(m.title)} <b style="color:#c8901a">${'★'.repeat((S.save.medals || {})[m.id] || 0)}</b><small>${escapeText(m.act)} · ${escapeText(S.story.towns.get(m.town).name)}, ${m.year}</small></span>${m.town === S.city.town.id && m.year === S.city.year && !S.mission && m.steps.some(x => x.t !== 'travel' && x.t !== 'talk') ? `<button class="alt" data-go="replay:${i}">Replay</button>` : ''}</div>` : i === S.save.idx ? `<div class="row need" style="padding:5px 8px"><span>▶ ${escapeText(m.title)}<small>${escapeText(m.act)} · ${escapeText(S.story.towns.get(m.town).name)}, ${m.year}</small></span></div>` : '').join('')}${S.save.idx < S.story.missions.length - 1 ? `<p>…and ${S.story.missions.length - S.save.idx - 1} more to come.</p>` : ''}
     <div class="foot"><button data-go="close">Resume</button><button class="alt" data-go="easy">Timers: ${S.save.easy ? 'generous' : 'normal'}</button><button class="alt" data-go="streets">Streets: ${realStreets() ? 'real (OpenStreetMap)' : 'made up'}</button>${realStreets() && S.city.source !== 'osm' && S.nets.get(S.city.town.id)?.source === 'osm' && !S.mission ? '<button class="alt" data-go="realnow">Switch to the real streets now</button>' : ''}<button class="alt" data-go="quit">Save and leave</button><button class="alt" data-go="reset">Restart the story</button></div>`, {
     close: () => S.ui.closePanel(),
@@ -1708,11 +1739,12 @@ function handleQueue() {
   while (q.length) {
     const act = q.shift();
     if (ui.dialogOpen) { if (act === 'action' || act === 'space' || /^opt/.test(act)) ui._advance?.(act); continue; }
-    if (ui.panelOpen) { if (act === 'pause' || act === 'dial' || act === 'pedigree' || act === 'map') ui._panelClose?.(); continue; }
+    if (ui.panelOpen) { if (act === 'pause' || act === 'dial' || act === 'pedigree' || act === 'map' || act === 'brief') ui._panelClose?.(); continue; }
     if (S.busy) continue;
     if (act === 'action') { const r = S.retry; if ((!S.near || !S.near.label) && S.ui.touch && r && !S.mission && S.t < r.until && r.town === S.city.town.id && r.year === S.city.year) { S.retry = null; startMission(r.def, r); } else S.near?.go(); }
     else if (act === 'dial') openDial();
     else if (act === 'pedigree') openPedigree();
+    else if (act === 'brief') openBrief();
     else if (act === 'pause') openPause();
     else if (act === 'retry') { const r = S.retry; if (r && !S.mission && S.t < r.until && r.town === S.city.town.id && r.year === S.city.year) { S.retry = null; startMission(r.def, r); } }
     else if (act === 'map') openMap();

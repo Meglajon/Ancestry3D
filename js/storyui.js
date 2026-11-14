@@ -91,7 +91,7 @@ const HTML = `
 <canvas id="stCanvas"></canvas>
 <div class="st-top"><div class="st-cash" id="stCash">£0</div><div class="st-stat" id="stStat"></div><div class="st-where" id="stWhere"></div></div>
 <canvas id="stMini" width="132" height="132"></canvas>
-<div class="st-menu"><button data-act="dial" title="Time dial (T)">⏱ Dial</button><button data-act="map" title="Town map (M)">🗺</button><button data-act="pedigree" title="Pedigree (P)">📜</button><button data-act="pause" title="Menu (Esc)">☰</button></div>
+<div class="st-menu"><button data-act="dial" title="Time dial (T)">⏱ Dial</button><button data-act="brief" title="Mission: read it again (B)">📋</button><button data-act="map" title="Town map (M)">🗺</button><button data-act="pedigree" title="Pedigree (P)">📜</button><button data-act="pause" title="Menu (Esc)">☰</button></div>
 <div class="st-obj" id="stObj"></div>
 <div class="st-toast" id="stToast"></div>
 <div class="st-hint" id="stHint"></div>
@@ -124,7 +124,7 @@ export function mountStoryUi() {
 
   const input = { keys: new Set(), stick: { x: 0, y: 0, active: false }, queue: [], brake: false, touch };
   const press = act => { input.queue.push(act); };
-  const KEYMAP = { KeyE: 'action', Enter: 'action', KeyT: 'dial', KeyH: 'call', KeyP: 'pedigree', Escape: 'pause', KeyF: 'action', KeyM: 'map', Tab: 'map', KeyR: 'retry' };
+  const KEYMAP = { KeyE: 'action', Enter: 'action', KeyT: 'dial', KeyH: 'call', KeyP: 'pedigree', Escape: 'pause', KeyF: 'action', KeyM: 'map', Tab: 'map', KeyR: 'retry', KeyB: 'brief', KeyJ: 'brief' };
   const GAME_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'ShiftLeft', 'ShiftRight', 'Tab', 'KeyM', ...Object.keys(KEYMAP)]);
   const typing = () => ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName);
   const onKey = e => {

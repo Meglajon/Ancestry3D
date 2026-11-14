@@ -28,6 +28,39 @@ middle of a courtyard where every ancestor stands on the ground as a 3D person y
 - **Find people**: dialogue options set a waypoint to their parents or back to their child. The map
   (Tab / M / MAP) shows the whole tree from above; search by name or tap someone to set a waypoint.
 
+### Story mode: Relative Speed
+
+The **Story** tab is a different game on the same family: a top-down driving story in the spirit of the
+mid-90s city crime games, played through the towns and years your ancestors actually lived in. A crooked heir
+hunter is rubbing your family out of the parish registers one generation at a time, and you have a battered
+estate car that runs on register ink to stop him.
+
+- **The plot is the same for everyone; the details are yours.** Up to seven ancestors get a chapter: you meet
+  them (and must prove you are family by answering a question from the file), do a day's work at their real
+  trade, and then play a mission built on a real event: their wedding, the birth of the child you descend
+  from, a census night, an emigration, their service or their baptism. Each one wins a proof for your pedigree.
+- **Drive anything.** The Heirloom is yours; everything else can be borrowed, from hatchbacks to hay carts.
+- **Fly to other countries.** The airport (a steamer quay before 1950) sells tickets to every town the story
+  has opened.
+- **Travel in time.** Set the dial, hold the Heirloom at full speed and you arrive on the same street in
+  another century. Every town keeps its street plan in every year; the further back, the more of it is fields.
+- **Earn your fare.** Missions pay cash; the £ board in every market place has odd jobs in every year.
+- **Mind the law.** Police cars after 1900, constables on foot before.
+- **Meet the neighbours.** The people on the pavements are the people in your file who lived in that town in
+  that year, and there are three lost photographs to find in every town and era, with the file's own notes
+  written on the back.
+
+The whole plot, and how each part is filled in from the GEDCOM, is in [STORY.md](STORY.md).
+
+| Story controls | Keyboard | Touch |
+|---|---|---|
+| Walk / drive | WASD or arrows (Shift runs) | left thumb |
+| Talk, get in or out, start a job, buy tickets | E | GO |
+| Handbrake | Space | BRAKE |
+| Time dial | T | ⏱ Dial |
+| Call the Heirloom to you | H | CAR |
+| Town map / pedigree / menu | M / P / Esc | 🗺 / 📜 / ☰ |
+
 ### Looks
 
 | Look | What you get |
@@ -152,13 +185,19 @@ js/fight.js         Fight back mode: angry ancestors, their weapons, chasing, he
 js/missions.js      missions: what ancestors ask you to find, and checking when you've found it
 js/textures.js      procedural pixel-art textures and portraits
 js/main.js          renderer, controls, cameras, jumping, interaction, dialogue box, HUDs, map
+js/storyplot.js     Story mode plot: chooses the cast, towns and years from the file and writes every mission
+js/storycity.js     Story mode towns: one street plan per town, dressed for any year; ground, buildings, minimap
+js/storyart.js      Story mode drawings: vehicles of every era, people, pick-ups, markers
+js/storyui.js       Story mode HUD, dialogue box, panels, keyboard and touch input
+js/storygame.js     Story mode game: driving, traffic, the law, missions, tickets, the time dial, saving
 sample/demo.ged     fictional demo family (regenerate with npm run demo)
 tools/              demo generator and single-file builder
 tests/              parser/layout tests (npm test) and a headless browser smoke test
 ```
 
 ```
-npm test            # parser, dates, layout spacing (incl. a 2,047-person tree, couples mode and every layout)
+npm test            # parser, dates, layout spacing (incl. a 2,047-person tree, couples mode and every layout),
+                    # and the story: every person in the demo file as hero, plus awkward trees
 npm run build       # writes index.html (self-contained) and dist/artifact.html
 ```
 

@@ -7369,14 +7369,14 @@ const PUBS = ['The Red Lion', 'The Crown', 'The Plough', 'The Kings Arms', 'The 
 const FARMS = ['Hollin', 'Top o\'th\' Hill', 'Brook', 'Nether', 'High Ash', 'Lane End', 'Church', 'Moor Side', 'Bank', 'Green'];
 /** What each landmark is called in a given town and year. */
 function lotName(kind, town, year) {
-  const e = eraOf(year), h = hashString(town.id);
+  const e = eraOf(year), h = hashString(town.id) >>> 0;
   const works = { mill: 'the mill', colliery: 'the pit', pennine: 'the mill', valleys: 'the pit', cityterrace: 'the docks', london: 'the works', tenement: 'the shipyard' }[town.house] || 'the works';
   switch (kind) {
     case 'church': return 'the parish church';
     case 'hall': return year >= 1930 ? 'the Records Office' : year >= 1837 ? 'the Register Office' : 'the vestry hall';
     case 'pub': return PUBS[h % PUBS.length];
     case 'works': return year < 1760 ? 'the forge' : works;
-    case 'farm': return FARMS[(h >> 3) % FARMS.length] + ' Farm';
+    case 'farm': return FARMS[(h >>> 3) % FARMS.length] + ' Farm';
     case 'school': return year >= 1870 ? 'the school' : 'the dame school';
     case 'hub': return eraWords(year).hub.replace(/^/, 'the ');
     case 'garage': return year >= 1950 ? 'Dot\'s lock-up' : year >= 1900 ? 'the motor shed' : 'the tithe barn';
@@ -7502,6 +7502,14 @@ const DAY_JOBS = {
     steps: [{ t: 'carry', from: 'works', to: 'hub', n: 3, label: /potter|kiln/.test(c.jobL) ? 'crates of pots' : /iron|steel|forge|puddl|foundry/.test(c.jobL) ? 'loads of pig iron' : /quarr|brick/.test(c.jobL) ? 'loads of stone' : 'loads of coal', timed: 1.25, text: `Haul three loads from ${c.works} to ${c.hub}` }] }),
   cloth: c => ({ title: 'Cut From the Same Cloth', ask: `Two pieces of finished cloth to go to the draper in ${c.market}. Finished, mind. One splash of muck and it comes out of my wages, so drive it like it was a christening gown.`,
     steps: [{ t: 'carry', from: 'works', to: 'market', n: 2, label: 'pieces of cloth', gentle: true, timed: 1.5, text: `Take the cloth from ${c.works} to ${c.market} without a bump` }] }),
+  haulB: c => ({ title: 'Runaway Tubs', ask: `A string of tubs has broken loose from ${c.works} and gone rattling off down the town. Six of them, loaded. Catch every one before something catches them, and the gaffer need never know.`,
+    steps: [{ t: 'collect', around: 'works', radius: 17, n: 6, label: 'runaway tubs', timed: 1.5, text: `Catch the runaway tubs near ${c.works}` }] }),
+  clothB: c => ({ title: 'The Knocker-Up', ask: `Half the street is still abed and the gates shut on the stroke. Anybody locked out loses the day. Go round and rattle every window, then be at ${c.works} before the hooter.`,
+    steps: [{ t: 'race', stops: ['pub', 'school', 'post', 'farm', 'works'], timed: 1.15, text: `Wake the street and reach ${c.works} before the hooter` }] }),
+  farmB: c => ({ title: 'Market Day', ask: `Two churns for ${c.market}, and they'll not keep in this heat. Mind the ruts, mind the dog, and mind you get a fair price.`,
+    steps: [{ t: 'carry', from: 'farm', to: 'market', n: 2, label: 'milk churns', timed: 1.2, text: `Take the churns from ${c.farm} to ${c.market}` }] }),
+  serveB: c => ({ title: 'The Mistress Is Out', ask: `The mistress is to be driven to church and the coachman's nowhere. Somebody in a grey coat stood him a drink. She notices every bump, mind. Every one.`,
+    steps: [{ t: 'carry', from: 'home', to: 'church', n: 1, label: 'passenger', passenger: 'the mistress', gentle: true, timed: 1.5, text: 'Drive the mistress to church without a bump' }] }),
   farm: c => ({ title: 'Gone Astray', ask: `Somebody in a grey coat left the gate open and every beast I own is out on the lane. Round them up, then take the cart to ${c.market} before the dealers go home.`,
     steps: [{ t: 'collect', around: 'farm', radius: 15, n: 6, label: c.year < 1800 ? 'pigs' : 'sheep', timed: 1.6, text: `Round up the strays near ${c.farm}` }, { t: 'carry', from: 'farm', to: 'market', n: 1, label: 'cart of produce', timed: 1.3, text: `Get the cart to ${c.market}` }] }),
   serve: c => ({ title: 'Below Stairs', ask: `The mistress wants the whole list fetched before she rings for tea, and she rings early when she's vexed. I can't be in four places at once. Can you?`,
@@ -7512,8 +7520,8 @@ const DAY_JOBS = {
     steps: [{ t: 'race', stops: ['hub', 'post', 'hall', 'school', 'pub'], timed: 1.15, text: 'Do the round before the timetable catches you' }] }),
   shop: c => ({ title: 'Orders Out', ask: `Five orders, five doors, and every one of them expects it before dinner. A shop lives on its name. Don't lose me mine.`,
     steps: [{ t: 'race', stops: ['pub', 'school', 'infirmary', 'church', 'farm'], timed: 1.2, text: 'Deliver all five orders' }] }),
-  craft: c => ({ title: 'Made to Last', ask: `That's a week of my work on the bench, wanted at the church, and a mended wheel wanted at ${c.farm}. Set it down gently. I'll know if you didn't.`,
-    steps: [{ t: 'carry', from: 'works', to: 'church', n: 1, label: c.year < 1900 ? 'new bell frame' : 'new church gate', gentle: true, timed: 1.6, text: 'Deliver the finished work to the church in one piece' }, { t: 'carry', from: 'works', to: 'farm', n: 1, label: 'mended wheel', timed: 1.4, text: `Take the wheel to ${c.farm}` }] }),
+  craft: c => { const thing = c.year < 1930 ? 'mended wheel' : 'mended generator'; return { title: 'Made to Last', ask: `That's a week of my work on the bench, wanted at the church, and a ${thing} wanted at ${c.farm}. Set it down gently. I'll know if you didn't.`,
+    steps: [{ t: 'carry', from: 'works', to: 'church', n: 1, label: c.year < 1900 ? 'new bell frame' : 'new church gate', gentle: true, timed: 1.6, text: 'Deliver the finished work to the church in one piece' }, { t: 'carry', from: 'works', to: 'farm', n: 1, label: thing, timed: 1.4, text: `Take the ${thing} to ${c.farm}` }] }; },
   care: c => ({ title: 'On Call', ask: `There's a man hurt up at ${c.farm} and nothing with wheels to fetch him. Bring him to ${c.infirmary}, quick but smooth. He has enough broken already.`,
     steps: [{ t: 'carry', from: 'farm', to: 'infirmary', n: 1, label: 'patient', passenger: 'the patient', gentle: true, timed: 1.3, text: `Bring the patient from ${c.farm} to ${c.infirmary}` }] }),
   school: c => ({ title: 'Truants', ask: `Half my flock has bolted. Somebody told them there was a grey man giving out toffee. Round them up before the inspector arrives and finds me teaching the furniture.`,
@@ -7581,6 +7589,7 @@ function buildStory(data, rootId, opts = {}) {
 
   // ---- Chapters ----
   let lastTown = home;
+  const usedSets = {}, usedJobs = {}, proven = new Set(['birth' + rootId]);
   const chapters = chosen.map(({ p, spine: onSpine }, i) => {
     const c = describe(p, data, { by: est.get(p.id) });
     const fam = familyThrough(data, p.id, p.primaryChild);
@@ -7591,11 +7600,39 @@ function buildStory(data, rootId, opts = {}) {
     c.father = par.father ? data.individuals.get(par.father) : null;
     c.mother = par.mother ? data.individuals.get(par.mother) : null;
     c.marriageYear = dateYear(fam.marriage?.date);
-    c.town = town(c.town || lastTown);
-    lastTown = c.town;
     const childBy = c.child ? birthYear(c.child) : null;
-    let year = c.marriageYear ?? (childBy != null ? childBy - 1 : c.by + 25);
-    year = Math.max(c.by + 16, Math.min(year, (c.dy ?? c.by + 70) - 1, present - 1));
+    const childBirth = c.child && findEvent(c.child, 'BIRT');
+    const isTop = i === chosen.length - 1;
+    // Which real event the chapter's big mission is built on: the least-used kind this person has.
+    c.emig = c.indi.events.find(e => e.tag === 'EMIG' || e.tag === 'IMMI') || null;
+    c.census = c.indi.events.find(e => (e.tag === 'CENS' || e.tag === 'RESI') && e.date) || null;
+    c.bapt = findEvent(c.indi, 'CHR', 'BAPM');
+    const laterTown = placeTown(childBirth?.place) || placeTown(evPlace(c.indi, 'DEAT', 'BURI'));
+    c.movedTo = c.town && laterTown && laterTown.country !== c.town.country ? laterTown : null;
+    const avail = [];
+    if (c.emig || c.movedTo) avail.push('emig');
+    if (c.group === 'arms' || c.indi.events.some(e => /MIL/.test(e.tag))) avail.push('arms');
+    // (a birth or a wedding is only proved once, however many of the family get a chapter)
+    if (c.spouse && !proven.has('wed' + fam.fam.id)) avail.push('wedding');
+    if (c.child && !proven.has('birth' + c.child.id)) avail.push('birth');
+    if (c.census) avail.push('census');
+    if (c.bapt) avail.push('baptism');
+    avail.push('chase');
+    c.set = isTop ? 'finale' : avail.slice().sort((a, b) => (usedSets[a] || 0) - (usedSets[b] || 0))[0];
+    usedSets[c.set] = (usedSets[c.set] || 0) + 1;
+    if (c.set === 'wedding') proven.add('wed' + fam.fam.id);
+    if (c.set === 'birth') proven.add('birth' + c.child.id);
+    // The chapter happens where and when that event did.
+    const evTown = c.set === 'wedding' ? placeTown(fam.marriage?.place) : c.set === 'birth' ? placeTown(childBirth?.place) : c.set === 'census' ? placeTown(c.census.place) : null;
+    c.town = town(evTown && evTown.key !== 'unknown' ? evTown : c.town || lastTown);
+    lastTown = c.town;
+    let year = c.set === 'birth' && childBy != null ? childBy
+      : c.set === 'emig' ? dateYear(c.emig?.date) ?? Math.min(c.by + 22, (childBy ?? 9999) - 1)
+        : c.set === 'census' ? dateYear(c.census.date)
+          : c.set === 'arms' ? c.by + 21
+            : c.set === 'finale' ? c.by + 24
+              : c.marriageYear ?? (childBy != null ? childBy - 1 : c.by + 25);
+    year = Math.max(c.by + 16, Math.min(year, (c.dy ?? c.by + 70) - (c.set === 'birth' ? 0 : 1), present - 1));
     c.year = year;
     c.index = i;
     return c;
@@ -7625,12 +7662,12 @@ function buildStory(data, rootId, opts = {}) {
     ],
     steps: [
       { t: 'goto', at: 'phone', foot: true, text: `Answer ${H.phone}` },
-      { t: 'talk', who: 'dot', at: 'phone', lines: [
+      { t: 'talk', who: 'dot', at: 'phone', text: `Answer ${H.phone}`, lines: [
         `Is that ${hero.first}? ${benefactor === hero ? 'The ' + surname + ' heir' : cap(benefactor.first) + '\'s ' + (benefactor.gen ? 'great-'.repeat(Math.max(0, benefactor.gen - 2)) + (benefactor.gen > 1 ? 'grandchild' : 'child') : 'heir')}? Thank heavens. Dot Quill, County Archivist, retired.`,
         `Don't sign anything. Silas Blank doesn't find heirs. He removes them. Names are going out of the registers like chalk off a slate, and yours is next in the queue.`,
         `Come to my lock-up behind ${H.pub}. Tell nobody. Oh, and I do hope you can drive.`] },
       { t: 'goto', at: 'garage', text: `Go to ${H.garage}` },
-      { t: 'talk', who: 'dot', at: 'garage', lines: [
+      { t: 'talk', who: 'dot', at: 'garage', text: 'Talk to Dot', lines: [
         `There she is. My late husband's estate car. We call her the Heirloom.`,
         `I fitted the Parish Engine myself. It runs on register ink and it reads the road like a page. Get her up to speed on a straight road and she turns the years back. I was a very bored archivist.`,
         `But first, ${H.hall}. I want the ${surname} file out of there before Blank's people shred it. Get in, the door sticks.`] },
@@ -7660,7 +7697,6 @@ function buildStory(data, rootId, opts = {}) {
   });
 
   // ---- One chapter per chosen ancestor ----
-  const usedSets = {};
   chapters.forEach((c, i) => {
     const isFinale = c === finale;
     const N = names(c.town, c.year), w = eraWords(c.year);
@@ -7676,14 +7712,18 @@ function buildStory(data, rootId, opts = {}) {
       brief: `Find ${relLine}, in ${c.town.name}, ${c.year}.`,
       intro: [{ who: c.id, greet: true },
         { who: c.id, text: `Family, you say. There's a grey fellow been round all week saying the same, and asking after the parish book. I trust nobody who can't tell me something only kin would know.` }],
-      steps: [{ t: 'talk', who: c.id, at: 'home', quiz, lines: quiz ? [] : [`Well. You've the look of us, I'll give you that.`] }],
+      steps: [{ t: 'talk', who: c.id, at: 'home', quiz, text: `Talk to ${c.first}`, lines: quiz ? [] : [`Well. You've the look of us, I'll give you that.`] }],
       outro: [{ who: c.id, text: isFinale
         ? `Then you're mine, sure enough, though how is past my wits. There's nobody behind me in any book, you know. I'm where it starts.`
         : `Then you're one of ours, though I can't think how. Sit down. You look half starved and wholly lost.` }],
       reward: { cash: 60 + i * 10 },
     });
     // 2. A day's work
-    const job = (DAY_JOBS[c.group] || DAY_JOBS.odd)(ctx);
+    // The same trade twice in one family gets a different day's work the second time.
+    const jobKeys = [c.group, c.group + 'B', 'odd', 'shop', 'rail', 'serve'].filter(k => DAY_JOBS[k]);
+    const jobKey = jobKeys.find(k => !usedJobs[k]) || c.group;
+    if (!isFinale) usedJobs[jobKey] = true;
+    const job = (DAY_JOBS[jobKey] || DAY_JOBS.odd)(ctx);
     if (!isFinale) add({
       ...base, id: `work-${i}`, title: job.title, giver: { who: c.id, at: c.group === 'farm' ? 'farm' : ['haul', 'cloth', 'craft'].includes(c.group) ? 'works' : c.group === 'sea' ? 'hub' : 'home' },
       brief: `${c.first}${c.job ? ' the ' + c.job.toLowerCase() : ''} could use a hand.`,
@@ -7694,20 +7734,9 @@ function buildStory(data, rootId, opts = {}) {
     });
     // 3. The set piece, built on a real event from the file
     const groom = c.sex === 'F' ? c.spouse : c.indi, bride = c.sex === 'F' ? c.indi : c.spouse;
-    const emig = c.indi.events.find(e => e.tag === 'EMIG' || e.tag === 'IMMI');
-    const census = c.indi.events.find(e => (e.tag === 'CENS' || e.tag === 'RESI') && e.date);
-    const bapt = findEvent(c.indi, 'CHR', 'BAPM');
+    const emig = c.emig, census = c.census, bapt = c.bapt;
     const childBirth = c.child && findEvent(c.child, 'BIRT');
-    const avail = [];
-    if (emig) avail.push('emig');
-    if (c.group === 'arms' || c.indi.events.some(e => /MIL/.test(e.tag))) avail.push('arms');
-    if (c.spouse) avail.push('wedding');
-    if (c.child) avail.push('birth');
-    if (census) avail.push('census');
-    if (bapt) avail.push('baptism');
-    avail.push('chase');
-    const kind = isFinale ? 'finale' : avail.slice().sort((a, b) => (usedSets[a] || 0) - (usedSets[b] || 0))[0];
-    usedSets[kind] = (usedSets[kind] || 0) + 1;
+    const kind = c.set;
     const when = d => d ? ' ' + datePhrase(d) : '';
     let set;
     if (kind === 'wedding') {
@@ -7720,21 +7749,22 @@ function buildStory(data, rootId, opts = {}) {
         proof: proof('marriage', c, `Marriage of ${groom ? displayName(groom) : g} and ${bride ? displayName(bride) : b}`, [c.marriage?.date && cap(datePhrase(c.marriage.date)), placeTown(c.marriage?.place)?.name || c.town.name].filter(Boolean).join(', ')) };
     } else if (kind === 'birth') {
       const kid = firstName(c.child);
-      set = { title: 'Special Delivery', brief: `${kid} is on the way${when(childBirth?.date)}, and the midwife is not.`,
+      set = { title: 'Special Delivery', brief: `${kid} is due${when(childBirth?.date)}, and the midwife is nowhere to be found.`,
         ask: `The baby's coming and the midwife's not: some grey devil has ${c.year >= 1900 ? 'let her tyres down' : 'lamed her pony'}. Fetch her from «${N.infirmary}», and drive like the child's life hangs on it. Yours might, come to think.`,
         steps: [{ t: 'carry', from: 'infirmary', to: 'home', n: 1, label: 'midwife', passenger: 'the midwife', timed: 1.0, text: `Rush the midwife from ${N.infirmary} to the house` },
           { t: 'collect', around: 'hall', radius: 14, n: 6, label: 'register pages', timed: 1.4, text: `Blank's men have scattered the birth register. Collect every page near ${N.hall}` }],
         done: `${displayName(c.child)}, born safe and written down. ${c.child.id === rootId ? 'That one is you, by the way.' : 'One more link that holds.'}`,
         proof: proof('birth', { id: c.child.id }, `Birth of ${displayName(c.child)}`, [childBirth?.date && cap(datePhrase(childBirth.date)), placeTown(childBirth?.place)?.name || c.town.name].filter(Boolean).join(', ')) };
     } else if (kind === 'emig') {
-      const dest = placeTown(evPlace(c.indi, 'IMMI', 'DEAT', 'BURI'))?.nation;
-      set = { title: 'The Last Boat', brief: `${c.first} is leaving${dest ? ' for ' + dest : ''}${when(emig.date)}. The ship will not wait.`,
-        ask: `Everything we own is in two trunks and the ${w.boat} sails on the tide${dest ? ' for «' + dest + '»' : ''}. Every carter in town has been paid by some grey gentleman to be busy. Get the trunks to «${N.hub}», then come back for us.`,
+      const dest = (c.movedTo || placeTown(evPlace(c.indi, 'IMMI', 'DEAT', 'BURI')))?.nation;
+      const air = c.year >= 1950;
+      set = { title: air ? 'Final Call' : 'The Last Boat', brief: `${c.first} is leaving${dest && dest !== c.town.nation ? ' for ' + dest : ''}${when(emig?.date)}. The ${w.boat} will not wait.`,
+        ask: `Everything I own is in two trunks and the ${w.boat} ${air ? 'leaves within the hour' : 'sails on the tide'}${dest && dest !== c.town.nation ? ' for «' + dest + '»' : ''}. Every ${air ? 'taxi' : 'carter'} in town has been paid by some grey gentleman to be busy. Get the trunks to «${N.hub}», then come back for me.`,
         steps: [{ t: 'carry', from: 'home', to: 'hub', n: 2, label: 'trunks', timed: 1.2, text: `Get both trunks to ${N.hub}` },
-          { t: 'carry', from: 'home', to: 'hub', n: 1, label: 'family', passenger: c.first, timed: 1.0, text: `Now the family. The ${w.boat} is casting off` },
+          { t: 'carry', from: 'home', to: 'hub', n: 1, label: 'traveller', passenger: c.first, timed: 1.0, text: `Now ${c.first}. The ${w.boat} is about to leave` },
           { t: 'chase', from: 'hub', hp: 4 + Math.min(3, i), label: `the ${w.van}`, drop: 'the passenger list', text: `Erasers have the passenger list. Stop the ${w.van}` }],
         done: `${c.name}, on the passenger list in black and white. Wherever ${c.he} went, ${c.he} went on the record.`,
-        proof: proof('passage', c, `Passage of ${c.name}`, [emig.date && cap(datePhrase(emig.date)), dest && 'bound for ' + dest].filter(Boolean).join(', ') || 'Passenger list') };
+        proof: proof('passage', c, `Passage of ${c.name}`, [emig?.date ? cap(datePhrase(emig.date)) : String(c.year), dest && 'bound for ' + dest].filter(Boolean).join(', ') || 'Passenger list') };
     } else if (kind === 'arms') {
       set = { title: 'The King\'s Shilling', brief: `${c.first} has orders, and somebody has been at the muster roll.`,
         ask: `I'm to report and the muster roll's gone missing with my name on it. No roll, no record, and a man with no record never served. Run these dispatches round and then get me to «${N.hub}» before the column moves off.`,
@@ -7772,7 +7802,7 @@ function buildStory(data, rootId, opts = {}) {
     });
 
     // The Golden Door: everybody's tree passes somebody's manifest. Only if the file never leaves home.
-    if (!foreign && !isFinale && i === Math.min(1, chapters.length - 2)) {
+    if (!foreign && present > 1907 && !isFinale && i === Math.min(1, chapters.length - 2)) {
       const ny = town(NEW_YORK);
       add({ act: 'Interlude', id: 'golden-door', title: 'The Golden Door', town: ny.id, year: 1907, giver: { who: 'dot', at: 'phone' },
         brief: 'Blank has gone wholesale: Ellis Island, 1907, twelve million names.',
@@ -7895,7 +7925,21 @@ function oddJob(town, year, seed) {
   };
 }
 
-return { eraOf, eraWords, placeTown, fareBetween, lotName, jobGroup, buildStory, residentsOf, oddJob, ERA_NAMES, inkCost };
+/** Notes from the file for people connected with a town: what is written on the back of the lost photographs. */
+function townNotes(data, town, limit = 12) {
+  const out = [];
+  let seen = 0;
+  for (const indi of data.individuals.values()) {
+    if (seen++ > 20000 || out.length >= limit) break;
+    if (!indi.notes.length) continue;
+    if (!indi.events.some(e => e.place && placeTown(e.place)?.id === town.id)) continue;
+    const text = indi.notes[0].replace(/\s+/g, ' ').trim();
+    if (text.length > 8) out.push({ name: displayName(indi), life: lifespan(indi), text: text.length > 230 ? text.slice(0, 227).replace(/\s+\S*$/, '') + '…' : text });
+  }
+  return out;
+}
+
+return { eraOf, eraWords, placeTown, fareBetween, lotName, jobGroup, buildStory, residentsOf, oddJob, townNotes, ERA_NAMES, inkCost };
 })();
 
 // ---- storycity.js ----
@@ -8609,6 +8653,8 @@ const CSS = `
 #story .st-card button.alt { background: #d8ccb0; box-shadow: 0 3px 0 #9a8a68; }
 #story .st-card button:disabled { opacity: 0.45; cursor: default; }
 #story .st-card .foot { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+#story .st-card canvas { display: block; width: 100%; height: auto; border: 3px solid #2a2218; border-radius: 6px; image-rendering: pixelated; }
+#story .st-card.wide { width: min(760px, 100%); }
 #story .st-card kbd { font-family: 'Press Start 2P', monospace; font-size: 9px; background: #2a2218; color: #f4ecd8; padding: 3px 5px; border-radius: 3px; }
 #story .st-touch { position: absolute; inset: 0; pointer-events: none; display: none; }
 #story.touch .st-touch { display: block; }
@@ -8629,14 +8675,23 @@ const CSS = `
   #story .st-dlg .txt { font-size: 15px; }
   #story .st-dlg canvas { width: 60px; height: 60px; }
 }
-@media (max-height: 480px) { #story .st-toast { top: 20%; } #story .st-obj { font-size: 13px; } }
+@media (max-height: 480px) {
+  #story .st-toast { top: 22%; font-size: 14px; }
+  #story #stMini { width: 104px; height: 104px; }
+  #story .st-menu { top: calc(8px + env(safe-area-inset-top, 0px)); right: calc(126px + env(safe-area-inset-right, 0px)); flex-direction: column; gap: 4px; }
+  #story .st-menu button { padding: 3px 8px; font-size: 12px; }
+  #story .st-obj { top: calc(8px + env(safe-area-inset-top, 0px)); width: calc(100% - 440px); font-size: 13px; }
+  #story .st-banner { top: 30%; }
+  #story .st-dlg { bottom: 6px; padding: 8px; }
+  #story .st-dlg .txt { font-size: 15px; min-height: 3.2em; }
+}
 `;
 
 const HTML = `
 <canvas id="stCanvas"></canvas>
 <div class="st-top"><div class="st-cash" id="stCash">£0</div><div class="st-stat" id="stStat"></div><div class="st-where" id="stWhere"></div></div>
 <canvas id="stMini" width="132" height="132"></canvas>
-<div class="st-menu"><button data-act="dial" title="Time dial (T)">⏱ Dial</button><button data-act="pedigree" title="Pedigree (P)">📜</button><button data-act="pause" title="Menu (Esc)">☰</button></div>
+<div class="st-menu"><button data-act="dial" title="Time dial (T)">⏱ Dial</button><button data-act="map" title="Town map (M)">🗺</button><button data-act="pedigree" title="Pedigree (P)">📜</button><button data-act="pause" title="Menu (Esc)">☰</button></div>
 <div class="st-obj" id="stObj"></div>
 <div class="st-toast" id="stToast"></div>
 <div class="st-hint" id="stHint"></div>
@@ -8669,7 +8724,7 @@ function mountStoryUi() {
 
   const input = { keys: new Set(), stick: { x: 0, y: 0, active: false }, queue: [], brake: false, touch };
   const press = act => { input.queue.push(act); };
-  const KEYMAP = { KeyE: 'action', Enter: 'action', KeyT: 'dial', KeyH: 'call', KeyP: 'pedigree', Escape: 'pause', KeyF: 'action' };
+  const KEYMAP = { KeyE: 'action', Enter: 'action', KeyT: 'dial', KeyH: 'call', KeyP: 'pedigree', Escape: 'pause', KeyF: 'action', KeyM: 'map', Tab: 'map' };
   const GAME_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'ShiftLeft', 'ShiftRight', 'Tab', 'KeyM', ...Object.keys(KEYMAP)]);
   const typing = () => ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName);
   const onKey = e => {
@@ -8765,9 +8820,9 @@ function mountStoryUi() {
       });
     },
     /** A modal card. html is the card's inside; handlers maps data-go values to callbacks. */
-    panel(html, handlers = {}) {
+    panel(html, handlers = {}, wide = false) {
       const p = $('stPanel');
-      p.innerHTML = '<div class="st-card">' + html + '</div>';
+      p.innerHTML = '<div class="st-card' + (wide ? ' wide' : '') + '">' + html + '</div>';
       p.classList.remove('hidden');
       ui.panelOpen = true;
       p.onclick = e => {
@@ -8807,7 +8862,7 @@ const { computeTraits } = __m_traits;
 const { lookFor } = __m_outfits;
 const { drawPortrait } = __m_textures;
 const { buildDialogue, voiceLine } = __m_dialogue;
-const { buildStory, eraOf, ERA_NAMES, eraWords, fareBetween, inkCost, residentsOf, oddJob } = __m_storyplot;
+const { buildStory, eraOf, ERA_NAMES, eraWords, fareBetween, inkCost, residentsOf, oddJob, townNotes } = __m_storyplot;
 const { buildTown, TILE, G, DIRS, laneOffset, drawGround, drawTall, renderMiniMap } = __m_storycity;
 const { VEHICLES, trafficMix, trafficCount, paintFor, drawVehicle, drawSmoke, strangerLook, lookSummary, drawPerson, drawItem, drawMarker, FIXED_LOOKS, drawPortraitExtras } = __m_storyart;
 const { mountStoryUi, escapeText } = __m_storyui;
@@ -8844,6 +8899,22 @@ const sfx = {
   siren: () => beep(700, 0.25, 'sine', 0.025, 300),
   ring: () => { beep(1400, 0.05, 'square', 0.03); setTimeout(() => beep(1400, 0.05, 'square', 0.03), 90); },
 };
+
+// A low engine note that rises with the revs (motor vehicles only).
+let eng = null;
+function engineNote(on, frac) {
+  try {
+    if (!AC) return;
+    if (!eng) {
+      const o = AC.createOscillator(), f = AC.createBiquadFilter(), g = AC.createGain();
+      o.type = 'sawtooth'; f.type = 'lowpass'; f.frequency.value = 380; g.gain.value = 0;
+      o.connect(f); f.connect(g); g.connect(AC.destination); o.start();
+      eng = { o, g };
+    }
+    eng.g.gain.setTargetAtTime(on ? 0.016 + frac * 0.014 : 0, AC.currentTime, 0.08);
+    eng.o.frequency.setTargetAtTime(46 + frac * 120, AC.currentTime, 0.07);
+  } catch (e) { /* no sound */ }
+}
 
 // ---------------- Open / close ----------------
 /** Start (or carry on) the story for one person in one file. store = { get, set } over localStorage. */
@@ -8888,6 +8959,7 @@ function closeStory(silent) {
   const s = S;
   persist();
   cancelAnimationFrame(s.raf);
+  engineNote(false, 0);
   window.removeEventListener('resize', s.onResize);
   s.ui.destroy();
   S = null;
@@ -8991,6 +9063,16 @@ function enterTown(town, year, where) {
     if (!circleSolid(px, py, 16)) makeVehicle(mix[(i + n) % mix.length][0], px, py, 0, { parked: true });
   });
   S.names = residentsOf(S.data, town, year, 40);
+  // three lost photographs in every town and era, with the file's own notes on the back
+  const got = new Set(S.save.photos || []), pr = seededRandom(hashString('photo' + town.id + c.era));
+  S.notes = townNotes(S.data, town);
+  for (let i = 0, guard = 0; i < 3 && guard < 400; guard++) {
+    const tx = Math.floor(pr() * c.W), ty = Math.floor(pr() * c.H), tt = c.at(tx, ty);
+    if (tt !== G.PAVE && tt !== G.YARD && tt !== G.GRASS && tt !== G.PLAZA) continue;
+    const id = `${town.id}:${c.era}:${i}`;
+    if (!got.has(id)) S.items.push({ photo: id, n: i, x: (tx + 0.5) * T, y: (ty + 0.5) * T, kind: 'photo' });
+    i++;
+  }
   S.heat = 0; S.bust = 0;
   S.view.x = P.x; S.view.y = P.y;
   spawnNpcs();
@@ -9191,12 +9273,12 @@ function collideVehicles() {
     A.speed = A.vx * Math.cos(A.ang) + A.vy * Math.sin(A.ang); B.speed = B.vx * Math.cos(B.ang) + B.vy * Math.sin(B.ang);
     if (A !== pv && B !== pv) continue;
     const other = A === pv ? B : A;
-    if (vn < 2.2 * T) continue;
+    if (vn < (other.ai === 'flee' ? 1.1 : 2.2) * T) continue;
     sfx.bump(); spark((A.x + B.x) / 2, (A.y + B.y) / 2, 8);
     if (other.ai === 'flee') {
-      if (other.hitCd <= 0 && vn > 2.8 * T) { other.hp -= 1; other.hitCd = 0.9; float(other.x, other.y - 30, other.hp > 0 ? 'CRUNCH!' : 'GOT IT!', '#ffd84a'); if (S.step) S.step.hits = (S.step.hits || 0) + 1; }
+      if (other.hitCd <= 0) { other.hp -= 1; other.speed *= 0.6; other.hitCd = 0.9; float(other.x, other.y - 30, other.hp > 0 ? 'CRUNCH!' : 'GOT IT!', '#ffd84a'); if (S.step) S.step.hits = (S.step.hits || 0) + 1; }
     } else {
-      if (vn > 4 * T) { offence(other.ai === 'cop' ? 0.7 : 0.2); damage(pv, 1); if (other.ai === 'traffic' && Math.random() < 0.5) float(other.x, other.y - 26, quip(), '#fff'); }
+      if (vn > 4 * T) { if (other.ai !== 'cop' || Math.abs(pv.speed) > 7 * T) offence(other.ai === 'cop' ? 0.7 : 0.2); damage(pv, 1); if (other.ai === 'traffic' && Math.random() < 0.5) float(other.x, other.y - 26, quip(), '#fff'); }
       gentleBump(vn);
     }
     other.parked = false;
@@ -9284,7 +9366,7 @@ function updateHeat(dt) {
       if (Math.random() < 0.5) sfx.siren();
     }
     // nicked if they have you boxed in
-    const px = P.vehicle || P, slow = P.vehicle ? Math.abs(P.vehicle.speed) < 1.3 * T : true;
+    const px = P.vehicle || P, slow = P.vehicle ? Math.abs(P.vehicle.speed) < 2.6 * T : true;
     let close = false;
     for (const v of S.vehicles) if (v.ai === 'cop' && Math.hypot(v.x - px.x, v.y - px.y) < 2.4 * T) close = true;
     for (const p of S.peds) if (p.cop && !(p.down > 0) && Math.hypot(p.x - px.x, p.y - px.y) < (P.vehicle ? 1.9 : 0.9) * T) close = true;
@@ -9354,6 +9436,7 @@ function nextStep() {
   clearStep();
   m.i++;
   if (m.i >= m.def.steps.length) { passMission(); return; }
+  if (m.def.id === 'final-notice' && m.i === 0) hintOnce('walk', S.ui.touch ? 'Left thumb walks. Follow the yellow arrow. GO talks, gets in and out and starts jobs.' : 'WASD or the arrow keys to walk (Shift to run). Follow the yellow arrow. E talks, gets in and out and starts jobs.', 8000);
   spawnNpcs();
   enterStep(m.def.steps[m.i]);
 }
@@ -9366,7 +9449,7 @@ function enterStep(step) {
     if (step.passenger) { const sp = freeSpotNear(a.x, a.y - 0.2 * T, 0); const giver = S.peds.find(p => p.npc && p.name && p.name.split(' ')[0] === step.passenger); st.pass = { stepPed: true, x: sp.x + 14, y: sp.y, ang: Math.PI / 2, walk: 0, down: 0, look: giver?.look || strangerLook(Math.random, c.year), name: step.passenger }; S.peds.push(st.pass); } }
   else if (step.t === 'race') { let prev = pp; for (const s of step.stops) { const l = lotPt(s); tiles += manh(prev, l); prev = l; } stops = step.stops.length; }
   else if (step.t === 'collect') {
-    const l = lotPt(step.around), kind = /sheep|pigs|truants/.test(step.label) ? step.label : 'page';
+    const l = lotPt(step.around), kind = /sheep|pigs|truants/.test(step.label) ? step.label : /tubs|crates|barrels/.test(step.label) ? 'load' : 'page';
     let guard = 0;
     while (S.items.filter(i => i.step).length < step.n && guard++ < 600) {
       const a = Math.random() * 7, r = (3 + Math.random() * (step.radius - 3)) * T, x = l.x + Math.cos(a) * r, y = l.y + Math.sin(a) * r;
@@ -9459,6 +9542,12 @@ async function converse(s) {
   S.busy = false;
   nextStep();
 }
+function hintOnce(key, text, ms = 6000) {
+  const h = S.save.hints || (S.save.hints = {});
+  if (h[key]) return;
+  h[key] = 1;
+  S.ui.toast(text, ms);
+}
 function earn(n) { if (n > 0) { S.save.cash += n; S.ui.cash(S.save.cash, true); sfx.cash(); } }
 async function passMission() {
   const tok = S, m = S.mission, def = m.def;
@@ -9550,12 +9639,28 @@ function openPedigree() {
   const st = S.story;
   const rows = st.proofs.map(p => { const got = S.save.proofs.includes(p.id); return `<div class="row${got ? '' : ' off'}"><span>${got ? '✔' : '□'} ${escapeText(p.title)}<small>${got ? escapeText(p.detail || '') : 'Not yet proven'}</small></span></div>`; }).join('');
   const n = Math.min(S.save.idx, st.missions.length);
-  S.ui.panel(`<h2>📜 The ${escapeText(st.surname)} pedigree</h2><p>${S.save.proofs.length} of ${st.proofs.length} proofs lodged · ${n} of ${st.missions.length} missions passed · £${S.save.cash}</p>${rows}<div class="foot"><button class="alt" data-go="close">Close</button></div>`, { close: () => S.ui.closePanel() });
+  S.ui.panel(`<h2>📜 The ${escapeText(st.surname)} pedigree</h2><p>${S.save.proofs.length} of ${st.proofs.length} proofs lodged · ${n} of ${st.missions.length} missions passed · ${(S.save.photos || []).length} lost photographs found · £${S.save.cash}</p>${rows}<div class="foot"><button class="alt" data-go="close">Close</button></div>`, { close: () => S.ui.closePanel() });
+}
+function openMap() {
+  const c = S.city, sc = 6;
+  S.ui.panel(`<h2>🗺 ${escapeText(c.town.name)}, ${c.year}</h2><canvas id="stMap" width="${c.W * sc}" height="${c.H * sc}"></canvas><p>Yellow: where the story wants you. Gold: the Heirloom. £: odd jobs. ${c.air ? '✈' : '⚓'}: tickets. Photographs found here: ${(S.save.photos || []).filter(p => p.startsWith(c.town.id + ':' + c.era)).length} of 3.</p><div class="foot"><button class="alt" data-go="close">Close</button></div>`, { close: () => S.ui.closePanel() }, true);
+  const g = S.ui.root.querySelector('#stMap').getContext('2d');
+  g.imageSmoothingEnabled = false;
+  g.drawImage(S.mini, 0, 0, c.W * sc, c.H * sc);
+  g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '700 12px "Fredoka", "Nunito", sans-serif';
+  const tag = (o, text, col) => { const x = o.x / T * sc, y = o.y / T * sc; g.lineWidth = 3; g.strokeStyle = 'rgba(0,0,0,0.85)'; g.strokeText(text, x, y); g.fillStyle = col; g.fillText(text, x, y); };
+  for (const k in c.lots) if (k !== 'phone') tag({ x: c.lots[k].x, y: c.lots[k].y - 1.6 * T }, c.lots[k].name.replace(/^the /, ''), '#fff');
+  const dot = (o, col, r = 6) => { g.fillStyle = col; g.strokeStyle = '#000'; g.lineWidth = 2; g.beginPath(); g.arc(o.x / T * sc, o.y / T * sc, r, 0, 7); g.fill(); g.stroke(); };
+  dot(S.heirloom, '#e8c040');
+  if (S.target) dot(S.target, '#ffd84a', 8);
+  const pp = S.player.vehicle || S.player;
+  dot(pp, '#fff', 5);
+  tag({ x: pp.x, y: pp.y + 1.8 * T }, 'you', '#fff');
 }
 function openPause() {
   const k = (a, b) => `<p><kbd>${a}</kbd> ${b}</p>`;
   S.ui.panel(`<h2>Relative Speed</h2><p>${escapeText(S.story.missions[S.save.idx]?.brief || 'Free roam: every town, every year.')}</p>
-    ${S.ui.touch ? '<p>Left thumb steers and walks. GO talks, gets in and out and starts jobs. CAR calls the Heirloom.</p>' : k('WASD / arrows', 'walk, drive') + k('E', 'talk, get in or out, start a job') + k('Space', 'handbrake') + k('T', 'time dial') + k('H', 'call the Heirloom (£10)') + k('P', 'pedigree') }
+    ${S.ui.touch ? '<p>Left thumb steers and walks. GO talks, gets in and out and starts jobs. CAR calls the Heirloom.</p>' : k('WASD / arrows', 'walk, drive') + k('E', 'talk, get in or out, start a job') + k('Space', 'handbrake') + k('T', 'time dial') + k('H', 'call the Heirloom (£10)') + k('M', 'town map') + k('P', 'pedigree') }
     <div class="foot"><button data-go="close">Resume</button><button class="alt" data-go="quit">Save and leave</button><button class="alt" data-go="reset">Restart the story</button></div>`, {
     close: () => S.ui.closePanel(),
     quit: () => { S.ui.closePanel(); closeStory(); },
@@ -9588,6 +9693,7 @@ function enterVehicle(v) {
   }
   v.ai = null; v.parked = false; v.wp = null;
   P.vehicle = v; sfx.door();
+  hintOnce('drive', S.ui.touch ? 'Push the stick the way you want to go. BRAKE is the handbrake. GO gets you out.' : 'W accelerates, S brakes and reverses, A and D steer. Space is the handbrake. E gets you out.');
 }
 function leaveVehicle(force) {
   const P = S.player, v = P.vehicle; if (!v) return;
@@ -9671,7 +9777,7 @@ function updatePlayer(dt) {
   // the Parish Engine
   if (v === S.heirloom) {
     const st = VEHICLES.heirloom, armed = S.dial != null && S.dial !== S.city.year;
-    if (armed && Math.abs(v.speed) > st.max * T * 0.84) v.charge = Math.min(1, v.charge + dt / 2.3); else v.charge = Math.max(0, v.charge - dt / 1.7);
+    if (armed && Math.abs(v.speed) > st.max * T * 0.84) v.charge = Math.min(1, v.charge + dt / 2.0); else v.charge = Math.max(0, v.charge - dt / 1.7);
     if (v.charge >= 1) {
       const cost = inkCost(S.city.year, S.dial);
       v.charge = 0;
@@ -9687,12 +9793,13 @@ function handleQueue() {
   while (q.length) {
     const act = q.shift();
     if (ui.dialogOpen) { if (act === 'action' || act === 'space' || /^opt/.test(act)) ui._advance?.(act); continue; }
-    if (ui.panelOpen) { if (act === 'pause' || act === 'dial' || act === 'pedigree') ui._panelClose?.(); continue; }
+    if (ui.panelOpen) { if (act === 'pause' || act === 'dial' || act === 'pedigree' || act === 'map') ui._panelClose?.(); continue; }
     if (S.busy) continue;
     if (act === 'action') S.near?.go();
     else if (act === 'dial') openDial();
     else if (act === 'pedigree') openPedigree();
     else if (act === 'pause') openPause();
+    else if (act === 'map') openMap();
     else if (act === 'call') callHeirloom();
   }
 }
@@ -9723,6 +9830,14 @@ function update(dt) {
   if (S.flash > 0) S.flash -= dt;
   // the phone box rings until you answer it
   if (S.step?.step.t === 'goto' && S.step.step.at === 'phone') { S.ringT -= dt; if (S.ringT <= 0) { S.ringT = 1.6; const l = c.lot('phone'); float(l.x, l.y - 18, 'RING RING', '#ffd84a'); if (dist(l, pp) < 12 * T) sfx.ring(); } }
+  for (const it of S.items) if (it.photo && dist(it, pp) < 1.2 * T) {
+    it.gone = true;
+    (S.save.photos || (S.save.photos = [])).push(it.photo);
+    const note = S.notes.length ? S.notes[(hashString(it.photo) >>> 0) % S.notes.length] : null, who = S.names.length ? S.names[(hashString(it.photo) >>> 0) % S.names.length] : null;
+    S.ui.toast(note ? `A lost photograph. On the back: "${note.name}${note.life ? ' (' + note.life + ')' : ''}. ${note.text}"` : who ? `A lost photograph. On the back, in pencil: "${who.name}, ${c.town.name}, ${c.year}."` : `A lost photograph of a street in ${c.town.name} you almost recognise.`, 9000);
+    earn(30);
+  }
+  if (S.items.some(i => i.gone)) S.items = S.items.filter(i => !i.gone);
   S.near = findNear();
   S.target = S.step ? stepTarget() : idleTarget();
 }
@@ -9771,7 +9886,7 @@ function render() {
   const ui = S.ui, g = ui.ctx, P = S.player, c = S.city;
   const { w, h, dpr } = ui.resize();
   const pp = P.vehicle || P, sp = P.vehicle ? Math.abs(P.vehicle.speed) / (15 * T) : 0;
-  const base = clamp(Math.min(w, h) / (15.5 * T), 0.75 * dpr, 2.2 * dpr);
+  const base = clamp(Math.min(w, h) / ((ui.touch ? 11.5 : 15.5) * T), 0.75 * dpr, 2.2 * dpr);
   const V = S.view;
   V.w = w; V.h = h;
   const zt = base * (1 - 0.3 * clamp(sp, 0, 1));
@@ -9871,6 +9986,9 @@ function loop(now) {
     if (!S) return;
     if (!s.ui.panelOpen && !s.ui.dialogOpen) update(dt); else s.t += dt * 0.0001;
     if (!S) return;
+    const pv = s.player.vehicle, quiet = s.ui.panelOpen || s.ui.dialogOpen || s.busy;
+    engineNote(!!pv && !VEHICLES[pv.type].horse && !quiet, pv ? Math.min(1, Math.abs(pv.speed) / (VEHICLES[pv.type].max * T)) : 0);
+    if (pv && VEHICLES[pv.type].horse && !quiet && Math.abs(pv.speed) > T) { s.clop = (s.clop || 0) - dt * Math.abs(pv.speed) / T; if (s.clop <= 0) { s.clop = 1.6; beep(180 + Math.random() * 40, 0.03, 'triangle', 0.035); } }
     hud();
     render();
   } catch (e) {

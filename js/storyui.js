@@ -50,6 +50,8 @@ const CSS = `
 #story .st-card button.alt { background: #d8ccb0; box-shadow: 0 3px 0 #9a8a68; }
 #story .st-card button:disabled { opacity: 0.45; cursor: default; }
 #story .st-card .foot { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+#story .st-card canvas { display: block; width: 100%; height: auto; border: 3px solid #2a2218; border-radius: 6px; image-rendering: pixelated; }
+#story .st-card.wide { width: min(760px, 100%); }
 #story .st-card kbd { font-family: 'Press Start 2P', monospace; font-size: 9px; background: #2a2218; color: #f4ecd8; padding: 3px 5px; border-radius: 3px; }
 #story .st-touch { position: absolute; inset: 0; pointer-events: none; display: none; }
 #story.touch .st-touch { display: block; }
@@ -70,14 +72,23 @@ const CSS = `
   #story .st-dlg .txt { font-size: 15px; }
   #story .st-dlg canvas { width: 60px; height: 60px; }
 }
-@media (max-height: 480px) { #story .st-toast { top: 20%; } #story .st-obj { font-size: 13px; } }
+@media (max-height: 480px) {
+  #story .st-toast { top: 22%; font-size: 14px; }
+  #story #stMini { width: 104px; height: 104px; }
+  #story .st-menu { top: calc(8px + env(safe-area-inset-top, 0px)); right: calc(126px + env(safe-area-inset-right, 0px)); flex-direction: column; gap: 4px; }
+  #story .st-menu button { padding: 3px 8px; font-size: 12px; }
+  #story .st-obj { top: calc(8px + env(safe-area-inset-top, 0px)); width: calc(100% - 440px); font-size: 13px; }
+  #story .st-banner { top: 30%; }
+  #story .st-dlg { bottom: 6px; padding: 8px; }
+  #story .st-dlg .txt { font-size: 15px; min-height: 3.2em; }
+}
 `;
 
 const HTML = `
 <canvas id="stCanvas"></canvas>
 <div class="st-top"><div class="st-cash" id="stCash">£0</div><div class="st-stat" id="stStat"></div><div class="st-where" id="stWhere"></div></div>
 <canvas id="stMini" width="132" height="132"></canvas>
-<div class="st-menu"><button data-act="dial" title="Time dial (T)">⏱ Dial</button><button data-act="pedigree" title="Pedigree (P)">📜</button><button data-act="pause" title="Menu (Esc)">☰</button></div>
+<div class="st-menu"><button data-act="dial" title="Time dial (T)">⏱ Dial</button><button data-act="map" title="Town map (M)">🗺</button><button data-act="pedigree" title="Pedigree (P)">📜</button><button data-act="pause" title="Menu (Esc)">☰</button></div>
 <div class="st-obj" id="stObj"></div>
 <div class="st-toast" id="stToast"></div>
 <div class="st-hint" id="stHint"></div>
@@ -110,7 +121,7 @@ export function mountStoryUi() {
 
   const input = { keys: new Set(), stick: { x: 0, y: 0, active: false }, queue: [], brake: false, touch };
   const press = act => { input.queue.push(act); };
-  const KEYMAP = { KeyE: 'action', Enter: 'action', KeyT: 'dial', KeyH: 'call', KeyP: 'pedigree', Escape: 'pause', KeyF: 'action' };
+  const KEYMAP = { KeyE: 'action', Enter: 'action', KeyT: 'dial', KeyH: 'call', KeyP: 'pedigree', Escape: 'pause', KeyF: 'action', KeyM: 'map', Tab: 'map' };
   const GAME_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'ShiftLeft', 'ShiftRight', 'Tab', 'KeyM', ...Object.keys(KEYMAP)]);
   const typing = () => ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName);
   const onKey = e => {
@@ -206,9 +217,9 @@ export function mountStoryUi() {
       });
     },
     /** A modal card. html is the card's inside; handlers maps data-go values to callbacks. */
-    panel(html, handlers = {}) {
+    panel(html, handlers = {}, wide = false) {
       const p = $('stPanel');
-      p.innerHTML = '<div class="st-card">' + html + '</div>';
+      p.innerHTML = '<div class="st-card' + (wide ? ' wide' : '') + '">' + html + '</div>';
       p.classList.remove('hidden');
       ui.panelOpen = true;
       p.onclick = e => {

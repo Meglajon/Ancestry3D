@@ -6,7 +6,7 @@ import { computeTraits } from './traits.js';
 import { lookFor } from './outfits.js';
 import { drawPortrait } from './textures.js';
 import { buildDialogue, voiceLine } from './dialogue.js';
-import { buildStory, eraOf, ERA_NAMES, eraWords, fareBetween, inkCost, residentsOf, oddJob } from './storyplot.js';
+import { buildStory, eraOf, ERA_NAMES, eraWords, fareBetween, inkCost, residentsOf, oddJob, townNotes } from './storyplot.js';
 import { buildTown, TILE, G, DIRS, laneOffset, drawGround, drawTall, renderMiniMap } from './storycity.js';
 import { VEHICLES, trafficMix, trafficCount, paintFor, drawVehicle, drawSmoke, strangerLook, lookSummary, drawPerson, drawItem, drawMarker, FIXED_LOOKS, drawPortraitExtras } from './storyart.js';
 import { mountStoryUi, escapeText } from './storyui.js';
@@ -44,6 +44,22 @@ const sfx = {
   siren: () => beep(700, 0.25, 'sine', 0.025, 300),
   ring: () => { beep(1400, 0.05, 'square', 0.03); setTimeout(() => beep(1400, 0.05, 'square', 0.03), 90); },
 };
+
+// A low engine note that rises with the revs (motor vehicles only).
+let eng = null;
+function engineNote(on, frac) {
+  try {
+    if (!AC) return;
+    if (!eng) {
+      const o = AC.createOscillator(), f = AC.createBiquadFilter(), g = AC.createGain();
+      o.type = 'sawtooth'; f.type = 'lowpass'; f.frequency.value = 380; g.gain.value = 0;
+      o.connect(f); f.connect(g); g.connect(AC.destination); o.start();
+      eng = { o, g };
+    }
+    eng.g.gain.setTargetAtTime(on ? 0.016 + frac * 0.014 : 0, AC.currentTime, 0.08);
+    eng.o.frequency.setTargetAtTime(46 + frac * 120, AC.currentTime, 0.07);
+  } catch (e) { /* no sound */ }
+}
 
 // ---------------- Open / close ----------------
 /** Start (or carry on) the story for one person in one file. store = { get, set } over localStorage. */
@@ -88,6 +104,7 @@ export function closeStory(silent) {
   const s = S;
   persist();
   cancelAnimationFrame(s.raf);
+  engineNote(false, 0);
   window.removeEventListener('resize', s.onResize);
   s.ui.destroy();
   S = null;
@@ -191,6 +208,16 @@ function enterTown(town, year, where) {
     if (!circleSolid(px, py, 16)) makeVehicle(mix[(i + n) % mix.length][0], px, py, 0, { parked: true });
   });
   S.names = residentsOf(S.data, town, year, 40);
+  // three lost photographs in every town and era, with the file's own notes on the back
+  const got = new Set(S.save.photos || []), pr = seededRandom(hashString('photo' + town.id + c.era));
+  S.notes = townNotes(S.data, town);
+  for (let i = 0, guard = 0; i < 3 && guard < 400; guard++) {
+    const tx = Math.floor(pr() * c.W), ty = Math.floor(pr() * c.H), tt = c.at(tx, ty);
+    if (tt !== G.PAVE && tt !== G.YARD && tt !== G.GRASS && tt !== G.PLAZA) continue;
+    const id = `${town.id}:${c.era}:${i}`;
+    if (!got.has(id)) S.items.push({ photo: id, n: i, x: (tx + 0.5) * T, y: (ty + 0.5) * T, kind: 'photo' });
+    i++;
+  }
   S.heat = 0; S.bust = 0;
   S.view.x = P.x; S.view.y = P.y;
   spawnNpcs();
@@ -391,12 +418,12 @@ function collideVehicles() {
     A.speed = A.vx * Math.cos(A.ang) + A.vy * Math.sin(A.ang); B.speed = B.vx * Math.cos(B.ang) + B.vy * Math.sin(B.ang);
     if (A !== pv && B !== pv) continue;
     const other = A === pv ? B : A;
-    if (vn < 2.2 * T) continue;
+    if (vn < (other.ai === 'flee' ? 1.1 : 2.2) * T) continue;
     sfx.bump(); spark((A.x + B.x) / 2, (A.y + B.y) / 2, 8);
     if (other.ai === 'flee') {
-      if (other.hitCd <= 0 && vn > 2.8 * T) { other.hp -= 1; other.hitCd = 0.9; float(other.x, other.y - 30, other.hp > 0 ? 'CRUNCH!' : 'GOT IT!', '#ffd84a'); if (S.step) S.step.hits = (S.step.hits || 0) + 1; }
+      if (other.hitCd <= 0) { other.hp -= 1; other.speed *= 0.6; other.hitCd = 0.9; float(other.x, other.y - 30, other.hp > 0 ? 'CRUNCH!' : 'GOT IT!', '#ffd84a'); if (S.step) S.step.hits = (S.step.hits || 0) + 1; }
     } else {
-      if (vn > 4 * T) { offence(other.ai === 'cop' ? 0.7 : 0.2); damage(pv, 1); if (other.ai === 'traffic' && Math.random() < 0.5) float(other.x, other.y - 26, quip(), '#fff'); }
+      if (vn > 4 * T) { if (other.ai !== 'cop' || Math.abs(pv.speed) > 7 * T) offence(other.ai === 'cop' ? 0.7 : 0.2); damage(pv, 1); if (other.ai === 'traffic' && Math.random() < 0.5) float(other.x, other.y - 26, quip(), '#fff'); }
       gentleBump(vn);
     }
     other.parked = false;
@@ -484,7 +511,7 @@ function updateHeat(dt) {
       if (Math.random() < 0.5) sfx.siren();
     }
     // nicked if they have you boxed in
-    const px = P.vehicle || P, slow = P.vehicle ? Math.abs(P.vehicle.speed) < 1.3 * T : true;
+    const px = P.vehicle || P, slow = P.vehicle ? Math.abs(P.vehicle.speed) < 2.6 * T : true;
     let close = false;
     for (const v of S.vehicles) if (v.ai === 'cop' && Math.hypot(v.x - px.x, v.y - px.y) < 2.4 * T) close = true;
     for (const p of S.peds) if (p.cop && !(p.down > 0) && Math.hypot(p.x - px.x, p.y - px.y) < (P.vehicle ? 1.9 : 0.9) * T) close = true;
@@ -554,6 +581,7 @@ function nextStep() {
   clearStep();
   m.i++;
   if (m.i >= m.def.steps.length) { passMission(); return; }
+  if (m.def.id === 'final-notice' && m.i === 0) hintOnce('walk', S.ui.touch ? 'Left thumb walks. Follow the yellow arrow. GO talks, gets in and out and starts jobs.' : 'WASD or the arrow keys to walk (Shift to run). Follow the yellow arrow. E talks, gets in and out and starts jobs.', 8000);
   spawnNpcs();
   enterStep(m.def.steps[m.i]);
 }
@@ -566,7 +594,7 @@ function enterStep(step) {
     if (step.passenger) { const sp = freeSpotNear(a.x, a.y - 0.2 * T, 0); const giver = S.peds.find(p => p.npc && p.name && p.name.split(' ')[0] === step.passenger); st.pass = { stepPed: true, x: sp.x + 14, y: sp.y, ang: Math.PI / 2, walk: 0, down: 0, look: giver?.look || strangerLook(Math.random, c.year), name: step.passenger }; S.peds.push(st.pass); } }
   else if (step.t === 'race') { let prev = pp; for (const s of step.stops) { const l = lotPt(s); tiles += manh(prev, l); prev = l; } stops = step.stops.length; }
   else if (step.t === 'collect') {
-    const l = lotPt(step.around), kind = /sheep|pigs|truants/.test(step.label) ? step.label : 'page';
+    const l = lotPt(step.around), kind = /sheep|pigs|truants/.test(step.label) ? step.label : /tubs|crates|barrels/.test(step.label) ? 'load' : 'page';
     let guard = 0;
     while (S.items.filter(i => i.step).length < step.n && guard++ < 600) {
       const a = Math.random() * 7, r = (3 + Math.random() * (step.radius - 3)) * T, x = l.x + Math.cos(a) * r, y = l.y + Math.sin(a) * r;
@@ -659,6 +687,12 @@ async function converse(s) {
   S.busy = false;
   nextStep();
 }
+function hintOnce(key, text, ms = 6000) {
+  const h = S.save.hints || (S.save.hints = {});
+  if (h[key]) return;
+  h[key] = 1;
+  S.ui.toast(text, ms);
+}
 function earn(n) { if (n > 0) { S.save.cash += n; S.ui.cash(S.save.cash, true); sfx.cash(); } }
 async function passMission() {
   const tok = S, m = S.mission, def = m.def;
@@ -750,12 +784,28 @@ function openPedigree() {
   const st = S.story;
   const rows = st.proofs.map(p => { const got = S.save.proofs.includes(p.id); return `<div class="row${got ? '' : ' off'}"><span>${got ? '✔' : '□'} ${escapeText(p.title)}<small>${got ? escapeText(p.detail || '') : 'Not yet proven'}</small></span></div>`; }).join('');
   const n = Math.min(S.save.idx, st.missions.length);
-  S.ui.panel(`<h2>📜 The ${escapeText(st.surname)} pedigree</h2><p>${S.save.proofs.length} of ${st.proofs.length} proofs lodged · ${n} of ${st.missions.length} missions passed · £${S.save.cash}</p>${rows}<div class="foot"><button class="alt" data-go="close">Close</button></div>`, { close: () => S.ui.closePanel() });
+  S.ui.panel(`<h2>📜 The ${escapeText(st.surname)} pedigree</h2><p>${S.save.proofs.length} of ${st.proofs.length} proofs lodged · ${n} of ${st.missions.length} missions passed · ${(S.save.photos || []).length} lost photographs found · £${S.save.cash}</p>${rows}<div class="foot"><button class="alt" data-go="close">Close</button></div>`, { close: () => S.ui.closePanel() });
+}
+function openMap() {
+  const c = S.city, sc = 6;
+  S.ui.panel(`<h2>🗺 ${escapeText(c.town.name)}, ${c.year}</h2><canvas id="stMap" width="${c.W * sc}" height="${c.H * sc}"></canvas><p>Yellow: where the story wants you. Gold: the Heirloom. £: odd jobs. ${c.air ? '✈' : '⚓'}: tickets. Photographs found here: ${(S.save.photos || []).filter(p => p.startsWith(c.town.id + ':' + c.era)).length} of 3.</p><div class="foot"><button class="alt" data-go="close">Close</button></div>`, { close: () => S.ui.closePanel() }, true);
+  const g = S.ui.root.querySelector('#stMap').getContext('2d');
+  g.imageSmoothingEnabled = false;
+  g.drawImage(S.mini, 0, 0, c.W * sc, c.H * sc);
+  g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '700 12px "Fredoka", "Nunito", sans-serif';
+  const tag = (o, text, col) => { const x = o.x / T * sc, y = o.y / T * sc; g.lineWidth = 3; g.strokeStyle = 'rgba(0,0,0,0.85)'; g.strokeText(text, x, y); g.fillStyle = col; g.fillText(text, x, y); };
+  for (const k in c.lots) if (k !== 'phone') tag({ x: c.lots[k].x, y: c.lots[k].y - 1.6 * T }, c.lots[k].name.replace(/^the /, ''), '#fff');
+  const dot = (o, col, r = 6) => { g.fillStyle = col; g.strokeStyle = '#000'; g.lineWidth = 2; g.beginPath(); g.arc(o.x / T * sc, o.y / T * sc, r, 0, 7); g.fill(); g.stroke(); };
+  dot(S.heirloom, '#e8c040');
+  if (S.target) dot(S.target, '#ffd84a', 8);
+  const pp = S.player.vehicle || S.player;
+  dot(pp, '#fff', 5);
+  tag({ x: pp.x, y: pp.y + 1.8 * T }, 'you', '#fff');
 }
 function openPause() {
   const k = (a, b) => `<p><kbd>${a}</kbd> ${b}</p>`;
   S.ui.panel(`<h2>Relative Speed</h2><p>${escapeText(S.story.missions[S.save.idx]?.brief || 'Free roam: every town, every year.')}</p>
-    ${S.ui.touch ? '<p>Left thumb steers and walks. GO talks, gets in and out and starts jobs. CAR calls the Heirloom.</p>' : k('WASD / arrows', 'walk, drive') + k('E', 'talk, get in or out, start a job') + k('Space', 'handbrake') + k('T', 'time dial') + k('H', 'call the Heirloom (£10)') + k('P', 'pedigree') }
+    ${S.ui.touch ? '<p>Left thumb steers and walks. GO talks, gets in and out and starts jobs. CAR calls the Heirloom.</p>' : k('WASD / arrows', 'walk, drive') + k('E', 'talk, get in or out, start a job') + k('Space', 'handbrake') + k('T', 'time dial') + k('H', 'call the Heirloom (£10)') + k('M', 'town map') + k('P', 'pedigree') }
     <div class="foot"><button data-go="close">Resume</button><button class="alt" data-go="quit">Save and leave</button><button class="alt" data-go="reset">Restart the story</button></div>`, {
     close: () => S.ui.closePanel(),
     quit: () => { S.ui.closePanel(); closeStory(); },
@@ -788,6 +838,7 @@ function enterVehicle(v) {
   }
   v.ai = null; v.parked = false; v.wp = null;
   P.vehicle = v; sfx.door();
+  hintOnce('drive', S.ui.touch ? 'Push the stick the way you want to go. BRAKE is the handbrake. GO gets you out.' : 'W accelerates, S brakes and reverses, A and D steer. Space is the handbrake. E gets you out.');
 }
 function leaveVehicle(force) {
   const P = S.player, v = P.vehicle; if (!v) return;
@@ -871,7 +922,7 @@ function updatePlayer(dt) {
   // the Parish Engine
   if (v === S.heirloom) {
     const st = VEHICLES.heirloom, armed = S.dial != null && S.dial !== S.city.year;
-    if (armed && Math.abs(v.speed) > st.max * T * 0.84) v.charge = Math.min(1, v.charge + dt / 2.3); else v.charge = Math.max(0, v.charge - dt / 1.7);
+    if (armed && Math.abs(v.speed) > st.max * T * 0.84) v.charge = Math.min(1, v.charge + dt / 2.0); else v.charge = Math.max(0, v.charge - dt / 1.7);
     if (v.charge >= 1) {
       const cost = inkCost(S.city.year, S.dial);
       v.charge = 0;
@@ -887,12 +938,13 @@ function handleQueue() {
   while (q.length) {
     const act = q.shift();
     if (ui.dialogOpen) { if (act === 'action' || act === 'space' || /^opt/.test(act)) ui._advance?.(act); continue; }
-    if (ui.panelOpen) { if (act === 'pause' || act === 'dial' || act === 'pedigree') ui._panelClose?.(); continue; }
+    if (ui.panelOpen) { if (act === 'pause' || act === 'dial' || act === 'pedigree' || act === 'map') ui._panelClose?.(); continue; }
     if (S.busy) continue;
     if (act === 'action') S.near?.go();
     else if (act === 'dial') openDial();
     else if (act === 'pedigree') openPedigree();
     else if (act === 'pause') openPause();
+    else if (act === 'map') openMap();
     else if (act === 'call') callHeirloom();
   }
 }
@@ -923,6 +975,14 @@ function update(dt) {
   if (S.flash > 0) S.flash -= dt;
   // the phone box rings until you answer it
   if (S.step?.step.t === 'goto' && S.step.step.at === 'phone') { S.ringT -= dt; if (S.ringT <= 0) { S.ringT = 1.6; const l = c.lot('phone'); float(l.x, l.y - 18, 'RING RING', '#ffd84a'); if (dist(l, pp) < 12 * T) sfx.ring(); } }
+  for (const it of S.items) if (it.photo && dist(it, pp) < 1.2 * T) {
+    it.gone = true;
+    (S.save.photos || (S.save.photos = [])).push(it.photo);
+    const note = S.notes.length ? S.notes[(hashString(it.photo) >>> 0) % S.notes.length] : null, who = S.names.length ? S.names[(hashString(it.photo) >>> 0) % S.names.length] : null;
+    S.ui.toast(note ? `A lost photograph. On the back: "${note.name}${note.life ? ' (' + note.life + ')' : ''}. ${note.text}"` : who ? `A lost photograph. On the back, in pencil: "${who.name}, ${c.town.name}, ${c.year}."` : `A lost photograph of a street in ${c.town.name} you almost recognise.`, 9000);
+    earn(30);
+  }
+  if (S.items.some(i => i.gone)) S.items = S.items.filter(i => !i.gone);
   S.near = findNear();
   S.target = S.step ? stepTarget() : idleTarget();
 }
@@ -971,7 +1031,7 @@ function render() {
   const ui = S.ui, g = ui.ctx, P = S.player, c = S.city;
   const { w, h, dpr } = ui.resize();
   const pp = P.vehicle || P, sp = P.vehicle ? Math.abs(P.vehicle.speed) / (15 * T) : 0;
-  const base = clamp(Math.min(w, h) / (15.5 * T), 0.75 * dpr, 2.2 * dpr);
+  const base = clamp(Math.min(w, h) / ((ui.touch ? 11.5 : 15.5) * T), 0.75 * dpr, 2.2 * dpr);
   const V = S.view;
   V.w = w; V.h = h;
   const zt = base * (1 - 0.3 * clamp(sp, 0, 1));
@@ -1071,6 +1131,9 @@ function loop(now) {
     if (!S) return;
     if (!s.ui.panelOpen && !s.ui.dialogOpen) update(dt); else s.t += dt * 0.0001;
     if (!S) return;
+    const pv = s.player.vehicle, quiet = s.ui.panelOpen || s.ui.dialogOpen || s.busy;
+    engineNote(!!pv && !VEHICLES[pv.type].horse && !quiet, pv ? Math.min(1, Math.abs(pv.speed) / (VEHICLES[pv.type].max * T)) : 0);
+    if (pv && VEHICLES[pv.type].horse && !quiet && Math.abs(pv.speed) > T) { s.clop = (s.clop || 0) - dt * Math.abs(pv.speed) / T; if (s.clop <= 0) { s.clop = 1.6; beep(180 + Math.random() * 40, 0.03, 'triangle', 0.035); } }
     hud();
     render();
   } catch (e) {

@@ -17,6 +17,8 @@ import { drawRouteMap } from './storymap.js';
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const angDiff = (a, b) => { let d = a - b; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2; return d; };
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+// Every speed in this file below was tuned when everything went twice as fast; VS scales them to today's world.
+const VS = SPEED_SCALE;
 const plainText = s => String(s).replace(/[«»]/g, '');
 const T = TILE;
 const capFirst = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -24,7 +26,7 @@ let S = null;
 
 // ---------------- Upgrades and badges ----------------
 const UPGRADES = [
-  { id: 'engine', name: 'Tuned engine', desc: 'More speed and more pull.', max: 2, cost: [300, 700] },
+  { id: 'engine', name: 'Tuned engine', desc: 'Each level adds half her starting speed and pull again. Fully tuned, she is twice as quick.', max: 2, cost: [300, 700] },
   { id: 'bar', name: 'Brass ram bar', desc: 'Every bump on a grey van counts for more.', max: 2, cost: [250, 600] },
   { id: 'ink', name: 'Ink economiser', desc: 'Each level takes a fifth off the ink for a jump.', max: 2, cost: [200, 500] },
   { id: 'wind', name: 'Quick-wind dial', desc: 'The Engine winds up sooner, and at a lower speed.', max: 2, cost: [250, 550] },
@@ -49,7 +51,7 @@ function statsOf(v) {
   const st = VEHICLES[v.type];
   if (v !== S.heirloom) return st;
   const key = up('engine') + ':' + up('tyres');
-  if (!S.hstat || S.hstat.key !== key) S.hstat = { key, st: { ...st, max: st.max * (1 + 0.05 * up('engine')), acc: st.acc * (1 + 0.15 * up('engine')), grip: st.grip + 2 * up('tyres') } };
+  if (!S.hstat || S.hstat.key !== key) S.hstat = { key, st: { ...st, max: st.max * (1 + 0.5 * up('engine')), acc: st.acc * (1 + 0.5 * up('engine')), grip: st.grip + 2 * up('tyres') } };
   return S.hstat.st;
 }
 const inkFor = (y1, y2) => Math.round(inkCost(y1, y2) * (1 - 0.2 * up('ink')));
@@ -577,6 +579,7 @@ function vehicleSolid(v, x, y, ang) {
   return circleSolid(x + cx, y + cy, r) || circleSolid(x - cx, y - cy, r);
 }
 function moveWalker(p, dx, dy, r = 8) {
+  dx *= VS; dy *= VS;
   if (!circleSolid(p.x + dx, p.y, r)) p.x += dx;
   if (!circleSolid(p.x, p.y + dy, r)) p.y += dy;
 }
@@ -588,14 +591,14 @@ function driveVehicle(v, ctrl, dt) {
   const maxV = st.max * T * (rough ? 0.6 : 1) * (v.dead ? 0 : 1) * (ctrl.cap || 1);
   if (ctrl.thr > 0) v.speed += st.acc * T * ctrl.thr * dt * (v.speed < 0 ? 2.2 : 1);
   else if (ctrl.thr < 0) v.speed += st.acc * T * ctrl.thr * dt * (v.speed > 0 ? 2.4 : 0.7);
-  else v.speed -= Math.sign(v.speed) * Math.min(Math.abs(v.speed), 2.6 * T * dt);
-  if (ctrl.brake) v.speed -= Math.sign(v.speed) * Math.min(Math.abs(v.speed), 15 * T * dt);
-  const drift = st.horse ? 0 : st.drift ?? 0.5, hand = !!ctrl.hand && Math.abs(v.speed) > 1.5 * T;
-  if (ctrl.hand) v.speed -= Math.sign(v.speed) * Math.min(Math.abs(v.speed), (st.horse ? 12 : 3.2 + 5 * (1 - drift)) * T * dt);
+  else v.speed -= Math.sign(v.speed) * Math.min(Math.abs(v.speed), 2.6 * VS * T * dt);
+  if (ctrl.brake) v.speed -= Math.sign(v.speed) * Math.min(Math.abs(v.speed), 15 * VS * T * dt);
+  const drift = st.horse ? 0 : st.drift ?? 0.5, hand = !!ctrl.hand && Math.abs(v.speed) > 1.5 * VS * T;
+  if (ctrl.hand) v.speed -= Math.sign(v.speed) * Math.min(Math.abs(v.speed), (st.horse ? 12 : 3.2 + 5 * (1 - drift)) * VS * T * dt);
   v.thr = ctrl.thr; v.hand = !!ctrl.hand;
-  if (v.speed > maxV) v.speed = Math.max(maxV, v.speed - 12 * T * dt);
+  if (v.speed > maxV) v.speed = Math.max(maxV, v.speed - 12 * VS * T * dt);
   v.speed = Math.max(v.speed, -maxV * 0.38);
-  const sf = clamp(Math.abs(v.speed) / (3.2 * T), 0, 1) * (v.speed < 0 ? -1 : 1);
+  const sf = clamp(Math.abs(v.speed) / (3.2 * VS * T), 0, 1) * (v.speed < 0 ? -1 : 1);
   const newAng = v.ang + ctrl.steer * st.turn * sf * dt * (hand ? 1 + 0.8 * drift : ctrl.brake ? 1.35 : 1);
   if (!vehicleSolid(v, v.x, v.y, newAng)) v.ang = newAng;
   const wet = 1 - 0.38 * S.rain * (v === S.heirloom && up('tyres') ? 0.25 : 1);
@@ -605,11 +608,11 @@ function driveVehicle(v, ctrl, dt) {
   v.vx += (Math.cos(v.ang) * v.speed - v.vx) * k; v.vy += (Math.sin(v.ang) * v.speed - v.vy) * k;
   let hit = 0;
   const mine = v === S.player.vehicle, sp0 = Math.hypot(v.vx, v.vy) || 1;
-  if (mine && sp0 > 4 * T) fellTrees(v, dt);
+  if (mine && sp0 > 4 * VS * T) fellTrees(v, dt);
   // How square-on a knock is decides what it costs: a glancing touch slides along the wall, a head-on one
   // takes four fifths of the speed, throws the car back and sets it spinning.
   const knock = (comp, flip) => {
-    const frac = Math.abs(comp) / sp0, hard = Math.abs(comp) > 5 * T;
+    const frac = Math.abs(comp) / sp0, hard = Math.abs(comp) > 5 * VS * T;
     hit = Math.max(hit, Math.abs(comp));
     v.speed *= 1 - 0.8 * frac;
     flip(hard ? -0.42 : -0.12);
@@ -621,8 +624,8 @@ function driveVehicle(v, ctrl, dt) {
   if (vehicleSolid(v, v.x, ny, v.ang)) knock(v.vy, k => { v.vy *= k; }); else v.y = ny;
   if (v.fling > 0) { v.fling -= dt; const na = v.ang + (v.spin || 0) * dt; if (!vehicleSolid(v, v.x, v.y, na)) v.ang = na; v.spin *= 1 - 2.2 * dt; }
   // how far sideways it is going, and the marks that leaves
-  v.slip = Math.abs(-v.vx * Math.sin(v.ang) + v.vy * Math.cos(v.ang)) / T;
-  if (v.slip > 2.2 && !st.horse && !rough && Math.hypot(v.vx, v.vy) > 3 * T) {
+  v.slip = Math.abs(-v.vx * Math.sin(v.ang) + v.vy * Math.cos(v.ang)) / T / VS;
+  if (v.slip > 2.2 && !st.horse && !rough && Math.hypot(v.vx, v.vy) > 3 * VS * T) {
     const bx = -Math.cos(v.ang) * st.len * 0.32, by = -Math.sin(v.ang) * st.len * 0.32, sx = -Math.sin(v.ang) * st.wid * 0.38, sy = Math.cos(v.ang) * st.wid * 0.38;
     const now = [[v.x + bx + sx, v.y + by + sy], [v.x + bx - sx, v.y + by - sy]];
     if (v.sk) for (let w = 0; w < 2; w++) S.skids.push({ x1: v.sk[w][0], y1: v.sk[w][1], x2: now[w][0], y2: now[w][1], t: S.t });
@@ -630,7 +633,7 @@ function driveVehicle(v, ctrl, dt) {
     if (S.skids.length > 700) S.skids.splice(0, S.skids.length - 700);
   } else v.sk = null;
   if (v.hitCd > 0) v.hitCd -= dt;
-  if (hit > 3.5 * T) wallHit(v, hit);
+  if (hit > 3.5 * VS * T) wallHit(v, hit / VS);   // knocks are judged as they always were
   return hit;
 }
 // Anything going fast enough goes through a tree instead of stopping at it: the tree comes down, the car
@@ -748,7 +751,7 @@ function aiDrive(v, dt) {
   }
   const want = Math.atan2(tgt.y - v.y, tgt.x - v.x), da = angDiff(want, v.ang);
   let cruise = st.max * T * (v.ai === 'lead' ? (v.pace || 0.55) : fast ? (v.fast ? 1.02 : v.slow ? 0.7 : 1) : 0.5) * (v.ai === 'flee' && v.maxHp ? 0.78 + 0.22 * Math.max(0, v.hp) / v.maxHp : 1);
-  if (Math.abs(da) > 0.45) cruise = Math.min(cruise, (fast ? 5.5 : 2.4) * T);
+  if (Math.abs(da) > 0.45) cruise = Math.min(cruise, (fast ? 5.5 : 2.4) * VS * T);
   // anything in the way?
   let blocked = false;
   if (!fast && !(v.push > 0)) {
@@ -757,7 +760,7 @@ function aiDrive(v, dt) {
     for (const o of S.vehicles) {
       if (o === v || !test(o.x, o.y, VEHICLES[o.type].len * 0.3)) continue;
       // two cars waiting for each other across a junction: the older one goes
-      if (o.ai === 'traffic' && Math.abs(o.speed) < 0.4 * T && Math.abs(angDiff(o.ang, v.ang)) > 0.8 && v.id < o.id) continue;
+      if (o.ai === 'traffic' && Math.abs(o.speed) < 0.4 * VS * T && Math.abs(angDiff(o.ang, v.ang)) > 0.8 && v.id < o.id) continue;
       blocked = true; break;
     }
     if (!blocked && !P.vehicle && test(P.x, P.y, 6)) blocked = true;
@@ -769,8 +772,8 @@ function aiDrive(v, dt) {
   const hit = driveVehicle(v, { thr, steer: clamp(da * 2.6, -1, 1), brake: blocked }, dt);
   // wedged against a wall: back out
   if (fast) {
-    if (Math.abs(v.speed) < 0.8 * T) v.wedge = (v.wedge || 0) + dt; else v.wedge = 0;
-    if (v.wedge > 1.2) { v.ang = want; v.speed = 3 * T; v.vx = Math.cos(want) * v.speed; v.vy = Math.sin(want) * v.speed; const r = roadNear(v.x, v.y); if (hit || v.wedge > 3) { v.x = r.x; v.y = r.y; } v.wedge = 0; }
+    if (Math.abs(v.speed) < 0.8 * VS * T) v.wedge = (v.wedge || 0) + dt; else v.wedge = 0;
+    if (v.wedge > 1.2) { v.ang = want; v.speed = 3 * VS * T; v.vx = Math.cos(want) * v.speed; v.vy = Math.sin(want) * v.speed; const r = roadNear(v.x, v.y); if (hit || v.wedge > 3) { v.x = r.x; v.y = r.y; } v.wedge = 0; }
   }
 }
 function spawnTraffic(target) {
@@ -825,14 +828,15 @@ function collideVehicles() {
     if (hunter && !(hunter.ramCd > 0)) { const cv = hunter === A ? B : A; hunter.ramCd = 5; hunter.speed *= 0.3; cv.hp -= 1; float(cv.x, cv.y - 30, 'RAMMED!', '#ff5a4a'); spark((A.x + B.x) / 2, (A.y + B.y) / 2, 8); }
     if (A !== pv && B !== pv) continue;
     const other = A === pv ? B : A;
-    const nudge = (other.ai === 'flee' || (other.ai === 'hunt' && other.prey)) && Math.abs(pv.speed) > 2.5 * T;  // touching the one you are chasing always counts
-    if (!nudge && vn < (other.ai === 'flee' ? 1.1 : 2.2) * T) continue;
-    if (vn > 8 * T) sfx.crash(); else sfx.bump(clamp(vn / (9 * T), 0.2, 1));
-    spark((A.x + B.x) / 2, (A.y + B.y) / 2, 8); S.shake = Math.max(S.shake || 0, clamp(vn / (12 * T), 0.1, 0.8));
+    const vq = vn / VS;   // how hard, in the units the numbers below were tuned in
+    const nudge = (other.ai === 'flee' || (other.ai === 'hunt' && other.prey)) && Math.abs(pv.speed) > 2.5 * VS * T;  // touching the one you are chasing always counts
+    if (!nudge && vq < (other.ai === 'flee' ? 1.1 : 2.2) * T) continue;
+    if (vq > 8 * T) sfx.crash(); else sfx.bump(clamp(vq / (9 * T), 0.2, 1));
+    spark((A.x + B.x) / 2, (A.y + B.y) / 2, 8); S.shake = Math.max(S.shake || 0, clamp(vq / (12 * T), 0.1, 0.8));
     if (other.ai === 'hunt') {
       const mine = Math.abs(pv.speed) >= Math.abs(other.speed);
       if (!other.prey) other.ramCd = Math.max(other.ramCd || 0, 2.4);
-      if (((mine && vn > 2.2 * T) || (other.prey && Math.abs(pv.speed) > 3 * T)) && other.hitCd <= 0) {   // anything going for the convoy only needs a shove
+      if (((mine && vq > 2.2 * T) || (other.prey && Math.abs(pv.speed) > 3 * VS * T)) && other.hitCd <= 0) {   // anything going for the convoy only needs a shove
         other.hp -= 1 + 0.5 * up('bar'); other.hitCd = 0.8; other.speed *= 0.3; other.ramCd = Math.max(other.ramCd || 0, 1.5);
         float(other.x, other.y - 30, other.hp > 0 ? 'CRUNCH!' : 'OFF THE ROAD! +£15', '#f08aa0'); if (other.hp <= 0) sfx.boom();
         if (other.hp <= 0) { other.dead = true; other.wreck = true; other.ai = null; S.save.cash += 15; sfx.cash(); if (S.step && S.step.step.t === 'frenzy') S.step.k++; if (bump('erasers') >= 5) badge('rubber'); }
@@ -840,15 +844,15 @@ function collideVehicles() {
         other.rammedT = S.t + 2.4;
         if (S.step) S.step.rams = (S.step.rams || 0) + 1;
         if (S.step?.timer != null && S.step.step.t !== 'frenzy') { S.step.timer = Math.max(1, S.step.timer - 3); float(pv.x, pv.y - 34, '−3 seconds', '#ff5a4a'); }
-        gentleBump(vn + 3 * T);
+        gentleBump(vq + 3 * T);
       }
     } else if (other.ai === 'lead' || other.convoy) {
-      if (S.step && S.step.step.t === 'tail' && !(S.step.grace > 0) && !(other.hold > 0) && !(other.tapCd > S.t)) { other.tapCd = S.t + 2; S.step.sus += Math.abs(pv.speed) > 3 * T ? 1 : 0.4; }   // run into them and they know; a touch at a crawl only makes them wonder
+      if (S.step && S.step.step.t === 'tail' && !(S.step.grace > 0) && !(other.hold > 0) && !(other.tapCd > S.t)) { other.tapCd = S.t + 2; S.step.sus += Math.abs(pv.speed) > 3 * VS * T ? 1 : 0.4; }   // run into them and they know; a touch at a crawl only makes them wonder
     } else if (other.ai === 'flee') {
       if (other.hitCd <= 0) { other.hp -= 1 + 0.5 * up('bar'); other.speed *= 0.6; other.hitCd = 0.9; float(other.x, other.y - 30, other.hp > 0 ? 'CRUNCH!' : 'GOT IT!', '#ffd84a'); if (S.step) S.step.hits = (S.step.hits || 0) + 1; }
     } else {
-      if (vn > 4 * T) { if (!other.block && !/^eraser|^engine1/.test(other.type) && (other.ai !== 'cop' || Math.abs(pv.speed) > 7 * T)) offence(other.ai === 'cop' ? 0.7 : 0.15); damage(pv, 1); if (other.ai === 'traffic' && Math.random() < 0.5) float(other.x, other.y - 26, quip(), '#fff'); }
-      gentleBump(vn);
+      if (vq > 4 * T) { if (!other.block && !/^eraser|^engine1/.test(other.type) && (other.ai !== 'cop' || Math.abs(pv.speed) > 7 * VS * T)) offence(other.ai === 'cop' ? 0.7 : 0.15); damage(pv, 1); if (other.ai === 'traffic' && Math.random() < 0.5) float(other.x, other.y - 26, quip(), '#fff'); }
+      gentleBump(vq);
     }
     other.parked = false;
   }
@@ -884,7 +888,7 @@ function updateWalker(p, dt) {
   if (p.cop) return updateConstable(p, dt);
   // dive out of the way of the player's car
   const pv = S.player.vehicle;
-  if (pv && Math.abs(pv.speed) > 3 * T) {
+  if (pv && Math.abs(pv.speed) > 3 * VS * T) {
     const rx = p.x - pv.x, ry = p.y - pv.y, fx = Math.cos(pv.ang), fy = Math.sin(pv.ang), f = rx * fx + ry * fy, l = -rx * fy + ry * fx;
     if (f > 0 && f < 3.2 * T && Math.abs(l) < 0.9 * T) { const s = (l >= 0 ? 1 : -1) * 5.5 * T * dt; moveWalker(p, -fy * s, fx * s); p.walk += dt * 20; return; }
   }
@@ -1001,7 +1005,7 @@ function updateHeat(dt) {
     }
     if (c.year >= 1930 && (S.sirenT = (S.sirenT || 0) - dt) <= 0 && S.vehicles.some(v => v.ai === 'cop' && Math.hypot(v.x - (P.vehicle || P).x, v.y - (P.vehicle || P).y) < 22 * T)) { S.sirenT = 0.56; sfx.siren(); }
     // nicked if they have you boxed in
-    const px = P.vehicle || P, slow = P.vehicle ? Math.abs(P.vehicle.speed) < 2.6 * T : true;
+    const px = P.vehicle || P, slow = P.vehicle ? Math.abs(P.vehicle.speed) < 2.6 * VS * T : true;
     let close = false;
     for (const v of S.vehicles) if (v.ai === 'cop' && Math.hypot(v.x - px.x, v.y - px.y) < 2.4 * T) close = true;
     for (const p of S.peds) if (p.cop && !(p.down > 0) && Math.hypot(p.x - px.x, p.y - px.y) < (P.vehicle ? 1.9 : 0.9) * T) close = true;
@@ -1107,7 +1111,7 @@ function enterStep(step) {
   } else if (step.t === 'chase') {
     const horse = c.year < 1900;
     st.target = spawnAi(step.boss ? 'engine1' : horse ? 'erasercoach' : 'eraser', lotPt(step.from), 'flee', { fast: !!step.fast, slow: !!step.slow });
-    st.target.hp = step.hp; st.target.maxHp = step.hp; st.maxHp = step.hp; st.timer = 70 + step.hp * 14;
+    st.target.hp = step.hp; st.target.maxHp = step.hp; st.maxHp = step.hp; st.timer = Math.round((70 + step.hp * 14) * (0.5 + 0.5 / VS));
   } else if (step.t === 'escape') { S.heat = Math.max(S.heat, step.heat); S.heatCalm = -6; S.copT = 7; }
   else if (step.t === 'tail') {
     const troute = [...(step.via || []), step.to].map(k => lotPt(k));
@@ -1116,14 +1120,14 @@ function enterStep(step) {
   } else if (step.t === 'defend') {
     const type = c.year < 1900 ? 'wagon' : c.year < 1950 ? 'lorry' : 'van';
     const route = [...(step.via || []), step.to].map(k => lotPt(k));
-    st.convoy = spawnAi(type, lotPt(step.from), 'lead', { dest: route.shift(), route, pace: 3.4 / VEHICLES[type].max, convoy: true, hold: 3 });
+    st.convoy = spawnAi(type, lotPt(step.from), 'lead', { dest: route.shift(), route, pace: 3.4 * VS / VEHICLES[type].max, convoy: true, hold: 3 });
     st.convoy.color = '#e8dfc4'; st.convoy.hp = step.hp || 10; st.maxHp = st.convoy.hp; st.sent = 0; st.wave = 6;
   } else if (step.t === 'catch') {
     const l = lotPt(step.from);
     let sp = freeSpotNear(l.x, l.y, 1);
     for (let k = 0; k < 40; k++) { const a = Math.random() * 7, r = (5 + Math.random() * 5) * T, x = l.x + Math.cos(a) * r, y = l.y + Math.sin(a) * r; if (c.reachable(Math.floor(x / T), Math.floor(y / T)) && !circleSolid(x, y, 10) && Math.hypot(x - pp.x, y - pp.y) > 6 * T) { sp = { x, y }; break; } }
     st.runner = { stepPed: true, runner: true, x: sp.x, y: sp.y, ang: 0, sp: (step.speed || 4.8) * T, walk: 0, down: 0, look: ERASER_LOOK, name: step.label, think: 0 };
-    S.peds.push(st.runner); st.timer = step.time || 60;
+    S.peds.push(st.runner); st.timer = Math.round((step.time || 60) * (0.5 + 0.5 / VS));
   }
   else if (step.t === 'search') {
     st.spots = step.spots.map(k => ({ k, pt: lotPt(k), seen: false }));
@@ -1197,13 +1201,13 @@ function updateMission(dt) {
   if (s.t === 'goto') {
     if (near(1.5, 2.7) && (!s.need || pv === S.heirloom)) nextStep();
   } else if (s.t === 'talk') {
-    if (near(1.7, 2.9) && speed < 2 * T) { st.done = true; converse(s); }
+    if (near(1.7, 2.9) && speed < 2 * VS * T) { st.done = true; converse(s); }
   } else if (s.t === 'race') {
     if (near(1.5, 2.7)) { st.k++; sfx.pick(); float(tgt.x, tgt.y - 20, `${st.k}/${s.stops.length}`, '#ffd84a'); if (st.k >= s.stops.length) nextStep(); }
   } else if (s.t === 'carry') {
     if (near(1.4, 2.8)) {
       if (!pv) st.needWheels = true;
-      else if (speed < 1.8 * T) {
+      else if (speed < 1.8 * VS * T) {
         st.wait += dt;
         if (st.wait > 0.55) {
           st.wait = 0;
@@ -1275,13 +1279,13 @@ function updateMission(dt) {
     const id = s.drills[st.k], max = statsOf(pv).max * T;
     let ok = false;
     if (id === 'speed') ok = pv.speed > 0.75 * max;
-    else if (id === 'stop') { st.peak = Math.max(st.peak, Math.abs(pv.speed)); ok = st.peak > 4 * T && Math.abs(pv.speed) < 0.4 * T; }
-    else if (id === 'reverse') { st.held = pv.speed < -0.8 * T ? st.held + dt : Math.max(0, st.held - dt * 0.5); ok = st.held > 0.8; }
+    else if (id === 'stop') { st.peak = Math.max(st.peak, Math.abs(pv.speed)); ok = st.peak > 4 * VS * T && Math.abs(pv.speed) < 0.4 * VS * T; }
+    else if (id === 'reverse') { st.held = pv.speed < -0.8 * VS * T ? st.held + dt : Math.max(0, st.held - dt * 0.5); ok = st.held > 0.8; }
     else if (id === 'slide') { st.held = pv.hand && pv.slip > 2.2 ? st.held + dt : st.held; ok = st.held > 0.7; }
     else if (id === 'spin') {
       // a handbrake turn: swing round to face back the way you came, all in one fresh pull of the handbrake
       if (st.lift) { if (!pv.hand) st.lift = false; }
-      else if (pv.hand && (st.spin || Math.abs(pv.speed) > 3 * T)) { st.spin ||= { tot: 0, last: pv.ang }; st.spin.tot += angDiff(pv.ang, st.spin.last); st.spin.last = pv.ang; ok = Math.abs(st.spin.tot) > 2.4; }
+      else if (pv.hand && (st.spin || Math.abs(pv.speed) > 3 * VS * T)) { st.spin ||= { tot: 0, last: pv.ang }; st.spin.tot += angDiff(pv.ang, st.spin.last); st.spin.last = pv.ang; ok = Math.abs(st.spin.tot) > 2.4; }
       else st.spin = null;
     }
     if (ok) {
@@ -1358,7 +1362,7 @@ function updateIncident(dt) {
 function startRival(dest, pace) {
   const st = S.step, P = S.player, pp = P.vehicle || P;
   const type = S.city.year < 1900 ? 'erasercoach' : 'eraser', c = S.city, far = Math.max(1, 16 * T / Math.max(1, dist(pp, dest))), from = { x: clamp(dest.x + (dest.x - pp.x) * far, 6 * T, c.wpx - 6 * T), y: clamp(dest.y + (dest.y - pp.y) * far, 6 * T, c.hpx - 6 * T) };  // from the far side of where you are both going
-  const secs = (st.timer ?? manh(pp, dest) / 5 + 14) * (pace === true ? 0.8 : 0.8 * 0.44 / pace);
+  const secs = (st.timer ?? manh(pp, dest) / 5 / VS + 14) * (pace === true ? 0.8 : 0.8 * 0.44 / pace);
   st.rival = spawnAi(type, from, 'lead', { dest, pace: clamp((manh(from, dest) + 4) / Math.max(secs, 12) / VEHICLES[type].max, 0.1, 0.6) });
   hintOnce('rival', 'A grey one is racing you there from the other side of town. Get there first, or get in its way.', 5200);
 }
@@ -1844,8 +1848,8 @@ function botDrive(v, dt) {
   { const fx = Math.cos(v.ang), fy = Math.sin(v.ang), reach = 1.6 * T + Math.abs(v.speed) * 0.5;
     for (const p of S.peds) { if (p.runner || p.npc || p.stepPed || p.cop || p.down > 0) continue; const rx = p.x - v.x, ry = p.y - v.y, f = rx * fx + ry * fy; if (f > 0 && f < reach + 2 * T && Math.abs(-rx * fy + ry * fx) < 0.9 * T) { vmax = Math.min(vmax, 9 * T); break; } } }
   let thr = v.speed < vmax ? 1 : v.speed > vmax * 1.15 + 8 ? -1 : 0;
-  if (g.stop && dGoal < 2.4 * T) return { thr: v.speed > 0.4 * T ? -1 : 0, steer: 0, brake: Math.abs(v.speed) < T };
-  if (Math.abs(v.speed) < 0.6 * T && thr > 0) B.stuck += dt; else B.stuck = Math.max(0, B.stuck - dt * 2);
+  if (g.stop && dGoal < 2.4 * T) return { thr: v.speed > 0.4 * VS * T ? -1 : 0, steer: 0, brake: Math.abs(v.speed) < VS * T };
+  if (Math.abs(v.speed) < 0.6 * VS * T && thr > 0) B.stuck += dt; else B.stuck = Math.max(0, B.stuck - dt * 2);
   if (B.stuck > 1.1) { B.stuck = 0; B.rev = 0.9; B.revSteer = da > 0 ? -1 : 1; B.unstick++; }
   if (B.rev > 0) { B.rev -= dt; return { thr: -1, steer: B.revSteer, brake: false }; }
   return { thr, steer: clamp(da * 2.6, -1, 1), brake: false };
@@ -1877,7 +1881,7 @@ function startFare(streak) {
 }
 function leaveVehicle(force) {
   const P = S.player, v = P.vehicle; if (!v) return;
-  if (!force && Math.abs(v.speed) > 2.5 * T) { S.ui.toast('Slow down first.', 1200); return; }
+  if (!force && Math.abs(v.speed) > 2.5 * VS * T) { S.ui.toast('Slow down first.', 1200); return; }
   if (S.mission?.def.fare) { const n = S.mission.def.streak; failMission('', true); S.ui.toast(n ? `Off duty after ${n} fare${n === 1 ? '' : 's'}.` : 'Off duty.'); }
   const side = VEHICLES[v.type].wid / 2 + 15;
   for (const s of [1, -1]) {
@@ -1887,7 +1891,7 @@ function leaveVehicle(force) {
   const sp = freeSpotNear(v.x, v.y, 1); P.x = sp.x; P.y = sp.y; P.vehicle = null;
 }
 function findNear() {
-  const P = S.player, pv = P.vehicle, pp = pv || P, c = S.city, slow = !pv || Math.abs(pv.speed) < 2 * T;
+  const P = S.player, pv = P.vehicle, pp = pv || P, c = S.city, slow = !pv || Math.abs(pv.speed) < 2 * VS * T;
   const within = (o, a, b) => Math.hypot(o.x - pp.x, o.y - pp.y) < (pv ? b : a) * T;
   // the nearest vehicle you could get into
   let car = null, carD = 1.9 * T;
@@ -1959,7 +1963,7 @@ function updatePlayer(dt) {
       P.ang = Math.atan2(ky, kx); P.walk += dt * 13;
     }
     // traffic can knock you over
-    if (P.invuln <= 0) for (const o of S.vehicles) if (o.ai && Math.abs(o.speed) > 3 * T && nearCar(o, P, 4)) {
+    if (P.invuln <= 0) for (const o of S.vehicles) if (o.ai && Math.abs(o.speed) > 3 * VS * T && nearCar(o, P, 4)) {
       P.hearts--; P.down = 1.2; P.invuln = 2.5; sfx.bump(); const a = Math.atan2(P.y - o.y, P.x - o.x); moveWalker(P, Math.cos(a) * 30, Math.sin(a) * 30);
       if (P.hearts <= 0) flattened();
       break;
@@ -1970,14 +1974,14 @@ function updatePlayer(dt) {
   if (S.bot) ctrl = botDrive(v, dt);
   else if (inp.stick.active) {
     const want = Math.atan2(inp.stick.y, inp.stick.x), da = angDiff(want, v.ang), mag = Math.hypot(inp.stick.x, inp.stick.y);
-    const rev = Math.abs(da) > 2.3 && v.speed < 2 * T;
+    const rev = Math.abs(da) > 2.3 && v.speed < 2 * VS * T;
     ctrl = { thr: rev ? -mag : mag * (Math.abs(da) > 1.2 ? 0.5 : 1), steer: rev ? clamp(-angDiff(want + Math.PI, v.ang) * 2.5, -1, 1) * -1 : clamp(da * 2.4, -1, 1), hand: inp.brake };
   } else ctrl = { thr: -ky, steer: kx, hand: k.has('Space') || inp.brake };
   driveVehicle(v, ctrl, dt);
   P.x = v.x; P.y = v.y; P.ang = v.ang;
   // knock people over
   // people jump clear of anything they can see coming; flat out, they cannot
-  if (Math.abs(v.speed) > 1.5 * T && Math.abs(v.speed) < (v === S.heirloom && up('horn') ? 15 : 12.5) * T) {
+  if (Math.abs(v.speed) > 1.5 * VS * T && Math.abs(v.speed) < (v === S.heirloom && up('horn') ? 15 : 12.5) * VS * T) {
     const fx = Math.cos(v.ang) * Math.sign(v.speed), fy = Math.sin(v.ang) * Math.sign(v.speed), reach = (2.2 * T + Math.abs(v.speed) * 0.3) * (v === S.heirloom && up('horn') ? 2 : 1);
     for (const p of S.peds) {
       if (p.npc || p.stepPed || p.cop || p.down > 0) continue;
@@ -1988,7 +1992,7 @@ function updatePlayer(dt) {
       if (!(p.yelp > S.t)) { p.yelp = S.t + 4; if (Math.random() < 0.4) float(p.x, p.y - 22, quip(), '#fff'); }
     }
   }
-  if (Math.abs(v.speed) > 2.4 * T) for (const p of S.peds) if (!p.npc && (!p.stepPed || p.runner || p.vandal) && !(p.down > 0) && nearCar(v, p, 5)) knockDown(p, v);
+  if (Math.abs(v.speed) > 2.4 * VS * T) for (const p of S.peds) if (!p.npc && (!p.stepPed || p.runner || p.vandal) && !(p.down > 0) && nearCar(v, p, 5)) knockDown(p, v);
   // the Parish Engine
   if (v === S.heirloom) {
     const st = statsOf(v), armed = S.dial != null && S.dial !== S.city.year;
@@ -2262,7 +2266,7 @@ function hud() {
 function render() {
   const ui = S.ui, g = ui.ctx, P = S.player, c = S.city;
   const { w, h, dpr } = ui.resize();
-  const pp = P.vehicle || P, sp = P.vehicle ? Math.abs(P.vehicle.speed) / (15 * T) : 0;
+  const pp = P.vehicle || P, sp = P.vehicle ? Math.abs(P.vehicle.speed) / (15 * VS * T) : 0;
   const base = clamp(Math.min(w, h) / ((ui.touch ? 11.5 : 15.5) * T), 0.75 * dpr, 2.2 * dpr);
   const V = S.view;
   V.w = w; V.h = h;

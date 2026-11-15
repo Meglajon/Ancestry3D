@@ -266,7 +266,8 @@ round the town after a girl with a basket, and drive him up to the church. Slowl
   taxi or hansom and you are for hire, with a bonus for every fare in a row), lost photographs, reunion
   bonuses and badges.
 - **Dorothy's workbench** at the lock-up (a motor shed or tithe barn in earlier years): a tuned engine (the
-  Heirloom starts out a little slow and earns its speed: fully tuned, it is the quickest thing in any century), a brass
+  Heirloom starts at half speed and earns the rest: each level adds half her starting speed again, so fully
+  tuned she is twice as quick and the fastest thing in any century), a brass
   ram bar, an ink economiser, a quick-wind dial, proper tyres, luggage straps, Dorothy's stopwatch (every
   timer runs a little long), a klaxon that clears the road, a police-band wireless, a respray that also
   loses the police, and a flask of tea.

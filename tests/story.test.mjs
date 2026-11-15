@@ -6,7 +6,7 @@ import { parseGedcom } from '../js/gedcom.js';
 import { buildStory, placeTown, residentsOf, oddJob, fareBetween, inkCost, eraOf, jobGroup } from '../js/storyplot.js';
 
 const LOTS = new Set(['@found', 'church', 'hall', 'pub', 'works', 'farm', 'school', 'hub', 'garage', 'market', 'infirmary', 'police', 'post', 'office', 'phone', 'home']);
-const STEPS = new Set(['goto', 'talk', 'carry', 'collect', 'chase', 'race', 'travel', 'escape', 'tail', 'defend', 'catch', 'search', 'frenzy']);
+const STEPS = new Set(['goto', 'talk', 'carry', 'collect', 'chase', 'race', 'travel', 'escape', 'tail', 'defend', 'catch', 'search', 'frenzy', 'drill']);
 function check(story, label) {
   assert.ok(story.missions.length >= 4, label + ': too few missions');
   assert.equal(story.missions[0].id, 'final-notice');
@@ -34,6 +34,29 @@ function check(story, label) {
       for (const line of s.lines || []) assert.ok(!/undefined|null|NaN/.test(line), `${label}: ${m.id} "${line}"`);
     }
     if (m.reward.proof) assert.ok(story.proofs.includes(m.reward.proof));
+    for (const cut of [m.cutIn, m.cutOut]) if (cut) {
+      assert.ok(cut.shots.length >= 2, `${label}: ${m.id} cut scene too short`);
+      for (const sh of cut.shots) {
+        assert.ok(sh.text && !/undefined|null|NaN|\[object/.test(sh.text + (cut.caption || '') + (sh.caption || '')), `${label}: ${m.id} cut "${sh.text}"`);
+        assert.ok(['note', 'dot', 'blank', 'lowe'].includes(sh.who) || story.tree.people.has(sh.who), `${label}: ${m.id} cut speaker ${sh.who}`);
+        assert.ok(sh.at === 'you' || LOTS.has(sh.at), `${label}: ${m.id} cut lot ${sh.at}`);
+      }
+    }
+  });
+  // variety: Hargreaves tries a different scheme in every chapter, no two meetings in a row play the same way,
+  // every day's work has at least two acts, and no two story missions in a row are the same acts in the same order
+  const meets = story.missions.filter(m => /^meet-/.test(m.id) && m.scheme);
+  assert.equal(new Set(meets.map(m => m.scheme)).size, Math.min(meets.length, 7), `${label}: a scheme repeats`);
+  for (let k = 1; k < meets.length; k++) assert.notEqual(meets[k].steps[0].t, meets[k - 1].steps[0].t, `${label}: ${meets[k].id} plays like ${meets[k - 1].id}`);
+  for (const m of story.missions.filter(m => /^work-/.test(m.id))) assert.ok(m.steps.length >= 2, `${label}: ${m.id} is one act`);
+  const seq = m => m.steps.map(s => s.t).join(',');
+  const main = story.missions.filter(m => !m.odd && m.steps.length > 1);
+  for (let k = 1; k < main.length; k++) assert.notEqual(seq(main[k]), seq(main[k - 1]), `${label}: ${main[k].id} has the same acts as ${main[k - 1].id}`);
+  // a scene at both ends of every chapter
+  story.chapters.forEach((c, i) => {
+    const own = story.missions.filter(m => m.chapter === i && !m.odd);
+    assert.ok(own[0]?.cutIn, `${label}: chapter ${i + 1} has no opening scene`);
+    if (c !== story.chapters.at(-1)) assert.ok(own.some(m => m.cutOut), `${label}: chapter ${i + 1} has no closing scene`);
   });
   assert.equal(new Set(story.proofs.map(p => p.id)).size, story.proofs.length, label + ': duplicate proofs');
   // nobody tells you that you are a stranger in a year when you were already born

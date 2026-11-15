@@ -592,7 +592,7 @@ function driveVehicle(v, ctrl, dt) {
   if (ctrl.brake) v.speed -= Math.sign(v.speed) * Math.min(Math.abs(v.speed), 15 * T * dt);
   const drift = st.horse ? 0 : st.drift ?? 0.5, hand = !!ctrl.hand && Math.abs(v.speed) > 1.5 * T;
   if (ctrl.hand) v.speed -= Math.sign(v.speed) * Math.min(Math.abs(v.speed), (st.horse ? 12 : 3.2 + 5 * (1 - drift)) * T * dt);
-  v.thr = ctrl.thr;
+  v.thr = ctrl.thr; v.hand = !!ctrl.hand;
   if (v.speed > maxV) v.speed = Math.max(maxV, v.speed - 12 * T * dt);
   v.speed = Math.max(v.speed, -maxV * 0.38);
   const sf = clamp(Math.abs(v.speed) / (3.2 * T), 0, 1) * (v.speed < 0 ? -1 : 1);
@@ -1078,7 +1078,7 @@ function enterStep(step) {
     if (step.passenger) { const sp = freeSpotNear(a.x, a.y - 0.2 * T, 0); const giver = S.peds.find(p => p.npc && p.name && p.name.split(' ')[0] === step.passenger); st.pass = { stepPed: true, x: sp.x + 14, y: sp.y, ang: Math.PI / 2, walk: 0, down: 0, look: step.who && S.tree.people.has(step.who) ? lookSummary(personLook(step.who)) : giver?.look || strangerLook(Math.random, c.year), name: step.passenger }; S.peds.push(st.pass); } }
   else if (step.t === 'race') { let prev = pp; for (const s of step.stops) { const l = lotPt(s); tiles += manh(prev, l) + off(l) * 2; prev = l; } stops = step.stops.length; }
   else if (step.t === 'collect') {
-    const l = lotPt(step.around), kind = /sheep|pigs|truants/.test(step.label) ? step.label : /tubs|crates|barrels/.test(step.label) ? 'load' : 'page';
+    const l = lotPt(step.around), kind = /sheep|pigs|truants/.test(step.label) ? step.label : /tubs|crates|barrels/.test(step.label) ? 'load' : /parts/.test(step.label) ? 'part' : 'page';
     let guard = 0;
     while (S.items.filter(i => i.step).length < step.n && guard++ < 600) {
       const a = Math.random() * 7, r = (3 + Math.random() * (step.radius - 3)) * T, x = l.x + Math.cos(a) * r, y = l.y + Math.sin(a) * r;
@@ -1114,6 +1114,7 @@ function enterStep(step) {
     st.spots = step.spots.map(k => ({ k, pt: lotPt(k), seen: false }));
     st.where = st.spots.length > 1 ? 1 + Math.floor(Math.random() * (st.spots.length - 1)) : 0;
   } else if (step.t === 'frenzy') { st.timer = step.time || 60; st.wave = 0; }
+  else if (step.t === 'drill') { st.k = 0; st.peak = 0; st.held = 0; st.spin = null; }
   if (step.t === 'talk' && S.data.individuals.has(step.who)) {
     // whoever you are to talk to is standing where the step says
     S.peds = S.peds.filter(p => !(p.npc && p.who === step.who));
@@ -1121,6 +1122,14 @@ function enterStep(step) {
     S.peds.push({ npc: true, who: step.who, x: sp.x, y: sp.y, ang: Math.PI / 2, look: inTree ? lookSummary(personLook(step.who)) : outsider(step.who).look, walk: 0, down: 0, name: displayName(S.data.individuals.get(step.who)) });
   }
   if (step.t === 'search') hintOnce('search', 'They could be in any of the places marked ?. Go and ask at each. The nearest is arrowed.', 5600);
+  // the first time each kind of job comes up, say how it works (after whatever somebody shouts as it starts)
+  const tok = S, hint = (key, text, ms) => step.bark ? setTimeout(() => S === tok && S.step?.step === step && hintOnce(key, text, ms), 5400) : hintOnce(key, text, ms);
+  if (step.t === 'collect') hint('collect', 'PICK-UPS: drive (or walk) over every one. The arrow points at the nearest; the white dots on the little map show the rest.', 6000);
+  if (step.t === 'carry' && step.gentle) hint('gentle', 'FRAGILE: every knock costs a ♦. Lose all three and the load is ruined. Slow down before corners.', 6000);
+  if (step.t === 'catch') hint('catch', S.ui.touch ? 'ON FOOT: tap GO to get out, then run him down. Push the stick to the edge to sprint.' : 'ON FOOT: press E to get out, then run him down. Hold Shift to sprint.', 6400);
+  if (step.t === 'chase') hint('chase', 'CHASE: ram the van with the red ring. Every knock empties its bar a little.', 5200);
+  if (step.t === 'tail') hint('tail', 'TAIL: keep it in sight but not too close. The ! marks fill up if they notice you.', 5600);
+  if (step.t === 'defend') hint('defend', 'DEFEND: stay with the green-ringed convoy and ram any grey van that goes for it.', 5600);
   if (step.blocks) hintOnce('blocks', 'Grey vans are parked across the road ahead. Find another way round, or get out and walk the last bit.', 5600);
   if (step.rival && step.t === 'goto') startRival(lotPt(step.at), step.rival);
   if (step.blocks) placeBlocks(step.t === 'goto' ? lotPt(step.at) : lotPt(step.to), step.blocks);
@@ -1137,7 +1146,7 @@ function enterStep(step) {
   }
   const m = S.mission;
   if (m.t0 == null) m.t0 = S.t;
-  m.par = (m.par || 0) + (st.timer ?? ({ goto: 18, talk: 3, chase: 55, tail: 45, defend: 60, catch: 30, search: 40, escape: 30, travel: 0, collect: 40, carry: 40, race: 40 }[step.t] ?? 20));
+  m.par = (m.par || 0) + (st.timer ?? ({ drill: 45, goto: 18, talk: 3, chase: 55, tail: 45, defend: 60, catch: 30, search: 40, escape: 30, travel: 0, collect: 40, carry: 40, race: 40 }[step.t] ?? 20));
   if (st.timer != null && S.save.easy) st.timer = Math.round(st.timer * 1.6);
   if (st.timer != null && step.t !== 'frenzy' && up('clock')) st.timer = Math.round(st.timer * (1 + 0.1 * up('clock')));
   st.timer0 = st.timer; st.t0 = S.t;
@@ -1243,6 +1252,30 @@ function updateMission(dt) {
     const r = st.runner;
     fleeStep(r, pp, dt);
     if (r.caught || (!pv && dist(r, P) < 0.95 * T)) { r.down = 3; float(r.x, r.y - 22, 'Got him!', '#ffd84a'); sfx.cash(); st.runner = null; r.stepPed = false; r.runner = false; r.sp = 1.6 * T; r.dir = 0; r.cross = 0; S.ui.toast(`You have ${s.drop || 'the page'}.`, 2400); nextStep(); }
+  } else if (s.t === 'drill') {
+    // Dorothy's driving lesson: each move is checked from what the car actually does
+    if (S.bot) { nextStep(); return; }
+    if (!pv) return;
+    const id = s.drills[st.k], max = statsOf(pv).max * T;
+    let ok = false;
+    if (id === 'speed') ok = pv.speed > 0.75 * max;
+    else if (id === 'stop') { st.peak = Math.max(st.peak, Math.abs(pv.speed)); ok = st.peak > 4 * T && Math.abs(pv.speed) < 0.4 * T; }
+    else if (id === 'reverse') { st.held = pv.speed < -0.8 * T ? st.held + dt : Math.max(0, st.held - dt * 0.5); ok = st.held > 0.8; }
+    else if (id === 'slide') { st.held = pv.hand && pv.slip > 2.2 ? st.held + dt : st.held; ok = st.held > 0.7; }
+    else if (id === 'spin') {
+      // a handbrake turn: swing round to face back the way you came, all in one fresh pull of the handbrake
+      if (st.lift) { if (!pv.hand) st.lift = false; }
+      else if (pv.hand && (st.spin || Math.abs(pv.speed) > 3 * T)) { st.spin ||= { tot: 0, last: pv.ang }; st.spin.tot += angDiff(pv.ang, st.spin.last); st.spin.last = pv.ang; ok = Math.abs(st.spin.tot) > 2.4; }
+      else st.spin = null;
+    }
+    if (ok) {
+      const d = DRILLS[id];
+      st.k++; st.peak = 0; st.held = 0; st.spin = null; st.lift = pv.hand;   // the next move starts with a fresh press
+      float(pv.x, pv.y - 30, d.done, '#7be07b'); sfx.pick();
+      S.ui.toast(`Dorothy: "${d.praise}"`, 3200); S.lessonKey = 'praise';
+      S.lessonHold = S.t + 3.2;
+      if (st.k >= s.drills.length) nextStep();
+    }
   } else if (s.t === 'travel') {
     if (S.city.town.id === s.town && S.city.year === s.year) nextStep();
   } else if (s.t === 'escape') {
@@ -1431,6 +1464,8 @@ async function passMission() {
   if (S.player.vehicle) S.player.vehicle.speed *= 0.3;
   await runLines(def.outro);
   if (S !== tok) return;
+  if (def.cutOut && !def.odd && def.index >= S.save.idx) await playCut(def.cutOut, 'out:' + def.id);
+  if (S !== tok) return;
   S.busy = false;
   let cash = def.reward.cash || 0;
   if (def.reward.perTile) cash = Math.max(25, Math.round((m.total || 20) * def.reward.perTile / 5) * 5);
@@ -1540,7 +1575,13 @@ function drawCut(g, w, h, dpr) {
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.fillStyle = '#0b080c'; g.fillRect(0, 0, w, bar * k); g.fillRect(0, h - bar * k, w, bar * k);
   g.fillStyle = 'rgba(11,8,12,0.28)'; g.fillRect(0, bar, w, h - 2 * bar);
-  if (cu.caption) { g.font = `${Math.round(15 * dpr)}px "Press Start 2P", monospace`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#ffd84a'; g.fillText(cu.caption.toUpperCase(), w / 2, bar * 0.52); }
+  if (cu.caption) {
+    // long captions (a full name and a town) shrink to fit a phone held upright
+    const capt = cu.caption.toUpperCase();
+    g.font = `${Math.round(15 * dpr)}px "Press Start 2P", monospace`;
+    const fit = Math.min(1, (w * 0.92) / Math.max(1, g.measureText(capt).width));
+    g.font = `${Math.max(8, Math.floor(15 * dpr * fit))}px "Press Start 2P", monospace`;
+    g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#ffd84a'; g.fillText(capt, w / 2, bar * 0.52); }
   g.font = `700 ${Math.round(12 * dpr)}px "Nunito", sans-serif`; g.textAlign = 'right'; g.fillStyle = 'rgba(255,255,255,0.6)'; g.fillText(S.ui.touch ? 'tap to go on' : 'E: go on   ·   Esc: skip', w - 14 * dpr, h - bar * 0.5);
   if (!cu.who || cu.who === 'note' || cu.who === 'letter') return;
   const sp = speaker(cu.who), size = 16 * Math.max(6, Math.round(Math.min(h * 0.46, w * 0.3) / 16)), u = size / 16;
@@ -1968,7 +2009,9 @@ function update(dt) {
   if (S.transit) return;
   // a story mission that starts itself
   const next = nextStory();
-  if (!S.mission && !S.busy && S.save.idx === 0 && !S.save.seenCut && isHere(next) && !S.bot && (() => { try { return localStorage.getItem('a3d:nocut') !== '1'; } catch (e) { return true; } })()) { S.save.seenCut = 1; openingScene(); return; }
+  if (!S.mission && !S.busy && S.save.idx === 0 && !S.save.seenCut && isHere(next) && !S.bot && cutsOn()) { S.save.seenCut = 1; openingScene(); return; }
+  // a new part of the story starts the moment you arrive in its town and year
+  if (!S.mission && !S.busy && next?.cutIn && isHere(next) && !S.bot && cutsOn() && !cutSeen('in:' + next.id) && S.t > (S.failT || -9) + 1.5) { playCut(next.cutIn, 'in:' + next.id); return; }
   if (!S.mission && !S.busy && next && next.giver.who === 'auto' && isHere(next) && S.t > (S.failT || -9) + 3.5) { const r = S.retry && S.retry.def === next ? S.retry : undefined; S.retry = null; startMission(next, r); return; }
   if (S.bot && S.step && !S.busy) {
     // the test driver gets in and out of the car by itself, and side-steps when it walks into a wall
@@ -2098,7 +2141,39 @@ async function openingScene() {
   S.cut = null; S.clock = clock0; S.ui.root.classList.remove('cut'); S.busy = false; S.failT = S.t - 3; persist();
   S.ui.banner('RELATIVE SPEED', `Save the ${sur} family`, '#ffd84a', 3200);
 }
+// The scenes between the parts of the story, played the same way as the opening. cut = { caption, hour, shots }
+// (see addCuts in storyplot.js). Once each; Esc skips; the test driver and the "no cut scenes" switch skip them.
+const cutsOn = () => { try { return localStorage.getItem('a3d:nocut') !== '1'; } catch (e) { return true; } };
+const cutSeen = key => (S.save.cuts || []).includes(key);
+async function playCut(cut, key) {
+  if (!cut || !cut.shots?.length || S.bot || !cutsOn() || (key && cutSeen(key))) return;
+  if (key) (S.save.cuts || (S.save.cuts = [])).push(key);
+  const tok = S, c = S.city, clock0 = S.clock, was = S.busy;
+  const at = (k, of) => { if (k === 'you') { const p = S.player.vehicle || S.player; return { x: p.x, y: p.y }; } const l = c.lot(k, of || S.story.hero.id); return l ? { x: l.x, y: l.y - 1.5 * T } : { x: S.player.x, y: S.player.y }; };
+  S.busy = true;
+  if (S.player.vehicle) S.player.vehicle.speed = S.player.vehicle.vx = S.player.vehicle.vy = 0;
+  if (cut.hour != null) S.clock = cut.hour;
+  S.cut = { ...at(cut.shots[0].at, cut.shots[0].of), who: null, mood: '', side: 0, caption: cut.caption || '', t0: S.t };
+  S.ui.root.classList.add('cut');
+  await new Promise(r => setTimeout(r, 1100));
+  for (const sh of cut.shots) {
+    if (S !== tok || !S.cut || S.cut.skip) break;
+    Object.assign(S.cut, { ...at(sh.at, sh.of), who: sh.who, mood: sh.mood || '', side: sh.side || 0, caption: sh.caption || '' });
+    await say(sh.who, sh.text);
+  }
+  if (S !== tok) return;
+  S.cut = null; S.clock = clock0; S.ui.root.classList.remove('cut'); S.busy = was;
+  persist();
+}
 const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
+// Dorothy's driving lesson, a move at a time: what to press, and what she says when you have it.
+const DRILLS = {
+  speed: { name: 'flat out', keys: 'Hold W to put your foot down. Steer with A and D. Keep going until you are near top speed.', touch: 'Push the stick the way you want to go and hold it at the edge. Keep going until you are near top speed.', done: 'Flat out!', praise: 'Oh, she likes that. Now let\'s see you stop her.' },
+  stop: { name: 'brake', keys: 'BRAKE: let go of W and hold S. Stop completely before you hit anything.', touch: 'BRAKE: let go of the stick and hold BRAKE. Stop completely before you hit anything.', done: 'Stopped!', praise: 'Brake in a straight line, before the corner, never in it. My husband never learned.' },
+  reverse: { name: 'reverse', keys: 'REVERSE: once you are stopped, keep holding S and she goes backwards. Back up a car\'s length.', touch: 'REVERSE: once you are stopped, pull the stick behind the car and she goes backwards. Back up a car\'s length.', done: 'Reversing!', praise: 'Good. That gets you out of any dead end in any century.' },
+  slide: { name: 'handbrake slide', keys: 'SKID: get some speed up, steer hard with A or D, and hold SPACE. The back end swings out and leaves skid marks.', touch: 'SKID: get some speed up, turn hard, and hold BRAKE. The back end swings out and leaves skid marks.', done: 'Sliding!', praise: 'Ha! Space lets the back go. Use it to slide round corners without stopping.' },
+  spin: { name: 'handbrake turn', keys: 'HANDBRAKE TURN: go fast, then hold SPACE and steer hard until you are facing back the way you came.', touch: 'HANDBRAKE TURN: go fast, then hold BRAKE and turn hard until you are facing back the way you came.', done: 'Spun round!', praise: 'That\'s how you lose a grey van in a narrow street. Right: you can drive. Off we go.' },
+};
 // The first mission is the lesson: one instruction at a time, kept on screen until it has been done.
 function lesson() {
   const m = S.mission, P = S.player, touch = S.ui.touch;
@@ -2108,9 +2183,11 @@ function lesson() {
   if (m.i === 0) tip = touch ? 'WALK: push the left stick. Follow the yellow arrow to the phone box.' : 'WALK: use W A S D or the arrow keys (hold Shift to run). Follow the yellow arrow to the phone box.';
   else if (m.i === 1 || m.i === 3) { key += near ? 'n' : ''; tip = near ? (touch ? 'TALK: tap GO.' : 'TALK: press E. E is how you talk to people, answer things and get in and out of cars.') : 'Walk right up to the yellow marker.'; }
   else if (m.i === 2) tip = touch ? 'MISSION: tap the clipboard at the top right at any time to read what you are doing. Now follow the arrow to the lock-up.' : 'MISSION: press B at any time to read what you are meant to be doing. Now follow the yellow arrow to the lock-up.';
-  else if (m.i === 4 && !P.vehicle) { key += 'f'; tip = touch ? 'GET IN: walk up to the yellow car and tap GO.' : 'GET IN: walk up to the yellow car and press E.'; }
-  else if (m.i === 4) { key += 'v'; tip = touch ? 'DRIVE: push the stick the way you want to go. BRAKE is the handbrake, for sliding round corners. GO gets you out. Follow the arrow.' : 'DRIVE: W goes, S brakes and reverses, A and D steer. Space is the handbrake, for sliding round corners. E gets you out. Follow the arrow.'; }
-  else if (m.i === 5) { key += P.vehicle ? 'v' : 'f'; tip = P.vehicle ? 'CHASE: catch the grey van with the red ring and drive into it. Any touch counts. Empty the bar above it.' : 'Get back in the car: walk up to it and press ' + (touch ? 'GO.' : 'E.'); }
+  else if ((m.i === 4 || m.i === 5) && !P.vehicle) { key += 'f'; tip = touch ? 'GET IN: walk up to the yellow car and tap GO.' : 'GET IN: walk up to the yellow car and press E.'; }
+  else if (m.i === 4 && S.step?.step.t === 'drill') { const id = S.step.step.drills[S.step.k]; key += 'd' + id; tip = `LESSON ${S.step.k + 1} OF ${S.step.step.drills.length}: ` + DRILLS[id][touch ? 'touch' : 'keys']; }
+  else if (m.i === 5) { key += 'v'; tip = touch ? 'DRIVE: follow the yellow arrow. Let go to slow down; BRAKE slides the back round corners.' : 'DRIVE: follow the yellow arrow. S to brake before a corner, Space to slide round it.'; }
+  else if (m.i === 6) { key += P.vehicle ? 'v' : 'f'; tip = P.vehicle ? 'CHASE: catch the grey van with the red ring and drive into it. Any touch counts. Empty the bar above it.' : 'Get back in the car: walk up to it and press ' + (touch ? 'GO.' : 'E.'); }
+  if (S.lessonHold > S.t) return;   // let Dorothy's "well done" be read first
   if (key !== S.lessonKey) { S.lessonKey = key; S.ui.toast(tip, 600000); }
 }
 function hud() {
@@ -2137,6 +2214,7 @@ function hud() {
     if (s.t === 'race') text += ` <b>${st.k}/${s.stops.length}</b>`;
     if (s.t === 'search') text += ` <b>${st.spots.filter(x => !x.seen).length === 1 ? 'one place left to try' : st.spots.filter(x => !x.seen).length + ' places to try'}</b>`;
     if (s.t === 'frenzy') text += ` <b>${st.k} off the road</b>`;
+    if (s.t === 'drill') text = `Driving lesson: ${DRILLS[s.drills[Math.min(st.k, s.drills.length - 1)]].name} <b>${st.k}/${s.drills.length}</b>`;
     if (st.rival) { const dp = lotPt(s.t === 'goto' ? s.at : (st.toAlt || s.to)); text += ` <b style="color:#f08aa0">rival ${Math.round(dist(st.rival, dp) / T * 4)}m · you ${Math.round(dist(P.vehicle || P, dp) / T * 4)}m</b>`; }
     if (st.spillPt) text = 'Stop and pick it up!';
     if (s.t === 'tail') text += ` <b>${st.close ? 'too close! ' : st.far ? 'falling behind! ' : ''}${'!'.repeat(Math.ceil(st.sus * 5))}</b>`;
@@ -2169,11 +2247,17 @@ function render() {
   const V = S.view;
   V.w = w; V.h = h;
   const zt = S.cut ? base * 1.55 : base * (1 - 0.3 * clamp(sp, 0, 1));
-  V.z += (zt - V.z) * 0.06; if (!V.init) { V.z = zt; V.init = true; }
+  // The camera eases after the car by the same amount per second at any frame rate (phones run at 60, 90 or 120),
+  // and the shake is kept out of the camera itself so the ground and the cars never part company.
+  const fdt = clamp(S.frameDt || 1 / 60, 1 / 240, 0.05), ease = k => 1 - Math.pow(1 - k, fdt * 60);
+  V.z += (zt - V.z) * ease(0.06); if (!V.init) { V.z = zt; V.init = true; }
   const lead = P.vehicle ? 0.22 : 0;
   const tx = S.cut ? S.cut.x : pp.x + (P.vehicle ? P.vehicle.vx * lead : 0), ty = S.cut ? S.cut.y : pp.y + (P.vehicle ? P.vehicle.vy * lead : 0);
-  V.x += (tx - V.x) * 0.14; V.y += (ty - V.y) * 0.14;
-  if (S.shake > 0.02) { V.x += (Math.random() - 0.5) * S.shake * 16; V.y += (Math.random() - 0.5) * S.shake * 16; S.shake *= 0.86; } else S.shake = 0;
+  if (V.x !== V.sx || V.y !== V.sy) { V.cx = V.x; V.cy = V.y; }   // somebody moved the camera on purpose (a new town, a warp)
+  V.cx += (tx - V.cx) * ease(0.14); V.cy += (ty - V.cy) * ease(0.14);
+  V.x = V.cx; V.y = V.cy;
+  if (S.shake > 0.02) { V.x += (Math.random() - 0.5) * S.shake * 16; V.y += (Math.random() - 0.5) * S.shake * 16; S.shake *= Math.pow(0.86, fdt * 60); } else S.shake = 0;
+  V.sx = V.x; V.sy = V.y;
   const z = V.z, t = S.t;
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.imageSmoothingEnabled = true;
@@ -2220,9 +2304,10 @@ function render() {
   g.setTransform(1, 0, 0, 1, 0, 0);
   const dark = darkness();
   drawTall(g, c, V, t, dark);
-  // cloud shadows drifting over the town
-  if (dark < 0.3) {
-    g.fillStyle = `rgba(40,50,90,${0.085 * (1 - dark / 0.3)})`;
+  // cloud shadows drifting over the town, fading out at speed (big blue-grey shapes sweeping past read as flicker)
+  S.cloudA = (S.cloudA ?? 1) + ((1 - clamp(sp * 1.4, 0, 1)) - (S.cloudA ?? 1)) * Math.min(1, (S.frameDt || 0.016) * 1.5);
+  if (dark < 0.3 && S.cloudA > 0.02) {
+    g.fillStyle = `rgba(40,50,90,${(0.085 * (1 - dark / 0.3) * S.cloudA).toFixed(4)})`;
     for (let i = 0; i < 6; i++) {
       const wx = ((i * 977 + t * 22) % (c.wpx + 1400)) - 700, wy = ((i * 613) % c.hpx) + Math.sin(t * 0.05 + i) * 80;
       const sx = (wx - V.x) * z + w / 2, sy = (wy - V.y) * z + h / 2, rx = (260 + (i % 3) * 90) * z, ry = (120 + (i % 2) * 60) * z;
@@ -2267,11 +2352,14 @@ function render() {
   const ch = S.heirloom.charge;
   if (ch > 0.02) { const gr = g.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.25, w / 2, h / 2, Math.max(w, h) * 0.7); gr.addColorStop(0, 'rgba(160,236,255,0)'); gr.addColorStop(1, `rgba(160,236,255,${ch * 0.75})`); g.fillStyle = gr; g.fillRect(0, 0, w, h); }
   if (S.flash > 0) { g.fillStyle = `rgba(200,240,255,${S.flash})`; g.fillRect(0, 0, w, h); }
-  if (S.heat > 0 && Math.floor(t * 3) % 2) { g.fillStyle = 'rgba(60,110,255,0.07)'; g.fillRect(0, 0, w, h); }
-  if (S.glitch > 0) {
-    for (let i = 0; i < 9; i++) { const gy = Math.random() * h, gh = 6 + Math.random() * 46; g.drawImage(g.canvas, 0, gy, w, gh, (Math.random() - 0.5) * 90 * S.glitch, gy, w, gh); }
-    g.fillStyle = `rgba(200,120,255,${0.16 * S.glitch})`; g.fillRect(0, 0, w, h);
+  // Wanted: a police light at the edges only. (It used to wash the whole screen blue three times a second,
+  // which looked like the picture flickering.)
+  if (S.heat >= 1) {
+    const on = Math.floor(t * 2.5) % 2, bw = 7 * dpr;
+    g.fillStyle = on ? 'rgba(70,120,255,0.5)' : 'rgba(255,70,70,0.5)'; g.fillRect(0, 0, w, bw); g.fillRect(0, h - bw, w, bw);
   }
+  // A paradox: a soft violet fade (no tearing the picture apart; that looked like a fault, not a story).
+  if (S.glitch > 0) { g.fillStyle = `rgba(200,140,255,${(0.22 * Math.min(1, S.glitch)).toFixed(3)})`; g.fillRect(0, 0, w, h); }
   miniMap(pp, tgt);
   if (S.cut) drawCut(g, w, h, dpr);
   if (S.transit) drawTransit(g, w, h, dpr, S.frameDt || 0.016);

@@ -580,10 +580,23 @@ export function drawGround(ctx, city, view) {
     if (cx < 0 || cy < 0 || cx * CHUNK >= city.W || cy * CHUNK >= city.H) continue;
     const key = cx + ',' + cy;
     let ch = city.chunks.get(key);
-    if (!ch) { ch = renderChunk(city, cx, cy); if (city.chunks.size >= 56) city.chunks.delete(city.chunks.keys().next().value); } else city.chunks.delete(key);
+    if (!ch) { ch = renderChunk(city, cx, cy); if (city.chunks.size >= 64) city.chunks.delete(city.chunks.keys().next().value); } else city.chunks.delete(key);
     city.chunks.set(key, ch);
     const sx = Math.floor((cx * cs - view.x) * view.z + view.w / 2), sy = Math.floor((cy * cs - view.y) * view.z + view.h / 2);
     ctx.drawImage(ch, sx, sy, Math.ceil(cs * view.z) + 1, Math.ceil(cs * view.z) + 1);
+  }
+  // Draw one chunk just off screen per frame, ahead of the way the camera is going, so driving fast never
+  // has to stop and paint a whole row of new ground in one frame (that hitch read as the screen tearing).
+  const dx = view.x - (view.px ?? view.x), dy = view.y - (view.py ?? view.y);
+  view.px = view.x; view.py = view.y;
+  const ax = dx > 0.5 ? 1 : dx < -0.5 ? -1 : 0, ay = dy > 0.5 ? 1 : dy < -0.5 ? -1 : 0;
+  for (let cy = cy0 - 1 + Math.min(0, ay); cy <= cy1 + 1 + Math.max(0, ay); cy++) for (let cx = cx0 - 1 + Math.min(0, ax); cx <= cx1 + 1 + Math.max(0, ax); cx++) {
+    if (cx < 0 || cy < 0 || cx * CHUNK >= city.W || cy * CHUNK >= city.H || city.chunks.has(cx + ',' + cy)) continue;
+    const ahead = (ax && (cx - (cx0 + cx1) / 2) * ax > 0) || (ay && (cy - (cy0 + cy1) / 2) * ay > 0) || (!ax && !ay);
+    if (!ahead) continue;
+    if (city.chunks.size >= 64) city.chunks.delete(city.chunks.keys().next().value);
+    city.chunks.set(cx + ',' + cy, renderChunk(city, cx, cy));
+    return;
   }
 }
 

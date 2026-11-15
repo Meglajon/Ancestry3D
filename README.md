@@ -1,7 +1,8 @@
 # Ancestry 3D
 
-Walk among your ancestors. Load a GEDCOM family tree and explore it as the person you choose: you start in the
-middle of a courtyard where every ancestor stands on the ground as a 3D person you can walk up to and talk to.
+Walk among your ancestors. Load a GEDCOM family tree and explore it three ways: **Play** (roll round a garden where
+every ancestor is a fluffy ball you can chat to), **Story** (a top-down driving story through the towns and years
+they lived in) and **Visualisation** (a galaxy and a growing tree).
 
 - **You are the root person.** Pick who you're playing on the setup screen; you start at the centre as them.
 - **Generations are paths on the ground.** Walk outward to go back in time. Each ancestor stands directly behind
@@ -84,30 +85,17 @@ The whole plot, and how each part is filled in from the GEDCOM, is in [STORY.md]
 | Town map / pedigree / menu | M / P / Esc | 🗺 / 📜 / ☰ |
 | Try a failed mission again | R | GO |
 
-### Looks
+### The garden (Play)
 
-| Look | What you get |
-|---|---|
-| **Retro** | 90s demon-shooter: flagstones, brick walls, torches, a burning sky, a status bar with your own face, and a **minigun**. The courtyard is dotted with toxic barrels (shoot them and they explode, setting off any next to them), burning barrels, tech lamps, candelabras, crate stacks, broken pillars and boxes of bullets to top up your ammo. |
-| **Island** | A bright, cozy island seen from behind your own villager, with round villagers and speech-bubble chats. Floating brick platforms and coins are dotted about: **jump** onto the platforms, collect the coins and bounce on your ancestors' heads. |
-| **Fluffy** | A top-down 2D garden where you and every ancestor are round, fluffy balls in colours taken from their period clothes, with their hair as a tuft on top (or their hat). Roll along the paths, bump into people (they squeak), and chat exactly as in the other looks. |
+A top-down 2D garden where you and every ancestor are round, fluffy balls in colours taken from their period
+clothes, with their hair as a tuft on top (or their hat). Roll along the paths, bump into people (they squeak and
+tell you off in their own accent), and chat to them.
 
-Ancestors who get shot, jumped on or bumped into flinch and tell you off in their own accent. Nobody is hurt.
-
-**Fight back** (Retro, a switch under Look): shoot someone and they pull out a weapon from their time (a broom,
-rolling pin, frying pan, umbrella, club, cane or pitchfork) and walk after you, swinging when they're close.
-You have health (first-aid kits top it up) and a score: points for every hit and more for knocking someone out,
-which sends them home to their spot, calm again until you shoot them next time. Exploding barrels hurt everyone
-nearby, you included. If your health runs out you go back to the middle and everyone calms down. Your ammo no
-longer tops itself up in this mode: boxes of bullets and first-aid kits turn up at random spots around the
-courtyard. Your best score is remembered.
-
-**Missions** (every look): chat to ancestors and some will ask you to find someone: a person born in a certain
-town, someone called Edith, someone who worked as a weaver, someone born in the 1840s, one of their own parents,
-or one of a family they married into. Talk to anyone who fits and the mission is done, and they'll tell you who
-sent you. You earn XP in Fluffy (plus a little for everyone you meet), coins on the Island, and ammo (and score
-in Fight back) in Retro. Up to three missions at a time are listed on screen, and the map search finds names,
-birthplaces and jobs.
+**Missions**: chat to ancestors and some will ask you to find someone: a person born in a certain town, someone
+called Edith, someone who worked as a weaver, someone born in the 1840s, one of their own parents, or one of a
+family they married into. Talk to anyone who fits and the mission is done, and they'll tell you who sent you. You
+earn XP (plus a little for everyone you meet). Up to three missions at a time are listed on screen, and the map
+search finds names, birthplaces and jobs.
 
 ## Visualisation
 
@@ -147,8 +135,8 @@ family so everyone can be placed in time.
 Your GEDCOM file is read in the browser and never uploaded. The page remembers your last tree, your look and who
 you've met in local storage on your device.
 
-On a first visit the game starts on the Fluffy look with the Tree layout and couples standing together; your
-own choices are remembered after that.
+On a first visit the garden uses the Tree layout with couples standing together; your own choices are remembered
+after that.
 
 Bible verses: Scripture quotations taken from The Holy Bible, New International Version® NIV®. Copyright © 1973,
 1978, 1984, 2011 by Biblica, Inc.™ Used by permission. All rights reserved worldwide.
@@ -163,12 +151,9 @@ Bible verses: Scripture quotations taken from The Holy Bible, New International 
 | Action | Keyboard / mouse | Touch |
 |---|---|---|
 | Move | WASD, arrow keys (left/right turn) | Left thumb stick |
-| Look | Mouse (click to capture) | Drag on the right side |
 | Run | Shift | RUN button, or push the stick to its edge |
-| Talk | E / Enter (and Space, except on the Island), 1–9 picks an option | TALK button, or tap the right side |
-| Fire (Retro) | Left mouse / Ctrl | FIRE button |
-| Jump (Island) | Space | JUMP button |
-| Zoom (Fluffy) | Mouse wheel | |
+| Talk | E / Enter / Space, 1–9 picks an option | TALK button, or tap someone close by |
+| Zoom | Mouse wheel | |
 | Map | Tab / M | MAP |
 | Menu | Esc | ☰ |
 
@@ -184,17 +169,12 @@ Plain ES modules, no framework. three.js r160 is loaded from jsDelivr through an
 
 ```
 index.html          built, self-contained game (generated, don't edit by hand)
-dev.html            source page: HUD, menus, styles for all three looks and the Visualisation screen (loads js/* as modules; needs a local server)
+dev.html            source page: HUD, menus, styles and the Visualisation screen (loads js/* as modules; needs a local server)
 js/gedcom.js        GEDCOM parser (any line endings, CONC/CONT, shared notes, all life events, ANSI/UTF-16 decoding)
 js/ancestry.js      ancestor walk (Ahnentafel, pedigree collapse), relationships, ground layout, couples
 js/places.js        place gazetteer: region, dialect and colouring for a GEDCOM place
 js/traits.js        per-person class, schooling, dress decade, inherited colouring
 js/outfits.js       period wardrobe by decade, sex, class, job and region
-js/npc.js           blocky and island figure builders (4 draw calls near, 1 far)
-js/world.js         generation paths, descent lines, NPCs, beacon; Retro and Island environments
-js/guides.js        generation paths for any layout (rings, arcs or rows), floor labels, open-spot finder
-js/props.js         Retro props: barrels, lamps, candelabras, crates, pillars, ammo pickups, explosions
-js/envs.js          floating brick platforms and coins for the Island look
 js/fluffy.js        the Fluffy look: top-down 2D garden, fluffy-ball sprites and portraits
 js/vizkit.js        Visualisation helpers: estimated years, star colours, canvas video recorder
 js/galaxy.js        the Galaxy visualisation (stars, threads, physics layout, fly-through)
@@ -203,11 +183,9 @@ js/treeart.js       Growing tree art: seasons and light, bark, leaves, blossoms,
 js/verses.js        the Bible verses and the word-by-word reader
 js/viz.js           the Visualisation screen: controls, info panel, recording
 js/dialogue.js      dialect, period and schooling-aware speech, job memories, local history
-js/weapon.js        minigun viewmodel, impacts, shot tracing
-js/fight.js         Fight back mode: angry ancestors, their weapons, chasing, health and score
 js/missions.js      missions: what ancestors ask you to find, and checking when you've found it
-js/textures.js      procedural pixel-art textures and portraits
-js/main.js          renderer, controls, cameras, jumping, interaction, dialogue box, HUDs, map
+js/textures.js      pixel-art portraits (used by the story's dialogue)
+js/main.js          menu, the garden's controls and camera, dialogue box, HUD, map
 js/storyplot.js     Story mode plot: chooses the cast, towns and years from the file and writes every mission
 js/storynet.js      Story mode street plans: drawn from a town's name, or read from OpenStreetMap and kept
 js/storycity.js     Story mode towns: builds a town on a street plan for any year; ground, buildings, minimap
@@ -218,7 +196,7 @@ js/storygame.js     Story mode game: driving, traffic, the law, missions, ticket
 sample/demo.ged     fictional demo family (regenerate with npm run demo)
 tools/              demo generator and single-file builder
 tests/              parser, layout and story tests (npm test), headless browser smoke tests (smoke.py for the
-                    3D looks, story-smoke.py steps through the whole story, story-bot.py drives every
+                    garden and visualisations, story-smoke.py steps through the whole story, story-bot.py drives every
                     mission for real and reports time, clock margin and collisions) and a stand-in three.js for offline runs
 ```
 

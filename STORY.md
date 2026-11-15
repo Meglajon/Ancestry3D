@@ -40,28 +40,65 @@ will pass to "our client" unless a proven line of descent is lodged by the end o
 The phone box on the corner rings. It is Dorothy. Hargreaves does not find heirs, she says, he removes them: names
 are going out of the registers "like chalk off a slate", and yours is next. She sends you to her lock-up
 behind **{the pub}**, hands you the Heirloom, and you race the men in grey to the Records Office. They get
-there first. **You ram their van until it drops the {surname} file**, and inside is proof number one:
-**your own birth certificate {date, place}**.
+there first. Before Dorothy lets you take the car anywhere, she gives you **a driving lesson** round the streets,
+one move at a time, each checked from what the car actually does: flat out, brake to a stop, reverse, a handbrake
+skid (Space, or BRAKE on a phone) and a handbrake turn to face back the way you came. Then **you ram their van
+until it drops the {surname} file**, and inside is proof number one: **your own birth certificate {date, place}**.
 
 Dorothy's plan: go back one generation at a time and secure one document for each link in the chain, faster
 than Hargreaves can erase them. But the Heirloom's time engine is dead, and the **time dial is locked** until it has
-three parts. *Spare Parts* sends you round town for them: a valve from the works, a clock spring from the
-market (where you also earn the ink money with a delivery job), and a bottle of register ink from the
-Records Office. Press T at any time to see which parts are still missing. Take all three back to Dorothy
+three parts. *Spare Parts* sends you round town for them, and each one teaches a different job: the valve has
+come apart in the works yard (**pick up** the four pieces), a grey van is **racing** you to the last clock spring
+at the market, the ink money is earned carrying two crates of bottles to the pub **without a bump**, and a man
+in grey runs off with the register ink and has to be **caught on foot**. Press T at any time to see which parts are still missing. Take all three back to Dorothy
 and the dial lights up: **time travel unlocked**. Then you make the first jump (*Relative Speed*): set the
 dial, find a straight road, and do not lift off.
+
+### Cut scenes
+
+The opening (Hargreaves and Lowe plotting at night, Dorothy listening in the lock-up) sets the style for the
+rest: black bars, a caption, and big faces showing what each speaker thinks. A scene plays at:
+
+- **the end of the Prologue**: the first jump, and Dorothy delighted the car works;
+- **the start of every chapter**, the moment you arrive in its town and year: Hargreaves and Lowe in that
+  century's office, naming the very record they mean to erase; then **{the ancestor}** at home, busy with the
+  event the chapter is about (a wedding on Saturday, a baby any day, the enumerator tonight, two trunks packed);
+  then Dorothy setting you on;
+- **the end of every chapter**: Hargreaves furious that the record is lodged, Lowe counting the links proven,
+  Hargreaves naming the next ancestor he will go for, and **{the ancestor}** seeing you off;
+- **the start of the Finale** (the root of the tree, at dusk), **its reveal** in the churchyard, and **the start
+  of the Epilogue**.
+
+Each plays once; Esc (or tapping through) skips it.
 
 ### A chapter for each ancestor ({town}, {year})
 
 Each chapter is set where and when a real event in that person's life happened.
 
-1. **Meeting {name}.** Dorothy leaves a note of where to look: the house first, then their place of work,
-   then the pub or the church. They are never where you look first, and the neighbours send you on. When
-   you find your **{relationship}**, a grey man has been round asking questions and they trust nobody. To prove you are family you must answer something only family would
+1. **Meeting {name}.** Hargreaves never tries the same trick twice. Every chapter gets one of seven schemes, all
+   different, and the way you find your ancestor depends on it (no two chapters in a row play the same way, and
+   the meeting never plays like that chapter's day's work):
+
+   | His scheme | How the meeting plays |
+   |---|---|
+   | *The false alarm*: a man in grey shouts "fire" and {name} runs off | **search** the places they might be |
+   | *The bought clerk*: the parish clerk is paid to cut the page out | beat him to the Records Office **against the clock**, **catch** him on foot, take the page home |
+   | *The lift*: {name} accepted a lift in a grey van | **chase** the van down, then drive {name} home **gently** |
+   | *The scattered letters*: the family's letters thrown into the street | **pick up** the letters, then go where the last one says |
+   | *The rumour*: everybody has been told {name} is dead | **rounds** of the pub, market and church to put it right |
+   | *The forger*: a copy of the register with {name} left out | **tail** the forger to the church, then **catch** him |
+   | *The siege*: grey vans round the house since dawn | **defend** {name}'s cart of family papers to the church |
+
+   The scheme is in Dorothy's note, in Hargreaves's own words in the chapter's opening scene, and in what {name}
+   says when you arrive. Then, to prove you are family, you must answer something only family would
    know: **{their mother's maiden name / who they married / the year they were born / their trade / where
-   they were born}**, with wrong answers taken from elsewhere in your tree.
+   they were born}**, with wrong answers taken from elsewhere in your tree. The finale's meeting is always a
+   search.
 2. **A day's work** at their real trade. Each trade has two different jobs, so a family of weavers does
-   not do the same thing twice.
+   not do the same thing twice. A job that is over in one act gets a second, never the same kind as the job
+   or the meeting: a pickpocket with the day's pay (**catch**), a grey van that rammed the load (**chase**), a
+   rival after tomorrow's work (**race him**), the tailboard coming down (**pick up** the load) or the law
+   taking an interest (**lose them**).
 
    | Their occupation | First time | Second time |
    |---|---|---|
@@ -202,7 +239,7 @@ round the town after a girl with a basket, and drive him up to the church. Slowl
   same street in a different century. Ink is charged by the year.
 
 **Missions**
-- Twelve kinds of task: drive there, talk (and be quizzed), **search** the places somebody might be, carry
+- Thirteen kinds of task: the driving lesson, drive there, talk (and be quizzed), **search** the places somebody might be, carry
   loads or passengers (sometimes without a bump), collect things, race round stops, chase and ram a van,
   **tail** a van unseen, **defend** a convoy, **catch** a runner on foot, travel, and lose the police.
 - Twists on top: a **rival** racing you to the same door from the far side of town, **roadblocks** of

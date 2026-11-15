@@ -204,6 +204,12 @@ export function drawItem(g, kind, t, n = 0) {
     g.lineWidth = 1.5; g.strokeRect(-8, -12, 20, 13.5); g.restore();
   } else if (kind === 'rubber') {
     g.save(); g.translate(0, bob - 5); g.rotate(-0.3); g.fillStyle = '#f08aa0'; g.beginPath(); g.roundRect(-11, -7, 22, 14, 3); g.fill(); g.strokeStyle = INK; g.lineWidth = 2; g.stroke(); g.fillStyle = '#fff6f0'; g.fillRect(2, -7, 5, 14); g.restore();
+  } else if (kind === 'part') {
+    // a brass cog with a glint, for the Engine's spare parts
+    g.save(); g.translate(0, bob - 4); g.rotate(t * 1.5 + n);
+    g.fillStyle = '#d8a83a'; g.beginPath(); for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2, r = i % 2 ? 7 : 10; g.lineTo(Math.cos(a) * r, Math.sin(a) * r); } g.closePath(); g.fill();
+    g.strokeStyle = INK; g.lineWidth = 2; g.stroke(); g.fillStyle = '#6a4a1a'; g.beginPath(); g.arc(0, 0, 3, 0, 7); g.fill();
+    g.fillStyle = '#fff6c8'; g.fillRect(-6, -6, 3, 2); g.restore();
   } else if (kind === 'load') {
     g.fillStyle = '#9a7a4a'; g.fillRect(-10, -10 + bob * 0.3, 20, 20); g.strokeStyle = '#6a5230'; g.lineWidth = 2; g.strokeRect(-9, -9 + bob * 0.3, 18, 18);
   } else if (kind === 'photo') {

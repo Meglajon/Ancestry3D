@@ -252,6 +252,84 @@ const DAY_JOBS = {
     steps: [{ t: 'carry', from: 'market', to: 'pub', n: 2, label: c.year < 1900 ? 'barrels' : 'crates', timed: 1.4, text: `Carry two loads from ${c.market} to ${c.pub}` }] }),
 };
 
+// Hargreaves never tries the same trick twice. Each chapter gets its own scheme: the story of what he is doing to
+// this ancestor's record, how you find them (a different job every time), and what he and Lowe say about it.
+// p = { c, N, w, workLot, spots } for the chapter. Each returns the meeting's acts before the talk, where the talk
+// happens, the ancestor's suspicion, Dorothy's note, and the lines for the cut scene.
+const SCHEME_MECH = { search: 'search', bribe: 'goto', lure: 'chase', letters: 'collect', gossip: 'race', forgery: 'tail', siege: 'defend' };   // how each meeting opens
+const SCHEMES = {
+  search: p => { const { c, N, spots } = p; return {
+    mech: 'search', name: 'the false alarm',
+    note: `Hargreaves's people have been at the house with a story about a fire at ${N[spots[1]]}, and ${c.first} has gone running. Try the house first, then ${N[spots[1]]}, then ${N[spots[2]]}.`,
+    steps: [{ t: 'search', spots, miss: { 0: `Nobody in. A neighbour says a man in grey shouted "Fire!" and ${c.first} ran off towards ${N[spots[1]]}.`, 1: `No fire here, and no ${c.first}. "Try ${N[spots[2]]}," says somebody, without looking up.`, 2: `Not here either. "Gone to ${N[spots[1]]}, I should think."` }, text: `Find ${c.first}` }],
+    talkAt: '@found',
+    wary: `Some joker in grey sent me running across town for a fire that never was. I'll not be made a fool of twice.`,
+    cut: [`A false alarm, Mr Lowe. Shout "fire" and ${c.first} runs, and an empty house has no witnesses.`, `And while ${c.he}'s away, sir?`, `While ${c.he}'s away, the page goes.`],
+  }; },
+  bribe: p => { const { c, N } = p; return {
+    mech: 'catch', name: 'the bought clerk',
+    note: `Hargreaves has bought the parish clerk. The minute ${N.hall} is empty he means to cut ${c.first}'s entry out with a penknife. Get there first, and if he runs, run faster.`,
+    steps: [{ t: 'goto', at: 'hall', timed: 1.15, text: `Get to ${N.hall} before the clerk does his work` },
+      { t: 'catch', from: 'hall', label: 'the bought clerk', drop: `${c.first}'s page, folded in his hat`, time: 55, speed: 4.6, text: 'The clerk is away with the page. Catch him on foot' },
+      { t: 'goto', at: 'home', text: `Take the page back to ${c.first}` }],
+    talkAt: 'home',
+    wary: `The parish clerk, of all people. Thirty years I've known that man, and he'd sell my name for a sovereign. I'll trust nobody now who can't tell me something only kin would know.`,
+    cut: [`Every man has his price, Mr Lowe. The parish clerk's is a sovereign and a new hat.`, `He'll cut the page out himself, sir?`, `With his own penknife. Nobody suspects the clerk.`],
+  }; },
+  lure: p => { const { c, N, w, workLot } = p; return {
+    mech: 'chase', name: 'the lift',
+    note: `An hour ago a ${w.van} stopped beside ${c.first} and offered ${c.him} a lift. Nobody has seen ${c.him} since. Find that ${w.van.replace(/^grey /, '')} and stop it.`,
+    steps: [{ t: 'chase', from: workLot, hp: 3, slow: true, label: `the ${w.van}`, drop: `${c.first} out of the back of it, cross and dizzy`, text: `Stop the ${w.van} with ${c.first} in the back` },
+      { t: 'carry', from: workLot, to: 'home', n: 1, label: 'passenger', passenger: c.first, who: c.id, gentle: true, text: `${c.first} has walked back to ${N[workLot]} for ${c.his} things. Drive ${c.him} home, gently`, bark: { who: c.id, text: `I've been in one cart today against my will. Go steady in this one.` } }],
+    talkAt: 'home',
+    wary: `A nice man offered me a lift, and the next thing I know I'm halfway to nowhere in the back of a box. I'll not be kind to strangers again in a hurry.`,
+    cut: [`No book, no page, no ink. We simply take ${c.first} for a little drive.`, `A drive, sir? Where to?`, `Somewhere nobody thinks to write anything down. Out of the record, out of the world.`],
+  }; },
+  letters: p => { const { c, N, workLot } = p; return {
+    mech: 'collect', name: 'the scattered letters',
+    note: `Hargreaves's men broke into ${c.first}'s house in the night and threw every family letter out of the window. Gather them up: one of them will say where ${c.he} has gone.`,
+    steps: [{ t: 'collect', around: 'home', radius: 14, n: 6, label: 'family letters', timed: 1.45, text: `Gather the family letters blowing round ${c.first}'s house` },
+      { t: 'goto', at: workLot, text: `The last letter says ${c.first} is at ${N[workLot]}` }],
+    talkAt: workLot,
+    wary: `They had every letter I own out of the drawer and into the street. My mother's hand, my sweetheart's. I'll not talk family with anybody who can't prove they're family.`,
+    cut: [`Letters, Mr Lowe. People keep letters. Letters prove who is whose.`, `So we burn them, sir?`, `Burning is for amateurs. We scatter them. Nobody believes a letter found in the gutter.`],
+  }; },
+  gossip: p => { const { c, N, workLot } = p; const stops = [...new Set(['pub', 'market', 'church', 'post'])].filter(k => k !== workLot).slice(0, 3); return {
+    mech: 'race', name: 'the rumour',
+    note: `Hargreaves has put it about that ${c.first} died last week. By tonight somebody will write it down and then it's true. Get round ${N[stops[0]]}, ${N[stops[1]]} and ${N[stops[2]]} and tell everybody otherwise, then find ${c.first}.`,
+    steps: [{ t: 'race', stops, timed: 1.2, text: `Stop the rumour: ${N[stops[0]]}, ${N[stops[1]]} and ${N[stops[2]]}, quickly` },
+      { t: 'goto', at: workLot, text: `Find ${c.first} at ${N[workLot]}, alive and well` }],
+    talkAt: workLot,
+    wary: `Half the town's been round with flowers. Apparently I'm dead. I've never felt better, and I'd like to know who's been telling folk otherwise.`,
+    cut: [`Why erase a life when you can simply end it on paper? A word in the right ear, Mr Lowe.`, `That ${c.first} is dead, sir?`, `Dead and buried by teatime. Nobody looks for a dead woman's birth.`.replace('woman', c.sex === 'F' ? 'woman' : c.sex === 'M' ? 'man' : 'person')],
+  }; },
+  forgery: p => { const { c, N } = p; return {
+    mech: 'tail', name: 'the forger',
+    note: `Hargreaves has had the register copied out with ${c.first} left out of it, and his forger is in town to swap the books. He's just left ${N.hall} with a parcel. Follow him and he'll lead you to the real one. Don't let him see you.`,
+    steps: [{ t: 'tail', from: 'hall', via: ['market'], to: 'church', text: `Follow the forger to wherever he is swapping the books` },
+      { t: 'catch', from: 'church', label: 'the forger', drop: 'the forged register', time: 50, text: 'He has seen you. Catch him before he burns the evidence' }],
+    talkAt: 'church',
+    wary: `A man swapped our parish book for one with my name missing. I watched him do it and thought he was the verger. I'll trust nobody's face again.`,
+    cut: [`My forger has made a lovely copy of the register, Mr Lowe. Every page exactly the same.`, `Every page, sir?`, `Every page but one. ${c.first} was never born, according to the new book.`],
+  }; },
+  siege: p => { const { c, N, w } = p; const cart = c.year < 1900 ? 'cart' : c.year < 1950 ? 'lorry' : 'van'; return {
+    mech: 'defend', name: 'the siege',
+    note: `The ${w.van}s have been circling ${c.first}'s house since dawn. ${cap(c.he)}'s loading the family's papers onto a ${cart} to take to ${N.church} for safe keeping. Ride alongside and keep them off.`,
+    steps: [{ t: 'defend', from: 'home', to: 'church', hp: 9, waves: 4, text: `Keep the ${w.van}s off ${c.first}'s ${cart} all the way to ${N.church}` }],
+    talkAt: 'church',
+    wary: `Grey ${w.van}s round my door since first light, and now a stranger who drives like a lunatic. Thank you for that, by the way. But I'll still need proof.`,
+    cut: [`If the archivist's driver wants the page so badly, Mr Lowe, we shall take the house.`, `The whole house, sir?`, `Every ${w.van} we have, round every door. Nothing leaves without our say.`],
+  }; },
+};
+// A day's work that is over in one act gets a second, and never the same kind as the work or the meeting.
+const DAY_TWISTS = {
+  catch: (end, c) => ({ t: 'catch', from: end, label: 'a pickpocket in a grey cap', drop: 'the day\'s pay', time: 45, text: 'A pickpocket in a grey cap has the day\'s pay. After him', bark: { who: c.id, text: `My pay! He's had my pay! Don't just sit there!` } }),
+  chase: (end, c, w) => ({ t: 'chase', from: end, hp: 2, slow: true, label: `the ${w.van}`, drop: 'seen it off', text: `A ${w.van} rammed the last load on purpose. Run it off the road`, bark: { who: c.id, text: `That was no accident. Go on, give it some of its own back.` } }),
+  goto: (end, c) => ({ t: 'goto', at: end === 'pub' ? 'post' : 'pub', rival: true, text: `A rival is after tomorrow's work. Beat him to the ${end === 'pub' ? 'post office' : 'pub'} to put in your name first`, bark: { who: c.id, text: `See that fellow? He wants my trade. Get there before him and put my name down.` } }),
+  collect: (end, c) => ({ t: 'collect', around: end, radius: 9, n: 4, label: 'spilled crates', timed: 1.5, text: 'The tailboard came down at the last corner. Pick up what fell off', bark: { who: c.id, text: `You've left half of it in the road. Back you go.` } }),
+  escape: (end, c) => ({ t: 'escape', heat: 1.1, text: 'You were seen driving like that. Lose the law before they take your name', bark: { who: c.id, text: `Now you've done it. Don't stop, and don't give them my name.` } }),
+};
+
 // Loads that are not fragile can fall off; anything against the clock has spare seconds lying about.
 function spice(job) {
   for (const st of job.steps) {
@@ -406,8 +484,10 @@ export function buildStory(data, rootId, opts = {}) {
       { t: 'talk', who: 'dot', at: 'garage', text: 'Talk to Dorothy', lines: [
         `There she is. My late husband's estate car. We call her the Heirloom.`,
         `I fitted the Parish Engine myself. It runs on register ink and it reads the road like a page. She turns the years back. Or she will, once she is mended: the time engine is dead, and it wants three parts before it will go. I was a very bored archivist.`,
-        `But first, ${H.hall}. I want the ${surname} file out of there before Hargreaves's people shred it. Get in, the door sticks.`] },
-      { t: 'goto', at: 'hall', need: 'heirloom', text: `Drive the Heirloom to ${H.hall}` },
+        `But first, ${H.hall}. I want the ${surname} file out of there before Hargreaves's people shred it. Get in, the door sticks.`,
+        `Not so fast, mind. Nobody takes my husband's car anywhere until I've seen them handle her. Round the streets, dear. I'll shout.`] },
+      { t: 'drill', drills: ['speed', 'stop', 'reverse', 'slide', 'spin'], text: 'Driving lesson with Dorothy' },
+      { t: 'goto', at: 'hall', need: 'heirloom', text: `Drive the Heirloom to ${H.hall}`, bark: { who: 'dot', text: `You'll do. Now: ${H.hall}, and quickly.` } },
       { t: 'chase', from: 'hall', hp: 4, slow: true, label: 'the grey van', drop: `the ${surname} file`, text: 'Ram the grey van until it drops the file. Any knock counts', bark: { who: 'dot', text: `Don't be gentle with it, dear. It's a hire van.` } },
     ],
     outro: [{ who: 'dot', text: `One birth certificate: ${hero.name}${heroBirth?.date ? ', born ' + datePhrase(heroBirth.date) : ''}${hero.town ? ' in ' + hero.town.name : ''}. That's proof number one, and it proves you exist, which is a start. Now we go backwards, one generation at a time, faster than he can rub them out.` }],
@@ -416,13 +496,14 @@ export function buildStory(data, rootId, opts = {}) {
   add({
     id: 'ink-money', act: 'Prologue', title: 'Spare Parts', town: home.id, year: present, giver: { who: 'dot', at: 'garage' },
     brief: 'The time engine will not work until it has three parts: a valve, a clock spring and a bottle of register ink.',
-    intro: [{ who: 'dot', text: `Before the Heirloom can travel in time she needs three things. A valve, from ${H.works}. A clock spring, from ${H.market}. And a bottle of proper register ink, from ${H.hall}. Until she has all three, the time dial stays locked.` },
+    intro: [{ who: 'dot', text: `Before the Heirloom can travel in time she needs three things. A valve, from ${H.works}. A clock spring, from ${H.market}. And a bottle of proper register ink, from ${H.hall}. Until she has all three, the time dial stays locked. And Hargreaves will have heard we're looking, so expect company.` },
       { who: 'dot', text: `The ink costs money, and so will every ticket after it. So while you are at ${H.market}, earn some: ${H.pub} wants two crates fetched. After today, look for the £ signs in any town in any year. There is always somebody who needs something shifted.` }],
+    // Every part is a different skill: pick-ups, a race, a careful load and a chase on foot.
     steps: [
-      { t: 'goto', at: 'works', got: 'the valve', text: `Part 1 of 3: fetch a valve from ${H.works}` },
-      { t: 'goto', at: 'market', got: 'the clock spring', text: `Part 2 of 3: buy a clock spring at ${H.market}` },
-      { t: 'carry', from: 'market', to: 'pub', n: 2, label: 'crates', timed: 1.6, text: `Earn the ink money: carry two crates from ${H.market} to ${H.pub}`, bark: { who: 'dot', text: `Stop on the yellow ring and they load you. Stop on the next and they unload. That's the whole of the haulage trade.` } },
-      { t: 'goto', at: 'hall', got: 'the register ink', text: `Part 3 of 3: buy a bottle of register ink at ${H.hall}` },
+      { t: 'collect', around: 'works', n: 4, radius: 7, label: 'valve parts', got: 'the valve', text: `Part 1 of 3: the valve came apart in ${H.works}'s yard. Pick up all four pieces`, bark: { who: 'dot', text: `Drive over each piece and it's yours. The white dots on the little map show where they've rolled.` } },
+      { t: 'goto', at: 'market', rival: true, got: 'the clock spring', text: `Part 2 of 3: one clock spring left at ${H.market}, and a grey van wants it. Get there first`, bark: { who: 'dot', text: `That grey van is after the same spring. Beat it there, dear. Cut corners. Use the handbrake.` } },
+      { t: 'carry', from: 'market', to: 'pub', n: 2, label: 'crates', gentle: true, timed: 1.8, text: `Earn the ink money: two crates of bottles from ${H.market} to ${H.pub}. Mind the glass`, bark: { who: 'dot', text: `Stop on the yellow ring to load, and on the next to unload. Those are bottles: three knocks and they're broken, so brake before the corners, not in them.` } },
+      { t: 'catch', from: 'hall', label: 'the man in grey', drop: 'the bottle of register ink', speed: 4.3, time: 70, got: 'the register ink', text: `Part 3 of 3: a man in grey has run off with the ink from ${H.hall}. Catch him`, bark: { who: 'dot', text: `He's on foot, and he's quick. Get out and run after him, or catch him with the car if he's daft enough to stay on the road.` } },
       { t: 'goto', at: 'garage', text: `Take all three parts back to Dorothy at ${H.garage}` },
     ],
     outro: [{ who: 'dot', text: `Valve. Spring. Ink. Hold the lamp, dear. There. Hear that ticking? The time dial is working. From now on you can set a year and drive there.` }],
@@ -437,6 +518,32 @@ export function buildStory(data, rootId, opts = {}) {
     outro: [{ who: 'note', text: `${next.town.name}, ${next.year}. ${ERA_ARRIVAL[eraOf(next.year)]}` }],
     reward: { cash: 60 },
   });
+
+  // ---- Which scheme Hargreaves tries in each chapter ----
+  {
+    const real = chapters.length - 1, convoyAt = real >= 3 ? Math.ceil(real / 2) : -1;
+    const pool = Object.keys(SCHEMES).map(k => [rnd(), k]).sort((a, b) => a[0] - b[0]).map(x => x[1]);
+    let prev = null;
+    // the day's work is settled first (the same trade twice in one family gets a different job the second time),
+    // so the meeting can be picked to play differently from it
+    const usedJobs = {};
+    chapters.forEach(c => {
+      const jobKeys = [c.group, c.group + 'B', 'odd', 'shop', 'rail', 'serve', 'careB', 'craftB'].filter(k => DAY_JOBS[k]);
+      c.jobKey = jobKeys.find(k => !usedJobs[k]) || c.group;
+      if (c !== finale) usedJobs[c.jobKey] = true;
+      const N = names(c.town, c.year);
+      c.jobMech = (DAY_JOBS[c.jobKey] || DAY_JOBS.odd)({ ...N, year: c.year, first: c.first, jobL: c.jobs.join(' ').toLowerCase() }).steps[0].t;
+    });
+    chapters.forEach((c, i) => {
+      if (c === finale) { c.scheme = 'search'; return; }
+      const bad = k => k === prev || SCHEME_MECH[k] === c.jobMech || (i === 0 && k === 'forgery') || (i === convoyAt && k === 'siege') || (chapters[i + 1] === finale && k === 'search');
+      let k = pool.find(x => !bad(x)) || pool[0] || 'search';
+      pool.splice(pool.indexOf(k), 1);
+      if (!pool.length) pool.push(...Object.keys(SCHEMES).filter(x => x !== k));
+      c.scheme = prev = k;
+    });
+  }
+  const usedTwists = {};
 
   // ---- One chapter per chosen ancestor ----
   chapters.forEach((c, i) => {
@@ -458,36 +565,44 @@ export function buildStory(data, rootId, opts = {}) {
     const knowsNote = age == null ? `${cap(c.he)} ${c.he === 'they' ? 'have' : 'has'} never heard of you.`
       : young ? `Mind: ${c.he} ${c.he === 'they' ? 'have' : 'has'} a ${kidWord} called ${hero.first} already, ${ageWord}, and as far as ${c.he} ${c.he === 'they' ? 'know' : 'knows'} that is not you. Do not try to explain.`
         : `Mind: ${c.he} ${c.he === 'they' ? 'know' : 'knows'} ${hero.first} perfectly well, and ${hero.first} is ${ageWord}. You are a good deal older than that. Do not try to explain.`;
-    const knowsLine = age == null ? `Family, you say. There's a grey fellow been round all week saying the same, and asking after the parish book. I trust nobody who can't tell me something only kin would know.`
-      : young ? `${hero.first}? My ${hero.first} is ${ageWord}, and ${age < 3 ? 'asleep indoors' : age < 11 ? 'out playing in the street' : 'supposed to be at school'}. You've a look of ${hHim}, I'll give you that. But there's a grey fellow been round all week asking after the parish book, and I trust nobody who can't tell me something only kin would know.`
-        : `You've the very look of my ${hero.first}, only ${hHe} is ${ageWord} and you are not. A cousin, is it? There's a grey fellow been round all week asking after the parish book, and I trust nobody who can't tell me something only kin would know.`;
-    const knowsOutro = age == null ? `Then you're one of ours, though I can't think how. Come home with me. You look half starved and wholly lost.`
-      : `Then you're family, right enough, though I can't work out where you fit. You've even the name of my ${kidWord}. Come home with me. You look half starved and wholly lost.`;
-    // 1. Meet them. They are never at home.
     const workLot = { haul: 'works', cloth: 'works', craft: 'works', farm: 'farm', sea: 'hub', rail: 'hub', shop: 'market', care: 'infirmary', school: 'school', arms: 'police', desk: 'hall' }[c.group] || 'church';
     const spots = [...new Set(['home', workLot, 'pub', 'church'])].slice(0, 3);
+    const sch = SCHEMES[c.scheme]({ c, N, w, workLot, spots });
+    c.schemeInfo = sch;
+    const wary = isFinale ? `There's a grey fellow been round all week asking after the parish book, and I trust nobody who can't tell me something only kin would know.` : sch.wary + ' Tell me something only family would know.';
+    const knowsLine = age == null ? `Family, you say. ${wary}`
+      : young ? `${hero.first}? My ${hero.first} is ${ageWord}, and ${age < 3 ? 'asleep indoors' : age < 11 ? 'out playing in the street' : 'supposed to be at school'}. You've a look of ${hHim}, I'll give you that. ${wary}`
+        : `You've the very look of my ${hero.first}, only ${hHe} is ${ageWord} and you are not. A cousin, is it? ${wary}`;
+    const knowsOutro = age == null ? `Then you're one of ours, though I can't think how. Come home with me. You look half starved and wholly lost.`
+      : `Then you're family, right enough, though I can't work out where you fit. You've even the name of my ${kidWord}. Come home with me. You look half starved and wholly lost.`;
+    // 1. Meet them, the way this chapter's scheme decides.
     add({
       ...base, id: `meet-${i}`, title: isFinale ? 'Brick Wall' : `Meeting ${c.first}`, giver: { who: 'dot', at: 'phone' },
       brief: `Find ${relLine}, in ${c.town.name}, ${c.year}.`,
-      intro: [{ who: 'dot', text: `A note in Dorothy's hand, pinned where you would see it: "${c.name}, your ${c.rel}${c.job ? ', ' + c.job.toLowerCase() : ''}. Try the house first. If ${c.he} is out, ${c.he} will be at ${N[spots[1]]}, and failing that ${N[spots[2]]}. Be polite. ${knowsNote}"` }],
-      steps: [{ t: 'search', spots, miss: { 0: `Nobody in. A neighbour thinks ${c.he} went up to ${N[spots[1]]}.`, 1: `Not here. "Try ${N[spots[2]]}," says somebody, without looking up.`, 2: `Not here either. "Gone to ${N[spots[1]]}, I should think."` }, text: `Find ${c.first}` },
-        // no two meetings in a row go the same way
-        ...(isFinale || i % 3 === 0 ? [] : i % 3 === 1
-          ? [{ t: 'catch', from: '@found', label: 'grey clerk', drop: 'a form, in triplicate, that would have signed away the lot', time: 50, text: `A grey clerk is at ${c.first}'s elbow with a paper to sign. He has seen you. See him off`, bark: { who: c.id, text: `He says it's only a form. I never sign what I can't read, and I can't read that.` } }]
-          : [{ t: 'carry', from: '@found', to: 'home', n: 1, label: 'passenger', passenger: c.first, who: c.id, gentle: true, text: `${c.first} has come over faint: somebody in grey has been at ${c.him} with questions all morning. Drive ${c.him} home, gently`, bark: { who: c.id, text: `I don't know you from Adam, but you've a kind face and a strange cart. Go steady.` } }]),
-        { t: 'talk', who: c.id, at: !isFinale && i % 3 === 2 ? 'home' : '@found', greet: true, quiz, text: `Talk to ${c.first}`, lines: [knowsLine] }],
+      intro: isFinale
+        ? [{ who: 'dot', text: `A note in Dorothy's hand, pinned where you would see it: "${c.name}, your ${c.rel}${c.job ? ', ' + c.job.toLowerCase() : ''}. Try the house first. If ${c.he} is out, ${c.he} will be at ${N[spots[1]]}, and failing that ${N[spots[2]]}. Be polite. ${knowsNote}"` }]
+        : [{ who: 'dot', text: `A note in Dorothy's hand, pinned where you would see it: "${c.name}, your ${c.rel}${c.job ? ', ' + c.job.toLowerCase() : ''}. ${sch.note} ${knowsNote}"` }],
+      scheme: isFinale ? null : c.scheme,
+      steps: [...(isFinale
+        ? [{ t: 'search', spots, miss: { 0: `Nobody in. A neighbour thinks ${c.he} went up to ${N[spots[1]]}.`, 1: `Not here. "Try ${N[spots[2]]}," says somebody, without looking up.`, 2: `Not here either. "Gone to ${N[spots[1]]}, I should think."` }, text: `Find ${c.first}` }]
+        : sch.steps),
+        { t: 'talk', who: c.id, at: isFinale ? '@found' : sch.talkAt, greet: true, quiz, text: `Talk to ${c.first}`, lines: [knowsLine] }],
       outro: [{ who: c.id, text: isFinale
         ? `Then you're mine, sure enough, though how is past my wits. There's nobody behind me in any book, you know. I'm where it starts.`
         : knowsOutro }],
       reward: { cash: 80 + i * 10 },
     });
     // 2. A day's work
-    // The same trade twice in one family gets a different day's work the second time.
-    const jobKeys = [c.group, c.group + 'B', 'odd', 'shop', 'rail', 'serve', 'careB', 'craftB'].filter(k => DAY_JOBS[k]);
-    const jobKey = jobKeys.find(k => !usedJobs[k]) || c.group;
-    if (!isFinale) usedJobs[jobKey] = true;
-    c.jobKey = jobKey;
+    const jobKey = c.jobKey;
     const job = spice((DAY_JOBS[jobKey] || DAY_JOBS.odd)(ctx));
+    if (!isFinale && job.steps.length === 1) {
+      const last = job.steps[0], end = last.to || last.at || last.around || (last.stops && last.stops[last.stops.length - 1]) || 'market';
+      const avoid = new Set([last.t, SCHEMES[c.scheme]({ c, N, w, workLot, spots }).mech]);
+      const keys = Object.keys(DAY_TWISTS).filter(k => !avoid.has(k)).sort((a, b) => (usedTwists[a] || 0) - (usedTwists[b] || 0) || (a < b ? -1 : 1));
+      const tk = keys[i % Math.min(2, keys.length)] || keys[0];
+      usedTwists[tk] = (usedTwists[tk] || 0) + 1;
+      job.steps = [...job.steps, DAY_TWISTS[tk](end, c, w)];
+    }
     if (!isFinale) add({
       ...base, id: `work-${i}`, title: job.title, giver: { who: c.id, at: c.group === 'farm' ? 'farm' : ['haul', 'cloth', 'craft'].includes(c.group) ? 'works' : c.group === 'sea' ? 'hub' : 'home' },
       brief: `${c.first}${c.job ? ' the ' + c.job.toLowerCase() : ''} could use a hand.`,
@@ -833,6 +948,100 @@ export function buildStory(data, rootId, opts = {}) {
     ],
     reward: { cash: 1500 },
   } : null;
+
+  addCuts();
+  // Cut scenes, played like the opening (black bars, big faces) at the start and end of each part of the story:
+  // the end of the Prologue, both ends of every chapter, the start of the Finale and of the Epilogue.
+  // Each shot: where the camera is (a lot, 'home' with whose home, or 'you'), who speaks, their face, and the line.
+  function addCuts() {
+    const byId = id => missions.find(m => m.id === id);
+    const sov = y => y >= 1837 && y < 1901 ? 'Queen\'s' : y >= 1702 && y < 1714 ? 'Queen\'s' : y >= 1558 && y < 1603 ? 'Queen\'s' : 'King\'s';
+    const nameOf = indi => indi ? displayName(indi) : '';
+    const firstOf = indi => nameOf(indi).split(' ')[0];
+    const shot = (at, who, mood, text, extra = {}) => ({ at, who, mood, text, side: who === 'lowe' ? 1 : 0, ...extra });
+    // what the ancestor is busy with when the chapter opens, before anybody has told them anything
+    const busyWith = (c, proofM) => {
+      const sp = c.spouse ? firstOf(c.spouse) : '', ch = c.child ? firstOf(c.child) : '', late = c.late ? nameOf(c.late.indi) : '';
+      return {
+        wedding: `Saturday I'm to be wed${sp ? ' to ' + sp : ''}. The banns are read, and the parson's book is waiting for the both of us.`,
+        birth: `Any day now, the midwife says.${ch ? ' We have a name picked: ' + ch + '.' : ''} There's a page in the register with a space for it.`,
+        portrait: `There's a photographer coming to take the children's likeness. All of them at once, heaven help the man.`,
+        census: `The enumerator's coming round tonight with his forms. Every soul under this roof, written down for the government.`,
+        emig: `Everything we own is in two trunks. Our names are on the passenger list, and we sail with the tide.`,
+        burial: `We bury ${late || 'our own'} this week. Whatever else happens, it'll be written in the book proper.`,
+        arms: `I've taken the ${sov(c.year)} shilling. They'll write my name in the muster roll, and then I belong to the army.`,
+        baptism: `The christening's on Sunday. Our little one, in the parish book at last.`,
+        chase: `There's a gentleman in grey been round asking after the parish book. Says he's from the solicitors. I didn't like his face.`,
+      }[c.set] || `There's a gentleman in grey been round asking after the parish book. I didn't like his face.`;
+    };
+    const LOWE_IN = [
+      `They followed us, sir. That yellow car was seen on the bridge this morning.`,
+      `The archivist's car again, sir. It's come back through the years after us.`,
+      `Sir, they're proving them faster than we can rub them out.`,
+      `The men are tired, sir. And the vans keep getting rammed.`,
+    ];
+    const BLANK_IN = [
+      `Then we shall simply have to be quicker. Tonight.`,
+      `Let it come. Nobody outruns the Engine twice.`,
+      `Then take the book before they find the family. Go!`,
+      `Tired? We are erasing four hundred years, Mr Lowe. Nobody said it was a half-day.`,
+    ];
+    const BLANK_OUT = [
+      `Lodged? LODGED? One page, and they have it in a folder with a ribbon round it.`,
+      `Again! That ridiculous car, and that ridiculous old woman.`,
+      `How do they always know where to look? They must be family. They must actually care.`,
+      `Do you know what it costs to keep a van in four centuries, Mr Lowe? Do you?`,
+    ];
+    const prologueEnd = byId('first-jump'), ch0 = chapters[0];
+    if (prologueEnd && ch0) prologueEnd.cutOut = { caption: `${ch0.town.name}, ${ch0.year}`, shots: [
+      shot('you', 'note', '', `Fire on the road behind you. A smell of hot ink. And the street is the same street, give or take ${Math.max(1, present - ch0.year)} years.`),
+      shot('you', 'dot', 'grin', `She works! Oh, she WORKS. Forty years in a shed, and she works. Don't tell my hip, it'll want to come along.`),
+    ] };
+    chapters.forEach((c, i) => {
+      const own = missions.filter(m => m.chapter === i && !m.odd), first = own[0], proofM = own.filter(m => m.reward.proof).at(-1);
+      if (!first) return;
+      const isFinale = c === finale, k = i % 4, next = chapters[i + 1];
+      const pTitle = proofM?.reward.proof.title || `${c.name}'s page`;
+      if (isFinale) {
+        first.cutIn = { caption: `${c.town.name}, ${c.year}. Dusk.`, hour: 18.6, shots: [
+          shot('church', 'note', '', `The oldest page in the oldest book. Above ${c.name}, nothing at all. No father, no mother, no parish of birth. A brick wall.`),
+          shot('church', 'blank', 'set', `Somebody has to be nobody, ${c.first}. Why not you?`),
+          shot('church', 'blank', 'worried', `...Why not me?`, { caption: 'Silas Hargreaves' }),
+          shot('phone', 'dot', 'worried', `This is the root, ${hero.first}. If that entry goes, every name under it goes too. Yours. Mine. All of them. Get to ${c.first} before he does.`),
+        ] };
+        // the finale's reveal is played as a scene rather than read out
+        if (proofM && proofM.outro.length) {
+          proofM.cutOut = { caption: 'The churchyard', shots: proofM.outro.map((l, n) => shot('church', l.who, l.who === 'blank' ? (n ? 'worried' : 'set') : l.who === 'dot' ? 'set' : '', l.text)) };
+          proofM.outro = [];
+        }
+        return;
+      }
+      first.cutIn = { caption: `${c.town.name}, ${c.year}`, hour: 21.5, shots: [
+        shot('office', 'note', '', i === 0 ? `${c.town.name}, ${c.year}. Hargreaves & Lowe have an office here too. They have one in every century.` : `${c.town.name}, ${c.year}. Another century, the same grey door.`, { caption: 'Hargreaves & Lowe' }),
+        // his scheme for this chapter, in his own words; failing that, the old complaints
+        ...(c.schemeInfo
+          ? [shot('office', 'blank', 'grin', `${c.name}. ${pTitle}. ${c.schemeInfo.cut[0]}`), shot('office', 'lowe', 'worried', c.schemeInfo.cut[1]), shot('office', 'blank', 'set', c.schemeInfo.cut[2])]
+          : [shot('office', 'blank', 'grin', `${c.name}. ${pTitle}. One page in one book, Mr Lowe. Lose it, and everybody after ${c.him} goes with it.`), shot('office', 'lowe', 'worried', LOWE_IN[k]), shot('office', 'blank', 'angry', BLANK_IN[k])]),
+        shot('home', c.id, '', busyWith(c, proofM), { of: c.id, caption: `Meanwhile: ${c.name}` }),
+        shot('phone', 'dot', 'set', `That's the page he's after, ${hero.first}: ${pTitle}. And this time it's ${c.schemeInfo ? c.schemeInfo.name : 'no ordinary trick'}. Get to your ${c.rel} before his men do.`),
+      ] };
+      if (proofM) {
+        const n = proofs.indexOf(proofM.reward.proof) + 1;
+        proofM.cutOut = { caption: 'Hargreaves & Lowe', hour: 22, shots: [
+          shot('office', 'blank', 'angry', BLANK_OUT[k]),
+          shot('office', 'lowe', 'worried', `That's ${n} link${n === 1 ? '' : 's'} of the chain proven, sir. If they reach the top of the tree...`),
+          shot('office', 'blank', 'set', next && next !== finale ? `They won't. We go further back. ${next.name}, ${next.town.name}, ${next.year}. Before they've even worked out where.` : `Then we go to the very top. The root. And we take it out.`),
+          shot('home', c.id, 'grin', `Mind how you go, ${hero.first}. Whoever you are, you've the family look about you.`, { of: c.id, caption: c.name }),
+        ] };
+      }
+    });
+    const epi = byId('case-closed');
+    if (epi) epi.cutIn = { caption: `${home.name}. The present day.`, hour: 14, shots: [
+      shot('garage', 'note', '', `Back where it started: a lock-up behind ${H.pub}, a yellow car with a scorched dial, and a grey man with nowhere to be.`),
+      shot('garage', 'blank', 'worried', `I don't suppose there is any tea.`),
+      shot('garage', 'dot', 'grin', `There's always tea. Drink it, then we'll lodge the pedigree. All three of us.`),
+    ] };
+  }
 
   return {
     frags, bonus,

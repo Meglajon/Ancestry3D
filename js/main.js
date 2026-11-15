@@ -23,8 +23,12 @@ const GEN_NAMES = g => g === 0 ? 'YOU' : g === 1 ? 'PARENTS' : g === 2 ? 'GRANDP
 const LOOK_NOTES = {
   fluffy: 'Fluffy: a top-down 2D garden where you and every ancestor are round, fluffy balls. Their fur takes the colours of their period clothes, with their hair (or hat) as a tuft on top. Roll along the paths, bump into people to make them squeak, and chat to them all.',
 };
-// The Story tab has its own name and look (see body.tab-story in dev.html); Play and Visualisation keep the garden's.
-const BRAND = { story: ['<span class="l1">Ancestry</span><span class="l2">A Battle in Time</span>', 'Four hundred years of family. One very old car.', 'Ancestry: A Battle in Time'] };
+// Each tab has its own name and look: Play is the Fluffy garden, Story is A Battle in Time (body.tab-story in
+// dev.html) and Visualisation is Roots & Stars (body.tab-viz).
+const BRAND = {
+  story: ['<span class="l1">Ancestry</span><span class="l2">A Battle in Time</span>', 'Four hundred years of family. One very old car.', 'Ancestry: A Battle in Time'],
+  viz: ['<span class="l0" aria-hidden="true">✦ ✦ ✦</span><span class="l1">Ancestry</span><span class="l2">Roots &amp; Stars</span>', 'Your family as a galaxy of stars, or a tree growing back through time.', 'Ancestry: Roots & Stars'],
+};
 const LOGOS = {
   fluffy: ['Ancestry<br>Fluffs', 'Roll round and meet the family', 'Ancestry 3D'],
 };

@@ -1690,23 +1690,86 @@ function openPedigree() {
   const n = Math.min(S.save.idx, st.missions.length);
   S.ui.panel(`<h2>📜 The ${escapeText(st.surname)} pedigree</h2><p>${S.save.proofs.length} of ${st.proofs.length} proofs lodged · ${n} of ${st.missions.length} missions passed · ${(S.save.photos || []).length} lost photographs · ${(S.save.met || []).length} of the family met · ${(S.save.graves || []).length} graves visited · £${S.save.cash}</p><p>Badges (${(S.save.badges || []).length}/${Object.keys(BADGES).length}): ${escapeText((S.save.badges || []).map(b => BADGES[b][0]).join(', ') || 'none yet')}</p>${rows}<div class="foot"><button class="alt" data-go="close">Close</button></div>`, { close: () => S.ui.closePanel() });
 }
+// The town map: opens centred on you at a readable zoom. Zoom with + and − (or the wheel, or a pinch), drag to look
+// about, and jump back to yourself, to where the story wants you, or out to the whole town.
+function streetLabels(c) {
+  // one label per named street, at the middle of its stretch of road
+  if (c.mapLabels) return c.mapLabels;
+  const by = new Map();
+  for (let y = 0; y < c.H; y += 2) for (let x = 0; x < c.W; x += 2) { const n = c.streetAt((x + 0.5) * T, (y + 0.5) * T); if (!n) continue; let e = by.get(n); if (!e) by.set(n, e = []); e.push([x, y]); }
+  const out = [];
+  for (const [name, pts] of by) {
+    if (pts.length < 4) continue;
+    const mx = pts.reduce((a, q) => a + q[0], 0) / pts.length, my = pts.reduce((a, q) => a + q[1], 0) / pts.length;
+    let best = pts[0], bd = 1e9; for (const q of pts) { const d = (q[0] - mx) ** 2 + (q[1] - my) ** 2; if (d < bd) { bd = d; best = q; } }
+    const xs = pts.map(q => q[0]), ys = pts.map(q => q[1]), wide = Math.max(...xs) - Math.min(...xs), tall = Math.max(...ys) - Math.min(...ys);
+    out.push({ name, x: best[0] + 1, y: best[1] + 1, rot: tall > wide * 1.6 ? -Math.PI / 2 : 0, n: pts.length });
+  }
+  out.sort((a, b) => b.n - a.n);
+  return (c.mapLabels = out);
+}
 function openMap() {
-  const c = S.city, sc = 6;
-  S.ui.panel(`<h2>🗺 ${escapeText(c.town.name)}, ${c.year}</h2><canvas id="stMap" width="${c.W * sc}" height="${c.H * sc}"></canvas><p>Yellow: where the story wants you. Gold: the Heirloom. £: odd jobs. ${c.air ? '✈' : '⚓'}: tickets. Photographs found here: ${(S.save.photos || []).filter(p => p.startsWith(c.town.id + ':' + c.era)).length} of 3.</p><div class="foot"><button class="alt" data-go="close">Close</button></div>`, { close: () => S.ui.closePanel() }, true);
-  const g = S.ui.root.querySelector('#stMap').getContext('2d');
-  g.imageSmoothingEnabled = false;
-  g.drawImage(S.mini, 0, 0, c.W * sc, c.H * sc);
-  g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '700 12px "Fredoka", "Nunito", sans-serif';
-  const tag = (o, text, col) => { const x = o.x / T * sc, y = o.y / T * sc; g.lineWidth = 3; g.strokeStyle = 'rgba(0,0,0,0.85)'; g.strokeText(text, x, y); g.fillStyle = col; g.fillText(text, x, y); };
-  const SHORT = { church: 'Church', hall: c.year >= 1837 ? 'Records' : 'Vestry', pub: 'Pub', works: 'Works', farm: 'Farm', school: 'School', hub: c.air ? 'Airport' : 'Quay', garage: c.year >= 1950 ? 'Lock-up' : 'Barn', market: 'Market', infirmary: c.year >= 1948 ? 'Hospital' : 'Infirmary', police: c.year >= 1900 ? 'Police' : 'Watch', post: 'Post', office: c.era === 'modern' ? 'Hargreaves & Lowe' : 'Counting ho.' };
-  g.font = '700 11px "Fredoka", "Nunito", sans-serif';
-  for (const k in c.lots) if (SHORT[k]) tag({ x: c.lots[k].x, y: c.lots[k].y - (k === 'garage' ? -1.2 : 1.8) * T }, SHORT[k], '#fff');
-  const dot = (o, col, r = 6) => { g.fillStyle = col; g.strokeStyle = '#000'; g.lineWidth = 2; g.beginPath(); g.arc(o.x / T * sc, o.y / T * sc, r, 0, 7); g.fill(); g.stroke(); };
-  dot(S.heirloom, '#e8c040');
-  if (S.target) dot(S.target, '#ffd84a', 8);
-  const pp = S.player.vehicle || S.player;
-  dot(pp, '#fff', 5);
-  tag({ x: pp.x, y: pp.y + 1.8 * T }, 'you', '#fff');
+  const c = S.city, pp = S.player.vehicle || S.player, M = S.mapView || (S.mapView = { z: 11 });
+  M.cx = pp.x / T; M.cy = pp.y / T;
+  const fitZ = () => Math.min(M.cw / c.W, M.ch / c.H);
+  const clampView = () => { M.z = clamp(M.z, Math.min(fitZ(), 3), 28); const hw = M.cw / M.z / 2, hh = M.ch / M.z / 2; M.cx = c.W <= hw * 2 ? c.W / 2 : clamp(M.cx, hw, c.W - hw); M.cy = c.H <= hh * 2 ? c.H / 2 : clamp(M.cy, hh, c.H - hh); };
+  const go = (x, y, z) => { M.cx = x; M.cy = y; if (z) M.z = z; clampView(); draw(); };
+  S.ui.panel(`<h2>🗺 ${escapeText(c.town.name)}, ${c.year}</h2>
+    <div class="st-map"><canvas id="stMap"></canvas>
+      <div class="st-mapbtns"><button data-go="zin" aria-label="Zoom in">+</button><button data-go="zout" aria-label="Zoom out">−</button></div>
+      <div class="st-mapgo"><button data-go="me">📍 Me</button>${S.target ? '<button data-go="tgt">🎯 Where to go</button>' : ''}<button data-go="all">Whole town</button></div>
+    </div>
+    <p class="st-maplegend"><i style="background:#fff"></i>You <i style="background:#e8c040"></i>the Heirloom <i style="background:#ffd84a;box-shadow:0 0 0 3px #ff5a4a"></i>where to go <i style="background:#7be07b"></i>£ odd jobs <i style="background:#a8d8ff"></i>${c.air ? 'airport' : 'quay'} · drag to look about · photographs found here: ${(S.save.photos || []).filter(p => p.startsWith(c.town.id + ':' + c.era)).length} of 3</p>
+    <div class="foot"><button class="alt" data-go="close">Close</button></div>`, {
+    close: () => S.ui.closePanel(),
+    zin: () => go(M.cx, M.cy, M.z * 1.5), zout: () => go(M.cx, M.cy, M.z / 1.5),
+    me: () => go(pp.x / T, pp.y / T, Math.max(M.z, 11)),
+    tgt: () => S.target && go(S.target.x / T, S.target.y / T, Math.max(M.z, 11)),
+    all: () => go(c.W / 2, c.H / 2, fitZ()),
+  }, true);
+  const cv = S.ui.root.querySelector('#stMap'), g = cv.getContext('2d');
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const size = () => { const r = cv.getBoundingClientRect(); M.cw = Math.max(200, r.width); M.ch = Math.max(200, r.height); cv.width = Math.round(M.cw * dpr); cv.height = Math.round(M.ch * dpr); };
+  size(); clampView();
+  const SHORT = { church: 'Church', hall: c.year >= 1837 ? 'Records Office' : 'Vestry', pub: 'Pub', works: 'Works', farm: 'Farm', school: 'School', hub: c.air ? 'Airport' : 'Quay', garage: c.year >= 1950 ? 'Lock-up' : 'Barn', market: 'Market', infirmary: c.year >= 1948 ? 'Hospital' : 'Infirmary', police: c.year >= 1900 ? 'Police' : 'Watch', post: 'Post office', office: c.era === 'modern' ? 'Hargreaves & Lowe' : 'Counting house' };
+  function draw() {
+    const z = M.z, X = tx => (tx - M.cx) * z + M.cw / 2, Y = ty => (ty - M.cy) * z + M.ch / 2;
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.fillStyle = '#2a6aa8'; g.fillRect(0, 0, M.cw, M.ch);
+    g.imageSmoothingEnabled = z < 4;
+    g.drawImage(S.mini, 0, 0, S.mini.width, S.mini.height, X(0), Y(0), c.W * z, c.H * z);
+    g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
+    const tag = (x, y, text, col, px = 12, rot = 0) => { g.save(); g.translate(x, y); if (rot) g.rotate(rot); g.font = `700 ${px}px "Fredoka", "Nunito", sans-serif`; g.lineWidth = 3.5; g.strokeStyle = 'rgba(0,0,0,0.85)'; g.strokeText(text, 0, 0); g.fillStyle = col; g.fillText(text, 0, 0); g.restore(); };
+    // street names, once there is room for them
+    if (z >= 7) { const placed = []; for (const l of streetLabels(c)) { const x = X(l.x), y = Y(l.y); if (x < -60 || y < -20 || x > M.cw + 60 || y > M.ch + 20) continue; if (placed.some(q => Math.abs(q[0] - x) < 90 && Math.abs(q[1] - y) < 22)) continue; placed.push([x, y]); tag(x, y, l.name, '#f4ecd8', z >= 14 ? 12 : 10, l.rot); } }
+    // places
+    if (z >= 3.5) for (const k in c.lots) if (SHORT[k]) { const l = c.lots[k]; tag(X(l.x / T), Y(l.y / T) - 14, SHORT[k], '#ffe9a8', z >= 9 ? 13 : 11); }   // (too crowded to read when the whole town is in view)
+    const dot = (o, col, r = 6, ring) => { const x = X(o.x / T), y = Y(o.y / T); g.fillStyle = col; g.strokeStyle = ring || '#000'; g.lineWidth = 2.5; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); g.stroke(); return [x, y]; };
+    dot(c.lots.hub, '#a8d8ff', 6);
+    if (!S.mission) dot(c.lots.market, '#7be07b', 6);
+    for (const it of S.items) if (it.frenzy || it.cup) dot(it, it.frenzy ? '#f08aa0' : '#ffffff', 5);
+    if (S.step?.step.t === 'search') for (const sp of S.step.spots) if (!sp.seen) dot(sp.pt, '#ffffff', 5);
+    for (const it of S.items) if (it.step) dot(it, '#ffffff', 4);
+    if (S.player.vehicle !== S.heirloom) dot(S.heirloom, '#e8c040', 7);
+    if (S.target) { const [x, y] = dot(S.target, '#ffd84a', 8, '#ff5a4a'); g.strokeStyle = '#ff5a4a'; g.lineWidth = 3; g.beginPath(); g.arc(x, y, 15, 0, 7); g.stroke(); tag(x, y - 26, 'Go here', '#ffd84a', 13); }
+    // you: an arrow pointing the way you face
+    const yx = X(pp.x / T), yy = Y(pp.y / T);
+    g.save(); g.translate(yx, yy); g.rotate(S.player.ang); g.fillStyle = '#fff'; g.strokeStyle = '#000'; g.lineWidth = 3; g.beginPath(); g.moveTo(11, 0); g.lineTo(-8, -8); g.lineTo(-3, 0); g.lineTo(-8, 8); g.closePath(); g.stroke(); g.fill(); g.restore();
+    tag(yx, yy + 20, 'You', '#fff', 13);
+  }
+  draw();
+  // drag to look about, the wheel or a pinch to zoom
+  const ptrs = new Map(); let pinch = 0;
+  cv.onpointerdown = e => { cv.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (ptrs.size === 2) { const [p1, p2] = [...ptrs.values()]; pinch = Math.hypot(p1.x - p2.x, p1.y - p2.y); } };
+  cv.onpointermove = e => {
+    const q = ptrs.get(e.pointerId); if (!q) return;
+    if (ptrs.size === 1) { M.cx -= (e.clientX - q.x) / M.z; M.cy -= (e.clientY - q.y) / M.z; }
+    q.x = e.clientX; q.y = e.clientY;
+    if (ptrs.size === 2) { const [p1, p2] = [...ptrs.values()], d = Math.hypot(p1.x - p2.x, p1.y - p2.y); if (pinch) M.z *= d / pinch; pinch = d; }
+    clampView(); draw();
+  };
+  cv.onpointerup = cv.onpointercancel = e => { ptrs.delete(e.pointerId); pinch = 0; };
+  cv.onwheel = e => { e.preventDefault(); M.z *= e.deltaY < 0 ? 1.15 : 1 / 1.15; clampView(); draw(); };
 }
 function openWorkshop(intro) {
   const draw = () => {

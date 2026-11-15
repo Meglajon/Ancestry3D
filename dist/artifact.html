@@ -3,7 +3,7 @@
 <meta name="description" content="Walk among your ancestors: a first-person retro 3D explorer for GEDCOM family trees.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Press+Start+2P&family=VT323&family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&family=Lora:ital,wght@1,500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Press+Start+2P&family=VT323&family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&family=Lora:ital,wght@1,500&display=swap" rel="stylesheet">
 <script type="importmap">
 { "imports": {
   "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
@@ -473,6 +473,71 @@ body.tab-story #loading { background: var(--b-asphalt); color: var(--b-paint); f
   body.tab-story #menu .logo .l1 { -webkit-text-stroke-width: 4px; text-shadow: 4px 5px 0 var(--b-ink); }
 }
 @media (prefers-reduced-motion: reduce) { #menu .btn:active { transform: none; } }
+
+/* ================= The Visualisation tab: Ancestry, Roots & Stars =================
+   While the Visualisation tab is open (body.tab-viz) the menu is a still night sky: deep indigo, a faint
+   starfield and a soft nebula, an engraved serif title in starlight gold, and dark glass cards edged in gold.
+   Quieter than the Story tab's cartoon streets: this is the part you sit back and watch. One look in every theme. */
+:root {
+  --v-night: #0c1024; --v-night2: #151a38; --v-glass: rgba(22,26,56,0.78); --v-glass2: rgba(34,40,82,0.85);
+  --v-gold: #e8c77a; --v-gold2: #f6e3b0; --v-ivory: #eeeaf8; --v-mist: #a9a6c8; --v-rose: #e89ab8; --v-blue: #8ab4ff;
+  --v-serif: 'Cormorant Garamond', 'Lora', Georgia, serif; --v-sans: 'Nunito', system-ui, sans-serif;
+}
+body.tab-viz #menu {
+  color: var(--v-ivory);
+  background:
+    radial-gradient(1px 1px at 20px 30px, rgba(255,255,255,0.9), transparent 2px) 0 0 / 137px 131px,
+    radial-gradient(1px 1px at 80px 70px, rgba(255,255,255,0.7), transparent 2px) 0 0 / 173px 167px,
+    radial-gradient(1.5px 1.5px at 40px 110px, rgba(246,227,176,0.9), transparent 2px) 0 0 / 229px 211px,
+    radial-gradient(1px 1px at 120px 20px, rgba(170,190,255,0.8), transparent 2px) 0 0 / 97px 113px,
+    radial-gradient(ellipse 60% 40% at 75% 18%, rgba(232,154,184,0.16), transparent 70%),
+    radial-gradient(ellipse 70% 50% at 20% 70%, rgba(138,180,255,0.12), transparent 70%),
+    linear-gradient(180deg, var(--v-night) 0%, var(--v-night2) 60%, #1c1838 100%);
+}
+body.tab-viz #menu .logo { margin: 14px 0 0; background: none; filter: none; -webkit-text-fill-color: currentColor; text-shadow: none; display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--v-gold); }
+body.tab-viz #menu .logo .l0 { font-size: 22px; letter-spacing: 18px; margin-left: 18px; color: var(--v-gold2); text-shadow: 0 0 12px rgba(246,227,176,0.8); }
+body.tab-viz #menu .logo .l1 { font-family: var(--v-serif); font-weight: 600; font-size: clamp(54px, 15vw, 92px); line-height: 0.95; letter-spacing: 4px; color: var(--v-gold2);
+  background: linear-gradient(180deg, #fff6dc 0%, var(--v-gold) 60%, #b8904a 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 18px rgba(232,199,122,0.35)); }
+body.tab-viz #menu .logo .l2 { font-family: var(--v-serif); font-style: italic; font-weight: 500; font-size: clamp(22px, 6vw, 32px); color: var(--v-ivory); letter-spacing: 1px; display: flex; align-items: center; gap: 14px; }
+body.tab-viz #menu .logo .l2::before, body.tab-viz #menu .logo .l2::after { content: ''; width: 48px; height: 1px; background: linear-gradient(90deg, transparent, var(--v-gold)); }
+body.tab-viz #menu .logo .l2::after { transform: scaleX(-1); }
+body.tab-viz #menu .tagline { font-family: var(--v-sans); font-weight: 600; font-size: 15px; color: var(--v-mist); margin: 14px 0 18px; letter-spacing: 0; text-transform: none; }
+body.tab-viz #menu .tabs { gap: 8px; }
+body.tab-viz #menu .tabs button { font-family: var(--v-serif); font-weight: 600; font-size: 20px; letter-spacing: 1px; text-transform: none; border-radius: 999px; padding: 8px 4px;
+  color: var(--v-mist); background: rgba(255,255,255,0.04); border: 1px solid rgba(232,199,122,0.35); box-shadow: none; }
+body.tab-viz #menu .tabs button.on { color: var(--v-night); background: linear-gradient(180deg, var(--v-gold2), var(--v-gold)); border-color: var(--v-gold); box-shadow: 0 0 18px rgba(232,199,122,0.35); }
+body.tab-viz #menu .card { background: var(--v-glass); color: var(--v-ivory); border: 1px solid rgba(232,199,122,0.4); border-radius: 18px; padding: 18px; box-shadow: 0 12px 40px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06); backdrop-filter: blur(6px); }
+body.tab-viz #menu .card h2 { font-family: var(--v-serif); font-weight: 600; font-size: 24px; color: var(--v-gold2); letter-spacing: 0.5px; text-transform: none; margin: 0 0 10px; }
+body.tab-viz #menu .note, body.tab-viz #menu .field .lbl, body.tab-viz #menu .help { font-family: var(--v-sans); font-weight: 600; font-size: 14.5px; color: var(--v-mist); line-height: 1.45; }
+body.tab-viz #menu .help { color: var(--v-ivory); }
+body.tab-viz #menu .help b, body.tab-viz #menu .field .lbl b { font-family: var(--v-serif); font-weight: 700; font-size: 17px; color: var(--v-gold2); }
+body.tab-viz #menu .help i { color: var(--v-gold2); }
+body.tab-viz #menu .status { font-family: var(--v-sans); font-weight: 800; font-size: 15px; color: #9be3b0; }
+body.tab-viz #menu .btn { font-family: var(--v-sans); font-weight: 700; font-size: 16px; color: var(--v-ivory); text-shadow: none; text-transform: none; border-radius: 999px; padding: 12px 16px;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(232,199,122,0.55); box-shadow: none; }
+body.tab-viz #menu .btn:active { transform: translateY(1px); }
+body.tab-viz #menu label.btn.file { color: var(--v-night); background: linear-gradient(180deg, var(--v-gold2), var(--v-gold)); border-color: var(--v-gold); }
+body.tab-viz #menu .btn.go { font-family: var(--v-serif); font-weight: 700; font-size: 22px; letter-spacing: 1px; color: var(--v-night); background: linear-gradient(180deg, var(--v-gold2), var(--v-gold)); border-color: var(--v-gold); box-shadow: 0 0 22px rgba(232,199,122,0.35); }
+body.tab-viz #menu input[type=search], body.tab-viz #menu input[type=text] { font-family: var(--v-sans); font-weight: 700; font-size: 16px; color: var(--v-ivory); background: rgba(8,10,28,0.7); border: 1px solid rgba(232,199,122,0.45); border-radius: 999px; padding: 9px 16px; }
+body.tab-viz #menu input[type=range] { accent-color: var(--v-gold); }
+body.tab-viz #menu .people { background: rgba(8,10,28,0.6); border: 1px solid rgba(232,199,122,0.35); border-radius: 14px; }
+body.tab-viz #menu .people div { font-family: var(--v-sans); font-weight: 700; font-size: 15.5px; color: var(--v-ivory); border-bottom: 1px solid rgba(255,255,255,0.06); }
+body.tab-viz #menu .people div span:last-child { color: var(--v-mist); }
+body.tab-viz #menu .people div.sel { background: linear-gradient(90deg, rgba(232,199,122,0.35), rgba(232,199,122,0.1)); color: var(--v-gold2); }
+body.tab-viz #menu .people div:hover { background: rgba(255,255,255,0.06); }
+body.tab-viz #menu .seg button { font-family: var(--v-sans); font-weight: 700; font-size: 14px; color: var(--v-mist); background: rgba(255,255,255,0.04); border: 1px solid rgba(232,199,122,0.35); border-radius: 999px; padding: 8px 4px; text-transform: none; }
+body.tab-viz #menu .seg button.on { color: var(--v-night); background: var(--v-gold); border-color: var(--v-gold); }
+body.tab-viz #menu .toggle .sw { background: rgba(255,255,255,0.08); border: 1px solid rgba(232,199,122,0.5); border-radius: 999px; width: 52px; height: 28px; }
+body.tab-viz #menu .toggle .sw::after { top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: var(--v-mist); box-shadow: none; }
+body.tab-viz #menu .toggle input:checked + .sw { background: rgba(232,199,122,0.35); }
+body.tab-viz #menu .toggle input:checked + .sw::after { left: 27px; background: var(--v-gold2); box-shadow: 0 0 10px rgba(246,227,176,0.8); }
+body.tab-viz #menu .toggle .tl { font-family: var(--v-sans); font-weight: 800; font-size: 16px; color: var(--v-ivory); }
+body.tab-viz #menu .toggle .tl small { font-weight: 600; font-size: 13.5px; color: var(--v-mist); }
+body.tab-viz #menu details.verses summary { color: var(--v-gold2); }
+body.tab-viz #menu a { color: var(--v-gold2) !important; }
+body.tab-viz #menu :focus-visible { outline: 2px solid var(--v-gold2); outline-offset: 2px; }
+@media (max-width: 480px) { body.tab-viz #menu .tabs button { font-size: 16px; padding: 8px 2px; } body.tab-viz #menu .logo .l0 { letter-spacing: 12px; } }
 </style>
 <canvas id="flat"></canvas>
 
@@ -8198,6 +8263,14 @@ const CSS = `
 #story .st-card .foot { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
 #story .st-card canvas { display: block; width: 100%; height: auto; border: 3px solid #2a2218; border-radius: 6px; image-rendering: pixelated; }
 #story .st-card.wide { width: min(760px, 100%); }
+#story .st-map { position: relative; }
+#story .st-map canvas { width: 100%; height: min(62vh, 560px); touch-action: none; cursor: grab; image-rendering: auto; }
+#story .st-mapbtns { position: absolute; right: 10px; top: 10px; display: flex; flex-direction: column; gap: 6px; }
+#story .st-mapbtns button { width: 42px; height: 42px; padding: 0; font-size: 24px; line-height: 1; border: 3px solid #2a2218; }
+#story .st-mapgo { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+#story .st-mapgo button { border: 3px solid #2a2218; padding: 6px 12px; }
+#story .st-maplegend { font-size: 13px; line-height: 1.6; }
+#story .st-maplegend i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; border: 2px solid #000; margin: 0 4px 0 8px; vertical-align: -1px; }
 #story .st-card kbd { font-family: 'Press Start 2P', monospace; font-size: 9px; background: #2a2218; color: #f4ecd8; padding: 3px 5px; border-radius: 3px; }
 #story .st-touch { position: absolute; inset: 0; pointer-events: none; display: none; }
 #story.touch .st-touch { display: block; }
@@ -10179,23 +10252,86 @@ function openPedigree() {
   const n = Math.min(S.save.idx, st.missions.length);
   S.ui.panel(`<h2>📜 The ${escapeText(st.surname)} pedigree</h2><p>${S.save.proofs.length} of ${st.proofs.length} proofs lodged · ${n} of ${st.missions.length} missions passed · ${(S.save.photos || []).length} lost photographs · ${(S.save.met || []).length} of the family met · ${(S.save.graves || []).length} graves visited · £${S.save.cash}</p><p>Badges (${(S.save.badges || []).length}/${Object.keys(BADGES).length}): ${escapeText((S.save.badges || []).map(b => BADGES[b][0]).join(', ') || 'none yet')}</p>${rows}<div class="foot"><button class="alt" data-go="close">Close</button></div>`, { close: () => S.ui.closePanel() });
 }
+// The town map: opens centred on you at a readable zoom. Zoom with + and − (or the wheel, or a pinch), drag to look
+// about, and jump back to yourself, to where the story wants you, or out to the whole town.
+function streetLabels(c) {
+  // one label per named street, at the middle of its stretch of road
+  if (c.mapLabels) return c.mapLabels;
+  const by = new Map();
+  for (let y = 0; y < c.H; y += 2) for (let x = 0; x < c.W; x += 2) { const n = c.streetAt((x + 0.5) * T, (y + 0.5) * T); if (!n) continue; let e = by.get(n); if (!e) by.set(n, e = []); e.push([x, y]); }
+  const out = [];
+  for (const [name, pts] of by) {
+    if (pts.length < 4) continue;
+    const mx = pts.reduce((a, q) => a + q[0], 0) / pts.length, my = pts.reduce((a, q) => a + q[1], 0) / pts.length;
+    let best = pts[0], bd = 1e9; for (const q of pts) { const d = (q[0] - mx) ** 2 + (q[1] - my) ** 2; if (d < bd) { bd = d; best = q; } }
+    const xs = pts.map(q => q[0]), ys = pts.map(q => q[1]), wide = Math.max(...xs) - Math.min(...xs), tall = Math.max(...ys) - Math.min(...ys);
+    out.push({ name, x: best[0] + 1, y: best[1] + 1, rot: tall > wide * 1.6 ? -Math.PI / 2 : 0, n: pts.length });
+  }
+  out.sort((a, b) => b.n - a.n);
+  return (c.mapLabels = out);
+}
 function openMap() {
-  const c = S.city, sc = 6;
-  S.ui.panel(`<h2>🗺 ${escapeText(c.town.name)}, ${c.year}</h2><canvas id="stMap" width="${c.W * sc}" height="${c.H * sc}"></canvas><p>Yellow: where the story wants you. Gold: the Heirloom. £: odd jobs. ${c.air ? '✈' : '⚓'}: tickets. Photographs found here: ${(S.save.photos || []).filter(p => p.startsWith(c.town.id + ':' + c.era)).length} of 3.</p><div class="foot"><button class="alt" data-go="close">Close</button></div>`, { close: () => S.ui.closePanel() }, true);
-  const g = S.ui.root.querySelector('#stMap').getContext('2d');
-  g.imageSmoothingEnabled = false;
-  g.drawImage(S.mini, 0, 0, c.W * sc, c.H * sc);
-  g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '700 12px "Fredoka", "Nunito", sans-serif';
-  const tag = (o, text, col) => { const x = o.x / T * sc, y = o.y / T * sc; g.lineWidth = 3; g.strokeStyle = 'rgba(0,0,0,0.85)'; g.strokeText(text, x, y); g.fillStyle = col; g.fillText(text, x, y); };
-  const SHORT = { church: 'Church', hall: c.year >= 1837 ? 'Records' : 'Vestry', pub: 'Pub', works: 'Works', farm: 'Farm', school: 'School', hub: c.air ? 'Airport' : 'Quay', garage: c.year >= 1950 ? 'Lock-up' : 'Barn', market: 'Market', infirmary: c.year >= 1948 ? 'Hospital' : 'Infirmary', police: c.year >= 1900 ? 'Police' : 'Watch', post: 'Post', office: c.era === 'modern' ? 'Hargreaves & Lowe' : 'Counting ho.' };
-  g.font = '700 11px "Fredoka", "Nunito", sans-serif';
-  for (const k in c.lots) if (SHORT[k]) tag({ x: c.lots[k].x, y: c.lots[k].y - (k === 'garage' ? -1.2 : 1.8) * T }, SHORT[k], '#fff');
-  const dot = (o, col, r = 6) => { g.fillStyle = col; g.strokeStyle = '#000'; g.lineWidth = 2; g.beginPath(); g.arc(o.x / T * sc, o.y / T * sc, r, 0, 7); g.fill(); g.stroke(); };
-  dot(S.heirloom, '#e8c040');
-  if (S.target) dot(S.target, '#ffd84a', 8);
-  const pp = S.player.vehicle || S.player;
-  dot(pp, '#fff', 5);
-  tag({ x: pp.x, y: pp.y + 1.8 * T }, 'you', '#fff');
+  const c = S.city, pp = S.player.vehicle || S.player, M = S.mapView || (S.mapView = { z: 11 });
+  M.cx = pp.x / T; M.cy = pp.y / T;
+  const fitZ = () => Math.min(M.cw / c.W, M.ch / c.H);
+  const clampView = () => { M.z = clamp(M.z, Math.min(fitZ(), 3), 28); const hw = M.cw / M.z / 2, hh = M.ch / M.z / 2; M.cx = c.W <= hw * 2 ? c.W / 2 : clamp(M.cx, hw, c.W - hw); M.cy = c.H <= hh * 2 ? c.H / 2 : clamp(M.cy, hh, c.H - hh); };
+  const go = (x, y, z) => { M.cx = x; M.cy = y; if (z) M.z = z; clampView(); draw(); };
+  S.ui.panel(`<h2>🗺 ${escapeText(c.town.name)}, ${c.year}</h2>
+    <div class="st-map"><canvas id="stMap"></canvas>
+      <div class="st-mapbtns"><button data-go="zin" aria-label="Zoom in">+</button><button data-go="zout" aria-label="Zoom out">−</button></div>
+      <div class="st-mapgo"><button data-go="me">📍 Me</button>${S.target ? '<button data-go="tgt">🎯 Where to go</button>' : ''}<button data-go="all">Whole town</button></div>
+    </div>
+    <p class="st-maplegend"><i style="background:#fff"></i>You <i style="background:#e8c040"></i>the Heirloom <i style="background:#ffd84a;box-shadow:0 0 0 3px #ff5a4a"></i>where to go <i style="background:#7be07b"></i>£ odd jobs <i style="background:#a8d8ff"></i>${c.air ? 'airport' : 'quay'} · drag to look about · photographs found here: ${(S.save.photos || []).filter(p => p.startsWith(c.town.id + ':' + c.era)).length} of 3</p>
+    <div class="foot"><button class="alt" data-go="close">Close</button></div>`, {
+    close: () => S.ui.closePanel(),
+    zin: () => go(M.cx, M.cy, M.z * 1.5), zout: () => go(M.cx, M.cy, M.z / 1.5),
+    me: () => go(pp.x / T, pp.y / T, Math.max(M.z, 11)),
+    tgt: () => S.target && go(S.target.x / T, S.target.y / T, Math.max(M.z, 11)),
+    all: () => go(c.W / 2, c.H / 2, fitZ()),
+  }, true);
+  const cv = S.ui.root.querySelector('#stMap'), g = cv.getContext('2d');
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const size = () => { const r = cv.getBoundingClientRect(); M.cw = Math.max(200, r.width); M.ch = Math.max(200, r.height); cv.width = Math.round(M.cw * dpr); cv.height = Math.round(M.ch * dpr); };
+  size(); clampView();
+  const SHORT = { church: 'Church', hall: c.year >= 1837 ? 'Records Office' : 'Vestry', pub: 'Pub', works: 'Works', farm: 'Farm', school: 'School', hub: c.air ? 'Airport' : 'Quay', garage: c.year >= 1950 ? 'Lock-up' : 'Barn', market: 'Market', infirmary: c.year >= 1948 ? 'Hospital' : 'Infirmary', police: c.year >= 1900 ? 'Police' : 'Watch', post: 'Post office', office: c.era === 'modern' ? 'Hargreaves & Lowe' : 'Counting house' };
+  function draw() {
+    const z = M.z, X = tx => (tx - M.cx) * z + M.cw / 2, Y = ty => (ty - M.cy) * z + M.ch / 2;
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.fillStyle = '#2a6aa8'; g.fillRect(0, 0, M.cw, M.ch);
+    g.imageSmoothingEnabled = z < 4;
+    g.drawImage(S.mini, 0, 0, S.mini.width, S.mini.height, X(0), Y(0), c.W * z, c.H * z);
+    g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
+    const tag = (x, y, text, col, px = 12, rot = 0) => { g.save(); g.translate(x, y); if (rot) g.rotate(rot); g.font = `700 ${px}px "Fredoka", "Nunito", sans-serif`; g.lineWidth = 3.5; g.strokeStyle = 'rgba(0,0,0,0.85)'; g.strokeText(text, 0, 0); g.fillStyle = col; g.fillText(text, 0, 0); g.restore(); };
+    // street names, once there is room for them
+    if (z >= 7) { const placed = []; for (const l of streetLabels(c)) { const x = X(l.x), y = Y(l.y); if (x < -60 || y < -20 || x > M.cw + 60 || y > M.ch + 20) continue; if (placed.some(q => Math.abs(q[0] - x) < 90 && Math.abs(q[1] - y) < 22)) continue; placed.push([x, y]); tag(x, y, l.name, '#f4ecd8', z >= 14 ? 12 : 10, l.rot); } }
+    // places
+    if (z >= 3.5) for (const k in c.lots) if (SHORT[k]) { const l = c.lots[k]; tag(X(l.x / T), Y(l.y / T) - 14, SHORT[k], '#ffe9a8', z >= 9 ? 13 : 11); }   // (too crowded to read when the whole town is in view)
+    const dot = (o, col, r = 6, ring) => { const x = X(o.x / T), y = Y(o.y / T); g.fillStyle = col; g.strokeStyle = ring || '#000'; g.lineWidth = 2.5; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); g.stroke(); return [x, y]; };
+    dot(c.lots.hub, '#a8d8ff', 6);
+    if (!S.mission) dot(c.lots.market, '#7be07b', 6);
+    for (const it of S.items) if (it.frenzy || it.cup) dot(it, it.frenzy ? '#f08aa0' : '#ffffff', 5);
+    if (S.step?.step.t === 'search') for (const sp of S.step.spots) if (!sp.seen) dot(sp.pt, '#ffffff', 5);
+    for (const it of S.items) if (it.step) dot(it, '#ffffff', 4);
+    if (S.player.vehicle !== S.heirloom) dot(S.heirloom, '#e8c040', 7);
+    if (S.target) { const [x, y] = dot(S.target, '#ffd84a', 8, '#ff5a4a'); g.strokeStyle = '#ff5a4a'; g.lineWidth = 3; g.beginPath(); g.arc(x, y, 15, 0, 7); g.stroke(); tag(x, y - 26, 'Go here', '#ffd84a', 13); }
+    // you: an arrow pointing the way you face
+    const yx = X(pp.x / T), yy = Y(pp.y / T);
+    g.save(); g.translate(yx, yy); g.rotate(S.player.ang); g.fillStyle = '#fff'; g.strokeStyle = '#000'; g.lineWidth = 3; g.beginPath(); g.moveTo(11, 0); g.lineTo(-8, -8); g.lineTo(-3, 0); g.lineTo(-8, 8); g.closePath(); g.stroke(); g.fill(); g.restore();
+    tag(yx, yy + 20, 'You', '#fff', 13);
+  }
+  draw();
+  // drag to look about, the wheel or a pinch to zoom
+  const ptrs = new Map(); let pinch = 0;
+  cv.onpointerdown = e => { cv.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (ptrs.size === 2) { const [p1, p2] = [...ptrs.values()]; pinch = Math.hypot(p1.x - p2.x, p1.y - p2.y); } };
+  cv.onpointermove = e => {
+    const q = ptrs.get(e.pointerId); if (!q) return;
+    if (ptrs.size === 1) { M.cx -= (e.clientX - q.x) / M.z; M.cy -= (e.clientY - q.y) / M.z; }
+    q.x = e.clientX; q.y = e.clientY;
+    if (ptrs.size === 2) { const [p1, p2] = [...ptrs.values()], d = Math.hypot(p1.x - p2.x, p1.y - p2.y); if (pinch) M.z *= d / pinch; pinch = d; }
+    clampView(); draw();
+  };
+  cv.onpointerup = cv.onpointercancel = e => { ptrs.delete(e.pointerId); pinch = 0; };
+  cv.onwheel = e => { e.preventDefault(); M.z *= e.deltaY < 0 ? 1.15 : 1 / 1.15; clampView(); draw(); };
 }
 function openWorkshop(intro) {
   const draw = () => {
@@ -10987,8 +11123,12 @@ const GEN_NAMES = g => g === 0 ? 'YOU' : g === 1 ? 'PARENTS' : g === 2 ? 'GRANDP
 const LOOK_NOTES = {
   fluffy: 'Fluffy: a top-down 2D garden where you and every ancestor are round, fluffy balls. Their fur takes the colours of their period clothes, with their hair (or hat) as a tuft on top. Roll along the paths, bump into people to make them squeak, and chat to them all.',
 };
-// The Story tab has its own name and look (see body.tab-story in dev.html); Play and Visualisation keep the garden's.
-const BRAND = { story: ['<span class="l1">Ancestry</span><span class="l2">A Battle in Time</span>', 'Four hundred years of family. One very old car.', 'Ancestry: A Battle in Time'] };
+// Each tab has its own name and look: Play is the Fluffy garden, Story is A Battle in Time (body.tab-story in
+// dev.html) and Visualisation is Roots & Stars (body.tab-viz).
+const BRAND = {
+  story: ['<span class="l1">Ancestry</span><span class="l2">A Battle in Time</span>', 'Four hundred years of family. One very old car.', 'Ancestry: A Battle in Time'],
+  viz: ['<span class="l0" aria-hidden="true">✦ ✦ ✦</span><span class="l1">Ancestry</span><span class="l2">Roots &amp; Stars</span>', 'Your family as a galaxy of stars, or a tree growing back through time.', 'Ancestry: Roots & Stars'],
+};
 const LOGOS = {
   fluffy: ['Ancestry<br>Fluffs', 'Roll round and meet the family', 'Ancestry 3D'],
 };

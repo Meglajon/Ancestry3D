@@ -8,7 +8,7 @@
 <meta name="description" content="Walk among your ancestors: a first-person retro 3D explorer for GEDCOM family trees.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Press+Start+2P&family=VT323&family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&family=Lora:ital,wght@1,500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Press+Start+2P&family=VT323&family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&family=Lora:ital,wght@1,500&display=swap" rel="stylesheet">
 <script type="importmap">
 { "imports": {
   "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
@@ -478,6 +478,71 @@ body.tab-story #loading { background: var(--b-asphalt); color: var(--b-paint); f
   body.tab-story #menu .logo .l1 { -webkit-text-stroke-width: 4px; text-shadow: 4px 5px 0 var(--b-ink); }
 }
 @media (prefers-reduced-motion: reduce) { #menu .btn:active { transform: none; } }
+
+/* ================= The Visualisation tab: Ancestry, Roots & Stars =================
+   While the Visualisation tab is open (body.tab-viz) the menu is a still night sky: deep indigo, a faint
+   starfield and a soft nebula, an engraved serif title in starlight gold, and dark glass cards edged in gold.
+   Quieter than the Story tab's cartoon streets: this is the part you sit back and watch. One look in every theme. */
+:root {
+  --v-night: #0c1024; --v-night2: #151a38; --v-glass: rgba(22,26,56,0.78); --v-glass2: rgba(34,40,82,0.85);
+  --v-gold: #e8c77a; --v-gold2: #f6e3b0; --v-ivory: #eeeaf8; --v-mist: #a9a6c8; --v-rose: #e89ab8; --v-blue: #8ab4ff;
+  --v-serif: 'Cormorant Garamond', 'Lora', Georgia, serif; --v-sans: 'Nunito', system-ui, sans-serif;
+}
+body.tab-viz #menu {
+  color: var(--v-ivory);
+  background:
+    radial-gradient(1px 1px at 20px 30px, rgba(255,255,255,0.9), transparent 2px) 0 0 / 137px 131px,
+    radial-gradient(1px 1px at 80px 70px, rgba(255,255,255,0.7), transparent 2px) 0 0 / 173px 167px,
+    radial-gradient(1.5px 1.5px at 40px 110px, rgba(246,227,176,0.9), transparent 2px) 0 0 / 229px 211px,
+    radial-gradient(1px 1px at 120px 20px, rgba(170,190,255,0.8), transparent 2px) 0 0 / 97px 113px,
+    radial-gradient(ellipse 60% 40% at 75% 18%, rgba(232,154,184,0.16), transparent 70%),
+    radial-gradient(ellipse 70% 50% at 20% 70%, rgba(138,180,255,0.12), transparent 70%),
+    linear-gradient(180deg, var(--v-night) 0%, var(--v-night2) 60%, #1c1838 100%);
+}
+body.tab-viz #menu .logo { margin: 14px 0 0; background: none; filter: none; -webkit-text-fill-color: currentColor; text-shadow: none; display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--v-gold); }
+body.tab-viz #menu .logo .l0 { font-size: 22px; letter-spacing: 18px; margin-left: 18px; color: var(--v-gold2); text-shadow: 0 0 12px rgba(246,227,176,0.8); }
+body.tab-viz #menu .logo .l1 { font-family: var(--v-serif); font-weight: 600; font-size: clamp(54px, 15vw, 92px); line-height: 0.95; letter-spacing: 4px; color: var(--v-gold2);
+  background: linear-gradient(180deg, #fff6dc 0%, var(--v-gold) 60%, #b8904a 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 18px rgba(232,199,122,0.35)); }
+body.tab-viz #menu .logo .l2 { font-family: var(--v-serif); font-style: italic; font-weight: 500; font-size: clamp(22px, 6vw, 32px); color: var(--v-ivory); letter-spacing: 1px; display: flex; align-items: center; gap: 14px; }
+body.tab-viz #menu .logo .l2::before, body.tab-viz #menu .logo .l2::after { content: ''; width: 48px; height: 1px; background: linear-gradient(90deg, transparent, var(--v-gold)); }
+body.tab-viz #menu .logo .l2::after { transform: scaleX(-1); }
+body.tab-viz #menu .tagline { font-family: var(--v-sans); font-weight: 600; font-size: 15px; color: var(--v-mist); margin: 14px 0 18px; letter-spacing: 0; text-transform: none; }
+body.tab-viz #menu .tabs { gap: 8px; }
+body.tab-viz #menu .tabs button { font-family: var(--v-serif); font-weight: 600; font-size: 20px; letter-spacing: 1px; text-transform: none; border-radius: 999px; padding: 8px 4px;
+  color: var(--v-mist); background: rgba(255,255,255,0.04); border: 1px solid rgba(232,199,122,0.35); box-shadow: none; }
+body.tab-viz #menu .tabs button.on { color: var(--v-night); background: linear-gradient(180deg, var(--v-gold2), var(--v-gold)); border-color: var(--v-gold); box-shadow: 0 0 18px rgba(232,199,122,0.35); }
+body.tab-viz #menu .card { background: var(--v-glass); color: var(--v-ivory); border: 1px solid rgba(232,199,122,0.4); border-radius: 18px; padding: 18px; box-shadow: 0 12px 40px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06); backdrop-filter: blur(6px); }
+body.tab-viz #menu .card h2 { font-family: var(--v-serif); font-weight: 600; font-size: 24px; color: var(--v-gold2); letter-spacing: 0.5px; text-transform: none; margin: 0 0 10px; }
+body.tab-viz #menu .note, body.tab-viz #menu .field .lbl, body.tab-viz #menu .help { font-family: var(--v-sans); font-weight: 600; font-size: 14.5px; color: var(--v-mist); line-height: 1.45; }
+body.tab-viz #menu .help { color: var(--v-ivory); }
+body.tab-viz #menu .help b, body.tab-viz #menu .field .lbl b { font-family: var(--v-serif); font-weight: 700; font-size: 17px; color: var(--v-gold2); }
+body.tab-viz #menu .help i { color: var(--v-gold2); }
+body.tab-viz #menu .status { font-family: var(--v-sans); font-weight: 800; font-size: 15px; color: #9be3b0; }
+body.tab-viz #menu .btn { font-family: var(--v-sans); font-weight: 700; font-size: 16px; color: var(--v-ivory); text-shadow: none; text-transform: none; border-radius: 999px; padding: 12px 16px;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(232,199,122,0.55); box-shadow: none; }
+body.tab-viz #menu .btn:active { transform: translateY(1px); }
+body.tab-viz #menu label.btn.file { color: var(--v-night); background: linear-gradient(180deg, var(--v-gold2), var(--v-gold)); border-color: var(--v-gold); }
+body.tab-viz #menu .btn.go { font-family: var(--v-serif); font-weight: 700; font-size: 22px; letter-spacing: 1px; color: var(--v-night); background: linear-gradient(180deg, var(--v-gold2), var(--v-gold)); border-color: var(--v-gold); box-shadow: 0 0 22px rgba(232,199,122,0.35); }
+body.tab-viz #menu input[type=search], body.tab-viz #menu input[type=text] { font-family: var(--v-sans); font-weight: 700; font-size: 16px; color: var(--v-ivory); background: rgba(8,10,28,0.7); border: 1px solid rgba(232,199,122,0.45); border-radius: 999px; padding: 9px 16px; }
+body.tab-viz #menu input[type=range] { accent-color: var(--v-gold); }
+body.tab-viz #menu .people { background: rgba(8,10,28,0.6); border: 1px solid rgba(232,199,122,0.35); border-radius: 14px; }
+body.tab-viz #menu .people div { font-family: var(--v-sans); font-weight: 700; font-size: 15.5px; color: var(--v-ivory); border-bottom: 1px solid rgba(255,255,255,0.06); }
+body.tab-viz #menu .people div span:last-child { color: var(--v-mist); }
+body.tab-viz #menu .people div.sel { background: linear-gradient(90deg, rgba(232,199,122,0.35), rgba(232,199,122,0.1)); color: var(--v-gold2); }
+body.tab-viz #menu .people div:hover { background: rgba(255,255,255,0.06); }
+body.tab-viz #menu .seg button { font-family: var(--v-sans); font-weight: 700; font-size: 14px; color: var(--v-mist); background: rgba(255,255,255,0.04); border: 1px solid rgba(232,199,122,0.35); border-radius: 999px; padding: 8px 4px; text-transform: none; }
+body.tab-viz #menu .seg button.on { color: var(--v-night); background: var(--v-gold); border-color: var(--v-gold); }
+body.tab-viz #menu .toggle .sw { background: rgba(255,255,255,0.08); border: 1px solid rgba(232,199,122,0.5); border-radius: 999px; width: 52px; height: 28px; }
+body.tab-viz #menu .toggle .sw::after { top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: var(--v-mist); box-shadow: none; }
+body.tab-viz #menu .toggle input:checked + .sw { background: rgba(232,199,122,0.35); }
+body.tab-viz #menu .toggle input:checked + .sw::after { left: 27px; background: var(--v-gold2); box-shadow: 0 0 10px rgba(246,227,176,0.8); }
+body.tab-viz #menu .toggle .tl { font-family: var(--v-sans); font-weight: 800; font-size: 16px; color: var(--v-ivory); }
+body.tab-viz #menu .toggle .tl small { font-weight: 600; font-size: 13.5px; color: var(--v-mist); }
+body.tab-viz #menu details.verses summary { color: var(--v-gold2); }
+body.tab-viz #menu a { color: var(--v-gold2) !important; }
+body.tab-viz #menu :focus-visible { outline: 2px solid var(--v-gold2); outline-offset: 2px; }
+@media (max-width: 480px) { body.tab-viz #menu .tabs button { font-size: 16px; padding: 8px 2px; } body.tab-viz #menu .logo .l0 { letter-spacing: 12px; } }
 </style>
 </head>
 <body>

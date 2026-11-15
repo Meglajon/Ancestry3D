@@ -9,7 +9,7 @@
 <meta name="description" content="Walk among your ancestors: a first-person retro 3D explorer for GEDCOM family trees.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Press+Start+2P&family=VT323&family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&family=Lora:ital,wght@1,500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Press+Start+2P&family=VT323&family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&family=Lora:ital,wght@1,500&display=swap" rel="stylesheet">
 <script type="importmap">
 { "imports": {
   "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
@@ -479,6 +479,71 @@ body.tab-story #loading { background: var(--b-asphalt); color: var(--b-paint); f
   body.tab-story #menu .logo .l1 { -webkit-text-stroke-width: 4px; text-shadow: 4px 5px 0 var(--b-ink); }
 }
 @media (prefers-reduced-motion: reduce) { #menu .btn:active { transform: none; } }
+
+/* ================= The Visualisation tab: Ancestry, Roots & Stars =================
+   While the Visualisation tab is open (body.tab-viz) the menu is a still night sky: deep indigo, a faint
+   starfield and a soft nebula, an engraved serif title in starlight gold, and dark glass cards edged in gold.
+   Quieter than the Story tab's cartoon streets: this is the part you sit back and watch. One look in every theme. */
+:root {
+  --v-night: #0c1024; --v-night2: #151a38; --v-glass: rgba(22,26,56,0.78); --v-glass2: rgba(34,40,82,0.85);
+  --v-gold: #e8c77a; --v-gold2: #f6e3b0; --v-ivory: #eeeaf8; --v-mist: #a9a6c8; --v-rose: #e89ab8; --v-blue: #8ab4ff;
+  --v-serif: 'Cormorant Garamond', 'Lora', Georgia, serif; --v-sans: 'Nunito', system-ui, sans-serif;
+}
+body.tab-viz #menu {
+  color: var(--v-ivory);
+  background:
+    radial-gradient(1px 1px at 20px 30px, rgba(255,255,255,0.9), transparent 2px) 0 0 / 137px 131px,
+    radial-gradient(1px 1px at 80px 70px, rgba(255,255,255,0.7), transparent 2px) 0 0 / 173px 167px,
+    radial-gradient(1.5px 1.5px at 40px 110px, rgba(246,227,176,0.9), transparent 2px) 0 0 / 229px 211px,
+    radial-gradient(1px 1px at 120px 20px, rgba(170,190,255,0.8), transparent 2px) 0 0 / 97px 113px,
+    radial-gradient(ellipse 60% 40% at 75% 18%, rgba(232,154,184,0.16), transparent 70%),
+    radial-gradient(ellipse 70% 50% at 20% 70%, rgba(138,180,255,0.12), transparent 70%),
+    linear-gradient(180deg, var(--v-night) 0%, var(--v-night2) 60%, #1c1838 100%);
+}
+body.tab-viz #menu .logo { margin: 14px 0 0; background: none; filter: none; -webkit-text-fill-color: currentColor; text-shadow: none; display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--v-gold); }
+body.tab-viz #menu .logo .l0 { font-size: 22px; letter-spacing: 18px; margin-left: 18px; color: var(--v-gold2); text-shadow: 0 0 12px rgba(246,227,176,0.8); }
+body.tab-viz #menu .logo .l1 { font-family: var(--v-serif); font-weight: 600; font-size: clamp(54px, 15vw, 92px); line-height: 0.95; letter-spacing: 4px; color: var(--v-gold2);
+  background: linear-gradient(180deg, #fff6dc 0%, var(--v-gold) 60%, #b8904a 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 18px rgba(232,199,122,0.35)); }
+body.tab-viz #menu .logo .l2 { font-family: var(--v-serif); font-style: italic; font-weight: 500; font-size: clamp(22px, 6vw, 32px); color: var(--v-ivory); letter-spacing: 1px; display: flex; align-items: center; gap: 14px; }
+body.tab-viz #menu .logo .l2::before, body.tab-viz #menu .logo .l2::after { content: ''; width: 48px; height: 1px; background: linear-gradient(90deg, transparent, var(--v-gold)); }
+body.tab-viz #menu .logo .l2::after { transform: scaleX(-1); }
+body.tab-viz #menu .tagline { font-family: var(--v-sans); font-weight: 600; font-size: 15px; color: var(--v-mist); margin: 14px 0 18px; letter-spacing: 0; text-transform: none; }
+body.tab-viz #menu .tabs { gap: 8px; }
+body.tab-viz #menu .tabs button { font-family: var(--v-serif); font-weight: 600; font-size: 20px; letter-spacing: 1px; text-transform: none; border-radius: 999px; padding: 8px 4px;
+  color: var(--v-mist); background: rgba(255,255,255,0.04); border: 1px solid rgba(232,199,122,0.35); box-shadow: none; }
+body.tab-viz #menu .tabs button.on { color: var(--v-night); background: linear-gradient(180deg, var(--v-gold2), var(--v-gold)); border-color: var(--v-gold); box-shadow: 0 0 18px rgba(232,199,122,0.35); }
+body.tab-viz #menu .card { background: var(--v-glass); color: var(--v-ivory); border: 1px solid rgba(232,199,122,0.4); border-radius: 18px; padding: 18px; box-shadow: 0 12px 40px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06); backdrop-filter: blur(6px); }
+body.tab-viz #menu .card h2 { font-family: var(--v-serif); font-weight: 600; font-size: 24px; color: var(--v-gold2); letter-spacing: 0.5px; text-transform: none; margin: 0 0 10px; }
+body.tab-viz #menu .note, body.tab-viz #menu .field .lbl, body.tab-viz #menu .help { font-family: var(--v-sans); font-weight: 600; font-size: 14.5px; color: var(--v-mist); line-height: 1.45; }
+body.tab-viz #menu .help { color: var(--v-ivory); }
+body.tab-viz #menu .help b, body.tab-viz #menu .field .lbl b { font-family: var(--v-serif); font-weight: 700; font-size: 17px; color: var(--v-gold2); }
+body.tab-viz #menu .help i { color: var(--v-gold2); }
+body.tab-viz #menu .status { font-family: var(--v-sans); font-weight: 800; font-size: 15px; color: #9be3b0; }
+body.tab-viz #menu .btn { font-family: var(--v-sans); font-weight: 700; font-size: 16px; color: var(--v-ivory); text-shadow: none; text-transform: none; border-radius: 999px; padding: 12px 16px;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(232,199,122,0.55); box-shadow: none; }
+body.tab-viz #menu .btn:active { transform: translateY(1px); }
+body.tab-viz #menu label.btn.file { color: var(--v-night); background: linear-gradient(180deg, var(--v-gold2), var(--v-gold)); border-color: var(--v-gold); }
+body.tab-viz #menu .btn.go { font-family: var(--v-serif); font-weight: 700; font-size: 22px; letter-spacing: 1px; color: var(--v-night); background: linear-gradient(180deg, var(--v-gold2), var(--v-gold)); border-color: var(--v-gold); box-shadow: 0 0 22px rgba(232,199,122,0.35); }
+body.tab-viz #menu input[type=search], body.tab-viz #menu input[type=text] { font-family: var(--v-sans); font-weight: 700; font-size: 16px; color: var(--v-ivory); background: rgba(8,10,28,0.7); border: 1px solid rgba(232,199,122,0.45); border-radius: 999px; padding: 9px 16px; }
+body.tab-viz #menu input[type=range] { accent-color: var(--v-gold); }
+body.tab-viz #menu .people { background: rgba(8,10,28,0.6); border: 1px solid rgba(232,199,122,0.35); border-radius: 14px; }
+body.tab-viz #menu .people div { font-family: var(--v-sans); font-weight: 700; font-size: 15.5px; color: var(--v-ivory); border-bottom: 1px solid rgba(255,255,255,0.06); }
+body.tab-viz #menu .people div span:last-child { color: var(--v-mist); }
+body.tab-viz #menu .people div.sel { background: linear-gradient(90deg, rgba(232,199,122,0.35), rgba(232,199,122,0.1)); color: var(--v-gold2); }
+body.tab-viz #menu .people div:hover { background: rgba(255,255,255,0.06); }
+body.tab-viz #menu .seg button { font-family: var(--v-sans); font-weight: 700; font-size: 14px; color: var(--v-mist); background: rgba(255,255,255,0.04); border: 1px solid rgba(232,199,122,0.35); border-radius: 999px; padding: 8px 4px; text-transform: none; }
+body.tab-viz #menu .seg button.on { color: var(--v-night); background: var(--v-gold); border-color: var(--v-gold); }
+body.tab-viz #menu .toggle .sw { background: rgba(255,255,255,0.08); border: 1px solid rgba(232,199,122,0.5); border-radius: 999px; width: 52px; height: 28px; }
+body.tab-viz #menu .toggle .sw::after { top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: var(--v-mist); box-shadow: none; }
+body.tab-viz #menu .toggle input:checked + .sw { background: rgba(232,199,122,0.35); }
+body.tab-viz #menu .toggle input:checked + .sw::after { left: 27px; background: var(--v-gold2); box-shadow: 0 0 10px rgba(246,227,176,0.8); }
+body.tab-viz #menu .toggle .tl { font-family: var(--v-sans); font-weight: 800; font-size: 16px; color: var(--v-ivory); }
+body.tab-viz #menu .toggle .tl small { font-weight: 600; font-size: 13.5px; color: var(--v-mist); }
+body.tab-viz #menu details.verses summary { color: var(--v-gold2); }
+body.tab-viz #menu a { color: var(--v-gold2) !important; }
+body.tab-viz #menu :focus-visible { outline: 2px solid var(--v-gold2); outline-offset: 2px; }
+@media (max-width: 480px) { body.tab-viz #menu .tabs button { font-size: 16px; padding: 8px 2px; } body.tab-viz #menu .logo .l0 { letter-spacing: 12px; } }
 </style>
 </head>
 <body>
@@ -5638,12 +5703,212 @@ function eraOf(year) {
   return year >= 1990 ? 'modern' : year >= 1950 ? 'retro' : year >= 1900 ? 'vintage' : year >= 1837 ? 'victorian' : year >= 1714 ? 'georgian' : 'early';
 }
 const ERA_ARRIVAL = {
-  modern: 'Traffic, takeaways and a phone signal.',
-  retro: 'Coal smoke, corner shops and somebody\'s wireless through an open window.',
-  vintage: 'Trams, flat caps and motor cars that still frighten the horses.',
-  victorian: 'Gas lamps, horse muck and a hundred chimneys.',
-  georgian: 'Mud to the axles, a coach horn somewhere, and not one pavement.',
-  early: 'Thatch, woodsmoke and a church bell. The road is mostly a suggestion.',
+  modern: ['Traffic, takeaways and a phone signal.', 'Roadworks, a queue for coffee, and a parking warden already taking an interest.', 'Home. Everything costs more than you remember, and you only left this morning.'],
+  retro: ['Coal smoke, corner shops and somebody\'s wireless through an open window.', 'Washing on every line, a football against every wall, and one car on the whole street. Yours.', 'Doorsteps scrubbed white and net curtains twitching. The Heirloom has been noticed.'],
+  vintage: ['Trams, flat caps and motor cars that still frighten the horses.', 'A brass band somewhere, a tram bell, and a policeman who has never seen a car this colour.', 'Hats. Everybody has a hat. You feel underdressed from the neck up.'],
+  victorian: ['Gas lamps, horse muck and a hundred chimneys.', 'Soot on everything, a hymn from somewhere, and a small boy offering to mind your engine for a penny.', 'Fog, clogs on cobbles, and a smell you decide not to identify.'],
+  georgian: ['Mud to the axles, a coach horn somewhere, and not one pavement.', 'A pig in the road. It has right of way and it knows it.', 'Wigs on the gentry, mud on everybody else, and a coachman staring hard at your wheels.'],
+  early: ['Thatch, woodsmoke and a church bell. The road is mostly a suggestion.', 'Geese, mud and a great deal of sky. Somebody crosses themselves as you go by.', 'No lamps, no signs, and no glass in half the windows. A dog barks at the Heirloom, then thinks better of it.'],
+};
+
+/** What a year looks like as you arrive in it: one of that era's lines, dealt so no two arrivals read the same. */
+function eraArrival(year, deal) {
+  const list = ERA_ARRIVAL[eraOf(year)];
+  return deal ? deal('era-' + eraOf(year), list) : list[0];
+}
+
+// ---------------- Lines that come round more than once ----------------
+// Anything said in every chapter is a pack of alternatives (the script's ALT 1, ALT 2...), dealt like shuffled cards:
+// one pack per line for the whole story, and nothing comes round again until its pack is empty. The shuffle is seeded
+// by the family, so the same story always reads the same way. (IDs in brackets are the script's line IDs.)
+function dealer(seed) {
+  const rnd = seededRandom(seed), packs = new Map();
+  return (id, list) => {
+    let p = packs.get(id);
+    if (!p || !p.left.length) {
+      const left = list.map((_, i) => i);
+      for (let i = left.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [left[i], left[j]] = [left[j], left[i]]; }
+      // a fresh pack never opens with the card that closed the last one
+      if (p && left.length > 1 && left[left.length - 1] === p.last) [left[0], left[left.length - 1]] = [left[left.length - 1], left[0]];
+      p = { left, last: p ? p.last : -1 };
+      packs.set(id, p);
+    }
+    p.last = p.left.pop();
+    return list[p.last];
+  };
+}
+const LINES = {
+  // [A-02] the narrator at the grey door, every chapter after the first
+  door: ['Another century, the same grey door.', 'The brass plate is newer here. The grey is exactly the same.', 'A different roof, a different street, and Mr Lowe\'s same worried face at the window.',
+    'You can always find the office. It\'s the one building in town nobody has ever looked at twice.', 'The clerks change with the centuries. The filing does not.', 'Somewhere in this town is a grey room with a lamp burning late. There always is.'],
+  // [A-02a] Silas's lead-in to the scheme. x = { name, job, he, him, is, page }
+  leadIn: [
+    x => `${x.name}. ${x.page}.`,
+    x => `Next on the list: ${x.name}. And the page that props ${x.him} up: ${x.page}.`,
+    x => `${x.page}. One page, and ${x.name} hangs from it by a thread.`,
+    x => `The name is ${x.name}. The record is ${x.page}. Write it down, while there is still something to write.`,
+    x => `${x.name}${x.job ? ', ' + x.job : ''}. Nobody of the slightest importance, and yet here ${x.he} ${x.is} in ink. ${x.page}.`,
+    x => `Tonight's page: ${x.page}. Tonight's inconvenience: ${x.name}.`,
+    x => `${x.name}. Yet another one. They breed like footnotes. ${x.page}.`,
+  ],
+  // [A-03] Dorothy names the page and the scheme. x = { hero, page, scheme, rel, he, does }
+  target: [
+    x => `That's the page he's after, ${x.hero}: ${x.page}. And this time it's ${x.scheme}. Get to your ${x.rel} before his men do.`,
+    x => `${x.page}, dear. That's the page he wants, and his plan this time is ${x.scheme}. Your ${x.rel} hasn't the faintest idea. Go and be the faintest idea.`,
+    x => `I've found his next target: ${x.page}. I'd file this one under ${x.scheme}. Find your ${x.rel}, quickly, before somebody greyer does.`,
+    x => `He's after ${x.page} now, and the trick is ${x.scheme}. Nasty little man. Your ${x.rel} needs you, ${x.hero}, though ${x.he} ${x.does}n't know it yet.`,
+    x => `Now then. The page is ${x.page}. The plan is ${x.scheme}. The person is your ${x.rel}, and you want to get there first.`,
+    x => `It's ${x.page} this time, and it's ${x.scheme}. Honestly, the effort he goes to. Off you go, dear: your ${x.rel} is expecting nobody, so do knock.`,
+  ],
+  // [B-01] where Dorothy's note turns up, and [B-01a] how it introduces the quiz clue
+  noteAt: ['A note in Dorothy\'s hand, pinned where you would see it:', 'A note taped to the steering wheel, in Dorothy\'s small square writing:', 'On the dashboard, a page torn from an archive request form. Dorothy has written on the back:',
+    'Tucked behind the sun visor, a note that smells faintly of register ink:', 'A note on the passenger seat, held down with a boiled sweet:', 'Folded into the door pocket, a note with a tea ring on it:',
+    'Clipped to the brass dial with a clothes peg, a note in pencil:', 'In the glove box, on the back of an old parking ticket, in Dorothy\'s hand:'],
+  remember: ['Something to remember:', 'Keep this in your head:', 'One fact for your pocket:', 'You will be asked, so learn this:', 'Don\'t forget, whatever else you forget:', 'Worth knowing before you knock:', 'And a word to the wise:'],
+  // [B-02] [B-03] [B-04] what the ancestor knows of you. x = { He, he, him, his, has, is, does, knows, hero, kid, age }
+  stranger: [
+    x => `${x.He} ${x.has} never heard of you.`,
+    x => `To ${x.him} you are a stranger in odd shoes. Start from there.`,
+    x => `${x.He} ${x.does}n't know you from Adam, and Adam at least dressed for the period.`,
+    x => `You are nobody to ${x.him} yet. Be a polite nobody.`,
+    x => `${x.He} won't know your face, your name or your business. Lead with the name.`,
+    x => `As far as ${x.he} ${x.is} concerned you won't be born for a very long time. Don't bring it up.`,
+  ],
+  knowsChild: [
+    x => `Mind: ${x.he} ${x.has} a ${x.kid} called ${x.hero} already, ${x.age}, and as far as ${x.he} ${x.knows} that is not you. Do not try to explain.`,
+    x => `Careful: there is already a ${x.hero} in that house, ${x.age}, and it's ${x.his} ${x.kid}. You are a coincidence. Stay a coincidence.`,
+    x => `One thing: ${x.his} ${x.kid} ${x.hero} is ${x.age} this year. If you meet a child with your face, do not shake hands. I don't know what happens and I don't want to.`,
+  ],
+  knowsGrown: [
+    x => `Mind: ${x.he} ${x.knows} ${x.hero} perfectly well, and ${x.hero} is ${x.age}. You are a good deal older than that. Say you're a cousin and leave it there.`,
+    x => `Awkward: ${x.he} already ${x.knows} a ${x.hero}, ${x.age} and living locally. You are the same person with more miles on. Smile and change the subject.`,
+    x => `Take care: the ${x.hero} ${x.he} ${x.knows} is ${x.age}. You look like that ${x.hero} after a hard winter. Don't explain, dear. I explained once, and a man fainted.`,
+  ],
+  // [B-09] [B-10] [B-11] the ancestor's wary opening. x = { hero, age, doing, hHe, hHim }
+  wary: ['Family, you say.', 'Kin of mine? You?', 'A relation. I see. I\'ve a great many relations and I\'ve met them all.', 'One of us, are you? You don\'t dress like one of us.',
+    'Family is what they all say when they want something.', 'You\'ll forgive me if I don\'t ask you in just yet.'],
+  waryChild: [
+    x => `${x.hero}? My ${x.hero} is ${x.age}, and ${x.doing}. You've a look of ${x.hHim}, I'll give you that.`,
+    x => `${x.hero}, is it? I've a ${x.hero} of my own, ${x.age}, and ${x.doing}. Same name, same nose. That's a lot of coincidence for one doorstep.`,
+    x => `That's my little ${x.hero}'s name, and my little ${x.hero} is ${x.age} and ${x.doing}. You're the spit of the child, only taller and worse dressed.`,
+  ],
+  waryGrown: [
+    x => `You've the very look of my ${x.hero}, only ${x.hHe} is ${x.age} and you are not. A cousin, is it?`,
+    x => `Well, you're not my ${x.hero}, because my ${x.hero} is ${x.age} and owes me money. But you've the same face. A cousin?`,
+    x => `For a moment I took you for our ${x.hero}. But our ${x.hero} is ${x.age}, and stands up straighter. Some sort of cousin, I suppose.`,
+  ],
+  // [B-11a] the challenge that leads into the quiz
+  challenge: ['Tell me something only family would know.', 'So prove it. Something no stranger could tell me.', 'If you\'re kin, you\'ll know a thing or two about us. Let\'s hear one.', 'One question, then. Get it right and I\'ll listen.',
+    'Blood knows blood. Answer me this.', 'I\'ll ask you what I\'d ask any long-lost cousin who turned up at dinner time.', 'Go on, then. Convince me.'],
+  // [B-12] [B-13] [B-14] the quiz replies
+  right: ['Right first time. Nobody but family would know that.', 'Well, I\'ll be. Straight off, and without counting on your fingers.', 'Correct. And you didn\'t even look at the ceiling first.', 'Now how would a stranger know that? They wouldn\'t. Go on, then, you\'re in.',
+    'That\'s it exactly. You\'ve either the blood or a very good spy.', 'Quick as that! You know us better than some who come to dinner every Sunday.', 'Yes. That\'s the truth of it, and there\'s not many living could say so.'],
+  rightAtLast: ['There. Now you sound like one of us.', 'Got there in the end. That\'s the family way: wrong first, then loud about being right.', 'That\'s the one. I was starting to wonder about you.', 'Better. We\'ll say no more about the other answers.',
+    'There it is. Slow, but sound. We\'ve a few like that.', 'Right at last. My patience isn\'t what it was, and it was never much.', 'Finally. You may be family after all. None of us listens the first time.'],
+  wrong: ['No. Any stranger off the road would say that. Think on, and try again.', 'Wrong. And you said it with such confidence, too.', 'No. Not even close, and I was being generous with the question.', 'That\'s not it. Family would know. Have another go before I shut this door.',
+    'Ha! No. Whoever told you that was having you on.', 'Guessing, are you? I can always tell. You\'ve gone pink.', 'No, and I\'ll thank you not to guess at my family as if it were a raffle.', 'Not that. I\'ve all day, mind. You\'re the one who looks in a hurry.'],
+  // [B-15] [B-16] "come home with me". x = { kid, hero }
+  welcome: ['Then you\'re one of ours, though I can\'t think how. Come home with me. You look half starved and wholly lost.', 'Kin, then. Don\'t ask me which branch. Come in and eat something before you fall over.',
+    'So you are family. That explains the nose. You\'d best come back with me, there\'s a pot on.', 'Well, I can\'t leave a relation standing in the road. Come along. You can explain yourself over supper, or not at all.',
+    'One of us, then, from some far corner of the family that nobody mentions. Come home. We\'ll find you a chair.', 'That settles it. You\'re ours, and we look after our own, even the peculiar ones. This way.'],
+  welcomeKnown: [
+    x => `Then you're family, right enough, though I can't work out where you fit. You've even the name of my ${x.kid}. Come back with me and we'll puzzle it out.`,
+    x => `Family, then. Two of you called ${x.hero}: you and my ${x.kid}. We never did have much imagination with names. Come on, there's supper.`,
+    x => `So you're one of ours, and you share a name with my ${x.kid}. I shall call you the Other ${x.hero}, to save confusion. Come and be fed.`,
+  ],
+  // [C-00] the day's-work opener. x = { a, A, job }  (a / A = "a" or "an")
+  trade: [
+    x => `I'm ${x.a} ${x.job}, and it's no life for the idle.`,
+    x => `You've caught me at work. ${x.A} ${x.job} is always at work.`,
+    x => `Since you're family, you can be useful. I'm ${x.a} ${x.job}, and I'm a pair of hands short.`,
+    x => `Being ${x.a} ${x.job} looks easy from where you're standing. Everything does, from standing.`,
+    x => `Nobody ever got rich as ${x.a} ${x.job}, but nobody ever got bored either.`,
+    x => `My father said ${x.a} ${x.job} never starves. He said nothing about ever sitting down.`,
+    x => `You want to know your family? Then know the work. I'm ${x.a} ${x.job}.`,
+    x => `There's no such thing as a guest in this house. I'm ${x.a} ${x.job}, and today so are you.`,
+  ],
+  // [C-01] the day's work is done
+  paid: ['Not bad. Not bad at all, for somebody who talks like you do. Here, you\'ve earned it.', 'Well, nothing\'s broken and nobody\'s dead. I\'ve paid for worse. Here.', 'You\'ve done a day\'s work in half a day. Don\'t tell anybody, or they\'ll all want you. Take this.',
+    'I\'d not have believed it of somebody with hands that soft. There\'s your money.', 'That\'ll do. That is high praise in this family, by the way. Here\'s what you\'re owed.', 'You work like one of us: no fuss, no thanks, and done before dark. Go on, take it.',
+    'Fair\'s fair, and you did the job. Count it if you like. I would.', 'I\'ve had hired hands twenty years who never shifted like that. Mind, they had no contraption. Your pay.'],
+  // [C-02] to [C-06] the job goes wrong at the end
+  twistCatch: ['My pay! He\'s had my pay! Don\'t just sit there!', 'Stop him! That\'s a week\'s wages running off on somebody else\'s legs!'],
+  twistChase: ['That was no accident. Go on, give it some of its own back.', 'He did that on purpose! Well? You\'ve wheels of your own. Use them.'],
+  twistGoto: ['See that fellow? He wants my trade. Get there before him and put my name down.', 'That weasel is after tomorrow\'s work. Beat him to it, and don\'t be polite about it.'],
+  twistCollect: ['You\'ve left half of it in the road. Back you go.', 'Well, that\'s the load all over the lane. It won\'t pick itself up. I\'ve waited to see.'],
+  twistEscape: [w => `Now you've done it. Don't stop, and don't give them my name.`, w => `That's ${w.law} looking this way. Drive on. If anybody asks, we've never met, which is very nearly true.`],
+  // [D-99] the running total, and where next. Each is [tally, lead-in to the next ancestor]. x = { n, total }
+  tally: [
+    [x => `Proof ${x.n} of ${x.total}.`, 'Next:'],
+    [x => `That's ${x.n} of ${x.total} in the folder.`, 'Now for'],
+    [x => `${cap(x.word)} down, out of ${x.total}.`, 'Don\'t get comfortable:'],
+    [x => `Proof number ${x.n}. I've put a ribbon round it.`, 'Onwards, dear:'],
+    [x => `${cap(x.word)} proven of ${x.total}, and I've stopped biting my nails. Nearly.`, 'Next stop:'],
+    [x => `I make that ${x.n} out of ${x.total}.`, 'Have a biscuit, then'],
+    [x => `${cap(x.word)} of ${x.total}, and he'll be spitting feathers.`, 'Further back we go:'],
+  ],
+  // [E-01] [E-02] [E-03] [E-04] the chapter closes. x = { n, next, hero }
+  fume: ['Lodged? LODGED? One page, and they have it in a folder with a ribbon round it.', 'Again! That ridiculous car, and that ridiculous old woman.', 'How do they always know where to look? They must be family. They must actually care.',
+    'Do you know what it costs to keep a van in four centuries, Mr Lowe? Do you?', 'Beaten. By an estate car. With WOOD on the sides, Mr Lowe.', 'I had it in my hand. One page. And then that dreadful mustard colour in the mirror.', 'Don\'t say it, Mr Lowe. Don\'t count. I can see you counting.'],
+  count: [
+    x => `That's ${x.n} link${x.n === 1 ? '' : 's'} of the chain proven, sir. If they reach the top of the tree...`,
+    x => `I've done the sum, sir. It's ${x.n} now. I did it twice, hoping for a smaller number.`,
+    x => `${cap(x.word)} proven, sir. I've had to start a second page in the losses ledger.`,
+    x => `That makes ${x.n}, sir. And the hire company has written again about the vans.`,
+    x => `${cap(x.word)}, sir. I don't wish to alarm you. I only wish to be alarmed in company.`,
+    x => `They have ${x.n} link${x.n === 1 ? '' : 's'} now, sir. At this rate they will have a whole family, and we shall have a great deal of grey paint.`,
+    x => `${cap(x.word)}, sir. I only mention it because you asked me not to.`,
+  ],
+  further: [
+    x => `They won't reach the top. We go further back. ${x.next}. Before they've even worked out where.`,
+    x => `Then we stop being clever and start being early. ${x.next}. Fetch my coat.`,
+    x => `Further back, Mr Lowe. The ink is older there, and old ink lifts beautifully. ${x.next}.`,
+    x => `One page is nothing. A family is a chain, and I need only one link. ${x.next}.`,
+    x => `Let them have it. They cannot be in two centuries at once, and we have an office in every one. ${x.next}.`,
+    x => `Stop quivering and wind the Engine. ${x.next}. And tell the men to look less grey. No. More grey.`,
+  ],
+  farewell: [
+    x => `Mind how you go, ${x.hero}. Whoever you are, you've the family look about you.`,
+    x => `Go careful, ${x.hero}. And come again, when you can tell me whose you are.`,
+    x => `I still don't know where you fit, ${x.hero}. But there's a chair here for you whenever you want one.`,
+    x => `Off you go, then. You drive like a mad thing, ${x.hero}, but you're our mad thing.`,
+    x => `Safe home, ${x.hero}, wherever that is. I've a feeling it's a long way off.`,
+    x => `I'll tell the children about you, ${x.hero}. They'll not believe a word, but I'll tell them.`,
+    x => `Look after yourself, ${x.hero}. And that machine. I've grown almost fond of the smell.`,
+  ],
+  // [V-01] [V-02] Family favours, heard up to a dozen times. x = { c, name, rel, job, whose, poss, He, he }
+  favourAsk: [
+    x => `You're the one ${x.c} has been telling everybody about. I'm ${x.name}, ${x.poss} ${x.rel}${x.job}. Since you're stopping: `,
+    x => `So you're the stranger with the contraption. I'm ${x.name}, ${x.whose} ${x.rel}${x.job}. ${x.c} says you're handy. Prove it. `,
+    x => `${x.c} says you're family. I'm ${x.name}, ${x.poss} ${x.rel}${x.job}, and in this family that means work. `,
+    x => `I'm ${x.name}${x.job}: ${x.whose} ${x.rel}. You'll have heard about me. None of it's true. Now, while you're here: `,
+    x => `Ah, the famous cousin. ${x.name}, ${x.whose} ${x.rel}${x.job}. I've a job that wants doing, and you've wheels. `,
+    x => `You'll be the one who turned up from nowhere. I'm ${x.name}, ${x.whose} ${x.rel}${x.job}. Nowhere must be short of work, so: `,
+    x => `${x.name}. ${cap(x.poss)} ${x.rel}${x.job}. ${x.c} never mentioned you, which in this family is a compliment. Could you do a thing for me? `,
+    x => `Is that the machine everybody's talking about? I'm ${x.name}, ${x.whose} ${x.rel}${x.job}. Don't tell me how it works. Tell me if it carries. `,
+    x => `I'm ${x.name}, ${x.poss} ${x.rel}${x.job}. They say you'll help anybody who asks. I'm asking. `,
+    x => `You must be the relation nobody can place. ${x.name}, ${x.whose} ${x.rel}${x.job}. We'll place you later. First: `,
+    x => `${x.c} sent you? No? Well, you're here now. I'm ${x.name}, ${x.poss} ${x.rel}${x.job}, and I'm in a fix. `,
+    x => `Any kin of ${x.c} is kin of mine, I suppose. ${x.name}, ${x.poss} ${x.rel}${x.job}. Kin help each other, or so I'm always being told. `,
+    x => `I'm ${x.name}${x.job}. ${x.whose} ${x.rel}, for my sins. You look like somebody with time on their hands. `,
+    x => `You've the family ears, so I'll not ask who you are. ${x.name}, ${x.whose} ${x.rel}${x.job}. I will ask a favour. `,
+  ],
+  favourDone: [
+    x => `That's a kindness I'll not forget. Mind, I couldn't tell you what you are to me. Something with a deal of greats in it, I'd say.`,
+    x => `Well, that's done, and done well. Whatever branch you fell off, it's a good one.`,
+    x => `I'm obliged to you. If you're ever back this way, there's a seat at our table. You'll have to fight for it, mind.`,
+    x => `You've a useful pair of hands. That'll be our side of the family coming out.`,
+    x => `Thank you. I'll tell ${x.c} you're all right. ${x.He}'ll say ${x.he} knew it first.`,
+    x => `Done already? I shall have to think of something harder next time. Go on, with my thanks.`,
+    x => `There. I knew ${x.c} kept good company. Don't tell ${x.him} I said so.`,
+    x => `You've saved me a day and a sore back. I'd offer you a bed, but there are six in it as it is.`,
+    x => `Much obliged. I still say that machine's unnatural. Handy, though.`,
+    x => `Well, I never. And not a scratch on anything. You're wasted on whatever it is you do.`,
+    x => `That's a weight off. Come by at Christmas. We need somebody the children haven't heard all the stories from.`,
+    x => `Good. Now go before somebody else finds you a job. They will, you know. Word gets round.`,
+    x => `Bless you. I'd say you take after ${x.c}, but you were quicker about it.`,
+    x => `All done? Then you've earned this, and my good opinion, which is the rarer of the two.`,
+  ],
 };
 function eraWords(year) {
   return {
@@ -5823,17 +6088,17 @@ function chooseChapters(tree, data, now) {
 
 // ---------------- Mission text ----------------
 const DAY_JOBS = {
-  haul: c => ({ title: 'Three Loads', ask: `Three loads from ${c.works} down to ${c.hub} before the hooter goes. Every one that's late is a day's pay docked, and I've none to spare. Thy contraption looks strong enough.`,
+  haul: c => ({ title: 'Three Loads', ask: `Three loads from ${c.works} down to ${c.hub} before the hooter goes. Every one that's late is a day's pay docked, and I've none to spare. That contraption of yours looks strong enough, if ugly.`,
     steps: [{ t: 'carry', from: 'works', to: 'hub', n: 3, label: /potter|kiln/.test(c.jobL) ? 'crates of pots' : /iron|steel|forge|puddl|foundry/.test(c.jobL) ? 'loads of pig iron' : /quarr|brick/.test(c.jobL) ? 'loads of stone' : 'loads of coal', timed: 1.25, text: `Haul three loads from ${c.works} to ${c.hub}` }] }),
   cloth: c => ({ title: 'Cut From the Same Cloth', ask: `Two pieces of finished cloth to go to the draper in ${c.market}. Finished, mind. One splash of muck and it comes out of my wages, so drive it like it was a christening gown.`,
     steps: [{ t: 'carry', from: 'works', to: 'market', n: 2, label: 'pieces of cloth', gentle: true, timed: 1.5, text: `Take the cloth from ${c.works} to ${c.market} without a bump` }] }),
   haulB: c => ({ title: 'Runaway Tubs', ask: `A string of tubs has broken loose from ${c.works} and gone rattling off down the town. Six of them, loaded. Catch every one before something catches them, and the gaffer need never know.`,
     steps: [{ t: 'collect', around: 'works', radius: 17, n: 6, label: 'runaway tubs', timed: 1.5, text: `Catch the runaway tubs near ${c.works}` }] }),
-  clothB: c => ({ title: 'The Knocker-Up', ask: `Half the street is still abed and the gates shut on the stroke. Anybody locked out loses the day. Go round and rattle every window, then be at ${c.works} before the hooter.`,
+  clothB: c => ({ title: 'The Knocker-Up', ask: `Half the street is still abed and the gates shut on the stroke. Anybody locked out loses the day. Go round and rattle every window, then be at ${c.works} before they close. They'll curse you. Take it as thanks.`,
     steps: [{ t: 'race', stops: ['pub', 'school', 'post', 'farm', 'works'], timed: 1.15, text: `Wake the street and reach ${c.works} before the hooter` }] }),
-  farmB: c => ({ title: 'Market Day', ask: `Two churns for ${c.market}, and they'll not keep in this heat. Mind the ruts, mind the dog, and mind you get a fair price.`,
+  farmB: c => ({ title: 'Market Day', ask: `Two churns for ${c.market}, and they'll not keep in this heat. Mind the ruts, mind the dog, and mind you get a fair price. If it's butter when you get there, you went too fast.`,
     steps: [{ t: 'carry', from: 'farm', to: 'market', n: 2, label: 'milk churns', timed: 1.2, text: `Take the churns from ${c.farm} to ${c.market}` }] }),
-  serveB: c => ({ title: 'The Mistress Is Out', ask: `The mistress is to be driven to church and the coachman's nowhere. Somebody in a grey coat stood him a drink. She notices every bump, mind. Every one.`,
+  serveB: c => ({ title: 'The Mistress Is Out', ask: `The mistress is to be driven to church and the coachman's nowhere. A grey stranger stood him a drink, and then several more. She notices every bump, mind. Every one.`,
     steps: [{ t: 'carry', from: 'home', to: 'church', n: 1, label: 'passenger', passenger: 'the mistress', gentle: true, timed: 1.5, text: 'Drive the mistress to church without a bump' }] }),
   armsB: c => ({ title: 'Absent Without Leave', ask: `One of my lads has taken the shilling and then taken to his heels, in a borrowed grey coat. He was last seen by ${c.pub}. Bring him back on his own feet, if you please.`,
     steps: [{ t: 'catch', from: 'pub', label: 'the deserter', drop: 'the deserter by the collar', text: `Catch the deserter near ${c.pub}, on foot` }] }),
@@ -5849,17 +6114,17 @@ const DAY_JOBS = {
     steps: [{ t: 'carry', from: 'school', to: 'farm', n: 2, label: 'children', passenger: 'the children', gentle: true, timed: 1.6, text: `Take the children to ${c.farm}, smoothly` }] }),
   craftB: c => ({ title: 'Tools of the Trade', ask: `Some comedian in a grey apron has had my tool bag and scattered the lot between here and ${c.market}. Every one of those cost me a week's wage. Find them.`,
     steps: [{ t: 'collect', around: 'works', radius: 15, n: 7, label: 'crates of tools', timed: 1.5, text: 'Find the scattered tools' }] }),
-  seaB: c => ({ title: 'Pots and Lines', ask: `The pots came adrift on the tide and they're strewn the length of the quay road. Fetch them in before somebody else does.`,
+  seaB: c => ({ title: 'Pots and Lines', ask: `The pots came adrift on the tide and they're strewn the length of the quay road. Fetch them in before somebody else does. Anything still inside them is supper.`,
     steps: [{ t: 'collect', around: 'hub', radius: 15, n: 6, label: 'crates of pots', timed: 1.5, text: `Gather the pots near ${c.hub}` }] }),
   gentryB: c => ({ title: 'Leaving Cards', ask: `One calls, one leaves a card, one goes. Five houses before luncheon. You will hand in the cards. I shall remain in the vehicle and be seen.`,
     steps: [{ t: 'race', stops: ['church', 'hall', 'school', 'infirmary', 'home'], timed: 1.3, text: 'Leave cards at five houses before luncheon' }] }),
-  farm: c => ({ title: 'Gone Astray', ask: `Somebody in a grey coat left the gate open and every beast I own is out on the lane. Round them up, then take the cart to ${c.market} before the dealers go home.`,
+  farm: c => ({ title: 'Gone Astray', ask: `Somebody in a grey coat left the gate open and every beast I own is out on the lane. Round them up, then take the cart to ${c.market} before the dealers go home. The brown one bites.`,
     steps: [{ t: 'collect', around: 'farm', radius: 15, n: 6, label: c.year < 1800 ? 'pigs' : 'sheep', timed: 1.6, text: `Round up the strays near ${c.farm}` }, { t: 'carry', from: 'farm', to: 'market', n: 1, label: 'cart of produce', timed: 1.3, text: `Get the cart to ${c.market}` }] }),
   serve: c => ({ title: 'Below Stairs', ask: `The mistress wants the whole list fetched before she rings for tea, and she rings early when she's vexed. I can't be in four places at once. Can you?`,
     steps: [{ t: 'race', stops: ['market', 'post', 'pub', 'infirmary', 'home'], timed: 1.2, text: 'Fetch everything on the list and get back before the bell' }] }),
   sea: c => ({ title: 'Fresh Today', ask: `Two boxes off the boat and they want to be in ${c.market} while they still smell of the sea and not of Friday. Go on, shift.`,
     steps: [{ t: 'carry', from: 'hub', to: 'market', n: 2, label: 'boxes of fish', timed: 1.1, text: `Rush the catch from ${c.hub} to ${c.market}` }] }),
-  rail: c => ({ title: 'The Round', ask: `Bags for ${c.post}, ${c.hall}, the school and ${c.pub}, and the timetable waits for nobody. I'll ride along and shout if you're late.`,
+  rail: c => ({ title: 'The Round', ask: `Bags for ${c.post}, ${c.hall}, the school and ${c.pub}, and the timetable waits for nobody. I'll ride along and shout if you're late. I'll shout if you're early, too. It's expected.`,
     steps: [{ t: 'race', stops: ['hub', 'post', 'hall', 'school', 'pub'], timed: 1.15, text: 'Do the round before the timetable catches you' }] }),
   shop: c => ({ title: 'Orders Out', ask: `Five orders, five doors, and every one of them expects it before dinner. A shop lives on its name. Don't lose me mine.`,
     steps: [{ t: 'race', stops: ['pub', 'school', 'infirmary', 'church', 'farm'], timed: 1.2, text: 'Deliver all five orders' }] }),
@@ -5887,74 +6152,74 @@ const SCHEME_MECH = { search: 'search', bribe: 'goto', lure: 'chase', letters: '
 const SCHEMES = {
   search: p => { const { c, N, spots } = p; return {
     mech: 'search', name: 'the false alarm',
-    note: `Hargreaves's people have been at the house with a story about a fire at ${N[spots[1]]}, and ${c.first} has gone running. Try the house first, then ${N[spots[1]]}, then ${N[spots[2]]}.`,
-    steps: [{ t: 'search', spots, miss: { 0: `Nobody in. A neighbour says a man in grey shouted "Fire!" and ${c.first} ran off towards ${N[spots[1]]}.`, 1: `No fire here, and no ${c.first}. "Try ${N[spots[2]]}," says somebody, without looking up.`, 2: `Not here either. "Gone to ${N[spots[1]]}, I should think."` }, text: `Find ${c.first}` }],
+    note: `Hargreaves's people have been at the house with a story about a fire at ${N[spots[1]]}, and ${c.first} has gone running. Try the house first, then ${N[spots[1]]}, then ${N[spots[2]]}. There is no fire. There is never a fire. There is only ever Silas.`,
+    steps: [{ t: 'search', spots, miss: { 0: `Nobody in. A neighbour says a man in grey shouted "Fire!" and ${c.first} ran off towards ${N[spots[1]]}. "He didn't run himself, I noticed," she adds.`, 1: `No fire here, no smoke, and no ${c.first}. "Try ${N[spots[2]]}," says somebody, without looking up from a pie.`, 2: `No sign of ${c.him}. "Went by with a bucket," says a child. "Towards ${N[spots[1]]}. I'd have gone too, but I'm not allowed."` }, text: `Find ${c.first}` }],
     talkAt: '@found',
-    wary: `Some joker in grey sent me running across town for a fire that never was. I'll not be made a fool of twice.`,
-    cut: [`A false alarm, Mr Lowe. Shout "fire" and ${c.first} runs, and an empty house has no witnesses.`, `And while ${c.he}'s away, sir?`, `While ${c.he}'s away, the page goes.`],
+    wary: `Some joker in grey sent me running across town for a fire that never was. I took a bucket. I'll not be made a fool of twice in one day.`,
+    cut: [`A false alarm, Mr Lowe. Shout "fire" and ${c.first} runs, and an empty house has no witnesses.`, `Should I bring an actual fire, sir? For authenticity?`, `Bring a loud voice. While ${c.he}'s away, the page goes.`],
   }; },
   bribe: p => { const { c, N } = p; return {
     mech: 'catch', name: 'the bought clerk',
-    note: `Hargreaves has bought the parish clerk. The minute ${N.hall} is empty he means to cut ${c.first}'s entry out with a penknife. Get there first, and if he runs, run faster.`,
+    note: `Hargreaves has bought the parish clerk. The minute ${N.hall} is empty he means to cut ${c.first}'s entry out with a penknife. Get there first, and if he runs, run faster. He's a clerk. It shouldn't be hard.`,
     steps: [{ t: 'goto', at: 'hall', timed: 1.15, text: `Get to ${N.hall} before the clerk does his work` },
       { t: 'catch', from: 'hall', label: 'the bought clerk', drop: `${c.first}'s page, folded in his hat`, time: 55, speed: 4.6, text: 'The clerk is away with the page. Catch him on foot' },
       { t: 'goto', at: 'home', text: `Take the page back to ${c.first}` }],
     talkAt: 'home',
-    wary: `The parish clerk, of all people. Thirty years I've known that man, and he'd sell my name for a sovereign. I'll trust nobody now who can't tell me something only kin would know.`,
-    cut: [`Every man has his price, Mr Lowe. The parish clerk's is a sovereign and a new hat.`, `He'll cut the page out himself, sir?`, `With his own penknife. Nobody suspects the clerk.`],
+    wary: `The parish clerk, of all people. Thirty years I've known that man, and he'd sell my name for a sovereign and a hat. It wasn't even a good hat.`,
+    cut: [`Every man has his price, Mr Lowe. The parish clerk's is a sovereign and a new hat.`, `A hat, sir? Shall I get a receipt for the hat?`, `No receipts. He'll cut the page out with his own penknife. Nobody suspects the clerk.`],
   }; },
   lure: p => { const { c, N, w, workLot } = p; return {
     mech: 'chase', name: 'the lift',
-    note: `An hour ago a ${w.van} stopped beside ${c.first} and offered ${c.him} a lift. Nobody has seen ${c.him} since. Find that ${w.van.replace(/^grey /, '')} and stop it.`,
+    note: `An hour ago a ${w.van} stopped beside ${c.first} and offered ${c.him} a lift. Nobody has seen ${c.him} since. Find that ${w.van.replace(/^grey /, '')} and stop it. I don't mind how. I'd rather not know how.`,
     steps: [{ t: 'chase', from: workLot, hp: 3, slow: true, label: `the ${w.van}`, drop: `${c.first} out of the back of it, cross and dizzy`, text: `Stop the ${w.van} with ${c.first} in the back` },
-      { t: 'carry', from: workLot, to: 'home', n: 1, label: 'passenger', passenger: c.first, who: c.id, gentle: true, text: `${c.first} has walked back to ${N[workLot]} for ${c.his} things. Drive ${c.him} home, gently`, bark: { who: c.id, text: `I've been in one cart today against my will. Go steady in this one.` } }],
+      { t: 'carry', from: workLot, to: 'home', n: 1, label: 'passenger', passenger: c.first, who: c.id, gentle: true, text: `${c.first} has walked back to ${N[workLot]} for ${c.his} things. Drive ${c.him} home, gently`, bark: { who: c.id, text: `I've been carried off once today already. Go steady in this one, and warn me before you turn.` } }],
     talkAt: 'home',
-    wary: `A nice man offered me a lift, and the next thing I know I'm halfway to nowhere in the back of a box. I'll not be kind to strangers again in a hurry.`,
-    cut: [`No book, no page, no ink. We simply take ${c.first} for a little drive.`, `A drive, sir? Where to?`, `Somewhere nobody thinks to write anything down. Out of the record, out of the world.`],
+    wary: `A nice man offered me a lift, and the next thing I know I'm halfway to nowhere in the back of a box. That's the last time I'm civil to a stranger.`,
+    cut: [`No book, no page, no ink. We simply take ${c.first} for a little drive.`, `A drive, sir? Where to? I only ask because of the mileage.`, `Somewhere nobody thinks to write anything down. Out of the record, out of the world.`],
   }; },
   letters: p => { const { c, N, workLot } = p; return {
     mech: 'collect', name: 'the scattered letters',
-    note: `Hargreaves's men broke into ${c.first}'s house in the night and threw every family letter out of the window. Gather them up: one of them will say where ${c.he} has gone.`,
+    note: `Hargreaves's men broke into ${c.first}'s house in the night and threw every family letter out of the window. Gather them up: one of them will say where ${c.he} ${c.he === 'they' ? 'have' : 'has'} gone. Don't read the love letters. Well. Skim.`,
     steps: [{ t: 'collect', around: 'home', radius: 14, n: 6, label: 'family letters', timed: 1.45, text: `Gather the family letters blowing round ${c.first}'s house` },
       { t: 'goto', at: workLot, text: `The last letter says ${c.first} is at ${N[workLot]}` }],
     talkAt: workLot,
-    wary: `They had every letter I own out of the drawer and into the street. My mother's hand, my sweetheart's. I'll not talk family with anybody who can't prove they're family.`,
-    cut: [`Letters, Mr Lowe. People keep letters. Letters prove who is whose.`, `So we burn them, sir?`, `Burning is for amateurs. We scatter them. Nobody believes a letter found in the gutter.`],
+    wary: `They had every letter I own out of the drawer and into the street. My mother's hand, my sweetheart's. Half the road has read things I'd not have told my own pillow.`,
+    cut: [`Letters, Mr Lowe. People keep letters. Letters prove who is whose.`, `So we burn them, sir? I've brought matches. I've also brought a bucket, in case.`, `Burning is for amateurs. We scatter them. Nobody believes a letter found in the gutter.`],
   }; },
   gossip: p => { const { c, N, workLot } = p; const stops = [...new Set(['pub', 'market', 'church', 'post'])].filter(k => k !== workLot).slice(0, 3); return {
     mech: 'race', name: 'the rumour',
-    note: `Hargreaves has put it about that ${c.first} died last week. By tonight somebody will write it down and then it's true. Get round ${N[stops[0]]}, ${N[stops[1]]} and ${N[stops[2]]} and tell everybody otherwise, then find ${c.first}.`,
+    note: `Hargreaves has put it about that ${c.first} died last week. By tonight somebody will write it down, and then it's true. Get round ${N[stops[0]]}, ${N[stops[1]]} and ${N[stops[2]]} and tell everybody otherwise. Then find ${c.first}, who I imagine is livid.`,
     steps: [{ t: 'race', stops, timed: 1.2, text: `Stop the rumour: ${N[stops[0]]}, ${N[stops[1]]} and ${N[stops[2]]}, quickly` },
       { t: 'goto', at: workLot, text: `Find ${c.first} at ${N[workLot]}, alive and well` }],
     talkAt: workLot,
-    wary: `Half the town's been round with flowers. Apparently I'm dead. I've never felt better, and I'd like to know who's been telling folk otherwise.`,
-    cut: [`Why erase a life when you can simply end it on paper? A word in the right ear, Mr Lowe.`, `That ${c.first} is dead, sir?`, `Dead and buried by teatime. Nobody looks for a dead woman's birth.`.replace('woman', c.sex === 'F' ? 'woman' : c.sex === 'M' ? 'man' : 'person')],
+    wary: `Half the town's been round with flowers. Apparently I'm dead. I've never felt better, and somebody has already asked about my boots.`,
+    cut: [`Why erase a life when you can simply end it on paper? A word in the right ear, Mr Lowe.`, `That ${c.first} is dead, sir? Should we send flowers? It seems only polite.`, `Send them. It adds conviction. Dead and buried by teatime, and nobody looks for a dead woman's birth.`.replace('woman', c.sex === 'F' ? 'woman' : c.sex === 'M' ? 'man' : 'person')],
   }; },
   forgery: p => { const { c, N } = p; return {
     mech: 'tail', name: 'the forger',
-    note: `Hargreaves has had the register copied out with ${c.first} left out of it, and his forger is in town to swap the books. He's just left ${N.hall} with a parcel. Follow him and he'll lead you to the real one. Don't let him see you.`,
+    note: `Hargreaves has had the register copied out with ${c.first} left out of it, and his forger is in town to swap the books. He's just left ${N.hall} with a parcel. Follow him and he'll lead you to the real one. Don't let him see you. Think inconspicuous thoughts.`,
     steps: [{ t: 'tail', from: 'hall', via: ['market'], to: 'church', text: `Follow the forger to wherever he is swapping the books` },
       { t: 'catch', from: 'church', label: 'the forger', drop: 'the forged register', time: 50, text: 'He has seen you. Catch him before he burns the evidence' }],
     talkAt: 'church',
-    wary: `A man swapped our parish book for one with my name missing. I watched him do it and thought he was the verger. I'll trust nobody's face again.`,
-    cut: [`My forger has made a lovely copy of the register, Mr Lowe. Every page exactly the same.`, `Every page, sir?`, `Every page but one. ${c.first} was never born, according to the new book.`],
+    wary: `A man swapped our parish book for one with my name missing. I watched him do it and thought he was the verger. I held the door for him.`,
+    cut: [`My forger has made a lovely copy of the register, Mr Lowe. Every page exactly the same.`, `Every page, sir? Even the blots?`, `Even the blots. Every page but one. According to the new book, ${c.first} was never born.`],
   }; },
   siege: p => { const { c, N, w } = p; const cart = c.year < 1900 ? 'cart' : c.year < 1950 ? 'lorry' : 'van'; return {
     mech: 'defend', name: 'the siege',
-    note: `The ${w.van}s have been circling ${c.first}'s house since dawn. ${cap(c.he)}'s loading the family's papers onto a ${cart} to take to ${N.church} for safe keeping. Ride alongside and keep them off.`,
+    note: `The ${w.van}s have been circling ${c.first}'s house since dawn. ${cap(c.he)}'s loading the family's papers onto a ${cart} to take to ${N.church} for safe keeping. Ride alongside and keep them off. You have my permission to be rude.`,
     steps: [{ t: 'defend', from: 'home', to: 'church', hp: 9, waves: 4, text: `Keep the ${w.van}s off ${c.first}'s ${cart} all the way to ${N.church}` }],
     talkAt: 'church',
-    wary: `Grey ${w.van}s round my door since first light, and now a stranger who drives like a lunatic. Thank you for that, by the way. But I'll still need proof.`,
-    cut: [`If the archivist's driver wants the page so badly, Mr Lowe, we shall take the house.`, `The whole house, sir?`, `Every ${w.van} we have, round every door. Nothing leaves without our say.`],
+    wary: `${cap(w.van)}s round my door since first light, and now a stranger who drives like a lunatic. Thank you for that, by the way. It doesn't mean I trust you.`,
+    cut: [`If the archivist's driver wants the page so badly, Mr Lowe, we shall take the house.`, `The whole house, sir? We've only the one form for that.`, `Every ${w.van} we have, round every door. Nothing leaves without our say.`],
   }; },
 };
 // A day's work that is over in one act gets a second, and never the same kind as the work or the meeting.
 const DAY_TWISTS = {
-  catch: (end, c) => ({ t: 'catch', from: end, label: 'a pickpocket in a grey cap', drop: 'the day\'s pay', time: 45, text: 'A pickpocket in a grey cap has the day\'s pay. After him', bark: { who: c.id, text: `My pay! He's had my pay! Don't just sit there!` } }),
-  chase: (end, c, w) => ({ t: 'chase', from: end, hp: 2, slow: true, label: `the ${w.van}`, drop: 'seen it off', text: `A ${w.van} rammed the last load on purpose. Run it off the road`, bark: { who: c.id, text: `That was no accident. Go on, give it some of its own back.` } }),
-  goto: (end, c) => ({ t: 'goto', at: end === 'pub' ? 'post' : 'pub', rival: true, text: `A rival is after tomorrow's work. Beat him to the ${end === 'pub' ? 'post office' : 'pub'} to put in your name first`, bark: { who: c.id, text: `See that fellow? He wants my trade. Get there before him and put my name down.` } }),
-  collect: (end, c) => ({ t: 'collect', around: end, radius: 9, n: 4, label: 'spilled crates', timed: 1.5, text: 'The tailboard came down at the last corner. Pick up what fell off', bark: { who: c.id, text: `You've left half of it in the road. Back you go.` } }),
-  escape: (end, c) => ({ t: 'escape', heat: 1.1, text: 'You were seen driving like that. Lose the law before they take your name', bark: { who: c.id, text: `Now you've done it. Don't stop, and don't give them my name.` } }),
+  catch: (end, c, w, deal) => ({ t: 'catch', from: end, label: 'a pickpocket in a grey cap', drop: 'the day\'s pay', time: 45, text: 'A pickpocket in a grey cap has the day\'s pay. After him', bark: { who: c.id, text: deal('twistCatch', LINES.twistCatch) } }),
+  chase: (end, c, w, deal) => ({ t: 'chase', from: end, hp: 2, slow: true, label: `the ${w.van}`, drop: 'seen it off', text: `A ${w.van} rammed the last load on purpose. Run it off the road`, bark: { who: c.id, text: deal('twistChase', LINES.twistChase) } }),
+  goto: (end, c, w, deal) => ({ t: 'goto', at: end === 'pub' ? 'post' : 'pub', rival: true, text: `A rival is after tomorrow's work. Beat him to the ${end === 'pub' ? 'post office' : 'pub'} to put in your name first`, bark: { who: c.id, text: deal('twistGoto', LINES.twistGoto) } }),
+  collect: (end, c, w, deal) => ({ t: 'collect', around: end, radius: 9, n: 4, label: 'spilled crates', timed: 1.5, text: 'The tailboard came down at the last corner. Pick up what fell off', bark: { who: c.id, text: deal('twistCollect', LINES.twistCollect) } }),
+  escape: (end, c, w, deal) => ({ t: 'escape', heat: 1.1, text: 'You were seen driving like that. Lose the law before they take your name', bark: { who: c.id, text: deal('twistEscape', LINES.twistEscape)(w) } }),
 };
 
 // Loads that are not fragile can fall off; anything against the clock has spare seconds lying about.
@@ -5966,7 +6231,10 @@ function spice(job) {
   return job;
 }
 const NUM = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty'];
-function quizFor(c, cast, rnd) {
+// The clue is dropped twice before the question is asked: the ancestor says it ([A-Q]) and Dorothy's note repeats it ([B-Q]).
+function quizFor(c, cast, rnd, deal, asked = {}) {
+  const they = c.he === 'they', He = cap(c.he), His = cap(c.his), be = they ? "'re" : "'s";
+  const pick = (id, list) => deal('quiz-' + id, list);
   const opts = (right, pool) => {
     const wrong = [...new Set(pool.filter(x => x && x !== right))];
     for (let i = wrong.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [wrong[i], wrong[j]] = [wrong[j], wrong[i]]; }
@@ -5974,24 +6242,33 @@ function quizFor(c, cast, rnd) {
     for (let i = options.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [options[i], options[j]] = [options[j], options[i]]; }
     return options.length >= 3 ? { options, answer: options.indexOf(right) } : null;
   };
-  const qs = [];
+  const qs = [], ask = (kind, f) => qs.push([kind, f]);
   const mother = c.mother, father = c.father;
   const wed = c.year >= (c.marriageYear || 0);
-  if (mother?.surname && mother.surname !== c.surname) qs.push(() => ({ q: 'What was my mother\'s name before she wed?', ...opts(mother.surname, cast.surnames),
-    said: `My mother was a «${mother.surname}» before she wed, and she never let my father forget it.`, told: `${cap(c.his)} mother was a ${mother.surname} before she married. ${cap(c.he)}'s prouder of that side than ${c.he} lets on.` }));
-  if (father) qs.push(() => ({ q: 'What is my father\'s Christian name?', ...opts(firstName(father), cast.maleNames),
-    said: `My father, «${firstName(father)}», always said a good name is worth more than a full purse.`, told: `${cap(c.his)} father was ${firstName(father)}, and ${c.he} quotes him at every turn.` }));
-  if (c.spouse) qs.push(() => ({ q: `Who ${wed ? 'did I marry' : 'am I walking out with'}?`, ...opts(displayName(c.spouse), cast.names),
-    said: wed ? `«${displayName(c.spouse)}» will want ${c.sex === 'F' ? 'his' : c.sex === 'M' ? 'her' : 'their'} tea, and I've not set foot in the kitchen.` : `I'm walking out with «${displayName(c.spouse)}», if you must know, and the whole street does know.`,
-    told: wed ? `${cap(c.he)}'s married to ${displayName(c.spouse)}.` : `${cap(c.he)}'s walking out with ${displayName(c.spouse)}, and the whole street knows it.` }));
-  if (c.byKnown) qs.push(() => ({ q: 'What year was I born?', ...opts(String(c.by), [c.by - 11, c.by + 7, c.by - 4, c.by + 13, c.by - 19].map(String)),
-    said: `Born in «${c.by}», I was, and my mother said it was the longest night of her life.`, told: `Born in ${c.by}, by the register.` }));
-  if (c.job) qs.push(() => ({ q: 'What do I do for my living?', ...opts(c.job, cast.jobs),
-    said: `A «${c.job.toLowerCase()}» gets no days off, whatever the solicitors are doing.`, told: `${cap(c.he)} works as a ${c.job.toLowerCase()}.` }));
-  if (c.town) qs.push(() => ({ q: 'Where was I born?', ...opts(c.town.name, cast.towns),
-    said: `I was born in «${c.town.name}», and they'll carry me out of «${c.town.name}» when the time comes.`, told: `${cap(c.he)} was born here in ${c.town.name} and has never left it for long.` }));
-  const order = qs.map((f, i) => [rnd(), f]).sort((a, b) => a[0] - b[0]);
-  for (const [, f] of order) { const z = f(); if (z.options) return z; }
+  if (mother?.surname && mother.surname !== c.surname) ask('mother', () => ({ kind: 'mother', q: 'What was my mother\'s name before she wed?', ...opts(mother.surname, cast.surnames),
+    said: pick('mother-said', [`My mother was a «${mother.surname}» before she wed, and she never let my father forget it.`, `Stubborn? I'm half «${mother.surname}», on my mother's side. We don't call it stubborn. We call it being right.`]),
+    told: pick('mother-told', [`${His} mother was a ${mother.surname} before she married. ${He}${be} prouder of that side than ${c.he} ${they ? 'let' : 'lets'} on.`, `The mother's maiden name was ${mother.surname}. It's in the register and, by all accounts, in ${c.his} temper.`]) }));
+  if (father) ask('father', () => ({ kind: 'father', q: 'What is my father\'s Christian name?', ...opts(firstName(father), cast.maleNames),
+    said: pick('father-said', [`My father, «${firstName(father)}», always said a good name is worth more than a full purse.`, `My father «${firstName(father)}» had a saying for everything. Most of them were wrong, but he said them with great confidence.`]),
+    told: pick('father-told', [`${His} father was ${firstName(father)}, and ${c.he} ${they ? 'quote' : 'quotes'} him at every turn.`, `Father: ${firstName(father)}. Remember it. ${He} certainly ${they ? 'do' : 'does'}.`]) }));
+  if (c.spouse) ask('spouse', () => { const sp = displayName(c.spouse); return { kind: 'spouse', q: `Who ${wed ? 'did I marry' : 'am I walking out with'}?`, ...opts(sp, cast.names),
+    said: wed ? pick('wed-said', [`«${sp}» will want ${c.sex === 'F' ? 'his' : c.sex === 'M' ? 'her' : 'their'} tea, and I've not set foot in the kitchen.`, `If «${sp}» asks, I was home an hour ago. That's marriage for you: a long argument about what time it is.`])
+      : pick('court-said', [`I'm walking out with «${sp}», if you must know, and the whole street does know.`, `«${sp}» is calling for me Sunday. I haven't told a soul, so I expect the town crier has it by now.`]),
+    told: wed ? pick('wed-told', [`${He}${be} married to ${sp}, who is by all accounts the brains of the outfit.`, `Married to ${sp}. Happily, or near enough for the register.`])
+      : pick('court-told', [`${He}${be} walking out with ${sp}. It's meant to be a secret, so everybody has heard.`, `${He}${be} courting ${sp}. It isn't in any register yet, but the neighbours keep better records than I do.`]) }; });
+  if (c.byKnown) ask('year', () => ({ kind: 'year', q: 'What year was I born?', ...opts(String(c.by), [c.by - 11, c.by + 7, c.by - 4, c.by + 13, c.by - 19].map(String)),
+    said: pick('year-said', [`Born in «${c.by}», I was, and my mother said it was the longest night of her life.`, `I've been on this earth since «${c.by}», and tired since about a week after.`]),
+    told: pick('year-told', [`Born in ${c.by}, by the register. ${He} may knock a year or two off if asked. Don't be fooled.`, `Year of birth: ${c.by}. I found the entry myself, and it took a wet Thursday.`]) }));
+  if (c.job) ask('job', () => { const job = c.job.toLowerCase(), a = /^[aeiou]/.test(job) ? 'an' : 'a'; return { kind: 'job', q: 'What do I do for my living?', ...opts(c.job, cast.jobs),
+    said: pick('job-said', [`${cap(a)} «${job}» gets no days off, whatever the solicitors are doing.`, `I've been ${a} «${job}» since I was old enough to be shouted at. It's honest work, which is why it pays so badly.`]),
+    told: pick('job-told', [`${He} ${they ? 'work' : 'works'} as ${a} ${job}, and will tell you so at length.`, `Occupation: ${job}. A good one, too. I've looked for complaints and found hardly any.`]) }; });
+  if (c.town) ask('town', () => ({ kind: 'town', q: 'Where was I born?', ...opts(c.town.name, cast.towns),
+    said: pick('town-said', [`I was born in «${c.town.name}», and they'll carry me out of «${c.town.name}» when the time comes.`, `«${c.town.name}» born and «${c.town.name}» bred. I went somewhere else once. I didn't care for it.`]),
+    told: pick('town-told', [`${He} ${they ? 'were' : 'was'} born here in ${c.town.name} and ${they ? 'have' : 'has'} never left it for long.`, `Born in ${c.town.name}. ${He} ${they ? 'think' : 'thinks'} the rest of the world is a rumour.`]) }));
+  // shuffled, then the kinds of question this story has asked least come first
+  const order = qs.map(([kind, f]) => [rnd(), f, kind]).sort((a, b) => a[0] - b[0]);
+  order.sort((a, b) => (asked[a[2]] || 0) - (asked[b[2]] || 0));
+  for (const [, f] of order) { const z = f(); if (z.options) { asked[z.kind] = (asked[z.kind] || 0) + 1; return z; } }
   return null;
 }
 
@@ -6004,6 +6281,7 @@ function buildStory(data, rootId, opts = {}) {
   const tree = opts.tree || collectAncestors(data, rootId, opts.maxGen || 12);
   const rootP = tree.people.get(rootId);
   const rnd = seededRandom(hashString('story' + rootId + data.individuals.size));
+  const deal = dealer(hashString('lines' + rootId + data.individuals.size));   // its own shuffle, so the plot's dice are left alone
   const { chosen, est, spine, homeCountry, foreign } = chooseChapters(tree, data, now);
 
   const towns = new Map();
@@ -6106,51 +6384,59 @@ function buildStory(data, rootId, opts = {}) {
     id: 'final-notice', act: 'Prologue', title: 'Final Notice', town: home.id, year: present, giver: { who: 'auto' }, hour: 9,
     brief: 'A solicitor\'s letter, a ringing phone box and a car that should not exist.',
     intro: [
-      { who: 'letter', text: `FINAL NOTICE. Re: the dormant estate of ${estateOf}${benefactor.town && benefactor !== hero ? ', late of ' + benefactor.town.name : ''}. Unless a proven line of descent is lodged by the last day of the month, the estate passes to our client. No reply is necessary. Yours faithfully, S. Hargreaves, Hargreaves & Lowe, Probate Genealogists.` },
-      { who: 'note', text: `You have never heard of Hargreaves & Lowe. You have barely heard of ${benefactor === hero ? 'any estate' : benefactor.first}. ` + (present >= 1925 ? `Outside, ${H.phone} on the corner is ringing. Nobody rings phone boxes any more.` : `Outside, somebody has pinned a note to ${H.phone}, and it has your name on it.`) },
+      { who: 'letter', text: `FINAL NOTICE. Re: the dormant estate of ${estateOf}${benefactor.town && benefactor !== hero ? ', late of ' + benefactor.town.name : ''}. Unless a proven line of descent is lodged by the last day of the month, the estate passes to our client.` },
+      { who: 'letter', text: `No reply is necessary. No reply will be read. Yours faithfully, S. Hargreaves, Hargreaves & Lowe, Probate Genealogists.` },
+      { who: 'note', text: `You have never heard of Hargreaves & Lowe. You have barely heard of ${benefactor === hero ? 'any estate' : benefactor.first}. ` + (present >= 1925 ? `Outside, ${H.phone} on the corner is ringing. Nobody has rung it in twenty years, and it sounds surprised.` : `Outside, somebody has pinned a note to ${H.phone}, and it has your name on it. Spelled correctly, which is the worrying part.`) },
     ],
     steps: [
       { t: 'goto', at: 'phone', foot: true, text: present >= 1925 ? `Answer ${H.phone}` : `Read the note on ${H.phone}` },
       { t: 'talk', who: 'dot', at: 'phone', text: present >= 1925 ? `Answer ${H.phone}` : `Read the note on ${H.phone}`, lines: [
-        `Is that ${hero.first}? ${benefactor === hero ? 'The ' + surname + ' heir' : cap(benefactor.first) + '\'s ' + (benefactor.gen ? 'great-'.repeat(Math.max(0, benefactor.gen - 2)) + (benefactor.gen > 1 ? 'grandchild' : 'child') : 'heir')}? Thank heavens. Dorothy Pickering: County Archivist, retired, and family, though not from any year you would know.`,
+        `Is that ${hero.first}? ${benefactor === hero ? 'The ' + surname + ' heir' : cap(benefactor.first) + '\'s ' + (benefactor.gen ? 'great-'.repeat(Math.max(0, benefactor.gen - 2)) + (benefactor.gen > 1 ? 'grandchild' : 'child') : 'heir')}? Thank heavens. ${present >= 1925 ? 'I\'ve been ringing every phone box in the district.' : 'I\'ve pinned one of these to every board in the district.'}`,
+        `Dorothy Pickering: County Archivist, retired. And family, though not from any year you would know. I'll explain later. It won't help.`,
         `Don't sign anything. Silas Hargreaves doesn't find heirs. He removes them. Names are going out of the registers like chalk off a slate, and yours is next in the queue.`,
         `Come to my lock-up behind ${H.pub}. Tell nobody. Oh, and I do hope you can drive.`] },
       { t: 'goto', at: 'garage', text: `Go to ${H.garage}` },
       { t: 'talk', who: 'dot', at: 'garage', text: 'Talk to Dorothy', lines: [
-        `There she is. My late husband's estate car. We call her the Heirloom.`,
-        `I fitted the Parish Engine myself. It runs on register ink and it reads the road like a page. She turns the years back. Or she will, once she is mended: the time engine is dead, and it wants three parts before it will go. I was a very bored archivist.`,
-        `But first, ${H.hall}. I want the ${surname} file out of there before Hargreaves's people shred it. Get in, the door sticks.`,
-        `Not so fast, mind. Nobody takes my husband's car anywhere until I've seen them handle her. Round the streets, dear. I'll shout.`] },
+        `There she is. My late husband's estate car. We call her the Heirloom. He called her other things, mostly on hills.`,
+        `I fitted the Parish Engine myself. It runs on register ink and it reads the road like a page. She turns the years back.`,
+        `Or she will, once she is mended. The time engine is dead, and it wants three parts before it will go. I was a very bored archivist. Other people take up bowls.`,
+        `But first, ${H.hall}. I want the ${surname} file out of there before Hargreaves's people shred it. Get in. The door sticks. Everything sticks.`,
+        `Not so fast, mind. Nobody takes my husband's car anywhere until I've seen them handle her. Round the streets, dear. I'll shout. I'm good at it.`] },
       { t: 'drill', drills: ['speed', 'stop', 'reverse', 'slide', 'spin'], text: 'Driving lesson with Dorothy' },
-      { t: 'goto', at: 'hall', need: 'heirloom', text: `Drive the Heirloom to ${H.hall}`, bark: { who: 'dot', text: `You'll do. Now: ${H.hall}, and quickly.` } },
-      { t: 'chase', from: 'hall', hp: 4, slow: true, label: 'the grey van', drop: `the ${surname} file`, text: 'Ram the grey van until it drops the file. Any knock counts', bark: { who: 'dot', text: `Don't be gentle with it, dear. It's a hire van.` } },
+      { t: 'goto', at: 'hall', need: 'heirloom', text: `Drive the Heirloom to ${H.hall}`, bark: { who: 'dot', text: `You'll do. Now: ${H.hall}, and don't spare her.` } },
+      { t: 'chase', from: 'hall', hp: 4, slow: true, label: 'the grey van', drop: `the ${surname} file`, text: 'Ram the grey van until it drops the file. Any knock counts', bark: { who: 'dot', text: `Don't be gentle with it, dear. It's a hire van. Let him lose the deposit.` } },
     ],
-    outro: [{ who: 'dot', text: `One birth certificate: ${hero.name}${heroBirth?.date ? ', born ' + datePhrase(heroBirth.date) : ''}${hero.town ? ' in ' + hero.town.name : ''}. That's proof number one, and it proves you exist, which is a start. Now we go backwards, one generation at a time, faster than he can rub them out.` }],
+    outro: [{ who: 'dot', text: `One birth certificate: ${hero.name}${heroBirth?.date ? ', born ' + datePhrase(heroBirth.date) : ''}${hero.town ? ' in ' + hero.town.name : ''}. That's proof number one. It proves you exist, which is a start.` },
+      { who: 'dot', text: `Now we go backwards, one generation at a time, faster than he can rub them out.` }],
     reward: { cash: 150, proof: proof('birth', hero, `Birth of ${hero.name}`, [heroBirth?.date && cap(datePhrase(heroBirth.date)), hero.town?.name].filter(Boolean).join(', ') || 'Certified copy') },
   });
   add({
     id: 'ink-money', act: 'Prologue', title: 'Spare Parts', town: home.id, year: present, giver: { who: 'dot', at: 'garage' },
     brief: 'The time engine will not work until it has three parts: a valve, a clock spring and a bottle of register ink.',
-    intro: [{ who: 'dot', text: `Before the Heirloom can travel in time she needs three things. A valve, from ${H.works}. A clock spring, from ${H.market}. And a bottle of proper register ink, from ${H.hall}. Until she has all three, the time dial stays locked. And Hargreaves will have heard we're looking, so expect company.` },
-      { who: 'dot', text: `The ink costs money, and so will every ticket after it. So while you are at ${H.market}, earn some: ${H.pub} wants two crates fetched. After today, look for the £ signs in any town in any year. There is always somebody who needs something shifted.` }],
+    intro: [{ who: 'dot', text: `Before the Heirloom can travel in time she needs three things. A valve, from ${H.works}. A clock spring, from ${H.market}. And a bottle of proper register ink, from ${H.hall}.` },
+      { who: 'dot', text: `Until she has all three, the time dial stays locked. And Hargreaves will have heard we're shopping, so expect company.` },
+      { who: 'dot', text: `The ink costs money, and so will every ticket after it. So while you are at ${H.market}, earn some: ${H.pub} wants two crates fetched.` },
+      { who: 'dot', text: `After today, look for the £ signs in any town in any year. There is always somebody who needs something shifted. It's the one constant of history.` }],
     // Every part is a different skill: pick-ups, a race, a careful load and a chase on foot.
     steps: [
-      { t: 'collect', around: 'works', n: 4, radius: 7, label: 'valve parts', got: 'the valve', text: `Part 1 of 3: the valve came apart in ${H.works}'s yard. Pick up all four pieces`, bark: { who: 'dot', text: `Drive over each piece and it's yours. The white dots on the little map show where they've rolled.` } },
-      { t: 'goto', at: 'market', rival: true, got: 'the clock spring', text: `Part 2 of 3: one clock spring left at ${H.market}, and a grey van wants it. Get there first`, bark: { who: 'dot', text: `That grey van is after the same spring. Beat it there, dear. Cut corners. Use the handbrake.` } },
-      { t: 'carry', from: 'market', to: 'pub', n: 2, label: 'crates', gentle: true, timed: 1.8, text: `Earn the ink money: two crates of bottles from ${H.market} to ${H.pub}. Mind the glass`, bark: { who: 'dot', text: `Stop on the yellow ring to load, and on the next to unload. Those are bottles: three knocks and they're broken, so brake before the corners, not in them.` } },
-      { t: 'catch', from: 'hall', label: 'the man in grey', drop: 'the bottle of register ink', speed: 4.3, time: 70, got: 'the register ink', text: `Part 3 of 3: a man in grey has run off with the ink from ${H.hall}. Catch him`, bark: { who: 'dot', text: `He's on foot, and he's quick. Get out and run after him, or catch him with the car if he's daft enough to stay on the road.` } },
+      { t: 'collect', around: 'works', n: 4, radius: 7, label: 'valve parts', got: 'the valve', text: `Part 1 of 3: the valve came apart in ${H.works}'s yard. Pick up all four pieces`, bark: { who: 'dot', text: `The valve's in bits and the bits have rolled. Drive over each piece and it's yours. The white dots on the little map show where they've got to.` } },
+      { t: 'goto', at: 'market', rival: true, got: 'the clock spring', text: `Part 2 of 3: one clock spring left at ${H.market}, and a grey van wants it. Get there first`, bark: { who: 'dot', text: `That grey van is after the same spring. Beat it there, dear. Cut corners. Use the handbrake. Forget what I said about hedges.` } },
+      { t: 'carry', from: 'market', to: 'pub', n: 2, label: 'crates', gentle: true, timed: 1.8, text: `Earn the ink money: two crates of bottles from ${H.market} to ${H.pub}. Mind the glass`, bark: { who: 'dot', text: `Stop on the yellow ring to load, and on the next to unload. Those are bottles: three knocks and they're broken. Drive as if I were holding a full cup of tea. I am.` } },
+      { t: 'catch', from: 'hall', label: 'the man in grey', drop: 'the bottle of register ink', speed: 4.3, time: 70, got: 'the register ink', text: `Part 3 of 3: a man in grey has run off with the ink from ${H.hall}. Catch him`, bark: { who: 'dot', text: `He's on foot, and he's quick. Get out and run after him, or catch him with the car if he's daft enough to stay on the road. I'd chase him myself, but, well. Hip.` } },
       { t: 'goto', at: 'garage', text: `Take all three parts back to Dorothy at ${H.garage}` },
     ],
-    outro: [{ who: 'dot', text: `Valve. Spring. Ink. Hold the lamp, dear. There. Hear that ticking? The time dial is working. From now on you can set a year and drive there.` }],
+    outro: [{ who: 'dot', text: `Valve. Spring. Ink. Hold the lamp, dear. No, higher. There. Hear that ticking?` },
+      { who: 'dot', text: `The time dial is working. From now on you can set a year and drive there. I have waited forty years to say that to somebody.` }],
     reward: { cash: 180 }, unlock: 'TIME TRAVEL UNLOCKED',
   });
   if (next) add({
     id: 'first-jump', act: 'Prologue', title: 'Relative Speed', town: home.id, year: present, giver: { who: 'dot', at: 'garage' },
     brief: `Take the Heirloom back to ${next.year}.`,
     intro: [{ who: 'dot', text: `Your ${next.rel} ${next.first}${next.job ? ', the ' + next.job.toLowerCase() : ''}. ${next.town.id === home.id ? 'Right here in ' + home.name : cap(next.town.name) + (next.town.country !== home.country ? ', ' + next.town.nation : '')}, ${next.year}. That's the first page Hargreaves will go for.` },
-      { who: 'dot', text: `${next.town.id === home.id ? '' : (next.town.country !== home.country ? `You'll need to get to ${next.town.nation} first: tickets at ${H.hub}. ` : `Get yourself to ${next.town.name} first: tickets at ${H.hub}. `)}Then set the dial with T, find a long straight road and keep your foot down until the dial reaches the year. Don't lift off. She hates it when you lift off.` }],
+      { who: 'dot', text: `${next.town.id === home.id ? '' : (next.town.country !== home.country ? `You'll need to get to ${next.town.nation} first: tickets at ${H.hub}. ` : `Get yourself to ${next.town.name} first: tickets at ${H.hub}. `)}Then set the dial with T, find a long straight road and keep your foot down until the dial reaches the year.` },
+      { who: 'dot', text: `Don't lift off. She hates it when you lift off. She sulks, and a sulking time machine is nobody's friend.` }],
     steps: [{ t: 'travel', town: next.town.id, year: next.year, text: `Get to ${next.town.name} in ${next.year}` }],
-    outro: [{ who: 'note', text: `${next.town.name}, ${next.year}. ${ERA_ARRIVAL[eraOf(next.year)]}` }],
+    outro: [{ who: 'note', text: `${next.town.name}, ${next.year}. ${eraArrival(next.year, deal)}` }],
     reward: { cash: 60 },
   });
 
@@ -6178,7 +6464,7 @@ function buildStory(data, rootId, opts = {}) {
       c.scheme = prev = k;
     });
   }
-  const usedTwists = {};
+  const usedTwists = {}, asked = {};
 
   // ---- One chapter per chosen ancestor ----
   chapters.forEach((c, i) => {
@@ -6189,8 +6475,13 @@ function buildStory(data, rootId, opts = {}) {
     const act = isFinale ? 'Finale' : `Chapter ${i + 1}`;
     const base = { act, town: c.town.id, year: c.year, chapter: i };
     const relLine = `${c.name}, your ${c.rel}`;
-    const quiz = quizFor(c, cast, rnd);
+    const quiz = quizFor(c, cast, rnd, deal, asked);
     c.quizSaid = quiz?.said || '';
+    if (quiz) {
+      // what they say to each answer: one "right", one "right at last", and three different ways of saying "wrong"
+      const from = LINES.wrong.indexOf(deal('wrong', LINES.wrong));
+      Object.assign(quiz, { right: deal('right', LINES.right), rightAtLast: deal('rightAtLast', LINES.rightAtLast), wrong: [0, 3, 5].map(k => LINES.wrong[(from + k) % LINES.wrong.length]) });
+    }
     // If you have already been born by this year, they know a child of your name, and it is not you.
     // (Unless this is the very year, and the chapter is about you being born: then you are still on the way.)
     const age = hero.byKnown && c.year >= hero.by && !(c.year === hero.by && c.set === 'birth') ? c.year - hero.by : null;
@@ -6198,31 +6489,35 @@ function buildStory(data, rootId, opts = {}) {
     const ageWord = age == null ? '' : age === 0 ? 'a babe in arms' : age === 1 ? 'a year old' : `${NUM[age] || age} years old`;
     const [hHe, hHim] = PRON[hero.sex] || PRON.U;
     const young = age != null && age < 16;       // old enough, and they simply would not believe it was you grown up
-    const knowsNote = age == null ? `${cap(c.he)} ${c.he === 'they' ? 'have' : 'has'} never heard of you.`
-      : young ? `Mind: ${c.he} ${c.he === 'they' ? 'have' : 'has'} a ${kidWord} called ${hero.first} already, ${ageWord}, and as far as ${c.he} ${c.he === 'they' ? 'know' : 'knows'} that is not you. Do not try to explain.`
-        : `Mind: ${c.he} ${c.he === 'they' ? 'know' : 'knows'} ${hero.first} perfectly well, and ${hero.first} is ${ageWord}. You are a good deal older than that. Do not try to explain.`;
+    const they = c.he === 'they';
+    const X = { He: cap(c.he), he: c.he, him: c.him, his: c.his, has: they ? 'have' : 'has', is: they ? 'are' : 'is', does: they ? 'do' : 'does', knows: they ? 'know' : 'knows',
+      hero: hero.first, kid: kidWord, age: ageWord, hHe, hHim, doing: age == null ? '' : age < 3 ? 'asleep indoors' : age < 11 ? 'out playing in the street' : 'supposed to be at school' };
+    const knowsNote = age == null ? (isFinale ? `Be polite: ${c.he} ${X.is} the oldest relative you will ever meet, and ${X.has} no idea you are coming.` : deal('stranger', LINES.stranger)(X))
+      : (isFinale ? 'Be polite. ' : '') + (young ? deal('knowsChild', LINES.knowsChild)(X) : deal('knowsGrown', LINES.knowsGrown)(X));
     const workLot = { haul: 'works', cloth: 'works', craft: 'works', farm: 'farm', sea: 'hub', rail: 'hub', shop: 'market', care: 'infirmary', school: 'school', arms: 'police', desk: 'hall' }[c.group] || 'church';
     const spots = [...new Set(['home', workLot, 'pub', 'church'])].slice(0, 3);
     const sch = SCHEMES[c.scheme]({ c, N, w, workLot, spots });
     c.schemeInfo = sch;
-    const wary = isFinale ? `There's a grey fellow been round all week asking after the parish book, and I trust nobody who can't tell me something only kin would know.` : sch.wary + ' Tell me something only family would know.';
-    const knowsLine = age == null ? `Family, you say. ${wary}`
-      : young ? `${hero.first}? My ${hero.first} is ${ageWord}, and ${age < 3 ? 'asleep indoors' : age < 11 ? 'out playing in the street' : 'supposed to be at school'}. You've a look of ${hHim}, I'll give you that. ${wary}`
-        : `You've the very look of my ${hero.first}, only ${hHe} is ${ageWord} and you are not. A cousin, is it? ${wary}`;
-    const knowsOutro = age == null ? `Then you're one of ours, though I can't think how. Come home with me. You look half starved and wholly lost.`
-      : `Then you're family, right enough, though I can't work out where you fit. You've even the name of my ${kidWord}. Come home with me. You look half starved and wholly lost.`;
+    // What they say when you find them: a wary opening, why they are wary (the scheme), and the challenge before the quiz.
+    // The very top of the tree has lines of its own.
+    const wary = isFinale ? `There's a grey fellow been round all week asking after the parish book, and now there's you.` : sch.wary;
+    const knowsLines = isFinale && age == null ? [`Kin? I have no kin. ${wary} Tell me one true thing about myself, and I'll hear the rest.`]
+      : age == null ? [`${deal('wary', LINES.wary)} ${wary}`, deal('challenge', LINES.challenge)]
+        : [(young ? deal('waryChild', LINES.waryChild) : deal('waryGrown', LINES.waryGrown))(X), wary, deal('challenge', LINES.challenge)];
+    const knowsOutro = age == null ? deal('welcome', LINES.welcome) : deal('welcomeKnown', LINES.welcomeKnown)(X);
+    const noteAt = deal('noteAt', LINES.noteAt), clue = quiz?.told ? ` ${deal('remember', LINES.remember)} ${quiz.told}` : '';
     // 1. Meet them, the way this chapter's scheme decides.
     add({
       ...base, id: `meet-${i}`, title: isFinale ? 'Brick Wall' : `Meeting ${c.first}`, giver: { who: 'dot', at: 'phone' },
       brief: `Find ${relLine}, in ${c.town.name}, ${c.year}.`,
       intro: isFinale
-        ? [{ who: 'dot', text: `A note in Dorothy's hand, pinned where you would see it: "${c.name}, your ${c.rel}${c.job ? ', ' + c.job.toLowerCase() : ''}. Try the house first. If ${c.he} is out, ${c.he} will be at ${N[spots[1]]}, and failing that ${N[spots[2]]}. Be polite. ${knowsNote}${quiz?.told ? ' Something to remember: ' + quiz.told : ''}"` }]
-        : [{ who: 'dot', text: `A note in Dorothy's hand, pinned where you would see it: "${c.name}, your ${c.rel}${c.job ? ', ' + c.job.toLowerCase() : ''}. ${sch.note} ${knowsNote}${quiz?.told ? ' Something to remember: ' + quiz.told : ''}"` }],
+        ? [{ who: 'dot', text: `${noteAt} "${c.name}, your ${c.rel}${c.job ? ', ' + c.job.toLowerCase() : ''}. Try the house first. If ${c.he} ${X.is} out, ${c.he} will be at ${N[spots[1]]}, and failing that ${N[spots[2]]}. ${knowsNote}${clue}"` }]
+        : [{ who: 'dot', text: `${noteAt} "${c.name}, your ${c.rel}${c.job ? ', ' + c.job.toLowerCase() : ''}. ${sch.note} ${knowsNote}${clue}"` }],
       scheme: isFinale ? null : c.scheme,
       steps: [...(isFinale
-        ? [{ t: 'search', spots, miss: { 0: `Nobody in. A neighbour thinks ${c.he} went up to ${N[spots[1]]}.`, 1: `Not here. "Try ${N[spots[2]]}," says somebody, without looking up.`, 2: `Not here either. "Gone to ${N[spots[1]]}, I should think."` }, text: `Find ${c.first}` }]
+        ? [{ t: 'search', spots, miss: { 0: `Nobody in. A neighbour thinks ${c.he} went up to ${N[spots[1]]}. "Walks everywhere, that one. Always has."`, 1: `An old man shakes his head. "You want ${N[spots[2]]}. And a hat, in this weather."`, 2: `Empty. A dog looks at you, then pointedly towards ${N[spots[1]]}.` }, text: `Find ${c.first}` }]
         : sch.steps),
-        { t: 'talk', who: c.id, at: isFinale ? '@found' : sch.talkAt, greet: true, quiz, text: `Talk to ${c.first}`, lines: [knowsLine] }],
+        { t: 'talk', who: c.id, at: isFinale ? '@found' : sch.talkAt, greet: true, quiz, text: `Talk to ${c.first}`, lines: knowsLines }],
       outro: [{ who: c.id, text: isFinale
         ? `Then you're mine, sure enough, though how is past my wits. There's nobody behind me in any book, you know. I'm where it starts.`
         : knowsOutro }],
@@ -6237,14 +6532,15 @@ function buildStory(data, rootId, opts = {}) {
       const keys = Object.keys(DAY_TWISTS).filter(k => !avoid.has(k)).sort((a, b) => (usedTwists[a] || 0) - (usedTwists[b] || 0) || (a < b ? -1 : 1));
       const tk = keys[i % Math.min(2, keys.length)] || keys[0];
       usedTwists[tk] = (usedTwists[tk] || 0) + 1;
-      job.steps = [...job.steps, DAY_TWISTS[tk](end, c, w)];
+      job.steps = [...job.steps, DAY_TWISTS[tk](end, c, w, deal)];
     }
+    const jobL = c.job.toLowerCase(), an = /^[aeiou]/.test(jobL) ? 'an' : 'a';
     if (!isFinale) add({
       ...base, id: `work-${i}`, title: job.title, giver: { who: c.id, at: c.group === 'farm' ? 'farm' : ['haul', 'cloth', 'craft'].includes(c.group) ? 'works' : c.group === 'sea' ? 'hub' : 'home' },
       brief: `${c.first}${c.job ? ' the ' + c.job.toLowerCase() : ''} could use a hand.`,
-      intro: [{ who: c.id, text: (c.job ? `I'm ${/^[aeiou]/i.test(c.job) ? 'an' : 'a'} «${c.job.toLowerCase()}», and it's no life for the idle. ` : '') + job.ask }],
+      intro: [...(c.job ? [{ who: c.id, text: deal('trade', LINES.trade)({ a: an, A: cap(an), job: q(jobL) }) }] : []), { who: c.id, text: job.ask }],
       steps: job.steps,
-      outro: [{ who: c.id, text: `Not bad. Not bad at all, for somebody who talks like you do. Here, you've earned it.` }],
+      outro: [{ who: c.id, text: deal('paid', LINES.paid) }],
       reward: { cash: pay },
     });
     // 3. The set piece, built on a real event from the file
@@ -6254,77 +6550,92 @@ function buildStory(data, rootId, opts = {}) {
     const kind = c.set;
     const when = d => d ? ' ' + datePhrase(d) : '';
     let set;
+    // The same kind of event can come up in two chapters, so every ask, shout and verdict has two versions ([D-...] ALT 1 and 2).
+    const v = deal('set-' + kind, [0, 1]), alt = (a, b) => v ? b : a;
     if (kind === 'wedding') {
       const g = groom ? firstName(groom) : 'the groom', b = bride ? firstName(bride) : 'the bride';
       set = { title: 'Get Me to the Church', brief: `${g} and ${b} are to be married${when(c.marriage?.date)}. Hargreaves would rather they weren't.`,
-        ask: `It's my wedding morning and ${c.sex === 'F' ? `«${g}» has not come` : `I'm stuck here`}. Somebody's had the wheels off every ${w.ride} in the street and the parson won't wait past the bells. ${c.sex === 'F' ? `He'll be at «${N.pub}», sick with nerves. Fetch him to church or there's no wedding, and then where will you be?` : `Get me to that church. If I'm not wed today then there's no us, and by the look on your face there's no you.`}`,
+        ask: c.sex === 'F'
+          ? alt([`It's my wedding morning and «${g}» has not come. Somebody's had the wheels off every ${w.ride} in the street, and the parson won't wait past the bells.`, `He'll be at «${N.pub}», sick with nerves. Fetch him to church or there's no wedding, and then where will you be?`],
+            [`I've been in this frock since dawn and there's no sign of «${g}». Every ${w.ride} for a mile has been got at, and the bells are about to start.`, `Try «${N.pub}» first. He'll be staring into a glass, working up to it. Bring him to the church, and tell him I said so.`])
+          : alt([`It's my wedding morning and I'm stranded. There isn't a ${w.ride} in the road with a wheel left on it, and the parson is a stickler for time.`, `Get me to that church. If I'm not wed today then there's no us, and by the look on your face there's no you.`],
+            [`I'm to be married within the hour, and some grey villain has wrecked every ${w.ride} we had. I've a clean collar, a speech, and no way of getting there.`, `You've a vehicle, of sorts. Take me to church. And if you see me reaching for the door on the way, speed up.`]),
         steps: [{ t: 'carry', from: c.sex === 'F' ? 'pub' : 'home', to: 'church', n: 1, label: 'groom', passenger: g, timed: 1.05, text: `Get ${g} to ${N.church} before the bells stop`, bark: { name: g, text: `I've changed my mind. No. No, I haven't. Faster!` } },
           { t: 'chase', from: 'church', hp: 4 + Math.min(3, i), label: `the ${w.van}`, drop: 'the marriage register', text: `They've snatched the register! Stop the ${w.van}` }],
-        done: `${g} and ${b}, married. It's in the book and the ink's dry.`,
+        done: alt(`${g} and ${b}, married. It's in the book and the ink's dry.`, `${g} and ${b}: wed, witnessed and written down. I do love a wedding I'm not catering.`),
         proof: proof('marriage', c, `Marriage of ${groom ? displayName(groom) : g} and ${bride ? displayName(bride) : b}`, [c.marriage?.date && cap(datePhrase(c.marriage.date)), placeTown(c.marriage?.place)?.name || c.town.name].filter(Boolean).join(', ')) };
     } else if (kind === 'birth') {
       const kid = firstName(c.child);
       set = { title: 'Special Delivery', brief: `${kid} is due${when(childBirth?.date)}, and the midwife is nowhere to be found.`,
-        ask: `The baby's coming and the midwife's not: some grey devil has ${c.year >= 1900 ? 'let her tyres down' : 'lamed her pony'}. Fetch her from «${N.infirmary}», and drive like the child's life hangs on it. Yours might, come to think.`,
+        ask: [alt(`The baby's coming and the midwife's not: some grey devil has ${c.year >= 1900 ? 'let her tyres down' : 'lamed her pony'}. Fetch her from «${N.infirmary}», and drive like the child's life hangs on it. Yours might, come to think.`,
+          `It's the baby, it's now, and the midwife is stranded: some grey devil has ${c.year >= 1900 ? 'let her tyres down' : 'lamed her pony'}. She'll be at «${N.infirmary}». Go like the wind, and don't come back without her.`)],
         steps: [{ t: 'carry', from: 'infirmary', to: 'home', n: 1, label: 'midwife', passenger: 'the midwife', timed: 1.0, text: `Rush the midwife from ${N.infirmary} to the house`, bark: { name: 'The midwife', text: `I've delivered half this town and I'll not be late for this one. Whatever this thing is, make it go.` } },
           { t: 'collect', around: 'hall', radius: 14, n: 6, label: 'register pages', timed: 1.4, text: `Hargreaves's men have scattered the birth register. Collect every page near ${N.hall}` }],
-        done: `${displayName(c.child)}, born safe and written down. ${c.child.id === rootId ? 'That one is you, by the way.' : 'One more link that holds.'}`,
+        done: c.child.id === rootId ? `${displayName(c.child)}, safely born and safely in the register. That one is you, by the way. You were very red.`
+          : alt(`${displayName(c.child)}, born safe and written down. One more link that holds.`, `A baby: ${displayName(c.child)}. Loud, healthy and entered in the register. That's another one he can't have.`),
         proof: proof('birth', { id: c.child.id }, `Birth of ${displayName(c.child)}`, [childBirth?.date && cap(datePhrase(childBirth.date)), placeTown(childBirth?.place)?.name || c.town.name].filter(Boolean).join(', ')) };
     } else if (kind === 'emig') {
       const dest = (c.movedTo || placeTown(evPlace(c.indi, 'IMMI', 'DEAT', 'BURI')))?.nation;
       const air = c.year >= 1950;
       set = { title: air ? 'Final Call' : 'The Last Boat', brief: `${c.first} is leaving${dest && dest !== c.town.nation ? ' for ' + dest : ''}${when(emig?.date)}. The ${w.boat} will not wait.`,
-        ask: `Everything I own is in two trunks and the ${w.boat} ${air ? 'leaves within the hour' : 'sails on the tide'}${dest && dest !== c.town.nation ? ' for «' + dest + '»' : ''}. Every ${air ? 'taxi' : 'carter'} in town has been paid by some grey gentleman to be busy. Get the trunks to «${N.hub}», then come back for me.`,
+        ask: [alt(`The ${w.boat} ${air ? 'leaves within the hour' : 'sails on the tide'}${dest && dest !== c.town.nation ? ' for «' + dest + '»' : ''}, and every ${air ? 'taxi' : 'carter'} in town has been paid by some grey gentleman to be busy. Get the trunks to «${N.hub}», then come back for me.`,
+          `I've a ticket${dest && dest !== c.town.nation ? ' for «' + dest + '»' : ''} and no way to «${N.hub}»: every ${air ? 'taxi' : 'carter'} for miles is suddenly spoken for. The ${w.boat} ${air ? 'leaves within the hour' : 'sails on the tide'}. Trunks first, then me. I'm lighter, but I matter more.`)],
         steps: [{ t: 'carry', from: 'home', to: 'hub', n: 2, label: 'trunks', timed: 1.2, text: `Get both trunks to ${N.hub}`, bark: { who: c.id, text: `Don't look back at the house. It's bad luck to look back.` } },
           { t: 'carry', from: 'home', to: 'hub', n: 1, label: 'traveller', passenger: c.first, who: c.id, timed: 1.0, text: `Now ${c.first}. The ${w.boat} is about to leave` },
           { t: 'chase', from: 'hub', hp: 4 + Math.min(3, i), label: `the ${w.van}`, drop: 'the passenger list', text: `Hargreaves's men have the passenger list. Stop the ${w.van}` }],
-        done: `${c.name}, on the passenger list in black and white. Wherever ${c.he} went, ${c.he} went on the record.`,
+        done: alt(`${c.name}, on the passenger list in black and white. Wherever ${c.he} went, ${c.he} went on the record.`, `${c.name}: name, age and luggage, all on the passenger list. Gone abroad, and nobody can say otherwise.`),
         proof: proof('passage', c, `Passage of ${c.name}`, [emig?.date ? cap(datePhrase(emig.date)) : String(c.year), dest && 'bound for ' + dest].filter(Boolean).join(', ') || 'Passenger list') };
     } else if (kind === 'arms') {
       set = { title: 'The King\'s Shilling', brief: `${c.first} has orders, and somebody has been at the muster roll.`,
-        ask: `I'm to report and the muster roll's gone missing with my name on it. No roll, no record, and a man with no record never served. Run these dispatches round and then get me to «${N.hub}» before the column moves off.`,
+        ask: alt([`I'm to report, and the muster roll's gone missing with my name on it. No roll, no record, and a soldier with no record never served.`, `Run these dispatches round, and then get me to «${N.hub}» before the column moves off.`],
+          [`The muster roll has vanished, and my name with it. The army won't feed anybody who isn't on a list. I've asked.`, `Take these dispatches round for the sergeant, then get me to «${N.hub}» before they march. I'd rather not chase a column on foot.`]),
         steps: [{ t: 'race', stops: ['police', 'hall', 'church', 'post', 'home'], timed: 1.1, text: 'Carry the dispatches round the town' },
           { t: 'carry', from: 'home', to: 'hub', n: 1, label: 'soldier', passenger: c.first, who: c.id, timed: 1.0, text: `Get ${c.first} to ${N.hub} before the column leaves` }],
-        done: `${c.name}, on the muster roll. Served, counted and remembered.`,
+        done: alt(`${c.name}, on the muster roll. Served, counted and remembered.`, `${c.name}: present on parade and present in the roll. The army loses a great many things, but not that page. Not today.`),
         proof: proof('service', c, `Service record of ${c.name}`, c.job || 'Muster roll') };
     } else if (kind === 'census') {
       set = { title: 'Count Me In', brief: `Census night${when(census.date)}. The enumerator has lost his nerve and most of his schedules.`,
-        ask: `The census man's been round in tears. A grey ${w.ride === 'cart' ? 'carriage' : 'van'} knocked him flat and took his schedules. If this street isn't counted tonight, we were never here. Do his round for him and get the book back.`,
+        ask: [alt(`The census man's been round in tears. A grey ${w.ride === 'cart' ? 'carriage' : 'van'} knocked him flat and took his schedules. If this street isn't counted tonight, we were never here. Do his round for him and get the book back.`,
+          `They've robbed the census man. A grey ${w.ride === 'cart' ? 'carriage' : 'van'} had him over and made off with every form. He's sat on my step with a cup of something. You'll have to count the street yourself, and fetch his book back.`)],
         steps: [{ t: 'race', stops: ['home', 'pub', 'farm', 'school', 'market', 'church'], timed: 1.25, text: 'Do the enumerator\'s round before midnight', bark: { who: c.id, text: `Knock loud. Half of them will think you're the rent man and hide.` } },
           { t: 'chase', from: 'hall', hp: 4 + Math.min(3, i), label: `the ${w.van}`, drop: 'the census schedules', text: `Get the schedules back from the ${w.van}` }],
-        done: `${c.name}${c.job ? ', ' + c.job.toLowerCase() : ''}, counted at ${c.town.name}. Present and correct.`,
+        done: alt(`${c.name}${c.job ? ', ' + c.job.toLowerCase() : ''}, counted at ${c.town.name}. Present and correct.`, `The whole street counted, and there in the middle: ${c.name}${c.job ? ', ' + c.job.toLowerCase() : ''}, of ${c.town.name}. I do like a tidy column.`),
         proof: proof('census', c, `Census entry for ${c.name}`, [dateYear(census.date), placeTown(census.place)?.name || c.town.name].filter(Boolean).join(', ')) };
     } else if (kind === 'baptism') {
       set = { title: 'Wet the Baby\'s Head', brief: `${c.first}'s own baptism entry${when(bapt.date)} is coming loose from the book.`,
-        ask: `Parson says the register fell open in the night and the wind took the pages. In a shut vestry. With the door locked. The page with my name on is out there somewhere, and I'd like to go on having been christened.`,
+        ask: [alt(`Parson says the register fell open in the night and the wind took the pages. In a shut vestry. With the door locked. The page with my name on is out there somewhere, and I'd like to go on having been christened.`,
+          `The baptism pages have blown clean out of the church, parson says. Blown. Through a bolted door. Mine's among them, and without it I'm a heathen on paper. Help me gather them in.`)],
         steps: [{ t: 'collect', around: 'church', radius: 15, n: 7, label: 'register pages', timed: 1.4, text: `Gather the register pages around ${N.church}` },
           { t: 'chase', from: 'church', hp: 4 + Math.min(3, i), label: `the ${w.van}`, drop: 'the last page', text: `The last page is in the ${w.van}. Stop it` }],
-        done: `${c.name}, baptised${when(bapt.date)}. Back in the book.`,
+        done: alt(`${c.name}, baptised${when(bapt.date)}. Back in the book.`, `Christened and recorded: ${c.name}${bapt.date ? ',' + when(bapt.date) : ''}. The page is a little muddy, but so was the baby, I expect.`),
         proof: proof('baptism', c, `Baptism of ${c.name}`, [bapt.date && cap(datePhrase(bapt.date)), placeTown(bapt.place)?.name || c.town.name].filter(Boolean).join(', ')) };
     } else if (kind === 'burial') {
       const L = c.late, who = displayName(L.indi), rel = L.indi.id === c.spouse?.id ? (L.indi.sex === 'M' ? 'husband' : 'wife') : L.indi.sex === 'M' ? 'father' : 'mother';
       set = { title: 'Set in Stone', brief: `${who} is to be buried${when(L.ev.date)}, and somebody has been to see the mason.`,
-        ask: `We bury my ${rel} today. «${who}». The mason has the stone cut and paid for, and there's a grey fellow been round offering him double to leave the name off it. Fetch the stone from «${N.works}» to the churchyard, and go gently. It is the last thing we shall ever give ${L.indi.sex === 'F' ? 'her' : 'him'}.`,
+        ask: alt([`We bury my ${rel} today. «${who}». The mason has the stone cut and paid for, and a man in grey has been at him to leave the name off it.`, `Fetch the stone from «${N.works}» to the churchyard, and go gently. It is the last thing we shall ever give ${L.indi.sex === 'F' ? 'her' : 'him'}.`],
+          [`It's the funeral today. «${who}», my ${rel}. There's a headstone waiting at «${N.works}», and a grey stranger hanging about it with a purse and a chisel.`, `Bring the stone to the churchyard for me. Slowly, please. «${firstName(L.indi)}» was never hurried in life, and won't thank you for it now.`]),
         steps: [{ t: 'carry', from: 'works', to: 'church', n: 1, label: 'headstone', gentle: true, timed: 1.7, text: `Carry the headstone from ${N.works} to ${N.church}, gently` },
           { t: 'catch', from: 'church', label: 'man in grey with a chisel', drop: 'the chisel', text: 'A man in grey is at the stone with a chisel. Catch him' }],
-        done: `${who}, laid to rest and named in stone. They cannot rub out granite.`,
+        done: alt(`${who}, laid to rest and named in stone. They cannot rub out granite.`, `${who}: buried with a name, a date and a good stone over the top. He'll need more than bleach for that.`),
         proof: proof('burial', { id: L.indi.id }, `Burial of ${who}`, [L.ev.date && cap(datePhrase(L.ev.date)), placeTown(L.ev.place)?.name || c.town.name].filter(Boolean).join(', ')) };
     } else if (kind === 'portrait') {
       const kids = c.kids.filter(k => (birthYear(k) ?? 0) <= c.year).slice(0, 6), names = kids.map(firstName);
       set = { title: 'Watch the Birdie', brief: `A likeness of the whole ${c.child?.surname || c.surname} family, ${c.year}. If anybody can find the children.`,
-        ask: `There's a photographer come to «${N.hub}», and we've saved a twelvemonth for one likeness of us all. The minute they were washed the children scattered: ${names.map(n => '«' + n + '»').join(', ')}. Find every one, then fetch the man himself before he loses the light. A grey fellow's been offering him double to go home.`,
+        ask: alt([`There's a photographer come to «${N.hub}», and we've saved a twelvemonth for one likeness of us all. The minute they were washed the children scattered: ${names.map(n => '«' + n + '»').join(', ')}.`, `Find every one, then fetch the man himself before he loses the light. A grey fellow's been offering him double to go home.`],
+          [`We're to be photographed today, all of us, and I had every child clean for a full minute. Then I turned my back. ${names.map(n => '«' + n + '»').join(', ')}: gone.`, `Round them up, then bring the photographer from «${N.hub}». Some grey article has been paying him to pack up early.`]),
         steps: [{ t: 'collect', around: 'home', radius: 12, n: names.length, names, label: 'children', timed: 1.7, text: `Round up the children: ${names.join(', ')}` },
           { t: 'carry', from: 'hub', to: 'home', n: 1, label: 'photographer', passenger: 'the photographer', timed: 1.1, text: `Fetch the photographer from ${N.hub} before the light goes`, bark: { name: 'The photographer', text: `Nobody is to smile. It takes eight seconds and smiling is a strain.` } },
           { t: 'chase', from: 'home', hp: 4 + Math.min(3, i), label: `the ${w.van}`, drop: 'the glass plate', text: `They have the glass plate! Stop the ${w.van}` }],
-        done: `One photograph: ${names.join(', ')}, and their parents trying not to blink. Nobody can rub out a photograph.`,
+        done: alt(`One photograph: ${names.join(', ')}, and their parents trying not to blink. Nobody can rub out a photograph.`, `Got it. ${names.join(', ')}, all facing the same way for the only time in their lives. Let him try unpicking that.`),
         proof: proof('portrait', c, `Photograph of the ${c.child?.surname || c.surname} family`, [String(c.year), c.town.name, names.join(', ')].filter(Boolean).join(', ')) };
     } else if (kind === 'chase') {
       set = { title: 'Struck Out', brief: `Hargreaves's men are at ${N.hall} with a bottle of ink remover.`,
-        ask: `That grey lot are at «${N.hall}» this minute with the book open at our page. I saw them through the window. Whatever that contraption of yours does, do it now.`,
+        ask: [alt(`That grey lot are at «${N.hall}» this minute with the book open at our page. I saw them through the window. Whatever that contraption of yours does, do it now.`,
+          `They're in «${N.hall}» right now, the grey ones, with a knife out and the register open. At OUR page. Get that machine of yours moving.`)],
         steps: [{ t: 'goto', at: 'hall', timed: 1.0, text: `Get to ${N.hall}` },
           { t: 'catch', from: 'hall', label: 'grey clerk', drop: 'the torn page', text: 'A clerk in grey has the page under his coat. Run him down on foot', bark: { name: 'The clerk', text: `It's only a name! You've hundreds!` } },
           { t: 'chase', from: 'hall', hp: 5 + Math.min(3, i), label: `the ${w.van}`, drop: 'the parish book', text: `Stop the ${w.van} and get the book back` }],
-        done: `${c.name}: the entry stands.`,
+        done: alt(`${c.name}: the entry stands.`, `Still there in ink: ${c.name}. And one parish clerk who will think twice next time.`),
         proof: proof('entry', c, `Parish entry for ${c.name}`, [c.life, c.town.name].filter(Boolean).join(', ')) };
     }
     if (set) {
@@ -6333,21 +6644,21 @@ function buildStory(data, rootId, opts = {}) {
       const acts = {
         wedding: [
           c.sex === 'F'
-            ? { t: 'search', spots: ['pub', 'works', 'market'], miss: { 0: `"He was in here an hour since, white as his shirt. Try ${N.works}."`, 1: `"Not here. He said something about needing air. ${cap(N.market)}?"`, 2: `"Him? Went off towards ${N.works} with a face like a wet week."` }, text: `Find ${g}. He has lost his nerve somewhere` }
-            : { t: 'search', spots: ['pub', 'market', 'works'], miss: { 0: `"The best man? He was showing everybody the ring. Try ${N.market}."`, 1: `"He was here. He's gone to ${N.works} to borrow a collar stud."`, 2: `"Not here. ${cap(N.market)}, most like."` }, text: 'Find the best man. He has the ring' },
-          { t: 'carry', from: c.sex === 'F' ? '@found' : 'home', to: 'church', n: 1, label: 'groom', passenger: g, timed: 1.05, rival: true, tokens: 2, text: `Get ${g} to ${N.church} before the men in grey bar the door`, bark: { name: g, text: `I've changed my mind. No. No, I haven't. Faster!` } },
+            ? { t: 'search', spots: ['pub', 'works', 'market'], miss: { 0: `"He was in here an hour since, white as his shirt. Ordered a drink and forgot to drink it. Try ${N.works}."`, 1: `"Came and went. Said he needed air. There's plenty of that at ${N.market}."`, 2: `"The bridegroom? Went off towards ${N.works} with a face like a wet week, practising saying 'I will'."` }, text: `Find ${g}. He has lost his nerve somewhere` }
+            : { t: 'search', spots: ['pub', 'market', 'works'], miss: { 0: `"The best man? He was showing everybody the ring. Dropped it twice. Try ${N.market}."`, 1: `"He was here. He's gone to ${N.works} to borrow a collar stud. He'd already borrowed the collar."`, 2: `"You've just missed him. ${cap(N.market)}, most like, writing his speech on his cuff."` }, text: 'Find the best man. He has the ring' },
+          { t: 'carry', from: c.sex === 'F' ? '@found' : 'home', to: 'church', n: 1, label: 'groom', passenger: g, timed: 1.05, rival: true, tokens: 2, text: `Get ${g} to ${N.church} before the men in grey bar the door`, bark: { name: g, text: alt(`I've changed my mind. No. No, I haven't. Faster!`, `Does it go any quicker? No, slower. No. Quicker. Sorry. It's my first wedding.`) } },
           { t: 'chase', from: 'church', hp, label: van, drop: 'the marriage register', text: `They've snatched the register! Stop ${van}` },
-          { t: 'carry', from: 'church', to: 'pub', n: 1, label: 'couple', passenger: 'the happy couple', gentle: true, text: `Drive the happy couple to the wedding breakfast at ${N.pub}. Gently: it is the only good frock she has`, bark: { name: bride ? firstName(bride) : 'The bride', text: `Mind my frock. And mind him, he's gone the colour of the cake.` } },
+          { t: 'carry', from: 'church', to: 'pub', n: 1, label: 'couple', passenger: 'the happy couple', gentle: true, text: `Drive the happy couple to the wedding breakfast at ${N.pub}. Gently: it is the only good frock she has`, bark: { name: bride ? firstName(bride) : 'The bride', text: alt(`Mind my frock. And mind him, he's gone the colour of the cake.`, `Married! Drive carefully. I've only had him ten minutes.`) } },
         ],
         birth: [
-          { t: 'search', spots: ['infirmary', 'church', 'market'], miss: { 0: `"The midwife? Out on a call. She was heading for ${N.church}."`, 1: `"You've missed her. She went to ${N.market} for carbolic."`, 2: `"Not here. Try ${N.church}."` }, text: 'Find the midwife. She is out on her rounds' },
-          { t: 'carry', from: '@found', to: 'home', n: 1, label: 'midwife', passenger: 'the midwife', timed: 1.05, blocks: 1, tokens: 2, text: 'Rush the midwife to the house. Men in grey have blocked the street', bark: { name: 'The midwife', text: `I've delivered half this town and I'll not be late for this one. Whatever this thing is, make it go.` } },
+          { t: 'search', spots: ['infirmary', 'church', 'market'], miss: { 0: `"The midwife? Out on a call. Twins, ${N.church} way. It's always twins when you're in a hurry."`, 1: `"You've missed her. She went to ${N.market} for carbolic. She gets through a deal of carbolic."`, 2: `"She's been and gone, and told me off on her way out. Try ${N.church}."` }, text: 'Find the midwife. She is out on her rounds' },
+          { t: 'carry', from: '@found', to: 'home', n: 1, label: 'midwife', passenger: 'the midwife', timed: 1.05, blocks: 1, tokens: 2, text: 'Rush the midwife to the house. Men in grey have blocked the street', bark: { name: 'The midwife', text: alt(`I've delivered half this town and I'll not be late for this one. Whatever this thing is, make it go.`, `I've been to births by cart, by boat and once carried on a door. This is new. Go on, then, and mind the bumps.`) } },
           { t: 'collect', around: 'hall', radius: 14, n: 6, label: 'register pages', timed: 1.6, hunt: 1, text: `Hargreaves's men have scattered the birth register. Collect every page near ${N.hall}` },
           { t: 'goto', at: 'hall', timed: 1.3, rival: 0.4, text: `Get the pages back to ${N.hall} before Hargreaves's clerk gets there first` },
         ],
         emig: [
-          { t: 'carry', from: 'home', to: 'hub', n: 2, label: 'trunks', timed: 1.25, spill: true, tokens: 2, text: `Get both trunks to ${N.hub}`, bark: { who: c.id, text: `Don't look back at the house. It's bad luck to look back.` } },
-          { t: 'carry', from: 'home', to: 'hub', n: 1, label: 'traveller', passenger: c.first, who: c.id, timed: 1.1, switch: { to: 'post', name: c.first, text: 'The tickets! I left the tickets at the post office!' }, text: `Now ${c.first}. The ${w.boat} is about to leave` },
+          { t: 'carry', from: 'home', to: 'hub', n: 2, label: 'trunks', timed: 1.25, spill: true, tokens: 2, text: `Get both trunks to ${N.hub}`, bark: { who: c.id, text: alt(`Don't look back at the house. It's bad luck to look back.`, `Careful with that one. It's my whole life, and also the good teapot.`) } },
+          { t: 'carry', from: 'home', to: 'hub', n: 1, label: 'traveller', passenger: c.first, who: c.id, timed: 1.1, switch: { to: 'post', name: c.first, text: alt('The tickets! I left the tickets at the post office!', 'Stop! The tickets! They\'re on the post office counter, where I put them so I shouldn\'t forget them!') }, text: `Now ${c.first}. The ${w.boat} is about to leave` },
           { t: 'goto', at: 'hub', timed: 1.15, blocks: 1, text: `Tickets in hand. Get to ${N.hub} before they take the gangway up` },
           { t: 'chase', from: 'hub', hp, label: van, drop: 'the passenger list', text: `Hargreaves's men have the passenger list. Stop ${van}` },
         ],
@@ -6357,15 +6668,15 @@ function buildStory(data, rootId, opts = {}) {
           { t: 'catch', from: 'hub', label: 'grey clerk', drop: 'the muster roll', text: 'A grey clerk is striking names off the muster roll. Catch him' },
         ],
         census: [
-          { t: 'race', stops: ['home', 'pub', 'farm', 'school', 'market', 'church'], timed: 1.3, tokens: 3, hunt: 1, text: 'Do the enumerator\'s round before midnight', bark: { who: c.id, text: `Knock loud. Half of them will think you're the rent man and hide.` } },
-          { t: 'search', spots: ['pub', 'farm', 'market'], miss: { 0: `"The lodger? He scarpered when he heard the census was coming. Try ${N.farm}."`, 1: `"Slept in the barn, went at first light. ${cap(N.market)}, maybe."`, 2: `"Not here. Try ${N.farm}."` }, text: 'One lodger is dodging the count. Find where he has gone to ground' },
+          { t: 'race', stops: ['home', 'pub', 'farm', 'school', 'market', 'church'], timed: 1.3, tokens: 3, hunt: 1, text: 'Do the enumerator\'s round before midnight', bark: { who: c.id, text: alt(`Knock loud. Half of them will think you're the rent man and hide.`, `Count everybody. Even him at the end house, though he'll shout through the door that he's out.`) } },
+          { t: 'search', spots: ['pub', 'farm', 'market'], miss: { 0: `"The lodger? He scarpered when he heard the census was coming. He's not fond of being written down. Try ${N.farm}."`, 1: `"Slept in the barn and went at first light, with one of my hens under his coat. ${cap(N.market)}, maybe."`, 2: `"Him? Owes me for a week. If you find him at ${N.farm}, count him twice."` }, text: 'One lodger is dodging the count. Find where he has gone to ground' },
           { t: 'catch', from: '@found', label: 'the lodger', drop: 'his name, age and occupation', text: 'There he goes! Catch him and count him' },
           { t: 'chase', from: 'hall', hp, label: van, drop: 'the census schedules', text: `Now get the schedules back from ${van}` },
         ],
         portrait: [
           { t: 'collect', around: 'home', radius: 12, n: kidNames.length, names: kidNames, label: 'children', timed: 1.7, text: `Round up the children: ${kidNames.join(', ')}` },
-          { t: 'search', spots: ['hub', 'pub', 'market'], miss: { 0: `"The photographer? Gone to wet his whistle at ${N.pub}."`, 1: `"He was here. Went to ${N.market} to buy a new cloth for his head."`, 2: `"Not here. ${N.pub}?"` }, text: 'Find the photographer' },
-          { t: 'carry', from: '@found', to: 'home', n: 1, label: 'photographer', passenger: 'the photographer', gentle: true, timed: 1.5, text: 'Bring him to the house without breaking his camera', bark: { name: 'The photographer', text: `Nobody is to smile. It takes eight seconds and smiling is a strain.` } },
+          { t: 'search', spots: ['hub', 'pub', 'market'], miss: { 0: `"The photographer? Gone to wet his whistle at ${N.pub}. Says it steadies the hand."`, 1: `"He was here. Went to ${N.market} to buy a new cloth for his head. The old one had a moth, and the moth was in three pictures."`, 2: `"The picture man? He asked where a body could get a drink. I said ${N.pub}. He ran."` }, text: 'Find the photographer' },
+          { t: 'carry', from: '@found', to: 'home', n: 1, label: 'photographer', passenger: 'the photographer', gentle: true, timed: 1.5, text: 'Bring him to the house without breaking his camera', bark: { name: 'The photographer', text: alt(`Nobody is to smile. It takes eight seconds and smiling is a strain.`, `Stand still. Stiller. If the baby moves it comes out as a ghost, and I charge extra for ghosts.`) } },
           { t: 'chase', from: 'home', hp, label: van, drop: 'the glass plate', text: `They have the glass plate! Stop ${van}` },
         ],
         burial: [
@@ -6375,13 +6686,13 @@ function buildStory(data, rootId, opts = {}) {
         ],
         baptism: [
           { t: 'collect', around: 'church', radius: 15, n: 7, label: 'register pages', timed: 1.4, text: `Gather the register pages around ${N.church}` },
-          { t: 'search', spots: ['pub', 'infirmary', 'farm'], miss: { 0: `"Parson's out visiting the sick. ${cap(N.infirmary)}."`, 1: `"He's been and gone. Up at ${N.farm}, I heard."`, 2: `"Not here. Try ${N.infirmary}."` }, text: 'Find the parson to sign the entry afresh' },
+          { t: 'search', spots: ['pub', 'infirmary', 'farm'], miss: { 0: `"Parson's out visiting the sick. ${cap(N.infirmary)}. He'll be a while. He takes his sermons with him."`, 1: `"He's been and gone. Up at ${N.farm}, I heard, having words with a goat that ate a hymn book."`, 2: `"Parson? Went by at a trot, holding his hat on. ${cap(N.infirmary)}, I'd say."` }, text: 'Find the parson to sign the entry afresh' },
           { t: 'carry', from: '@found', to: 'church', n: 1, label: 'parson', passenger: 'the parson', timed: 1.1, rival: true, text: `Get the parson to ${N.church} before the men in grey` },
           { t: 'chase', from: 'church', hp, label: van, drop: 'the last page', text: `The last page is in ${van}. Stop it` },
         ],
         chase: [
           { t: 'goto', at: 'hall', timed: 1.1, blocks: 2, text: `Get to ${N.hall}. They have blocked the road` },
-          { t: 'catch', from: 'hall', label: 'grey clerk', drop: 'the torn page', text: 'A clerk in grey has the page under his coat. Run him down on foot', bark: { name: 'The clerk', text: `It's only a name! You've hundreds!` } },
+          { t: 'catch', from: 'hall', label: 'grey clerk', drop: 'the torn page', text: 'A clerk in grey has the page under his coat. Run him down on foot', bark: { name: 'The clerk', text: alt(`It's only a name! You've hundreds!`, `He said nobody would mind! He said nobody would even notice!`) } },
           { t: 'chase', from: 'hall', hp: hp + 1, label: van, drop: 'the parish book', text: `Stop ${van} and get the book back` },
           { t: 'escape', heat: 1.3, text: `${cap(w.law)} think it was you who took it. Lose them` },
           { t: 'goto', at: 'hall', text: `Put the book back where it belongs, at ${N.hall}` },
@@ -6392,15 +6703,20 @@ function buildStory(data, rootId, opts = {}) {
     if (set) add({
       ...base, id: `proof-${i}`, title: set.title, giver: { who: c.id, at: 'home' }, brief: set.brief,
       hour: { wedding: 10.5, birth: 2.5, emig: 6, arms: 7, census: 20.2, baptism: 11, chase: 22.5, portrait: 15, burial: 14.5 }[kind],
-      intro: [{ who: c.id, text: set.ask }], steps: set.steps,
-      outro: [{ who: 'dot', text: `${set.done} Proof ${proofs.length} of ${chapters.length + 1}.` + (chapters[i + 1] && chapters[i + 1] !== finale ? ` Next: ${chapters[i + 1].name}, your ${chapters[i + 1].rel}, ${chapters[i + 1].town.name}, ${chapters[i + 1].year}.` : '') }],
+      intro: set.ask.map(text => ({ who: c.id, text })), steps: set.steps,
+      outro: (() => {
+        const nx = chapters[i + 1] && chapters[i + 1] !== finale ? chapters[i + 1] : null, [tally, lead] = deal('tally', LINES.tally);
+        return [{ who: 'dot', text: `${set.done} ${tally({ n: proofs.length, word: NUM[proofs.length] || String(proofs.length), total: chapters.length + 1 })}` },
+          ...(nx ? [{ who: 'dot', text: `${lead} ${nx.name}, your ${nx.rel}, ${nx.town.name}, ${nx.year}.` }] : [])];
+      })(),
       reward: { cash: pay + 120, proof: set.proof },
     });
     const real = chapters.length - 1; // chapters before the finale
     if (set && !isFinale) {
       const last = missions[missions.length - 1];
-      if (i === 1) last.outro.push({ who: 'letter', text: `Under the wiper, on grey paper, in grey ink: "You are costing me a great deal of money. Kindly stop. S.H."` });
-      if (i === 3) last.outro.push({ who: 'letter', text: `Another grey note: "You have so very many of them. Mothers, grandfathers, aunts by the dozen. You would hardly miss one. I should have noticed one. S.B."` });
+      if (i === 1) last.outro.push({ who: 'letter', text: `Under the wiper, on grey paper, in grey ink: "You are costing me a great deal of money. Kindly stop. S.H. P.S. The van was on hire."` });
+      // (the slip of the pen is the first hint that Hargreaves is a name he was given, not one he has)
+      if (i === 3) last.outro.push({ who: 'letter', text: `Another grey note: "You have so very many of them. Mothers, grandfathers, aunts by the dozen. You would hardly miss one. I should have noticed one." It is signed S.B., crossed out, with S.H. written beside it.` });
     }
     // Grey Area: follow one of the vans home.
     if (i === 0 && real >= 2) add({
@@ -6411,8 +6727,10 @@ function buildStory(data, rootId, opts = {}) {
         { t: 'tail', from: 'hall', via: ['works'], to: 'office', text: `Follow the ${w.van}. Keep your distance`, bark: { who: 'dot', text: `Hang back, dear. You are driving the only mustard-coloured estate car in ${c.year}.` } },
         { t: 'goto', at: 'office', foot: true, text: 'Take a look through the window' },
         { t: 'catch', from: 'office', label: 'grey clerk', drop: 'a ledger of everybody they mean to strike out', text: 'A clerk has come out with a ledger under his arm. He has seen you. Catch him' }],
-      outro: [{ who: 'note', text: `Through the glass: rows of desks, rows of grey men, and on every desk a parish register and a bottle of something that smells of bleach. The brass plate by the door says HARGREAVES & LOWE. EST. ${c.year - 40}.` },
-        { who: 'dot', text: `Dorothy's next note is mostly underlining: "An office. In ${c.year}. He has a branch in every century, the cheek of the man. No wonder he is always ahead of us. We shall have to pay a call on head office."` }],
+      outro: [{ who: 'note', text: `Through the glass: rows of desks, rows of grey men, and on every desk a parish register and a bottle of something that smells of bleach.` },
+        { who: 'note', text: `The brass plate by the door says HARGREAVES & LOWE. EST. ${c.year - 40}. Underneath, smaller: NO CALLERS. NO RELATIVES.` },
+        { who: 'dot', text: `Dorothy's next note is mostly underlining: "An office. In ${c.year}. He has a branch in every century, the cheek of the man. No wonder he is always ahead of us."` },
+        { who: 'dot', text: `"We shall have to pay a call on head office. I shall bring a flask."` }],
       reward: { cash: 220 },
     });
     // The Paper Convoy: half way back.
@@ -6421,10 +6739,12 @@ function buildStory(data, rootId, opts = {}) {
       add({
         ...base, id: 'paper-convoy', title: 'The Paper Convoy', giver: { who: 'dot', at: 'phone' }, hour: 12,
         brief: `Every register in ${c.town.name} is going by ${cart} to be bound. Hargreaves knows.`,
-        intro: [{ who: 'dot', text: `Dorothy's note: "The parish is sending every old register it has to be rebound: by ${cart}, by way of ${N.farm}, to ${N.hub}. Three centuries of ${c.town.name} in one ${cart}. I have counted five grey ${c.year < 1900 ? 'carriages' : 'vans'} in town this morning. See it safe aboard."` }],
+        intro: [{ who: 'dot', text: `Dorothy's note: "The parish is sending every old register it has to be rebound: by ${cart}, by way of ${N.farm}, to ${N.hub}. Three centuries of ${c.town.name} in one ${cart}."` },
+          { who: 'dot', text: `"I have counted five grey ${c.year < 1900 ? 'carriages' : 'vans'} in town this morning, and not one of them is delivering anything. See it safe aboard."` }],
         steps: [{ t: 'goto', at: 'church', text: `Meet the ${cart} at ${N.church}` },
-          { t: 'defend', from: 'church', via: ['works'], to: 'hub', hp: 12, waves: 7, text: `Keep the grey vans off the ${cart} all the way to ${N.hub}`, bark: { name: 'The carter', text: `I was told this was a quiet job. Books, they said. Who robs books?` } }],
-        outro: [{ who: 'dot', text: `"Three hundred years of baptisms, safe on the ${w.boat}. Somewhere in that ${cart} is the first time anybody ever wrote your surname down. He will be furious."` }],
+          { t: 'defend', from: 'church', via: ['works'], to: 'hub', hp: 12, waves: 7, text: `Keep the grey vans off the ${cart} all the way to ${N.hub}`, bark: { name: 'The carter', text: `I was told this was a quiet job. Books, they said. Who robs books?` }, bark2: { name: 'The carter', text: `I've carried gunpowder with less bother than this.` } }],
+        outro: [{ who: 'dot', text: `"Three hundred years of baptisms, safe on the ${w.boat}. Somewhere in that ${cart} is the first time anybody ever wrote your surname down."` },
+          { who: 'dot', text: `"He will be furious. I've opened the good biscuits."` }],
         reward: { cash: 380 + i * 40 },
       });
     }
@@ -6437,7 +6757,7 @@ function buildStory(data, rootId, opts = {}) {
         intro: [{ who: 'dot', text: `A note in Dorothy's handwriting, pinned where you'd find it: "He's gone wholesale. Ellis Island, New York, 1907. Twelve million names on those manifests and he means to thin them out. Not your family's, perhaps, but somebody's. Go."` }],
         steps: [{ t: 'collect', around: 'hub', radius: 17, n: 8, label: 'manifest pages', timed: 1.5, text: 'Collect the ship\'s manifest pages blowing along the waterfront' },
           { t: 'chase', from: 'hub', hp: 6, label: 'the grey motor-van', drop: 'a crate of manifests', text: 'Stop the grey motor-van before it reaches the incinerator' }],
-        outro: [{ who: 'dot', text: `Twelve million strangers who'll never know your name. That's the job, dear. Now, back to your own lot.` }],
+        outro: [{ who: 'dot', text: `Twelve million strangers who'll never know your name. That's the job, dear. That's all an archive is: minding people you will never meet. Now, back to your own lot.` }],
         reward: { cash: 520 } });
     }
     // Before the finale: the raid on Hargreaves & Lowe, back in the present.
@@ -6447,16 +6767,19 @@ function buildStory(data, rootId, opts = {}) {
       add({
         ...base, id: 'blank-page', title: 'The Last Page', giver: { who: c.id, at: 'home' }, hour: 18.6,
         brief: `${c.name} is the top of your tree. If ${c.his} name never goes in the book, nobody below it does either.`,
-        intro: [{ who: c.id, text: `There's a gentleman at the church this hour, grey as a gravestone, turning the parson's book to my page. He said the queerest thing. He said, "Somebody has to be nobody." What did he mean by it?` },
-          { who: 'dot', text: `A note, in pencil, shaking: "${hero.first}. This is it. ${c.name}${bapt?.date ? ', baptised ' + datePhrase(bapt.date) : ', ' + c.by}, ${c.town.name}. Nobody above ${c.him} in any record. Your brick wall. If that entry goes, every name under it goes, down to yours. He has my first Engine. Do not let him turn the page."` }],
+        intro: [{ who: c.id, text: `There's a gentleman at the church this hour, grey as a gravestone, turning the parson's book to my page.` },
+          { who: c.id, text: `He said the queerest thing. He said, "Somebody has to be nobody." What did he mean by it?` },
+          { who: 'dot', text: `A note, in pencil, shaking: "${hero.first}. This is it. ${c.name}${bapt?.date ? ', baptised ' + datePhrase(bapt.date) : ', ' + c.by}, ${c.town.name}. Nobody above ${c.him} in any record. Your brick wall."` },
+          { who: 'dot', text: `"Lose that page and the whole family comes down like washing off a line. He has my first Engine. Do not let him turn the page."` }],
         steps: [{ t: 'goto', at: 'church', timed: 1.1, blocks: 2, text: `Race to ${N.church}. They have barricaded the lane` },
           { t: 'collect', around: 'church', radius: 16, n: 8, label: 'register pages', timed: 1.3, hunt: 2, text: 'He has torn the register apart. Save every page' },
           { t: 'catch', from: 'church', label: 'Hargreaves\'s clerk', drop: 'the flyleaf', time: 70, text: 'His clerk is away through the churchyard with the flyleaf. Catch him' },
-          { t: 'chase', from: 'church', hp: 12, fast: true, boss: true, hop: [...new Set([chapters[Math.floor((chapters.length - 1) / 2)].year, present, chapters[0].year, c.year])].filter((y, k, a) => k === a.length - 1 || y !== c.year), label: 'Engine No. 1', drop: 'the last page', text: 'Silas Hargreaves is running through the centuries. Stay with Engine No. 1 and stop it', bark: { who: 'blank', text: `You have thousands of them! I only ever wanted one!` } }],
+          { t: 'chase', from: 'church', hp: 12, fast: true, boss: true, hop: [...new Set([chapters[Math.floor((chapters.length - 1) / 2)].year, present, chapters[0].year, c.year])].filter((y, k, a) => k === a.length - 1 || y !== c.year), label: 'Engine No. 1', drop: 'the last page', text: 'Silas Hargreaves is running through the centuries. Stay with Engine No. 1 and stop it', bark: { who: 'blank', text: `You have thousands of them! I only ever wanted one!` }, bark2: { who: 'blank', text: `Stop following me! Nobody ever follows me!` } }],
         outro: [
           { who: 'blank', text: `Go on, then. Read it. Read the page you were so keen to save. Not the entry. The margin.` },
           { who: 'note', text: `In the margin beside ${c.first}'s entry, in the parson's cramped hand: "Also a second infant of this house, base-born, put out to the parish this day. No name given." And beneath it, in another hand: "Entered as HARGREAVES, for the overseer who signed for him."` },
-          { who: 'blank', text: `Another man's name. Nobody thought to give me my own. Four hundred years of your people in every book I open, and my whole family is a gap in a margin. I thought if nobody had a tree, I should not mind so much.` },
+          { who: 'blank', text: `Another man's name. Nobody thought to give me my own.` },
+          { who: 'blank', text: `Four hundred years of your people in every book I open, and my whole family is a gap in a margin. I thought if nobody had a tree, I should not mind so much.` },
           { who: 'dot', text: `Oh, Silas. You silly man. That's not a gap. That's a sibling. You've spent thirty years trying to erase your own family.` },
         ],
         reward: { cash: 600, proof: proof('baptism', c, `Baptism of ${c.name}`, [bapt?.date ? cap(datePhrase(bapt.date)) : String(c.by), c.town.name, 'with a note in the margin'].filter(Boolean).join(', ')) },
@@ -6468,14 +6791,17 @@ function buildStory(data, rootId, opts = {}) {
     add({
       act: 'Interlude', id: 'blank-and-void', title: 'The Break-In', town: home.id, year: present, giver: { who: 'dot', at: 'garage' }, hour: 23,
       brief: 'A visit to the offices of Hargreaves & Lowe, Probate Genealogists. Uninvited.',
-      intro: [{ who: 'dot', text: `He's ahead of us and I want to know how. Hargreaves & Lowe keep an office in town. Very grey. Very shredder. Get whatever's left of his ledger, and expect company on the way out.` }],
+      intro: [{ who: 'dot', text: `He's ahead of us and I want to know how. Hargreaves & Lowe keep an office in town. Very grey. Very shredder.` },
+        { who: 'dot', text: `Get whatever's left of his ledger, and expect company on the way out. I'd come in with you, but somebody has to mind the flask.` }],
       steps: [{ t: 'goto', at: 'office', text: 'Go to the offices of Hargreaves & Lowe' },
         { t: 'collect', around: 'office', radius: 15, n: 7, label: 'ledger pages', timed: 1.35, text: 'They are throwing the ledger out of the windows. Grab every page' },
         { t: 'catch', from: 'office', label: 'the office boy', drop: 'page one', time: 45, text: 'The office boy has page one. After him' },
         { t: 'escape', heat: 1.3, text: 'The alarm has gone. Lose the police' },
         { t: 'goto', at: 'garage', timed: 1.4, blocks: 1, hunt: 2, text: `Take the ledger back to ${H.garage}. They will try to stop you` }],
-      outro: [{ who: 'dot', text: `I ought to tell you. He was my apprentice. The brightest I ever had, and the loneliest. I showed him my first Engine one Friday, and on the Monday the pair of them were gone.` },
-        { who: 'dot', text: `Page one, in his own hand: "HARGREAVES, Silas. Foundling. Left at the door of the parish of ${f.town.name}. No name given." Oh, I see. He isn't only erasing your family, ${hero.first}. He's been looking for his own.` },
+      outro: [{ who: 'dot', text: `I ought to tell you. He was my apprentice. The brightest I ever had, and the loneliest.` },
+        { who: 'dot', text: `I showed him my first Engine one Friday, and on the Monday the pair of them were gone. He'd tidied the shed before he went. That's what I couldn't forgive.` },
+        { who: 'dot', text: `Page one, in his own hand: "HARGREAVES, Silas. Foundling. Left at the door of the parish of ${f.town.name}. No name given."` },
+        { who: 'dot', text: `Oh, I see. He isn't only erasing your family, ${hero.first}. He's been looking for his own.` },
         { who: 'dot', text: `And the last entry: ${f.name}, ${f.town.name}, ${f.year}. The very top of your tree. He's going for the root.` }],
       reward: { cash: 400 },
     });
@@ -6501,12 +6827,16 @@ function buildStory(data, rootId, opts = {}) {
   add({
     act: 'Epilogue', id: 'case-closed', title: 'Case Closed', town: home.id, year: present, giver: { who: 'dot', at: 'garage' }, hour: 14,
     brief: 'One pedigree, proven. One extra name to write in.',
-    intro: [{ who: 'dot', text: `Every link proven, ${hero.first}, from you ${finale ? 'to ' + finale.name : 'upwards'}. And one more name for the chart than we started with. Drive us to ${H.hall}, both of us. Slowly. My hip, and his nerves.` }],
+    intro: [{ who: 'dot', text: `Every link proven, ${hero.first}, from you ${finale ? 'to ' + finale.name : 'upwards'}. And one more name for the chart than we started with.` },
+      { who: 'dot', text: `Drive us to ${H.hall}, both of us. Slowly. My hip, and his nerves.` }],
     steps: [{ t: 'carry', from: 'garage', to: 'hall', n: 1, label: 'passengers', passenger: 'Dorothy and Silas', gentle: true, text: `Drive Dorothy and Silas to ${H.hall}. Gently` }],
     outro: [
-      { who: 'note', text: `The pedigree of ${hero.name} is lodged and stamped. The estate of ${estateOf} is released to its rightful heirs: you, and one newly discovered cousin, many times removed, who cries all over the paperwork.` },
+      { who: 'note', text: `The pedigree of ${hero.name} is lodged and stamped. The estate of ${estateOf} is released to its rightful heirs.` },
+      { who: 'note', text: `That is you, and one newly discovered cousin, many times removed, who cries all over the paperwork.` },
+      { who: 'note', text: `Mr Lowe, at last report, is still filling in the mileage claim. It covers four hundred years, and he has run out of form.` },
       { who: 'blank', text: `I have a ${finale ? 'great-' + 'great-'.repeat(Math.min(3, Math.max(0, finale.gen - 2))) + 'aunt' : 'family'}. Several, apparently. I should like to meet them. Might I borrow the car?` },
-      { who: 'dot', text: `You may not. But ${hero.first} might drive you. The Heirloom is yours now, dear: every town, every year, anyone in your tree. Go and say hello. They've been waiting long enough.` },
+      { who: 'dot', text: `You may not. But ${hero.first} might drive you. The Heirloom is yours now, dear: every town, every year, anyone in your tree.` },
+      { who: 'dot', text: `Go and say hello. They've been waiting long enough.` },
     ],
     reward: { cash: 5000 },
   });
@@ -6514,7 +6844,8 @@ function buildStory(data, rootId, opts = {}) {
 
   // ---- Family favours: optional jobs for brothers, sisters and children of each chapter's ancestor ----
   const favours = [];
-  const taken = new Set([rootId, ...chapters.map(c => c.id)]), usedFav = new Set();
+  // (a favour is never the job a chapter's ancestor has already given you, so no ask is heard twice)
+  const taken = new Set([rootId, ...chapters.map(c => c.id)]), usedFav = new Set(chapters.map(c => c.jobKey));
   for (const c of chapters) {
     const meet = missions.find(m => m.chapter === c.index);
     if (!meet) continue;
@@ -6539,9 +6870,9 @@ function buildStory(data, rootId, opts = {}) {
       favours.push({
         id: `favour-${c.index}-${x.id}`, odd: true, favour: true, act: 'Family favour', title: tmpl.title, town: c.town.id, year: c.year, after: meet.index,
         giver: { who: x.id, at: 'home' }, brief: `${displayName(x)}, ${c.first}'s ${rel}, could use a hand.`,
-        intro: [{ who: x.id, text: `You're the one «${c.first}» has been telling everybody about. I'm «${displayName(x)}», ${c.he === 'she' ? 'her' : c.he === 'he' ? 'his' : 'their'} ${rel}${job ? ', «' + job.toLowerCase() + '»' : ''}. Since you're stopping: ` + tmpl.ask }],
+        intro: [{ who: x.id, text: deal('favourAsk', LINES.favourAsk)({ c: q(c.first), name: q(displayName(x)), rel, job: job ? ', ' + q(job.toLowerCase()) : '', whose: q(c.first) + '\'s', poss: c.he === 'she' ? 'her' : c.he === 'he' ? 'his' : 'their' }) }, { who: x.id, text: tmpl.ask }],
         steps: tmpl.steps,
-        outro: [{ who: x.id, text: `That's a kindness I'll not forget. Mind, I couldn't tell you what you are to me. Something with a deal of greats in it, I'd say.` }],
+        outro: [{ who: x.id, text: deal('favourDone', LINES.favourDone)({ c: q(c.first), He: cap(c.he), he: c.he, him: c.him }) }],
         reward: { cash: 140 + c.index * 35 },
       });
     }
@@ -6555,7 +6886,7 @@ function buildStory(data, rootId, opts = {}) {
     `Apprenticed at nine to a law stationer. Absconded. Returned. Absconded. "The boy reads parish registers as other boys read adventure stories."`,
     `A letter, never posted: "To any person of the name of". The name after it has been rubbed out so often the paper has gone through.`,
     `A family tree in a child's hand. There is one name on it, his own, drawn very carefully, with room left all round.`,
-    `A reference in Dorothy's writing: "The brightest apprentice I ever had. He asked who the Engines were for. I said, people with somebody to go back to. I have regretted it since."`,
+    `A reference in Dorothy's writing: "Quick, exact, and never once late. He asked who the Engines were for. I said, people with somebody to go back to. I have regretted it since."`,
   ];
   const fragLots = ['church', 'infirmary', 'school', 'post', 'hall', 'farm'], seenFrag = new Set();
   const frags = [];
@@ -6568,7 +6899,8 @@ function buildStory(data, rootId, opts = {}) {
   const bonus = frags.length ? {
     id: 'somebodys-son', odd: true, bonus: true, act: 'After the end', title: `Somebody's Son`, town: home.id, year: present, giver: { who: 'dot', at: 'garage' }, hour: 16,
     brief: `Silas's file is whole again. It says where and when. The Heirloom can do the rest.`,
-    intro: [{ who: 'dot', text: `You found all of it. I never could. A Tuesday, the vestry door, ${ft.name}, ${fy}: the very year you stood there${finale ? ' with ' + finale.first : ''}. He was a week old and forty yards off the whole time.` },
+    intro: [{ who: 'dot', text: `You found all of it. I never could. A Tuesday, the vestry door, ${ft.name}, ${fy}: the very year you stood there${finale ? ' with ' + finale.first : ''}.` },
+      { who: 'dot', text: `He was a week old and forty yards off the whole time.` },
       { who: 'dot', text: `We have a machine that goes to Tuesdays, ${hero.first}. He won't ask. He has never asked anybody for anything. So I'm asking for him.` }],
     steps: [
       { t: 'carry', from: 'garage', to: 'hub', n: 1, label: 'passenger', passenger: 'Silas', gentle: true, text: `Collect Silas. He has packed a bag, and unpacked it, twice`, bark: { name: 'Silas', text: `I have brought sandwiches. I did not know what one brings.` } },
@@ -6596,20 +6928,30 @@ function buildStory(data, rootId, opts = {}) {
     const firstOf = indi => nameOf(indi).split(' ')[0];
     const shot = (at, who, mood, text, extra = {}) => ({ at, who, mood, text, side: who === 'lowe' ? 1 : 0, ...extra });
     // what the ancestor is busy with when the chapter opens, before anybody has told them anything
-    const busyWith = (c, proofM) => (busyLine(c, proofM) + (c.quizSaid ? ' ' + c.quizSaid : ''));
     const busyLine = (c, proofM) => {
       const sp = c.spouse ? firstOf(c.spouse) : '', ch = c.child ? firstOf(c.child) : '', late = c.late ? nameOf(c.late.indi) : '';
-      return {
-        wedding: `Saturday I'm to be wed${sp ? ' to ' + sp : ''}. The banns are read, and the parson's book is waiting for the both of us.`,
-        birth: `Any day now, the midwife says.${ch ? ' We have a name picked: ' + ch + '.' : ''} There's a page in the register with a space for it.`,
-        portrait: `There's a photographer coming to take the children's likeness. All of them at once, heaven help the man.`,
-        census: `The enumerator's coming round tonight with his forms. Every soul under this roof, written down for the government.`,
-        emig: `Everything we own is in two trunks. Our names are on the passenger list, and we sail with the tide.`,
-        burial: `We bury ${late || 'our own'} this week. Whatever else happens, it'll be written in the book proper.`,
-        arms: `I've taken the ${sov(c.year)} shilling. They'll write my name in the muster roll, and then I belong to the army.`,
-        baptism: `The christening's on Sunday. Our little one, in the parish book at last.`,
-        chase: `There's a gentleman in grey been round asking after the parish book. Says he's from the solicitors. I didn't like his face.`,
-      }[c.set] || `There's a gentleman in grey been round asking after the parish book. I didn't like his face.`;
+      // [A-E] two of each, because the same kind of event can open two chapters
+      const two = {
+        wedding: [`Saturday I'm to be wed${sp ? ' to ' + sp : ''}. The banns are read, and the parson's book is waiting for the both of us.`,
+          `Three days till ${sp ? 'I marry ' + sp : 'the wedding'}, and my mother has already cried on everything I own. All that's left is two names in the parson's book.`],
+        birth: [`Any day now, the midwife says.${ch ? ' We have a name picked: ' + ch + '.' : ''} There's a page in the register with a space for it.`,
+          `The baby's due, and the whole street has an opinion on the name.${ch ? ' It\'s ' + ch + ', and that\'s final.' : ''} It only wants writing in the register.`],
+        portrait: [`There's a photographer coming to take the children's likeness. All of them at once, heaven help the man.`,
+          `We're to have our likeness taken, the whole family. I've washed every child twice and I am not doing it a third time.`],
+        census: [`The enumerator's coming round tonight with his forms. Every soul under this roof, written down for the government.`,
+          `Census night. Every name in the house goes on the form, and I've told the lodger: one more false name and I'll choose it for him.`],
+        emig: [`Everything we own is in two trunks. Our names are on the passenger list, and we ${c.year >= 1950 ? 'fly in the morning' : 'sail with the tide'}.`,
+          `A whole life packed, and the house echoing. My name's on the passenger list now, so it's too late to be sensible.`],
+        burial: [`We bury ${late || 'our own'} this week. Whatever else happens, it'll be written in the book proper.`,
+          `The funeral's this week. ${late ? late + ' always said to make no fuss' : 'We were told to make no fuss'}, so naturally the whole town is coming. It'll go in the book, done right.`],
+        arms: [`I've taken the ${sov(c.year)} shilling. They'll write my name in the muster roll, and then I belong to the army.`,
+          `I've signed up. The sergeant said I'd see the world, and so far I've seen a field and a shouting man. Still, my name goes on the muster roll.`],
+        baptism: [`The christening's on Sunday. Our little one, in the parish book at last.`,
+          `There's a christening Sunday, and the parson has promised to keep it short. He promised that last time. It goes in the parish book, that's the main thing.`],
+        chase: [`There's a gentleman in grey been round asking after the parish book. Says he's from the solicitors. I didn't like his face.`,
+          `A grey sort of man knocked this morning, asking who my people were. I said they were none of his business. He wrote that down.`],
+      };
+      return deal('busy-' + (two[c.set] ? c.set : 'chase'), two[c.set] || two.chase);
     };
     const LOWE_IN = [
       `They followed us, sir. That yellow car was seen on the bridge this morning.`,
@@ -6622,12 +6964,6 @@ function buildStory(data, rootId, opts = {}) {
       `Let it come. Nobody outruns the Engine twice.`,
       `Then take the book before they find the family. Go!`,
       `Tired? We are erasing four hundred years, Mr Lowe. Nobody said it was a half-day.`,
-    ];
-    const BLANK_OUT = [
-      `Lodged? LODGED? One page, and they have it in a folder with a ribbon round it.`,
-      `Again! That ridiculous car, and that ridiculous old woman.`,
-      `How do they always know where to look? They must be family. They must actually care.`,
-      `Do you know what it costs to keep a van in four centuries, Mr Lowe? Do you?`,
     ];
     const prologueEnd = byId('first-jump'), ch0 = chapters[0];
     if (prologueEnd && ch0) prologueEnd.cutOut = { caption: `${ch0.town.name}, ${ch0.year}`, shots: [
@@ -6653,22 +6989,25 @@ function buildStory(data, rootId, opts = {}) {
         }
         return;
       }
+      const they = c.he === 'they';
+      const leadIn = deal('leadIn', LINES.leadIn)({ name: c.name, job: c.job.toLowerCase(), he: c.he, him: c.him, is: they ? 'are' : 'is', page: pTitle });
       first.cutIn = { caption: `${c.town.name}, ${c.year}`, hour: 21.5, shots: [
-        shot('office', 'note', '', i === 0 ? `${c.town.name}, ${c.year}. Hargreaves & Lowe have an office here too. They have one in every century.` : `${c.town.name}, ${c.year}. Another century, the same grey door.`, { caption: 'Hargreaves & Lowe' }),
+        shot('office', 'note', '', `${c.town.name}, ${c.year}. ` + (i === 0 ? `Hargreaves & Lowe have an office here too. They have one in every century. The carpet is always the same.` : deal('door', LINES.door)), { caption: 'Hargreaves & Lowe' }),
         // his scheme for this chapter, in his own words; failing that, the old complaints
         ...(c.schemeInfo
-          ? [shot('office', 'blank', 'grin', `${c.name}. ${pTitle}. ${c.schemeInfo.cut[0]}`), shot('office', 'lowe', 'worried', c.schemeInfo.cut[1]), shot('office', 'blank', 'set', c.schemeInfo.cut[2])]
-          : [shot('office', 'blank', 'grin', `${c.name}. ${pTitle}. One page in one book, Mr Lowe. Lose it, and everybody after ${c.him} goes with it.`), shot('office', 'lowe', 'worried', LOWE_IN[k]), shot('office', 'blank', 'angry', BLANK_IN[k])]),
-        shot('home', c.id, '', busyWith(c, proofM), { of: c.id, caption: `Meanwhile: ${c.name}` }),
-        shot('phone', 'dot', 'set', `That's the page he's after, ${hero.first}: ${pTitle}. And this time it's ${c.schemeInfo ? c.schemeInfo.name : 'no ordinary trick'}. Get to your ${c.rel} before his men do.`),
+          ? [shot('office', 'blank', 'grin', `${leadIn} ${c.schemeInfo.cut[0]}`), shot('office', 'lowe', 'worried', c.schemeInfo.cut[1]), shot('office', 'blank', 'set', c.schemeInfo.cut[2])]
+          : [shot('office', 'blank', 'grin', `${leadIn} One page in one book, Mr Lowe. Lose it, and everybody after ${c.him} goes with it.`), shot('office', 'lowe', 'worried', LOWE_IN[k]), shot('office', 'blank', 'angry', BLANK_IN[k])]),
+        shot('home', c.id, '', busyLine(c, proofM), { of: c.id, caption: `Meanwhile: ${c.name}` }),
+        ...(c.quizSaid ? [shot('home', c.id, '', c.quizSaid, { of: c.id, caption: `Meanwhile: ${c.name}` })] : []),   // (the quiz clue, in passing)
+        shot('phone', 'dot', 'set', deal('target', LINES.target)({ hero: hero.first, page: pTitle, scheme: c.schemeInfo ? c.schemeInfo.name : 'no ordinary trick', rel: c.rel, he: c.he, does: they ? 'do' : 'does' })),
       ] };
       if (proofM) {
         const n = proofs.indexOf(proofM.reward.proof) + 1;
         proofM.cutOut = { caption: 'Hargreaves & Lowe', hour: 22, shots: [
-          shot('office', 'blank', 'angry', BLANK_OUT[k]),
-          shot('office', 'lowe', 'worried', `That's ${n} link${n === 1 ? '' : 's'} of the chain proven, sir. If they reach the top of the tree...`),
-          shot('office', 'blank', 'set', next && next !== finale ? `They won't. We go further back. ${next.name}, ${next.town.name}, ${next.year}. Before they've even worked out where.` : `Then we go to the very top. The root. And we take it out.`),
-          shot('home', c.id, 'grin', `Mind how you go, ${hero.first}. Whoever you are, you've the family look about you.`, { of: c.id, caption: c.name }),
+          shot('office', 'blank', 'angry', deal('fume', LINES.fume)),
+          shot('office', 'lowe', 'worried', deal('count', LINES.count)({ n, word: NUM[n] || String(n) })),
+          shot('office', 'blank', 'set', next && next !== finale ? deal('further', LINES.further)({ next: `${next.name}, ${next.town.name}, ${next.year}` }) : `Then we go to the very top. The root. And we take it out.`),
+          shot('home', c.id, 'grin', deal('farewell', LINES.farewell)({ hero: hero.first }), { of: c.id, caption: c.name }),
         ] };
       }
     });
@@ -6807,7 +7146,7 @@ function lifeSoFar(data, id, year) {
   return lines;
 }
 
-return { eraOf, eraWords, placeTown, fareBetween, lotName, jobGroup, buildStory, residentsOf, oddJob, townNotes, kinOf, burialsIn, lifeSoFar, ERA_NAMES, inkCost };
+return { eraOf, eraArrival, eraWords, placeTown, fareBetween, lotName, jobGroup, buildStory, residentsOf, oddJob, townNotes, kinOf, burialsIn, lifeSoFar, ERA_NAMES, inkCost };
 })();
 
 // ---- storynet.js ----
@@ -8206,6 +8545,14 @@ const CSS = `
 #story .st-card .foot { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
 #story .st-card canvas { display: block; width: 100%; height: auto; border: 3px solid #2a2218; border-radius: 6px; image-rendering: pixelated; }
 #story .st-card.wide { width: min(760px, 100%); }
+#story .st-map { position: relative; }
+#story .st-map canvas { width: 100%; height: min(62vh, 560px); touch-action: none; cursor: grab; image-rendering: auto; }
+#story .st-mapbtns { position: absolute; right: 10px; top: 10px; display: flex; flex-direction: column; gap: 6px; }
+#story .st-mapbtns button { width: 42px; height: 42px; padding: 0; font-size: 24px; line-height: 1; border: 3px solid #2a2218; }
+#story .st-mapgo { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+#story .st-mapgo button { border: 3px solid #2a2218; padding: 6px 12px; }
+#story .st-maplegend { font-size: 13px; line-height: 1.6; }
+#story .st-maplegend i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; border: 2px solid #000; margin: 0 4px 0 8px; vertical-align: -1px; }
 #story .st-card kbd { font-family: 'Press Start 2P', monospace; font-size: 9px; background: #2a2218; color: #f4ecd8; padding: 3px 5px; border-radius: 3px; }
 #story .st-touch { position: absolute; inset: 0; pointer-events: none; display: none; }
 #story.touch .st-touch { display: block; }
@@ -8542,7 +8889,12 @@ const BADGES = {
   centuries: ['Century hopper', 'Visited four different eras'], fitted: ['Fully fitted', 'Every upgrade on the Heirloom'], proven: ['Proven', 'Lodged every proof'],
 };
 const SILAS = ['Is that one of ours? I mean yours. I mean ours.', 'She has my chin. Do you see it? That is my chin.', 'I had no idea there were so many. Do they all come at Christmas?',
-  'I should like to write that one down. In ink. I have given up pencil.', 'Nobody ever told me families were so loud.', 'May we stop? I think that gentleman is my great-great-great-uncle and I have nothing to give him.'];
+  'I should like to write that one down. In ink. I have given up pencil.', 'Nobody ever told me families were so loud.', 'May we stop? I think that gentleman is my great-great-great-uncle and I have nothing to give him.',
+  'That one looked straight at me. Do I wave? What is the done thing?', 'I have been practising the word "cousin". Cousin. It still sounds like somebody else\'s.', 'Does everybody have this many grandmothers, or have I been oversupplied?',
+  'I have started a list of birthdays. It is already longer than my client list ever was.', 'If anybody asks, what am I to them? Twelfth cousin? Thirteenth? I should like to get the paperwork right.', 'Mr Lowe sends his regards. He has taken up bee-keeping. He says the bees worry him less.'];
+// What Dorothy says at her workbench once there is nothing left to prove: a different line each visit.
+const DOT_DONE = ['Nothing left to prove, dear. Go and visit them. Take your time; you\'ve got all of it.', 'Still here, dear. Still retired. The kettle\'s on, if you\'ve a century to spare.', 'No more grey vans and no more deadlines. Only four hundred years of relatives who\'d love a visit. Do take a cake.'];
+let dotDone = 0;
 const up = id => (S.save.up && S.save.up[id]) || 0;
 function statsOf(v) {
   const st = VEHICLES[v.type];
@@ -9662,10 +10014,7 @@ function enterStep(step) {
   if (step.blocks) hintOnce('blocks', 'Grey vans are parked across the road ahead. Find another way round, or get out and walk the last bit.', 5600);
   if (step.rival && step.t === 'goto') startRival(lotPt(step.at), step.rival);
   if (step.blocks) placeBlocks(step.t === 'goto' ? lotPt(step.at) : lotPt(step.to), step.blocks);
-  if (step.bark) {
-    const sp = step.bark.who ? speaker(step.bark.who) : null, name = step.bark.name || (sp ? sp.who.split(' ')[0] : '');
-    S.ui.toast(`${name}: "${sp && sp.person ? voiceLine(sp.person, step.bark.text) : plainText(step.bark.text)}"`, 5200);
-  }
+  barkToast(step.bark);
   if (step.timed) st.timer = Math.round(14 + tiles / (c.source === 'osm' ? 3.2 : 3.8) / SPEED_SCALE * step.timed + stops * 5);   // (and the clock allows for an untuned engine)   // real streets twist more than drawn ones
   if (step.tokens && st.timer != null) {
     // clocks left about the streets: each one is five more seconds, if you care to go out of your way
@@ -9774,6 +10123,7 @@ function updateMission(dt) {
     const alive = S.vehicles.filter(v => v.prey === cv && v.ai === 'hunt').length;
     if (cv.started && st.wave <= 0 && alive < 2 && st.sent < (s.waves || 6)) {
       st.wave = 9; st.sent++;
+      if (st.sent === 2) barkToast(s.bark2);
       const a = Math.random() * 7, h = spawnAi(S.city.year < 1900 ? 'erasercoach' : 'eraser', { x: cv.x + Math.cos(a) * 11 * T, y: cv.y + Math.sin(a) * 11 * T }, 'hunt', { prey: cv });
       h.hp = 1;
     }
@@ -9801,8 +10151,8 @@ function updateMission(dt) {
       const d = DRILLS[id];
       st.k++; st.peak = 0; st.held = 0; st.spin = null; st.lift = pv.hand;   // the next move starts with a fresh press
       float(pv.x, pv.y - 30, d.done, '#7be07b'); sfx.pick();
-      S.ui.toast(`Dorothy: "${d.praise}"`, 3200); S.lessonKey = 'praise';
-      S.lessonHold = S.t + 3.2;
+      S.ui.toast(`Dorothy: "${d.praise}"`, 4600); S.lessonKey = 'praise';   // (long enough to read her aside)
+      S.lessonHold = S.t + 4.6;
       if (st.k >= s.drills.length) nextStep();
     }
   } else if (s.t === 'travel') {
@@ -9914,6 +10264,7 @@ function hopChase(year) {
   nv.hp = keep.hp; nv.speed = keep.speed; st.target = nv;
   if (st.timer != null) st.timer += 25;
   S.ui.toast(`Hargreaves has jumped to ${year}, and taken you with him!`, 3600);
+  if (st.hops === 2 && st.step.bark2) { const tok = S; setTimeout(() => S === tok && S.step === st && barkToast(st.step.bark2), 3800); }
 }
 // After the first chapter, Hargreaves's men come looking for you while the clock is running.
 function updateAmbush(dt) {
@@ -9931,6 +10282,12 @@ function updateAmbush(dt) {
   v.hp = 2;
   hintOnce('hunt', 'Grey vans on your tail! Every time one rams you, you lose three seconds. Ram them first.', 6500);
 }
+// Something shouted while you drive: a line from whoever is with you, shown as a toast.
+function barkToast(bark) {
+  if (!bark) return;
+  const sp = bark.who ? speaker(bark.who) : null, name = bark.name || (sp ? sp.who.split(' ')[0] : '');
+  S.ui.toast(`${name}: "${sp && sp.person ? voiceLine(sp.person, bark.text) : plainText(bark.text)}"`, 5200);
+}
 async function converse(s) {
   const tok = S;
   S.busy = true;
@@ -9938,13 +10295,14 @@ async function converse(s) {
   if (s.greet) { await runLines([{ who: s.who, greet: true }]); if (S !== tok) return; }
   for (const line of s.lines || []) { if (S !== tok) return; await say(s.who, line); }
   if (s.quiz && S === tok) {
-    let first = true;
+    let first = true, misses = 0;
+    const qz = s.quiz, wrong = qz.wrong && qz.wrong.length ? qz.wrong : ['No. Any stranger off the road would say that. Think on, and try again.'];
     for (;;) {
       const pick = await say(s.who, s.quiz.q, s.quiz.options);
       if (S !== tok) return;
-      if (pick === s.quiz.answer || pick < 0) { await say(s.who, first ? 'Right first time. Nobody but family would know that.' : 'There. Now you sound like one of us.'); if (first) { earn(25); } break; }
+      if (pick === s.quiz.answer || pick < 0) { await say(s.who, first ? qz.right || 'Right first time. Nobody but family would know that.' : qz.rightAtLast || 'There. Now you sound like one of us.'); if (first) { earn(25); } break; }
       first = false;
-      await say(s.who, 'No. Any stranger off the road would say that. Think on, and try again.');
+      await say(s.who, wrong[misses++ % wrong.length]);
       if (S !== tok) return;
     }
   }
@@ -10187,23 +10545,86 @@ function openPedigree() {
   const n = Math.min(S.save.idx, st.missions.length);
   S.ui.panel(`<h2>📜 The ${escapeText(st.surname)} pedigree</h2><p>${S.save.proofs.length} of ${st.proofs.length} proofs lodged · ${n} of ${st.missions.length} missions passed · ${(S.save.photos || []).length} lost photographs · ${(S.save.met || []).length} of the family met · ${(S.save.graves || []).length} graves visited · £${S.save.cash}</p><p>Badges (${(S.save.badges || []).length}/${Object.keys(BADGES).length}): ${escapeText((S.save.badges || []).map(b => BADGES[b][0]).join(', ') || 'none yet')}</p>${rows}<div class="foot"><button class="alt" data-go="close">Close</button></div>`, { close: () => S.ui.closePanel() });
 }
+// The town map: opens centred on you at a readable zoom. Zoom with + and − (or the wheel, or a pinch), drag to look
+// about, and jump back to yourself, to where the story wants you, or out to the whole town.
+function streetLabels(c) {
+  // one label per named street, at the middle of its stretch of road
+  if (c.mapLabels) return c.mapLabels;
+  const by = new Map();
+  for (let y = 0; y < c.H; y += 2) for (let x = 0; x < c.W; x += 2) { const n = c.streetAt((x + 0.5) * T, (y + 0.5) * T); if (!n) continue; let e = by.get(n); if (!e) by.set(n, e = []); e.push([x, y]); }
+  const out = [];
+  for (const [name, pts] of by) {
+    if (pts.length < 4) continue;
+    const mx = pts.reduce((a, q) => a + q[0], 0) / pts.length, my = pts.reduce((a, q) => a + q[1], 0) / pts.length;
+    let best = pts[0], bd = 1e9; for (const q of pts) { const d = (q[0] - mx) ** 2 + (q[1] - my) ** 2; if (d < bd) { bd = d; best = q; } }
+    const xs = pts.map(q => q[0]), ys = pts.map(q => q[1]), wide = Math.max(...xs) - Math.min(...xs), tall = Math.max(...ys) - Math.min(...ys);
+    out.push({ name, x: best[0] + 1, y: best[1] + 1, rot: tall > wide * 1.6 ? -Math.PI / 2 : 0, n: pts.length });
+  }
+  out.sort((a, b) => b.n - a.n);
+  return (c.mapLabels = out);
+}
 function openMap() {
-  const c = S.city, sc = 6;
-  S.ui.panel(`<h2>🗺 ${escapeText(c.town.name)}, ${c.year}</h2><canvas id="stMap" width="${c.W * sc}" height="${c.H * sc}"></canvas><p>Yellow: where the story wants you. Gold: the Heirloom. £: odd jobs. ${c.air ? '✈' : '⚓'}: tickets. Photographs found here: ${(S.save.photos || []).filter(p => p.startsWith(c.town.id + ':' + c.era)).length} of 3.</p><div class="foot"><button class="alt" data-go="close">Close</button></div>`, { close: () => S.ui.closePanel() }, true);
-  const g = S.ui.root.querySelector('#stMap').getContext('2d');
-  g.imageSmoothingEnabled = false;
-  g.drawImage(S.mini, 0, 0, c.W * sc, c.H * sc);
-  g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '700 12px "Fredoka", "Nunito", sans-serif';
-  const tag = (o, text, col) => { const x = o.x / T * sc, y = o.y / T * sc; g.lineWidth = 3; g.strokeStyle = 'rgba(0,0,0,0.85)'; g.strokeText(text, x, y); g.fillStyle = col; g.fillText(text, x, y); };
-  const SHORT = { church: 'Church', hall: c.year >= 1837 ? 'Records' : 'Vestry', pub: 'Pub', works: 'Works', farm: 'Farm', school: 'School', hub: c.air ? 'Airport' : 'Quay', garage: c.year >= 1950 ? 'Lock-up' : 'Barn', market: 'Market', infirmary: c.year >= 1948 ? 'Hospital' : 'Infirmary', police: c.year >= 1900 ? 'Police' : 'Watch', post: 'Post', office: c.era === 'modern' ? 'Hargreaves & Lowe' : 'Counting ho.' };
-  g.font = '700 11px "Fredoka", "Nunito", sans-serif';
-  for (const k in c.lots) if (SHORT[k]) tag({ x: c.lots[k].x, y: c.lots[k].y - (k === 'garage' ? -1.2 : 1.8) * T }, SHORT[k], '#fff');
-  const dot = (o, col, r = 6) => { g.fillStyle = col; g.strokeStyle = '#000'; g.lineWidth = 2; g.beginPath(); g.arc(o.x / T * sc, o.y / T * sc, r, 0, 7); g.fill(); g.stroke(); };
-  dot(S.heirloom, '#e8c040');
-  if (S.target) dot(S.target, '#ffd84a', 8);
-  const pp = S.player.vehicle || S.player;
-  dot(pp, '#fff', 5);
-  tag({ x: pp.x, y: pp.y + 1.8 * T }, 'you', '#fff');
+  const c = S.city, pp = S.player.vehicle || S.player, M = S.mapView || (S.mapView = { z: 11 });
+  M.cx = pp.x / T; M.cy = pp.y / T;
+  const fitZ = () => Math.min(M.cw / c.W, M.ch / c.H);
+  const clampView = () => { M.z = clamp(M.z, Math.min(fitZ(), 3), 28); const hw = M.cw / M.z / 2, hh = M.ch / M.z / 2; M.cx = c.W <= hw * 2 ? c.W / 2 : clamp(M.cx, hw, c.W - hw); M.cy = c.H <= hh * 2 ? c.H / 2 : clamp(M.cy, hh, c.H - hh); };
+  const go = (x, y, z) => { M.cx = x; M.cy = y; if (z) M.z = z; clampView(); draw(); };
+  S.ui.panel(`<h2>🗺 ${escapeText(c.town.name)}, ${c.year}</h2>
+    <div class="st-map"><canvas id="stMap"></canvas>
+      <div class="st-mapbtns"><button data-go="zin" aria-label="Zoom in">+</button><button data-go="zout" aria-label="Zoom out">−</button></div>
+      <div class="st-mapgo"><button data-go="me">📍 Me</button>${S.target ? '<button data-go="tgt">🎯 Where to go</button>' : ''}<button data-go="all">Whole town</button></div>
+    </div>
+    <p class="st-maplegend"><i style="background:#fff"></i>You <i style="background:#e8c040"></i>the Heirloom <i style="background:#ffd84a;box-shadow:0 0 0 3px #ff5a4a"></i>where to go <i style="background:#7be07b"></i>£ odd jobs <i style="background:#a8d8ff"></i>${c.air ? 'airport' : 'quay'} · drag to look about · photographs found here: ${(S.save.photos || []).filter(p => p.startsWith(c.town.id + ':' + c.era)).length} of 3</p>
+    <div class="foot"><button class="alt" data-go="close">Close</button></div>`, {
+    close: () => S.ui.closePanel(),
+    zin: () => go(M.cx, M.cy, M.z * 1.5), zout: () => go(M.cx, M.cy, M.z / 1.5),
+    me: () => go(pp.x / T, pp.y / T, Math.max(M.z, 11)),
+    tgt: () => S.target && go(S.target.x / T, S.target.y / T, Math.max(M.z, 11)),
+    all: () => go(c.W / 2, c.H / 2, fitZ()),
+  }, true);
+  const cv = S.ui.root.querySelector('#stMap'), g = cv.getContext('2d');
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const size = () => { const r = cv.getBoundingClientRect(); M.cw = Math.max(200, r.width); M.ch = Math.max(200, r.height); cv.width = Math.round(M.cw * dpr); cv.height = Math.round(M.ch * dpr); };
+  size(); clampView();
+  const SHORT = { church: 'Church', hall: c.year >= 1837 ? 'Records Office' : 'Vestry', pub: 'Pub', works: 'Works', farm: 'Farm', school: 'School', hub: c.air ? 'Airport' : 'Quay', garage: c.year >= 1950 ? 'Lock-up' : 'Barn', market: 'Market', infirmary: c.year >= 1948 ? 'Hospital' : 'Infirmary', police: c.year >= 1900 ? 'Police' : 'Watch', post: 'Post office', office: c.era === 'modern' ? 'Hargreaves & Lowe' : 'Counting house' };
+  function draw() {
+    const z = M.z, X = tx => (tx - M.cx) * z + M.cw / 2, Y = ty => (ty - M.cy) * z + M.ch / 2;
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.fillStyle = '#2a6aa8'; g.fillRect(0, 0, M.cw, M.ch);
+    g.imageSmoothingEnabled = z < 4;
+    g.drawImage(S.mini, 0, 0, S.mini.width, S.mini.height, X(0), Y(0), c.W * z, c.H * z);
+    g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
+    const tag = (x, y, text, col, px = 12, rot = 0) => { g.save(); g.translate(x, y); if (rot) g.rotate(rot); g.font = `700 ${px}px "Fredoka", "Nunito", sans-serif`; g.lineWidth = 3.5; g.strokeStyle = 'rgba(0,0,0,0.85)'; g.strokeText(text, 0, 0); g.fillStyle = col; g.fillText(text, 0, 0); g.restore(); };
+    // street names, once there is room for them
+    if (z >= 7) { const placed = []; for (const l of streetLabels(c)) { const x = X(l.x), y = Y(l.y); if (x < -60 || y < -20 || x > M.cw + 60 || y > M.ch + 20) continue; if (placed.some(q => Math.abs(q[0] - x) < 90 && Math.abs(q[1] - y) < 22)) continue; placed.push([x, y]); tag(x, y, l.name, '#f4ecd8', z >= 14 ? 12 : 10, l.rot); } }
+    // places
+    if (z >= 3.5) for (const k in c.lots) if (SHORT[k]) { const l = c.lots[k]; tag(X(l.x / T), Y(l.y / T) - 14, SHORT[k], '#ffe9a8', z >= 9 ? 13 : 11); }   // (too crowded to read when the whole town is in view)
+    const dot = (o, col, r = 6, ring) => { const x = X(o.x / T), y = Y(o.y / T); g.fillStyle = col; g.strokeStyle = ring || '#000'; g.lineWidth = 2.5; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); g.stroke(); return [x, y]; };
+    dot(c.lots.hub, '#a8d8ff', 6);
+    if (!S.mission) dot(c.lots.market, '#7be07b', 6);
+    for (const it of S.items) if (it.frenzy || it.cup) dot(it, it.frenzy ? '#f08aa0' : '#ffffff', 5);
+    if (S.step?.step.t === 'search') for (const sp of S.step.spots) if (!sp.seen) dot(sp.pt, '#ffffff', 5);
+    for (const it of S.items) if (it.step) dot(it, '#ffffff', 4);
+    if (S.player.vehicle !== S.heirloom) dot(S.heirloom, '#e8c040', 7);
+    if (S.target) { const [x, y] = dot(S.target, '#ffd84a', 8, '#ff5a4a'); g.strokeStyle = '#ff5a4a'; g.lineWidth = 3; g.beginPath(); g.arc(x, y, 15, 0, 7); g.stroke(); tag(x, y - 26, 'Go here', '#ffd84a', 13); }
+    // you: an arrow pointing the way you face
+    const yx = X(pp.x / T), yy = Y(pp.y / T);
+    g.save(); g.translate(yx, yy); g.rotate(S.player.ang); g.fillStyle = '#fff'; g.strokeStyle = '#000'; g.lineWidth = 3; g.beginPath(); g.moveTo(11, 0); g.lineTo(-8, -8); g.lineTo(-3, 0); g.lineTo(-8, 8); g.closePath(); g.stroke(); g.fill(); g.restore();
+    tag(yx, yy + 20, 'You', '#fff', 13);
+  }
+  draw();
+  // drag to look about, the wheel or a pinch to zoom
+  const ptrs = new Map(); let pinch = 0;
+  cv.onpointerdown = e => { cv.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (ptrs.size === 2) { const [p1, p2] = [...ptrs.values()]; pinch = Math.hypot(p1.x - p2.x, p1.y - p2.y); } };
+  cv.onpointermove = e => {
+    const q = ptrs.get(e.pointerId); if (!q) return;
+    if (ptrs.size === 1) { M.cx -= (e.clientX - q.x) / M.z; M.cy -= (e.clientY - q.y) / M.z; }
+    q.x = e.clientX; q.y = e.clientY;
+    if (ptrs.size === 2) { const [p1, p2] = [...ptrs.values()], d = Math.hypot(p1.x - p2.x, p1.y - p2.y); if (pinch) M.z *= d / pinch; pinch = d; }
+    clampView(); draw();
+  };
+  cv.onpointerup = cv.onpointercancel = e => { ptrs.delete(e.pointerId); pinch = 0; };
+  cv.onwheel = e => { e.preventDefault(); M.z *= e.deltaY < 0 ? 1.15 : 1 / 1.15; clampView(); draw(); };
 }
 function openWorkshop(intro) {
   const draw = () => {
@@ -10451,7 +10872,7 @@ async function chat(who) {
 }
 function dotLine() {
   const n = nextStory();
-  return 'Dorothy: "' + (n ? `${n.brief} ${isHere(n) ? '' : `That's ${S.story.towns.get(n.town).name}, ${n.year}.`} And mind the paintwork.` : `Nothing left to prove, dear. Go and visit them. Take your time; you've got all of it.`) + '"';
+  return 'Dorothy: "' + (n ? `${n.brief} ${isHere(n) ? '' : `That's ${S.story.towns.get(n.town).name}, ${n.year}.`} And mind the paintwork.` : DOT_DONE[dotDone++ % DOT_DONE.length]) + '"';
 }
 
 function updatePlayer(dt) {
@@ -10658,17 +11079,20 @@ async function openingScene() {
     await say(who, text);
   };
   await new Promise(r => setTimeout(r, 1400));
-  await shot('office', 'note', '', 0, `The offices of Hargreaves & Lowe, Solicitors. The lights are on late.`, 'Hargreaves & Lowe, Solicitors');
-  await shot('office', 'blank', 'grin', 0, `Another one, Mr Lowe. ${cap(estate)}. A fortune, and nobody has come forward to claim it.`);
-  await shot('office', 'lowe', 'worried', 1, `But there are heirs, Mr Hargreaves. The ${sur} family. Hundreds of them, going back four hundred years. It is all written down in the parish registers.`);
+  await shot('office', 'note', '', 0, `The offices of Hargreaves & Lowe, Solicitors. The lights are on late. Even the lights are grey.`, 'Hargreaves & Lowe, Solicitors');
+  await shot('office', 'blank', 'grin', 0, `Another one, Mr Lowe. ${cap(estate)}. A fortune, gathering dust, and not one soul has come forward to claim it.`);
+  await shot('office', 'lowe', 'worried', 1, `But there are heirs, Mr Hargreaves. The ${sur} family. Hundreds of them, going back four hundred years. It's all in the parish registers. I checked twice. I wish I hadn't.`);
   await shot('office', 'blank', 'angry', 0, `Then we take them OUT of the registers. One name at a time. One generation at a time. All the way back to the very first ${sur}.`);
   await shot('office', 'lowe', 'worried', 1, `If nobody was ever born... and nobody was ever married...`);
-  await shot('office', 'blank', 'grin', 0, `...then there never was a ${sur} family. And the money comes to the only people left to ask for it. Us. Start the time engine, Mr Lowe. We are going to erase a family from history.`);
-  await shot('garage', 'note', '', 0, `Across town, in a lock-up behind the pub, somebody has been listening.`, 'Meanwhile');
+  await shot('office', 'blank', 'grin', 0, `...then there never was a ${sur} family. And the money comes to the only people left to ask for it. Us.`);
+  await shot('office', 'lowe', 'worried', 1, `Is that legal, sir?`);
+  await shot('office', 'blank', 'grin', 0, `Nobody has ever thought to forbid it, Mr Lowe. That is the beauty of it. Start the time engine. We are going to erase a family from history.`);
+  await shot('garage', 'note', '', 0, `Across town, in a lock-up behind the pub, somebody has been listening in. She would call it research.`, 'Meanwhile');
   await shot('garage', 'dot', 'angry', 0, `Not while I'm breathing, Silas Hargreaves.`);
   await shot('garage', 'dot', 'worried', 0, `I'm a ${sur} too, you see. From a good way further down the family tree than anybody alive today. If he rubs out that line, I am never born. Nor is anybody I love.`);
-  await shot('garage', 'dot', 'set', 0, `He has a time machine. So have I: she's old, she's yellow, and she needs a driver. I'm too old to drive her. But I know who isn't.`);
-  if (S === tok && S.cut && !S.cut.skip) { Object.assign(S.cut, { x: S.player.x, y: S.player.y, who: null, caption: `${hero.name}. That's you.` }); await say('note', `You are ${hero.first}. You have one very old car, one month, and four hundred years of family depending on you. Go back through time, one ancestor at a time, and prove every one of them existed before Hargreaves can rub them out.`); }
+  await shot('garage', 'dot', 'set', 0, `He has a time machine. So have I: she's old, she's yellow, and she needs a driver. My hip retired before I did. But I know somebody with two good ones.`);
+  if (S === tok && S.cut && !S.cut.skip) { Object.assign(S.cut, { x: S.player.x, y: S.player.y, who: null, caption: `${hero.name}. That's you.` }); await say('note', `You are ${hero.first}. You have one very old car, one month, and four hundred years of family depending on you. No pressure.`); }
+  if (S === tok && S.cut && !S.cut.skip) await say('note', `Go back through time, one ancestor at a time, and prove every one of them existed before Hargreaves can rub them out.`);
   if (S !== tok) return;
   S.cut = null; S.clock = clock0; S.ui.root.classList.remove('cut'); S.busy = false; S.failT = S.t - 3; persist();
   S.ui.banner('A BATTLE IN TIME', `Save the ${sur} family`, '#ffd84a', 3200);
@@ -10700,11 +11124,11 @@ async function playCut(cut, key) {
 const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
 // Dorothy's driving lesson, a move at a time: what to press, and what she says when you have it.
 const DRILLS = {
-  speed: { name: 'flat out', keys: 'Hold W to put your foot down. Steer with A and D. Keep going until you are near top speed.', touch: 'Push the stick the way you want to go and hold it at the edge. Keep going until you are near top speed.', done: 'Flat out!', praise: 'Oh, she likes that. Now let\'s see you stop her.' },
-  stop: { name: 'brake', keys: 'BRAKE: let go of W and hold S (or Space to stop dead). Stop completely before you hit anything.', touch: 'BRAKE: let go of the stick and hold BRAKE. Stop completely before you hit anything.', done: 'Stopped!', praise: 'Brake in a straight line, before the corner, never in it. My husband never learned.' },
-  reverse: { name: 'reverse', keys: 'REVERSE: once you are stopped, keep holding S and she goes backwards. Back up a car\'s length.', touch: 'REVERSE: once you are stopped, pull the stick behind the car and she goes backwards. Back up a car\'s length.', done: 'Reversing!', praise: 'Good. That gets you out of any dead end in any century.' },
-  slide: { name: 'handbrake slide', keys: 'SKID: get some speed up, steer hard with A or D, and hold SPACE. The back end swings out and leaves skid marks.', touch: 'SKID: get some speed up, turn hard, and hold BRAKE. The back end swings out and leaves skid marks.', done: 'Sliding!', praise: 'Ha! Space lets the back go. Use it to slide round corners without stopping.' },
-  spin: { name: 'handbrake turn', keys: 'HANDBRAKE TURN: go fast, then hold SPACE and steer hard until you are facing back the way you came.', touch: 'HANDBRAKE TURN: go fast, then hold BRAKE and turn hard until you are facing back the way you came.', done: 'Spun round!', praise: 'That\'s how you lose a grey van in a narrow street. Right: you can drive. Off we go.' },
+  speed: { name: 'flat out', keys: 'Hold W to put your foot down. Steer with A and D. Keep going until you are near top speed.', touch: 'Push the stick the way you want to go and hold it at the edge. Keep going until you are near top speed.', done: 'Flat out!', praise: 'Oh, she likes that. She hasn\'t been past thirty since the funeral. Now let\'s see you stop her.' },
+  stop: { name: 'brake', keys: 'BRAKE: let go of W and hold S (or Space to stop dead). Stop completely before you hit anything.', touch: 'BRAKE: let go of the stick and hold BRAKE. Stop completely before you hit anything.', done: 'Stopped!', praise: 'Brake in a straight line, before the corner, never in it. My husband never learned. We got through four hedges and a bandstand.' },
+  reverse: { name: 'reverse', keys: 'REVERSE: once you are stopped, keep holding S and she goes backwards. Back up a car\'s length.', touch: 'REVERSE: once you are stopped, pull the stick behind the car and she goes backwards. Back up a car\'s length.', done: 'Reversing!', praise: 'Good. That gets you out of any dead end in any century. And most family gatherings.' },
+  slide: { name: 'handbrake slide', keys: 'SKID: get some speed up, steer hard with A or D, and hold SPACE. The back end swings out and leaves skid marks.', touch: 'SKID: get some speed up, turn hard, and hold BRAKE. The back end swings out and leaves skid marks.', done: 'Sliding!', praise: 'Ha! Space lets the back go. Use it to slide round corners without stopping. I\'m told it isn\'t in the Highway Code.' },
+  spin: { name: 'handbrake turn', keys: 'HANDBRAKE TURN: go fast, then hold SPACE and steer hard until you are facing back the way you came.', touch: 'HANDBRAKE TURN: go fast, then hold BRAKE and turn hard until you are facing back the way you came.', done: 'Spun round!', praise: 'That\'s how you lose a grey van in a narrow street. Right: you can drive. Better than he could, and I\'ll deny I said so.' },
 };
 // The first mission is the lesson: one instruction at a time, kept on screen until it has been done.
 function lesson() {
@@ -10995,8 +11419,12 @@ const GEN_NAMES = g => g === 0 ? 'YOU' : g === 1 ? 'PARENTS' : g === 2 ? 'GRANDP
 const LOOK_NOTES = {
   fluffy: 'Fluffy: a top-down 2D garden where you and every ancestor are round, fluffy balls. Their fur takes the colours of their period clothes, with their hair (or hat) as a tuft on top. Roll along the paths, bump into people to make them squeak, and chat to them all.',
 };
-// The Story tab has its own name and look (see body.tab-story in dev.html); Play and Visualisation keep the garden's.
-const BRAND = { story: ['<span class="l1">Ancestry</span><span class="l2">A Battle in Time</span>', 'Four hundred years of family. One very old car.', 'Ancestry: A Battle in Time'] };
+// Each tab has its own name and look: Play is the Fluffy garden, Story is A Battle in Time (body.tab-story in
+// dev.html) and Visualisation is Roots & Stars (body.tab-viz).
+const BRAND = {
+  story: ['<span class="l1">Ancestry</span><span class="l2">A Battle in Time</span>', 'Four hundred years of family. One very old car.', 'Ancestry: A Battle in Time'],
+  viz: ['<span class="l0" aria-hidden="true">✦ ✦ ✦</span><span class="l1">Ancestry</span><span class="l2">Roots &amp; Stars</span>', 'Your family as a galaxy of stars, or a tree growing back through time.', 'Ancestry: Roots & Stars'],
+};
 const LOGOS = {
   fluffy: ['Ancestry<br>Fluffs', 'Roll round and meet the family', 'Ancestry 3D'],
 };

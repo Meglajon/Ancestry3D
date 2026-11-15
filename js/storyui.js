@@ -52,6 +52,14 @@ const CSS = `
 #story .st-card .foot { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
 #story .st-card canvas { display: block; width: 100%; height: auto; border: 3px solid #2a2218; border-radius: 6px; image-rendering: pixelated; }
 #story .st-card.wide { width: min(760px, 100%); }
+#story .st-map { position: relative; }
+#story .st-map canvas { width: 100%; height: min(62vh, 560px); touch-action: none; cursor: grab; image-rendering: auto; }
+#story .st-mapbtns { position: absolute; right: 10px; top: 10px; display: flex; flex-direction: column; gap: 6px; }
+#story .st-mapbtns button { width: 42px; height: 42px; padding: 0; font-size: 24px; line-height: 1; border: 3px solid #2a2218; }
+#story .st-mapgo { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+#story .st-mapgo button { border: 3px solid #2a2218; padding: 6px 12px; }
+#story .st-maplegend { font-size: 13px; line-height: 1.6; }
+#story .st-maplegend i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; border: 2px solid #000; margin: 0 4px 0 8px; vertical-align: -1px; }
 #story .st-card kbd { font-family: 'Press Start 2P', monospace; font-size: 9px; background: #2a2218; color: #f4ecd8; padding: 3px 5px; border-radius: 3px; }
 #story .st-touch { position: absolute; inset: 0; pointer-events: none; display: none; }
 #story.touch .st-touch { display: block; }

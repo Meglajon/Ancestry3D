@@ -45,7 +45,12 @@ const BADGES = {
   centuries: ['Century hopper', 'Visited four different eras'], fitted: ['Fully fitted', 'Every upgrade on the Heirloom'], proven: ['Proven', 'Lodged every proof'],
 };
 const SILAS = ['Is that one of ours? I mean yours. I mean ours.', 'She has my chin. Do you see it? That is my chin.', 'I had no idea there were so many. Do they all come at Christmas?',
-  'I should like to write that one down. In ink. I have given up pencil.', 'Nobody ever told me families were so loud.', 'May we stop? I think that gentleman is my great-great-great-uncle and I have nothing to give him.'];
+  'I should like to write that one down. In ink. I have given up pencil.', 'Nobody ever told me families were so loud.', 'May we stop? I think that gentleman is my great-great-great-uncle and I have nothing to give him.',
+  'That one looked straight at me. Do I wave? What is the done thing?', 'I have been practising the word "cousin". Cousin. It still sounds like somebody else\'s.', 'Does everybody have this many grandmothers, or have I been oversupplied?',
+  'I have started a list of birthdays. It is already longer than my client list ever was.', 'If anybody asks, what am I to them? Twelfth cousin? Thirteenth? I should like to get the paperwork right.', 'Mr Lowe sends his regards. He has taken up bee-keeping. He says the bees worry him less.'];
+// What Dorothy says at her workbench once there is nothing left to prove: a different line each visit.
+const DOT_DONE = ['Nothing left to prove, dear. Go and visit them. Take your time; you\'ve got all of it.', 'Still here, dear. Still retired. The kettle\'s on, if you\'ve a century to spare.', 'No more grey vans and no more deadlines. Only four hundred years of relatives who\'d love a visit. Do take a cake.'];
+let dotDone = 0;
 const up = id => (S.save.up && S.save.up[id]) || 0;
 function statsOf(v) {
   const st = VEHICLES[v.type];
@@ -1165,10 +1170,7 @@ function enterStep(step) {
   if (step.blocks) hintOnce('blocks', 'Grey vans are parked across the road ahead. Find another way round, or get out and walk the last bit.', 5600);
   if (step.rival && step.t === 'goto') startRival(lotPt(step.at), step.rival);
   if (step.blocks) placeBlocks(step.t === 'goto' ? lotPt(step.at) : lotPt(step.to), step.blocks);
-  if (step.bark) {
-    const sp = step.bark.who ? speaker(step.bark.who) : null, name = step.bark.name || (sp ? sp.who.split(' ')[0] : '');
-    S.ui.toast(`${name}: "${sp && sp.person ? voiceLine(sp.person, step.bark.text) : plainText(step.bark.text)}"`, 5200);
-  }
+  barkToast(step.bark);
   if (step.timed) st.timer = Math.round(14 + tiles / (c.source === 'osm' ? 3.2 : 3.8) / SPEED_SCALE * step.timed + stops * 5);   // (and the clock allows for an untuned engine)   // real streets twist more than drawn ones
   if (step.tokens && st.timer != null) {
     // clocks left about the streets: each one is five more seconds, if you care to go out of your way
@@ -1277,6 +1279,7 @@ function updateMission(dt) {
     const alive = S.vehicles.filter(v => v.prey === cv && v.ai === 'hunt').length;
     if (cv.started && st.wave <= 0 && alive < 2 && st.sent < (s.waves || 6)) {
       st.wave = 9; st.sent++;
+      if (st.sent === 2) barkToast(s.bark2);
       const a = Math.random() * 7, h = spawnAi(S.city.year < 1900 ? 'erasercoach' : 'eraser', { x: cv.x + Math.cos(a) * 11 * T, y: cv.y + Math.sin(a) * 11 * T }, 'hunt', { prey: cv });
       h.hp = 1;
     }
@@ -1304,8 +1307,8 @@ function updateMission(dt) {
       const d = DRILLS[id];
       st.k++; st.peak = 0; st.held = 0; st.spin = null; st.lift = pv.hand;   // the next move starts with a fresh press
       float(pv.x, pv.y - 30, d.done, '#7be07b'); sfx.pick();
-      S.ui.toast(`Dorothy: "${d.praise}"`, 3200); S.lessonKey = 'praise';
-      S.lessonHold = S.t + 3.2;
+      S.ui.toast(`Dorothy: "${d.praise}"`, 4600); S.lessonKey = 'praise';   // (long enough to read her aside)
+      S.lessonHold = S.t + 4.6;
       if (st.k >= s.drills.length) nextStep();
     }
   } else if (s.t === 'travel') {
@@ -1417,6 +1420,7 @@ function hopChase(year) {
   nv.hp = keep.hp; nv.speed = keep.speed; st.target = nv;
   if (st.timer != null) st.timer += 25;
   S.ui.toast(`Hargreaves has jumped to ${year}, and taken you with him!`, 3600);
+  if (st.hops === 2 && st.step.bark2) { const tok = S; setTimeout(() => S === tok && S.step === st && barkToast(st.step.bark2), 3800); }
 }
 // After the first chapter, Hargreaves's men come looking for you while the clock is running.
 function updateAmbush(dt) {
@@ -1434,6 +1438,12 @@ function updateAmbush(dt) {
   v.hp = 2;
   hintOnce('hunt', 'Grey vans on your tail! Every time one rams you, you lose three seconds. Ram them first.', 6500);
 }
+// Something shouted while you drive: a line from whoever is with you, shown as a toast.
+function barkToast(bark) {
+  if (!bark) return;
+  const sp = bark.who ? speaker(bark.who) : null, name = bark.name || (sp ? sp.who.split(' ')[0] : '');
+  S.ui.toast(`${name}: "${sp && sp.person ? voiceLine(sp.person, bark.text) : plainText(bark.text)}"`, 5200);
+}
 async function converse(s) {
   const tok = S;
   S.busy = true;
@@ -1441,13 +1451,14 @@ async function converse(s) {
   if (s.greet) { await runLines([{ who: s.who, greet: true }]); if (S !== tok) return; }
   for (const line of s.lines || []) { if (S !== tok) return; await say(s.who, line); }
   if (s.quiz && S === tok) {
-    let first = true;
+    let first = true, misses = 0;
+    const qz = s.quiz, wrong = qz.wrong && qz.wrong.length ? qz.wrong : ['No. Any stranger off the road would say that. Think on, and try again.'];
     for (;;) {
       const pick = await say(s.who, s.quiz.q, s.quiz.options);
       if (S !== tok) return;
-      if (pick === s.quiz.answer || pick < 0) { await say(s.who, first ? 'Right first time. Nobody but family would know that.' : 'There. Now you sound like one of us.'); if (first) { earn(25); } break; }
+      if (pick === s.quiz.answer || pick < 0) { await say(s.who, first ? qz.right || 'Right first time. Nobody but family would know that.' : qz.rightAtLast || 'There. Now you sound like one of us.'); if (first) { earn(25); } break; }
       first = false;
-      await say(s.who, 'No. Any stranger off the road would say that. Think on, and try again.');
+      await say(s.who, wrong[misses++ % wrong.length]);
       if (S !== tok) return;
     }
   }
@@ -1690,23 +1701,86 @@ function openPedigree() {
   const n = Math.min(S.save.idx, st.missions.length);
   S.ui.panel(`<h2>📜 The ${escapeText(st.surname)} pedigree</h2><p>${S.save.proofs.length} of ${st.proofs.length} proofs lodged · ${n} of ${st.missions.length} missions passed · ${(S.save.photos || []).length} lost photographs · ${(S.save.met || []).length} of the family met · ${(S.save.graves || []).length} graves visited · £${S.save.cash}</p><p>Badges (${(S.save.badges || []).length}/${Object.keys(BADGES).length}): ${escapeText((S.save.badges || []).map(b => BADGES[b][0]).join(', ') || 'none yet')}</p>${rows}<div class="foot"><button class="alt" data-go="close">Close</button></div>`, { close: () => S.ui.closePanel() });
 }
+// The town map: opens centred on you at a readable zoom. Zoom with + and − (or the wheel, or a pinch), drag to look
+// about, and jump back to yourself, to where the story wants you, or out to the whole town.
+function streetLabels(c) {
+  // one label per named street, at the middle of its stretch of road
+  if (c.mapLabels) return c.mapLabels;
+  const by = new Map();
+  for (let y = 0; y < c.H; y += 2) for (let x = 0; x < c.W; x += 2) { const n = c.streetAt((x + 0.5) * T, (y + 0.5) * T); if (!n) continue; let e = by.get(n); if (!e) by.set(n, e = []); e.push([x, y]); }
+  const out = [];
+  for (const [name, pts] of by) {
+    if (pts.length < 4) continue;
+    const mx = pts.reduce((a, q) => a + q[0], 0) / pts.length, my = pts.reduce((a, q) => a + q[1], 0) / pts.length;
+    let best = pts[0], bd = 1e9; for (const q of pts) { const d = (q[0] - mx) ** 2 + (q[1] - my) ** 2; if (d < bd) { bd = d; best = q; } }
+    const xs = pts.map(q => q[0]), ys = pts.map(q => q[1]), wide = Math.max(...xs) - Math.min(...xs), tall = Math.max(...ys) - Math.min(...ys);
+    out.push({ name, x: best[0] + 1, y: best[1] + 1, rot: tall > wide * 1.6 ? -Math.PI / 2 : 0, n: pts.length });
+  }
+  out.sort((a, b) => b.n - a.n);
+  return (c.mapLabels = out);
+}
 function openMap() {
-  const c = S.city, sc = 6;
-  S.ui.panel(`<h2>🗺 ${escapeText(c.town.name)}, ${c.year}</h2><canvas id="stMap" width="${c.W * sc}" height="${c.H * sc}"></canvas><p>Yellow: where the story wants you. Gold: the Heirloom. £: odd jobs. ${c.air ? '✈' : '⚓'}: tickets. Photographs found here: ${(S.save.photos || []).filter(p => p.startsWith(c.town.id + ':' + c.era)).length} of 3.</p><div class="foot"><button class="alt" data-go="close">Close</button></div>`, { close: () => S.ui.closePanel() }, true);
-  const g = S.ui.root.querySelector('#stMap').getContext('2d');
-  g.imageSmoothingEnabled = false;
-  g.drawImage(S.mini, 0, 0, c.W * sc, c.H * sc);
-  g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '700 12px "Fredoka", "Nunito", sans-serif';
-  const tag = (o, text, col) => { const x = o.x / T * sc, y = o.y / T * sc; g.lineWidth = 3; g.strokeStyle = 'rgba(0,0,0,0.85)'; g.strokeText(text, x, y); g.fillStyle = col; g.fillText(text, x, y); };
-  const SHORT = { church: 'Church', hall: c.year >= 1837 ? 'Records' : 'Vestry', pub: 'Pub', works: 'Works', farm: 'Farm', school: 'School', hub: c.air ? 'Airport' : 'Quay', garage: c.year >= 1950 ? 'Lock-up' : 'Barn', market: 'Market', infirmary: c.year >= 1948 ? 'Hospital' : 'Infirmary', police: c.year >= 1900 ? 'Police' : 'Watch', post: 'Post', office: c.era === 'modern' ? 'Hargreaves & Lowe' : 'Counting ho.' };
-  g.font = '700 11px "Fredoka", "Nunito", sans-serif';
-  for (const k in c.lots) if (SHORT[k]) tag({ x: c.lots[k].x, y: c.lots[k].y - (k === 'garage' ? -1.2 : 1.8) * T }, SHORT[k], '#fff');
-  const dot = (o, col, r = 6) => { g.fillStyle = col; g.strokeStyle = '#000'; g.lineWidth = 2; g.beginPath(); g.arc(o.x / T * sc, o.y / T * sc, r, 0, 7); g.fill(); g.stroke(); };
-  dot(S.heirloom, '#e8c040');
-  if (S.target) dot(S.target, '#ffd84a', 8);
-  const pp = S.player.vehicle || S.player;
-  dot(pp, '#fff', 5);
-  tag({ x: pp.x, y: pp.y + 1.8 * T }, 'you', '#fff');
+  const c = S.city, pp = S.player.vehicle || S.player, M = S.mapView || (S.mapView = { z: 11 });
+  M.cx = pp.x / T; M.cy = pp.y / T;
+  const fitZ = () => Math.min(M.cw / c.W, M.ch / c.H);
+  const clampView = () => { M.z = clamp(M.z, Math.min(fitZ(), 3), 28); const hw = M.cw / M.z / 2, hh = M.ch / M.z / 2; M.cx = c.W <= hw * 2 ? c.W / 2 : clamp(M.cx, hw, c.W - hw); M.cy = c.H <= hh * 2 ? c.H / 2 : clamp(M.cy, hh, c.H - hh); };
+  const go = (x, y, z) => { M.cx = x; M.cy = y; if (z) M.z = z; clampView(); draw(); };
+  S.ui.panel(`<h2>🗺 ${escapeText(c.town.name)}, ${c.year}</h2>
+    <div class="st-map"><canvas id="stMap"></canvas>
+      <div class="st-mapbtns"><button data-go="zin" aria-label="Zoom in">+</button><button data-go="zout" aria-label="Zoom out">−</button></div>
+      <div class="st-mapgo"><button data-go="me">📍 Me</button>${S.target ? '<button data-go="tgt">🎯 Where to go</button>' : ''}<button data-go="all">Whole town</button></div>
+    </div>
+    <p class="st-maplegend"><i style="background:#fff"></i>You <i style="background:#e8c040"></i>the Heirloom <i style="background:#ffd84a;box-shadow:0 0 0 3px #ff5a4a"></i>where to go <i style="background:#7be07b"></i>£ odd jobs <i style="background:#a8d8ff"></i>${c.air ? 'airport' : 'quay'} · drag to look about · photographs found here: ${(S.save.photos || []).filter(p => p.startsWith(c.town.id + ':' + c.era)).length} of 3</p>
+    <div class="foot"><button class="alt" data-go="close">Close</button></div>`, {
+    close: () => S.ui.closePanel(),
+    zin: () => go(M.cx, M.cy, M.z * 1.5), zout: () => go(M.cx, M.cy, M.z / 1.5),
+    me: () => go(pp.x / T, pp.y / T, Math.max(M.z, 11)),
+    tgt: () => S.target && go(S.target.x / T, S.target.y / T, Math.max(M.z, 11)),
+    all: () => go(c.W / 2, c.H / 2, fitZ()),
+  }, true);
+  const cv = S.ui.root.querySelector('#stMap'), g = cv.getContext('2d');
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const size = () => { const r = cv.getBoundingClientRect(); M.cw = Math.max(200, r.width); M.ch = Math.max(200, r.height); cv.width = Math.round(M.cw * dpr); cv.height = Math.round(M.ch * dpr); };
+  size(); clampView();
+  const SHORT = { church: 'Church', hall: c.year >= 1837 ? 'Records Office' : 'Vestry', pub: 'Pub', works: 'Works', farm: 'Farm', school: 'School', hub: c.air ? 'Airport' : 'Quay', garage: c.year >= 1950 ? 'Lock-up' : 'Barn', market: 'Market', infirmary: c.year >= 1948 ? 'Hospital' : 'Infirmary', police: c.year >= 1900 ? 'Police' : 'Watch', post: 'Post office', office: c.era === 'modern' ? 'Hargreaves & Lowe' : 'Counting house' };
+  function draw() {
+    const z = M.z, X = tx => (tx - M.cx) * z + M.cw / 2, Y = ty => (ty - M.cy) * z + M.ch / 2;
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.fillStyle = '#2a6aa8'; g.fillRect(0, 0, M.cw, M.ch);
+    g.imageSmoothingEnabled = z < 4;
+    g.drawImage(S.mini, 0, 0, S.mini.width, S.mini.height, X(0), Y(0), c.W * z, c.H * z);
+    g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
+    const tag = (x, y, text, col, px = 12, rot = 0) => { g.save(); g.translate(x, y); if (rot) g.rotate(rot); g.font = `700 ${px}px "Fredoka", "Nunito", sans-serif`; g.lineWidth = 3.5; g.strokeStyle = 'rgba(0,0,0,0.85)'; g.strokeText(text, 0, 0); g.fillStyle = col; g.fillText(text, 0, 0); g.restore(); };
+    // street names, once there is room for them
+    if (z >= 7) { const placed = []; for (const l of streetLabels(c)) { const x = X(l.x), y = Y(l.y); if (x < -60 || y < -20 || x > M.cw + 60 || y > M.ch + 20) continue; if (placed.some(q => Math.abs(q[0] - x) < 90 && Math.abs(q[1] - y) < 22)) continue; placed.push([x, y]); tag(x, y, l.name, '#f4ecd8', z >= 14 ? 12 : 10, l.rot); } }
+    // places
+    if (z >= 3.5) for (const k in c.lots) if (SHORT[k]) { const l = c.lots[k]; tag(X(l.x / T), Y(l.y / T) - 14, SHORT[k], '#ffe9a8', z >= 9 ? 13 : 11); }   // (too crowded to read when the whole town is in view)
+    const dot = (o, col, r = 6, ring) => { const x = X(o.x / T), y = Y(o.y / T); g.fillStyle = col; g.strokeStyle = ring || '#000'; g.lineWidth = 2.5; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); g.stroke(); return [x, y]; };
+    dot(c.lots.hub, '#a8d8ff', 6);
+    if (!S.mission) dot(c.lots.market, '#7be07b', 6);
+    for (const it of S.items) if (it.frenzy || it.cup) dot(it, it.frenzy ? '#f08aa0' : '#ffffff', 5);
+    if (S.step?.step.t === 'search') for (const sp of S.step.spots) if (!sp.seen) dot(sp.pt, '#ffffff', 5);
+    for (const it of S.items) if (it.step) dot(it, '#ffffff', 4);
+    if (S.player.vehicle !== S.heirloom) dot(S.heirloom, '#e8c040', 7);
+    if (S.target) { const [x, y] = dot(S.target, '#ffd84a', 8, '#ff5a4a'); g.strokeStyle = '#ff5a4a'; g.lineWidth = 3; g.beginPath(); g.arc(x, y, 15, 0, 7); g.stroke(); tag(x, y - 26, 'Go here', '#ffd84a', 13); }
+    // you: an arrow pointing the way you face
+    const yx = X(pp.x / T), yy = Y(pp.y / T);
+    g.save(); g.translate(yx, yy); g.rotate(S.player.ang); g.fillStyle = '#fff'; g.strokeStyle = '#000'; g.lineWidth = 3; g.beginPath(); g.moveTo(11, 0); g.lineTo(-8, -8); g.lineTo(-3, 0); g.lineTo(-8, 8); g.closePath(); g.stroke(); g.fill(); g.restore();
+    tag(yx, yy + 20, 'You', '#fff', 13);
+  }
+  draw();
+  // drag to look about, the wheel or a pinch to zoom
+  const ptrs = new Map(); let pinch = 0;
+  cv.onpointerdown = e => { cv.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (ptrs.size === 2) { const [p1, p2] = [...ptrs.values()]; pinch = Math.hypot(p1.x - p2.x, p1.y - p2.y); } };
+  cv.onpointermove = e => {
+    const q = ptrs.get(e.pointerId); if (!q) return;
+    if (ptrs.size === 1) { M.cx -= (e.clientX - q.x) / M.z; M.cy -= (e.clientY - q.y) / M.z; }
+    q.x = e.clientX; q.y = e.clientY;
+    if (ptrs.size === 2) { const [p1, p2] = [...ptrs.values()], d = Math.hypot(p1.x - p2.x, p1.y - p2.y); if (pinch) M.z *= d / pinch; pinch = d; }
+    clampView(); draw();
+  };
+  cv.onpointerup = cv.onpointercancel = e => { ptrs.delete(e.pointerId); pinch = 0; };
+  cv.onwheel = e => { e.preventDefault(); M.z *= e.deltaY < 0 ? 1.15 : 1 / 1.15; clampView(); draw(); };
 }
 function openWorkshop(intro) {
   const draw = () => {
@@ -1954,7 +2028,7 @@ async function chat(who) {
 }
 function dotLine() {
   const n = nextStory();
-  return 'Dorothy: "' + (n ? `${n.brief} ${isHere(n) ? '' : `That's ${S.story.towns.get(n.town).name}, ${n.year}.`} And mind the paintwork.` : `Nothing left to prove, dear. Go and visit them. Take your time; you've got all of it.`) + '"';
+  return 'Dorothy: "' + (n ? `${n.brief} ${isHere(n) ? '' : `That's ${S.story.towns.get(n.town).name}, ${n.year}.`} And mind the paintwork.` : DOT_DONE[dotDone++ % DOT_DONE.length]) + '"';
 }
 
 function updatePlayer(dt) {
@@ -2161,17 +2235,20 @@ async function openingScene() {
     await say(who, text);
   };
   await new Promise(r => setTimeout(r, 1400));
-  await shot('office', 'note', '', 0, `The offices of Hargreaves & Lowe, Solicitors. The lights are on late.`, 'Hargreaves & Lowe, Solicitors');
-  await shot('office', 'blank', 'grin', 0, `Another one, Mr Lowe. ${cap(estate)}. A fortune, and nobody has come forward to claim it.`);
-  await shot('office', 'lowe', 'worried', 1, `But there are heirs, Mr Hargreaves. The ${sur} family. Hundreds of them, going back four hundred years. It is all written down in the parish registers.`);
+  await shot('office', 'note', '', 0, `The offices of Hargreaves & Lowe, Solicitors. The lights are on late. Even the lights are grey.`, 'Hargreaves & Lowe, Solicitors');
+  await shot('office', 'blank', 'grin', 0, `Another one, Mr Lowe. ${cap(estate)}. A fortune, gathering dust, and not one soul has come forward to claim it.`);
+  await shot('office', 'lowe', 'worried', 1, `But there are heirs, Mr Hargreaves. The ${sur} family. Hundreds of them, going back four hundred years. It's all in the parish registers. I checked twice. I wish I hadn't.`);
   await shot('office', 'blank', 'angry', 0, `Then we take them OUT of the registers. One name at a time. One generation at a time. All the way back to the very first ${sur}.`);
   await shot('office', 'lowe', 'worried', 1, `If nobody was ever born... and nobody was ever married...`);
-  await shot('office', 'blank', 'grin', 0, `...then there never was a ${sur} family. And the money comes to the only people left to ask for it. Us. Start the time engine, Mr Lowe. We are going to erase a family from history.`);
-  await shot('garage', 'note', '', 0, `Across town, in a lock-up behind the pub, somebody has been listening.`, 'Meanwhile');
+  await shot('office', 'blank', 'grin', 0, `...then there never was a ${sur} family. And the money comes to the only people left to ask for it. Us.`);
+  await shot('office', 'lowe', 'worried', 1, `Is that legal, sir?`);
+  await shot('office', 'blank', 'grin', 0, `Nobody has ever thought to forbid it, Mr Lowe. That is the beauty of it. Start the time engine. We are going to erase a family from history.`);
+  await shot('garage', 'note', '', 0, `Across town, in a lock-up behind the pub, somebody has been listening in. She would call it research.`, 'Meanwhile');
   await shot('garage', 'dot', 'angry', 0, `Not while I'm breathing, Silas Hargreaves.`);
   await shot('garage', 'dot', 'worried', 0, `I'm a ${sur} too, you see. From a good way further down the family tree than anybody alive today. If he rubs out that line, I am never born. Nor is anybody I love.`);
-  await shot('garage', 'dot', 'set', 0, `He has a time machine. So have I: she's old, she's yellow, and she needs a driver. I'm too old to drive her. But I know who isn't.`);
-  if (S === tok && S.cut && !S.cut.skip) { Object.assign(S.cut, { x: S.player.x, y: S.player.y, who: null, caption: `${hero.name}. That's you.` }); await say('note', `You are ${hero.first}. You have one very old car, one month, and four hundred years of family depending on you. Go back through time, one ancestor at a time, and prove every one of them existed before Hargreaves can rub them out.`); }
+  await shot('garage', 'dot', 'set', 0, `He has a time machine. So have I: she's old, she's yellow, and she needs a driver. My hip retired before I did. But I know somebody with two good ones.`);
+  if (S === tok && S.cut && !S.cut.skip) { Object.assign(S.cut, { x: S.player.x, y: S.player.y, who: null, caption: `${hero.name}. That's you.` }); await say('note', `You are ${hero.first}. You have one very old car, one month, and four hundred years of family depending on you. No pressure.`); }
+  if (S === tok && S.cut && !S.cut.skip) await say('note', `Go back through time, one ancestor at a time, and prove every one of them existed before Hargreaves can rub them out.`);
   if (S !== tok) return;
   S.cut = null; S.clock = clock0; S.ui.root.classList.remove('cut'); S.busy = false; S.failT = S.t - 3; persist();
   S.ui.banner('A BATTLE IN TIME', `Save the ${sur} family`, '#ffd84a', 3200);
@@ -2203,11 +2280,11 @@ async function playCut(cut, key) {
 const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
 // Dorothy's driving lesson, a move at a time: what to press, and what she says when you have it.
 const DRILLS = {
-  speed: { name: 'flat out', keys: 'Hold W to put your foot down. Steer with A and D. Keep going until you are near top speed.', touch: 'Push the stick the way you want to go and hold it at the edge. Keep going until you are near top speed.', done: 'Flat out!', praise: 'Oh, she likes that. Now let\'s see you stop her.' },
-  stop: { name: 'brake', keys: 'BRAKE: let go of W and hold S (or Space to stop dead). Stop completely before you hit anything.', touch: 'BRAKE: let go of the stick and hold BRAKE. Stop completely before you hit anything.', done: 'Stopped!', praise: 'Brake in a straight line, before the corner, never in it. My husband never learned.' },
-  reverse: { name: 'reverse', keys: 'REVERSE: once you are stopped, keep holding S and she goes backwards. Back up a car\'s length.', touch: 'REVERSE: once you are stopped, pull the stick behind the car and she goes backwards. Back up a car\'s length.', done: 'Reversing!', praise: 'Good. That gets you out of any dead end in any century.' },
-  slide: { name: 'handbrake slide', keys: 'SKID: get some speed up, steer hard with A or D, and hold SPACE. The back end swings out and leaves skid marks.', touch: 'SKID: get some speed up, turn hard, and hold BRAKE. The back end swings out and leaves skid marks.', done: 'Sliding!', praise: 'Ha! Space lets the back go. Use it to slide round corners without stopping.' },
-  spin: { name: 'handbrake turn', keys: 'HANDBRAKE TURN: go fast, then hold SPACE and steer hard until you are facing back the way you came.', touch: 'HANDBRAKE TURN: go fast, then hold BRAKE and turn hard until you are facing back the way you came.', done: 'Spun round!', praise: 'That\'s how you lose a grey van in a narrow street. Right: you can drive. Off we go.' },
+  speed: { name: 'flat out', keys: 'Hold W to put your foot down. Steer with A and D. Keep going until you are near top speed.', touch: 'Push the stick the way you want to go and hold it at the edge. Keep going until you are near top speed.', done: 'Flat out!', praise: 'Oh, she likes that. She hasn\'t been past thirty since the funeral. Now let\'s see you stop her.' },
+  stop: { name: 'brake', keys: 'BRAKE: let go of W and hold S (or Space to stop dead). Stop completely before you hit anything.', touch: 'BRAKE: let go of the stick and hold BRAKE. Stop completely before you hit anything.', done: 'Stopped!', praise: 'Brake in a straight line, before the corner, never in it. My husband never learned. We got through four hedges and a bandstand.' },
+  reverse: { name: 'reverse', keys: 'REVERSE: once you are stopped, keep holding S and she goes backwards. Back up a car\'s length.', touch: 'REVERSE: once you are stopped, pull the stick behind the car and she goes backwards. Back up a car\'s length.', done: 'Reversing!', praise: 'Good. That gets you out of any dead end in any century. And most family gatherings.' },
+  slide: { name: 'handbrake slide', keys: 'SKID: get some speed up, steer hard with A or D, and hold SPACE. The back end swings out and leaves skid marks.', touch: 'SKID: get some speed up, turn hard, and hold BRAKE. The back end swings out and leaves skid marks.', done: 'Sliding!', praise: 'Ha! Space lets the back go. Use it to slide round corners without stopping. I\'m told it isn\'t in the Highway Code.' },
+  spin: { name: 'handbrake turn', keys: 'HANDBRAKE TURN: go fast, then hold SPACE and steer hard until you are facing back the way you came.', touch: 'HANDBRAKE TURN: go fast, then hold BRAKE and turn hard until you are facing back the way you came.', done: 'Spun round!', praise: 'That\'s how you lose a grey van in a narrow street. Right: you can drive. Better than he could, and I\'ll deny I said so.' },
 };
 // The first mission is the lesson: one instruction at a time, kept on screen until it has been done.
 function lesson() {

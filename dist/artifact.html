@@ -1,9 +1,9 @@
-<title>Ancestry 3D</title>
+<title>Ancestry: A Battle in Time</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="Walk among your ancestors: a first-person retro 3D explorer for GEDCOM family trees.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&family=Lora:ital,wght@1,500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Press+Start+2P&family=VT323&family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&family=Lora:ital,wght@1,500&display=swap" rel="stylesheet">
 <script type="importmap">
 { "imports": {
   "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
@@ -394,6 +394,85 @@ body.island #verseList label.verse input { accent-color: var(--i-green); }
   #viz .vinfo { top: auto; bottom: calc(120px + env(safe-area-inset-bottom, 0px)); right: 10px; }
 }
 @media (hover: hover) and (pointer: fine) { #touch { display: none; } }
+/* ================= The menu: Ancestry, A Battle in Time =================
+   A cartoon crime-game title screen built from Story mode's own parts: night streets seen from above with
+   yellow lane paint, a slanted ink-outlined logotype, a red "A BATTLE IN TIME" banner in the story's pixel
+   type, and the story's cream case-file cards and yellow pill buttons. One look in every viewer theme. */
+:root {
+  --b-asphalt: #16191f; --b-asphalt2: #23272f; --b-kerb: #343a44; --b-paint: #ffd84a; --b-ink: #121014;
+  --b-paper: #f4ecd8; --b-paper2: #e8dcc0; --b-text: #2a2218; --b-text2: #6a5a44; --b-red: #d8352a; --b-red-d: #8a2a1a;
+  --b-mustard: #e8c040; --b-grey: #8a8e94; --b-pink: #f08aa0; --b-green: #3a9a4a;
+  --b-display: 'Bangers', 'Fredoka', 'Impact', sans-serif; --b-pixel: 'Press Start 2P', monospace; --b-ui: 'Fredoka', 'Nunito', sans-serif; --b-body: 'Nunito', system-ui, sans-serif;
+}
+body.island #menu, #menu {
+  color: var(--b-text);
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(255,216,74,0.10), transparent 55%),
+    radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(0,0,0,0.65) 100%),
+    /* lane paint down the middle of each road */
+    repeating-linear-gradient(90deg, transparent 0 109px, rgba(255,216,74,0.55) 109px 111px, transparent 111px 220px) 0 0 / 220px 26px,
+    repeating-linear-gradient(0deg, transparent 0 109px, rgba(255,216,74,0.55) 109px 111px, transparent 111px 220px) 0 0 / 26px 220px,
+    /* the roads, then the blocks between them */
+    linear-gradient(90deg, transparent 0 88px, var(--b-asphalt2) 88px 132px, transparent 132px) 0 0 / 220px 220px,
+    linear-gradient(0deg, transparent 0 88px, var(--b-asphalt2) 88px 132px, transparent 132px) 0 0 / 220px 220px,
+    linear-gradient(90deg, transparent 0 82px, var(--b-kerb) 82px 138px, transparent 138px) 0 0 / 220px 220px,
+    linear-gradient(0deg, transparent 0 82px, var(--b-kerb) 82px 138px, transparent 138px) 0 0 / 220px 220px,
+    var(--b-asphalt);
+}
+#menu .inner { max-width: 580px; }
+/* the logotype */
+#menu .logo, body.island #menu .logo { margin: 8px 0 0; background: none; filter: none; -webkit-text-fill-color: currentColor; color: var(--b-paint); text-shadow: none; line-height: 0.9; letter-spacing: 0; display: flex; flex-direction: column; align-items: center; }
+#menu .logo .l1 { font-family: var(--b-display); font-size: clamp(64px, 19vw, 118px); letter-spacing: 3px; transform: rotate(-4deg) skewX(-8deg);
+  -webkit-text-stroke: 6px var(--b-ink); paint-order: stroke fill; color: var(--b-paint); text-shadow: 6px 7px 0 var(--b-ink), 0 0 30px rgba(255,216,74,0.25); }
+#menu .logo .l2 { margin-top: 10px; transform: rotate(-4deg); font-family: var(--b-pixel); font-size: clamp(11px, 3.2vw, 17px); color: #fff; background: var(--b-red); padding: 9px 14px 8px;
+  border: 3px solid var(--b-ink); box-shadow: 4px 4px 0 var(--b-ink); letter-spacing: 1px; white-space: nowrap; text-transform: uppercase; }
+#menu .tagline, body.island #menu .tagline { font-family: var(--b-ui); font-weight: 600; font-size: 15px; color: #e8e0cc; margin: 20px 0 16px; text-shadow: 0 2px 0 var(--b-ink); letter-spacing: 0; text-transform: none; }
+/* tabs: chunky blocks on the tarmac */
+#menu .tabs, body.island #menu .tabs { gap: 8px; margin-bottom: 6px; }
+#menu .tabs button, body.island #menu .tabs button { font-family: var(--b-display); font-size: 24px; letter-spacing: 1.5px; text-transform: uppercase; padding: 8px 4px 6px; border-radius: 10px;
+  color: #d8d2c0; background: var(--b-asphalt2); border: 3px solid var(--b-ink); box-shadow: 0 4px 0 var(--b-ink); }
+#menu .tabs button.on, body.island #menu .tabs button.on { color: var(--b-ink); background: var(--b-paint); transform: translateY(-2px); box-shadow: 0 6px 0 var(--b-ink); }
+/* cards: the story's case-file paper */
+#menu .card, body.island #menu .card { background: var(--b-paper); color: var(--b-text); border: 4px solid var(--b-ink); border-radius: 14px; padding: 16px 18px; box-shadow: 6px 6px 0 rgba(0,0,0,0.55); margin: 14px 0; }
+#menu .card h2, body.island #menu .card h2 { font-family: var(--b-pixel); font-size: 12px; line-height: 1.5; color: var(--b-red-d); letter-spacing: 0.5px; margin: 0 0 12px; text-transform: none; }
+#menu .note, #menu .field .lbl, body.island #menu .note, body.island #menu .field .lbl { font-family: var(--b-body); font-weight: 700; font-size: 14.5px; color: var(--b-text2); line-height: 1.35; }
+#menu .field .lbl b, body.island #menu .field .lbl b { color: var(--b-red-d); font-weight: 800; }
+#menu .status, body.island #menu .status { font-family: var(--b-body); font-weight: 800; font-size: 15px; color: var(--b-green); }
+#menu .help, body.island #menu .help { font-family: var(--b-body); font-weight: 600; font-size: 14.5px; color: var(--b-text); }
+#menu .help b, body.island #menu .help b { color: var(--b-red-d); font-weight: 800; }
+#menu p.storyPitch { font-family: var(--b-body); font-weight: 600; font-size: 15px; line-height: 1.45; color: var(--b-text); margin: 8px 0; }
+#menu p.storyPitch b { font-family: var(--b-display); font-weight: normal; font-size: 22px; letter-spacing: 1px; color: var(--b-red-d); }
+/* buttons: yellow pills with an ink outline that press down */
+#menu .btn, body.island #menu .btn { font-family: var(--b-ui); font-weight: 700; font-size: 17px; color: var(--b-ink); text-shadow: none; text-transform: none;
+  background: var(--b-paint); border: 3px solid var(--b-ink); border-radius: 999px; padding: 12px 16px; box-shadow: 0 4px 0 var(--b-ink); }
+#menu .btn:active, body.island #menu .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--b-ink); }
+#menu .btn.alt, body.island #menu .btn.alt { background: #fffaf0; }
+#menu .btn.go, body.island #menu .btn.go { font-family: var(--b-display); font-weight: normal; font-size: 26px; letter-spacing: 1.5px; text-transform: uppercase; color: #fff; background: var(--b-red); padding: 10px 16px 8px;
+  -webkit-text-stroke: 1.5px var(--b-ink); paint-order: stroke fill; }
+/* inputs and lists */
+#menu input[type=search], #menu input[type=text], body.island #menu input[type=search] { font-family: var(--b-body); font-weight: 700; font-size: 16px; color: var(--b-text); background: #fffdf6; border: 3px solid var(--b-ink); border-radius: 10px; padding: 9px 12px; }
+#menu input[type=range], body.island #menu input[type=range] { accent-color: var(--b-red); }
+#menu .people, body.island #menu .people { background: #fffdf6; border: 3px solid var(--b-ink); border-radius: 10px; }
+#menu .people div, body.island #menu .people div { font-family: var(--b-body); font-weight: 700; font-size: 15.5px; color: var(--b-text); border-bottom: 1px solid var(--b-paper2); }
+#menu .people div span:last-child { color: var(--b-text2); }
+#menu .people div.sel, body.island #menu .people div.sel { background: var(--b-paint); color: var(--b-ink); }
+#menu .people div:hover, body.island #menu .people div:hover { background: #fff3c4; }
+#menu .seg button, body.island #menu .seg button { font-family: var(--b-ui); font-weight: 700; font-size: 14px; color: var(--b-text2); background: #fffdf6; border: 3px solid var(--b-ink); border-radius: 10px; padding: 8px 4px; text-transform: none; }
+#menu .seg button.on, body.island #menu .seg button.on { color: var(--b-ink); background: var(--b-paint); box-shadow: inset 0 -3px 0 rgba(0,0,0,0.18); }
+#menu .toggle .sw, body.island #menu .toggle .sw { background: var(--b-paper2); border: 3px solid var(--b-ink); border-radius: 999px; width: 54px; height: 30px; }
+#menu .toggle .sw::after, body.island #menu .toggle .sw::after { top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 2px solid var(--b-ink); box-shadow: none; }
+#menu .toggle input:checked + .sw, body.island #menu .toggle input:checked + .sw { background: var(--b-green); }
+#menu .toggle input:checked + .sw::after, body.island #menu .toggle input:checked + .sw::after { left: 27px; }
+#menu .toggle .tl, body.island #menu .toggle .tl { font-family: var(--b-body); font-weight: 800; font-size: 16px; color: var(--b-text); }
+#menu .toggle .tl small, body.island #menu .toggle .tl small { font-weight: 600; font-size: 13.5px; color: var(--b-text2); }
+#menu a, body.island #menu a { color: var(--b-red-d) !important; }
+#menu :focus-visible { outline: 3px solid var(--b-red); outline-offset: 2px; }
+#loading, body.island #loading { background: var(--b-asphalt); color: var(--b-paint); font-family: var(--b-pixel); }
+@media (max-width: 480px) {
+  #menu .tabs button, body.island #menu .tabs button { font-size: 16px; letter-spacing: 0.5px; padding: 8px 2px 6px; }
+  #menu .logo .l1 { -webkit-text-stroke-width: 4px; text-shadow: 4px 5px 0 var(--b-ink); }
+}
+@media (prefers-reduced-motion: reduce) { #menu .btn:active { transform: none; } }
 </style>
 <canvas id="flat"></canvas>
 
@@ -466,8 +545,8 @@ body.island #verseList label.verse input { accent-color: var(--i-green); }
 
 <div id="menu">
   <div class="inner">
-    <div class="logo" id="logo">Ancestry<br>Fluffs</div>
-    <div class="tagline" id="tagline">Roll round and meet the family</div>
+    <div class="logo" id="logo"><span class="l1">Ancestry</span><span class="l2">A Battle in Time</span></div>
+    <div class="tagline" id="tagline">Four hundred years of family. One very old car.</div>
     <div class="tabs" id="tabs" role="tablist">
       <button role="tab" data-tab="play" class="on" aria-selected="true">Play</button><button role="tab" data-tab="story" aria-selected="false">Story</button><button role="tab" data-tab="viz" aria-selected="false">Visualisation</button>
     </div>
@@ -514,7 +593,7 @@ body.island #verseList label.verse input { accent-color: var(--i-green); }
       <button class="btn go" id="btnStart">Enter ▶</button>
       </div>
       <div class="storyOnly">
-        <p class="storyPitch"><b>Relative Speed.</b> A crooked heir hunter is rubbing your ancestors out of the registers, one generation at a time. You have a battered estate car that runs on parish ink, and every year your family ever lived through to drive it in.</p>
+        <p class="storyPitch"><b>A Battle in Time.</b> A crooked heir hunter is rubbing your ancestors out of the registers, one generation at a time. You have a battered estate car that runs on parish ink, and every year your family ever lived through to drive it in.</p>
         <p class="storyPitch">Top-down driving, missions for cash, tickets to the countries your people came from, and a time dial for the years they lived in. Your progress is saved on this device.</p>
         <div class="note" id="storyInfo"></div>
         <button class="btn go" id="btnStory">Start the story ▶</button>
@@ -5539,7 +5618,7 @@ return { openViz, closeViz, vizOpen, vizView };
 
 // ---- storyplot.js ----
 const __m_storyplot = (() => {
-// Story mode ("Relative Speed"): turns a GEDCOM tree into the cast, towns, chapters and missions of the story.
+// Story mode ("A Battle in Time"): turns a GEDCOM tree into the cast, towns, chapters and missions of the story.
 // The plot is the same for every family; the people, places, years, jobs and events come from the file.
 // Pure data in, pure data out (no drawing), so it can be tested with node.
 const { dateYear, datePhrase } = __m_gedcom;
@@ -5889,12 +5968,20 @@ function quizFor(c, cast, rnd) {
   };
   const qs = [];
   const mother = c.mother, father = c.father;
-  if (mother?.surname && mother.surname !== c.surname) qs.push(() => ({ q: 'What was my mother\'s name before she wed?', ...opts(mother.surname, cast.surnames) }));
-  if (father) qs.push(() => ({ q: 'What is my father\'s Christian name?', ...opts(firstName(father), cast.maleNames) }));
-  if (c.spouse) qs.push(() => ({ q: `Who ${c.year >= (c.marriageYear || 0) ? 'did I marry' : 'am I walking out with'}?`, ...opts(displayName(c.spouse), cast.names) }));
-  if (c.byKnown) qs.push(() => ({ q: 'What year was I born?', ...opts(String(c.by), [c.by - 11, c.by + 7, c.by - 4, c.by + 13, c.by - 19].map(String)) }));
-  if (c.job) qs.push(() => ({ q: 'What do I do for my living?', ...opts(c.job, cast.jobs) }));
-  if (c.town) qs.push(() => ({ q: 'Where was I born?', ...opts(c.town.name, cast.towns) }));
+  const wed = c.year >= (c.marriageYear || 0);
+  if (mother?.surname && mother.surname !== c.surname) qs.push(() => ({ q: 'What was my mother\'s name before she wed?', ...opts(mother.surname, cast.surnames),
+    said: `My mother was a «${mother.surname}» before she wed, and she never let my father forget it.`, told: `${cap(c.his)} mother was a ${mother.surname} before she married. ${cap(c.he)}'s prouder of that side than ${c.he} lets on.` }));
+  if (father) qs.push(() => ({ q: 'What is my father\'s Christian name?', ...opts(firstName(father), cast.maleNames),
+    said: `My father, «${firstName(father)}», always said a good name is worth more than a full purse.`, told: `${cap(c.his)} father was ${firstName(father)}, and ${c.he} quotes him at every turn.` }));
+  if (c.spouse) qs.push(() => ({ q: `Who ${wed ? 'did I marry' : 'am I walking out with'}?`, ...opts(displayName(c.spouse), cast.names),
+    said: wed ? `«${displayName(c.spouse)}» will want ${c.sex === 'F' ? 'his' : c.sex === 'M' ? 'her' : 'their'} tea, and I've not set foot in the kitchen.` : `I'm walking out with «${displayName(c.spouse)}», if you must know, and the whole street does know.`,
+    told: wed ? `${cap(c.he)}'s married to ${displayName(c.spouse)}.` : `${cap(c.he)}'s walking out with ${displayName(c.spouse)}, and the whole street knows it.` }));
+  if (c.byKnown) qs.push(() => ({ q: 'What year was I born?', ...opts(String(c.by), [c.by - 11, c.by + 7, c.by - 4, c.by + 13, c.by - 19].map(String)),
+    said: `Born in «${c.by}», I was, and my mother said it was the longest night of her life.`, told: `Born in ${c.by}, by the register.` }));
+  if (c.job) qs.push(() => ({ q: 'What do I do for my living?', ...opts(c.job, cast.jobs),
+    said: `A «${c.job.toLowerCase()}» gets no days off, whatever the solicitors are doing.`, told: `${cap(c.he)} works as a ${c.job.toLowerCase()}.` }));
+  if (c.town) qs.push(() => ({ q: 'Where was I born?', ...opts(c.town.name, cast.towns),
+    said: `I was born in «${c.town.name}», and they'll carry me out of «${c.town.name}» when the time comes.`, told: `${cap(c.he)} was born here in ${c.town.name} and has never left it for long.` }));
   const order = qs.map((f, i) => [rnd(), f]).sort((a, b) => a[0] - b[0]);
   for (const [, f] of order) { const z = f(); if (z.options) return z; }
   return null;
@@ -6095,6 +6182,7 @@ function buildStory(data, rootId, opts = {}) {
     const base = { act, town: c.town.id, year: c.year, chapter: i };
     const relLine = `${c.name}, your ${c.rel}`;
     const quiz = quizFor(c, cast, rnd);
+    c.quizSaid = quiz?.said || '';
     // If you have already been born by this year, they know a child of your name, and it is not you.
     // (Unless this is the very year, and the chapter is about you being born: then you are still on the way.)
     const age = hero.byKnown && c.year >= hero.by && !(c.year === hero.by && c.set === 'birth') ? c.year - hero.by : null;
@@ -6120,8 +6208,8 @@ function buildStory(data, rootId, opts = {}) {
       ...base, id: `meet-${i}`, title: isFinale ? 'Brick Wall' : `Meeting ${c.first}`, giver: { who: 'dot', at: 'phone' },
       brief: `Find ${relLine}, in ${c.town.name}, ${c.year}.`,
       intro: isFinale
-        ? [{ who: 'dot', text: `A note in Dorothy's hand, pinned where you would see it: "${c.name}, your ${c.rel}${c.job ? ', ' + c.job.toLowerCase() : ''}. Try the house first. If ${c.he} is out, ${c.he} will be at ${N[spots[1]]}, and failing that ${N[spots[2]]}. Be polite. ${knowsNote}"` }]
-        : [{ who: 'dot', text: `A note in Dorothy's hand, pinned where you would see it: "${c.name}, your ${c.rel}${c.job ? ', ' + c.job.toLowerCase() : ''}. ${sch.note} ${knowsNote}"` }],
+        ? [{ who: 'dot', text: `A note in Dorothy's hand, pinned where you would see it: "${c.name}, your ${c.rel}${c.job ? ', ' + c.job.toLowerCase() : ''}. Try the house first. If ${c.he} is out, ${c.he} will be at ${N[spots[1]]}, and failing that ${N[spots[2]]}. Be polite. ${knowsNote}${quiz?.told ? ' Something to remember: ' + quiz.told : ''}"` }]
+        : [{ who: 'dot', text: `A note in Dorothy's hand, pinned where you would see it: "${c.name}, your ${c.rel}${c.job ? ', ' + c.job.toLowerCase() : ''}. ${sch.note} ${knowsNote}${quiz?.told ? ' Something to remember: ' + quiz.told : ''}"` }],
       scheme: isFinale ? null : c.scheme,
       steps: [...(isFinale
         ? [{ t: 'search', spots, miss: { 0: `Nobody in. A neighbour thinks ${c.he} went up to ${N[spots[1]]}.`, 1: `Not here. "Try ${N[spots[2]]}," says somebody, without looking up.`, 2: `Not here either. "Gone to ${N[spots[1]]}, I should think."` }, text: `Find ${c.first}` }]
@@ -6500,7 +6588,8 @@ function buildStory(data, rootId, opts = {}) {
     const firstOf = indi => nameOf(indi).split(' ')[0];
     const shot = (at, who, mood, text, extra = {}) => ({ at, who, mood, text, side: who === 'lowe' ? 1 : 0, ...extra });
     // what the ancestor is busy with when the chapter opens, before anybody has told them anything
-    const busyWith = (c, proofM) => {
+    const busyWith = (c, proofM) => (busyLine(c, proofM) + (c.quizSaid ? ' ' + c.quizSaid : ''));
+    const busyLine = (c, proofM) => {
       const sp = c.spouse ? firstOf(c.spouse) : '', ch = c.child ? firstOf(c.child) : '', late = c.late ? nameOf(c.late.indi) : '';
       return {
         wedding: `Saturday I'm to be wed${sp ? ' to ' + sp : ''}. The banns are read, and the parson's book is waiting for the both of us.`,
@@ -6585,7 +6674,7 @@ function buildStory(data, rootId, opts = {}) {
 
   return {
     frags, bonus,
-    title: 'Relative Speed', hero, villain: { name: 'Silas Hargreaves', firm: 'Hargreaves & Lowe, Probate Genealogists' }, mentor: { name: 'Dorothy Pickering' },
+    title: 'A Battle in Time', hero, villain: { name: 'Silas Hargreaves', firm: 'Hargreaves & Lowe, Probate Genealogists' }, mentor: { name: 'Dorothy Pickering' },
     benefactor, home, now: present, towns, chapters, missions, favours, proofs, tree, surname, foreign,
   };
 }
@@ -7803,6 +7892,11 @@ const VEHICLES = {
 };
 // Everything on wheels was a fifth too quick to steer comfortably. All slowed by the same amount, so nothing changes places.
 for (const v of Object.values(VEHICLES)) { v.max *= 0.8; v.acc *= 0.86; }
+// The Heirloom starts out slower and earns its speed: a fully tuned engine (+10% speed, +30% pull) now brings it
+// back to what it used to start with. Everything else slows by the same tenth, so nothing changes places.
+const SPEED_SCALE = 1 / 1.1;
+for (const v of Object.values(VEHICLES)) { v.max *= SPEED_SCALE; v.acc *= SPEED_SCALE; }
+VEHICLES.heirloom.acc *= 1.1 / 1.3;
 const CAR_COLORS = ['#c8443a', '#3a6ac8', '#e8e8e4', '#2a2a2e', '#3a9a5a', '#e0b030', '#8a8e94', '#7a3ac8', '#d86a3a', '#2a8a9a'];
 const OLD_COLORS = ['#1c1c20', '#4a1a1a', '#1a2a4a', '#1a3a2a', '#3a2a1a'];
 const HORSES = ['#6a4428', '#3a2618', '#8a5a34', '#c8b8a0', '#2a2220'];
@@ -8045,7 +8139,7 @@ function drawPortraitExtras(ctx, who, look, size) {
   if (look?.glasses) { px(4, 6, 4, 1, look.glasses); px(9, 6, 3, 1, look.glasses); px(4, 5, 1, 3, look.glasses); px(7, 5, 1, 3, look.glasses); px(8, 5, 1, 3, look.glasses); px(11, 5, 1, 3, look.glasses); px(5, 6, 2, 1, '#fff'); px(9, 6, 2, 1, '#fff'); px(6, 6, 1, 1, '#202040'); px(10, 6, 1, 1, '#202040'); }
 }
 
-return { trafficMix, paintFor, drawVehicle, drawSmoke, strangerLook, lookSummary, drawPerson, drawItem, drawCritter, drawMarker, drawPortraitExtras, VEHICLES, trafficCount, ERASER_LOOK, FIXED_LOOKS };
+return { trafficMix, paintFor, drawVehicle, drawSmoke, strangerLook, lookSummary, drawPerson, drawItem, drawCritter, drawMarker, drawPortraitExtras, VEHICLES, SPEED_SCALE, trafficCount, ERASER_LOOK, FIXED_LOOKS };
 })();
 
 // ---- storyui.js ----
@@ -8394,7 +8488,7 @@ return { townGeo, drawRouteMap };
 
 // ---- storygame.js ----
 const __m_storygame = (() => {
-// Story mode ("Relative Speed"): a top-down driving game played across the towns and years of your own
+// Story mode ("A Battle in Time"): a top-down driving game played across the towns and years of your own
 // family tree. On foot or at the wheel, mission by mission, by air to other countries and by ink to other
 // centuries. The plot is in storyplot.js, the towns in storycity.js, the drawings in storyart.js.
 const { displayName, hashString, seededRandom, collectAncestors, lifespan } = __m_ancestry;
@@ -8405,7 +8499,7 @@ const { buildDialogue, voiceLine } = __m_dialogue;
 const { buildStory, eraOf, ERA_NAMES, eraWords, fareBetween, inkCost, residentsOf, oddJob, townNotes, kinOf, burialsIn, lifeSoFar } = __m_storyplot;
 const { buildTown, TILE, G, DIRS, drawGround, drawTall, renderMiniMap } = __m_storycity;
 const { makeNet, fetchNet, cachedNet, netFromOsm } = __m_storynet;
-const { VEHICLES, trafficMix, trafficCount, paintFor, drawVehicle, drawSmoke, strangerLook, lookSummary, drawPerson, drawItem, drawMarker, FIXED_LOOKS, drawPortraitExtras, drawCritter, ERASER_LOOK } = __m_storyart;
+const { VEHICLES, SPEED_SCALE, trafficMix, trafficCount, paintFor, drawVehicle, drawSmoke, strangerLook, lookSummary, drawPerson, drawItem, drawMarker, FIXED_LOOKS, drawPortraitExtras, drawCritter, ERASER_LOOK } = __m_storyart;
 const { mountStoryUi, escapeText } = __m_storyui;
 const { resolvePlace } = __m_places;
 const { drawRouteMap } = __m_storymap;
@@ -8691,7 +8785,7 @@ function openStory({ data, rootId, store, key, onClose }) {
   window.addEventListener('resize', onResize);
   S.onResize = onResize;
   S.raf = requestAnimationFrame(loop);
-  if (save.fresh) { save.fresh = false; S.ui.banner('RELATIVE SPEED', `A story for the ${story.surname} family`, '#ffd84a', 3600); }
+  if (save.fresh) { save.fresh = false; S.ui.banner('A BATTLE IN TIME', `A story for the ${story.surname} family`, '#ffd84a', 3600); }
   return S;
 }
 
@@ -9110,6 +9204,8 @@ function planLeg(v) {
 function aiDrive(v, dt) {
   const st = VEHICLES[v.type], P = S.player;
   if (v.hold > 0) { v.hold -= dt; driveVehicle(v, { thr: 0, steer: 0, brake: true }, dt); return; }   // waiting to set off
+  // a convoy waits for its escort: it sets off when you reach it and pulls in if you fall far behind
+  if (v.convoy) { const q = P.vehicle || P, dq = Math.hypot(q.x - v.x, q.y - v.y); if (!v.started && dq < 7 * T) { v.started = true; float(v.x, v.y - 34, 'Off we go!', '#7be07b'); } if (!v.started || dq > 16 * T) { driveVehicle(v, { thr: 0, steer: 0, brake: true }, dt); return; } }
   // something being led or escorted must never sit still for good: if it has gone nowhere in ten seconds, put it on the next junction
   if (v.ai === 'lead') { v.pgT = (v.pgT || 0) + dt; if (v.pgT > 10) { if (v.pg && Math.hypot(v.x - v.pg.x, v.y - v.pg.y) < 2 * T && v.n != null) { const n = S.city.nodes[v.n]; v.x = n.x; v.y = n.y; v.vx = v.vy = 0; v.speed = 0; v.pn = v.n; v.wp = null; v.n = v.nn ?? v.n; } v.pg = { x: v.x, y: v.y }; v.pgT = 0; } }
   if (!v.wp || !v.wp.length) planLeg(v);
@@ -9120,7 +9216,18 @@ function aiDrive(v, dt) {
   }
   const fast = v.ai === 'flee' || v.ai === 'cop' || v.ai === 'hunt' || v.ai === 'lead';
   if (v.ramCd > 0) v.ramCd -= dt;
-  if (v.ai === 'cop' || v.ai === 'hunt') { const pp = v.prey && !v.prey.dead ? v.prey : P.vehicle || P; if (Math.hypot(pp.x - v.x, pp.y - v.y) < 5.5 * T) tgt = pp; }
+  if (v.ai === 'cop') { const pp = P.vehicle || P; if (Math.hypot(pp.x - v.x, pp.y - v.y) < 5.5 * T) tgt = pp; }
+  if (v.ai === 'hunt') {
+    // Grey vans take turns: one comes for you at a time while the rest keep their distance, and after a ram it
+    // peels away for a few seconds instead of pinning you against a wall.
+    const pp = v.prey && !v.prey.dead ? v.prey : P.vehicle || P, d0 = Math.hypot(pp.x - v.x, pp.y - v.y), key = v.prey ? 'turnC' : 'turnP';
+    const cur = S[key];
+    if (!cur || cur.dead || cur.gone || cur.ai !== 'hunt' || cur.ramCd > 0.5 || !S.vehicles.includes(cur)) { if (!(v.ramCd > 0.5) && d0 < 14 * T) S[key] = v; }
+    const away = (r) => ({ x: v.x + (v.x - pp.x) / (d0 || 1) * r, y: v.y + (v.y - pp.y) / (d0 || 1) * r });
+    if (v.ramCd > 0.5) { if (d0 < 7 * T) tgt = away(4 * T); }
+    else if (S[key] === v) { if (d0 < 5.5 * T) tgt = pp; }
+    else if (d0 < 6.5 * T) tgt = away(3 * T);
+  }
   const dx = tgt.x - v.x, dy = tgt.y - v.y, d = Math.hypot(dx, dy);
   const fx = Math.cos(v.ang), fy = Math.sin(v.ang);
   if (tgt === v.wp[0] && (d < 0.75 * T || (d < 2.4 * T && dx * fx + dy * fy < 0))) {
@@ -9191,6 +9298,7 @@ function collideVehicles() {
   const vs = S.vehicles, pv = S.player.vehicle;
   for (let a = 0; a < vs.length; a++) for (let b = a + 1; b < vs.length; b++) {
     const A = vs[a], B = vs[b], ra = (VEHICLES[A.type].len + VEHICLES[A.type].wid) * 0.23, rb = (VEHICLES[B.type].len + VEHICLES[B.type].wid) * 0.23;
+    if ((A.dead && A.wreck) || (B.dead && B.wreck)) continue;   // grey wrecks: drive straight through them
     const dx = B.x - A.x, dy = B.y - A.y, d = Math.hypot(dx, dy), min = ra + rb;
     if (d >= min || d < 0.01) continue;
     const nx = dx / d, ny = dy / d, push = (min - d) / 2;
@@ -9212,12 +9320,13 @@ function collideVehicles() {
     spark((A.x + B.x) / 2, (A.y + B.y) / 2, 8); S.shake = Math.max(S.shake || 0, clamp(vn / (12 * T), 0.1, 0.8));
     if (other.ai === 'hunt') {
       const mine = Math.abs(pv.speed) >= Math.abs(other.speed);
+      if (!other.prey) other.ramCd = Math.max(other.ramCd || 0, 2.4);
       if (((mine && vn > 2.2 * T) || (other.prey && Math.abs(pv.speed) > 3 * T)) && other.hitCd <= 0) {   // anything going for the convoy only needs a shove
         other.hp -= 1 + 0.5 * up('bar'); other.hitCd = 0.8; other.speed *= 0.3; other.ramCd = Math.max(other.ramCd || 0, 1.5);
         float(other.x, other.y - 30, other.hp > 0 ? 'CRUNCH!' : 'OFF THE ROAD! +£15', '#f08aa0'); if (other.hp <= 0) sfx.boom();
-        if (other.hp <= 0) { other.dead = true; other.ai = null; S.save.cash += 15; sfx.cash(); if (S.step && S.step.step.t === 'frenzy') S.step.k++; if (bump('erasers') >= 5) badge('rubber'); }
-      } else if (!mine && !(other.ramCd > 0)) {
-        other.ramCd = 2.2;
+        if (other.hp <= 0) { other.dead = true; other.wreck = true; other.ai = null; S.save.cash += 15; sfx.cash(); if (S.step && S.step.step.t === 'frenzy') S.step.k++; if (bump('erasers') >= 5) badge('rubber'); }
+      } else if (!mine && !(other.rammedT > S.t)) {
+        other.rammedT = S.t + 2.4;
         if (S.step) S.step.rams = (S.step.rams || 0) + 1;
         if (S.step?.timer != null && S.step.step.t !== 'frenzy') { S.step.timer = Math.max(1, S.step.timer - 3); float(pv.x, pv.y - 34, '−3 seconds', '#ff5a4a'); }
         gentleBump(vn + 3 * T);
@@ -9516,6 +9625,7 @@ function enterStep(step) {
     const l = lotPt(step.at, step.who), sp = freeSpotNear(l.x, l.y, 0), inTree = S.tree.people.has(step.who);
     S.peds.push({ npc: true, who: step.who, x: sp.x, y: sp.y, ang: Math.PI / 2, look: inTree ? lookSummary(personLook(step.who)) : outsider(step.who).look, walk: 0, down: 0, name: displayName(S.data.individuals.get(step.who)) });
   }
+  if (step.t === 'talk' && step.quiz) hintOnce('quiz', S.ui.touch ? 'They will test you with a question. The answer was in Dorothy\'s note: tap 📋 to read it again.' : 'They will test you with a question. The answer was in Dorothy\'s note: press B to read it again.', 6400);
   if (step.t === 'search') hintOnce('search', 'They could be in any of the places marked ?. Go and ask at each. The nearest is arrowed.', 5600);
   // the first time each kind of job comes up, say how it works (after whatever somebody shouts as it starts)
   const tok = S, hint = (key, text, ms) => step.bark ? setTimeout(() => S === tok && S.step?.step === step && hintOnce(key, text, ms), 5400) : hintOnce(key, text, ms);
@@ -9524,7 +9634,7 @@ function enterStep(step) {
   if (step.t === 'catch') hint('catch', S.ui.touch ? 'ON FOOT: tap GO to get out, then run him down. Push the stick to the edge to sprint.' : 'ON FOOT: press E to get out, then run him down. Hold Shift to sprint.', 6400);
   if (step.t === 'chase') hint('chase', 'CHASE: ram the van with the red ring. Every knock empties its bar a little.', 5200);
   if (step.t === 'tail') hint('tail', 'TAIL: keep it in sight but not too close. The ! marks fill up if they notice you.', 5600);
-  if (step.t === 'defend') hint('defend', 'DEFEND: stay with the green-ringed convoy and ram any grey van that goes for it.', 5600);
+  if (step.t === 'defend') hint('defend', 'DEFEND: drive up to the cart with the green ring and it sets off. Stay with it and shove away any grey van that goes for it.', 6400);
   if (step.blocks) hintOnce('blocks', 'Grey vans are parked across the road ahead. Find another way round, or get out and walk the last bit.', 5600);
   if (step.rival && step.t === 'goto') startRival(lotPt(step.at), step.rival);
   if (step.blocks) placeBlocks(step.t === 'goto' ? lotPt(step.at) : lotPt(step.to), step.blocks);
@@ -9532,7 +9642,7 @@ function enterStep(step) {
     const sp = step.bark.who ? speaker(step.bark.who) : null, name = step.bark.name || (sp ? sp.who.split(' ')[0] : '');
     S.ui.toast(`${name}: "${sp && sp.person ? voiceLine(sp.person, step.bark.text) : plainText(step.bark.text)}"`, 5200);
   }
-  if (step.timed) st.timer = Math.round(14 + tiles / (c.source === 'osm' ? 3.2 : 3.8) * step.timed + stops * 5);   // real streets twist more than drawn ones
+  if (step.timed) st.timer = Math.round(14 + tiles / (c.source === 'osm' ? 3.2 : 3.8) / SPEED_SCALE * step.timed + stops * 5);   // (and the clock allows for an untuned engine)   // real streets twist more than drawn ones
   if (step.tokens && st.timer != null) {
     // clocks left about the streets: each one is five more seconds, if you care to go out of your way
     const dest = stepTarget() || pp, x0 = Math.min(pp.x, dest.x) - 9 * T, x1 = Math.max(pp.x, dest.x) + 9 * T, y0 = Math.min(pp.y, dest.y) - 9 * T, y1 = Math.max(pp.y, dest.y) + 9 * T;
@@ -9620,7 +9730,7 @@ function updateMission(dt) {
     }
   } else if (s.t === 'frenzy') {
     st.wave -= dt;
-    if (st.wave <= 0 && S.vehicles.filter(v => v.ai === 'hunt').length < 4) { st.wave = 2.2; const h = spawnAi(S.city.year < 1900 ? 'erasercoach' : 'eraser', pp, 'hunt', { minPlayer: 9 * T }); h.hp = 1; }
+    if (st.wave <= 0 && S.vehicles.filter(v => v.ai === 'hunt' || (v.wreck && !v.gone)).length < 3) { st.wave = 3; const h = spawnAi(S.city.year < 1900 ? 'erasercoach' : 'eraser', pp, 'hunt', { minPlayer: Math.hypot(S.view.w, S.view.h) / 2 / S.view.z + 2 * T }); h.hp = 1; }
   } else if (s.t === 'tail') {
     const v = st.target, d = dist(v, pp);
     if (st.grace > 0) st.grace -= dt;
@@ -9638,7 +9748,7 @@ function updateMission(dt) {
     if (cv.arrived) { for (const v of S.vehicles) if (v.prey === cv) { v.ai = null; v.dead = true; } st.convoy = null; cv.parked = true; cv.convoy = false; sfx.cash(); nextStep(); return; }
     st.wave -= dt;
     const alive = S.vehicles.filter(v => v.prey === cv && v.ai === 'hunt').length;
-    if (st.wave <= 0 && alive < 2 && st.sent < (s.waves || 6)) {
+    if (cv.started && st.wave <= 0 && alive < 2 && st.sent < (s.waves || 6)) {
       st.wave = 9; st.sent++;
       const a = Math.random() * 7, h = spawnAi(S.city.year < 1900 ? 'erasercoach' : 'eraser', { x: cv.x + Math.cos(a) * 11 * T, y: cv.y + Math.sin(a) * 11 * T }, 'hunt', { prey: cv });
       h.hp = 1;
@@ -9793,7 +9903,7 @@ function updateAmbush(dt) {
   st.amb = (st.amb ?? 9 + Math.random() * 9) - dt;
   if (st.amb > 0) return;
   st.amb = 16 + Math.random() * 12;
-  const v = spawnAi(S.city.year < 1900 ? 'erasercoach' : 'eraser', S.player.vehicle || S.player, 'hunt', { minPlayer: 11 * T });
+  const v = spawnAi(S.city.year < 1900 ? 'erasercoach' : 'eraser', S.player.vehicle || S.player, 'hunt', { minPlayer: Math.max(11 * T, Math.hypot(S.view.w, S.view.h) / 2 / S.view.z + 2 * T) });
   v.hp = 2;
   hintOnce('hunt', 'Grey vans on your tail! Every time one rams you, you lose three seconds. Ram them first.', 6500);
 }
@@ -10121,7 +10231,7 @@ function stepHelp(st) {
 }
 function openPause() {
   const k = (a, b) => `<p><kbd>${a}</kbd> ${b}</p>`;
-  S.ui.panel(`<h2>Relative Speed</h2><p>${escapeText(nextStory()?.brief || 'Free roam: every town, every year.')}</p>
+  S.ui.panel(`<h2>A Battle in Time</h2><p>${escapeText(nextStory()?.brief || 'Free roam: every town, every year.')}</p>
     ${S.ui.touch ? '<p>Left thumb steers and walks. GO talks, gets in and out and starts jobs. CAR calls the Heirloom.</p>' : k('WASD / arrows', 'walk, drive') + k('E', 'talk, get in or out, start a job') + k('Space', 'handbrake: hold it into a corner to slide the back round') + k('T', 'time dial') + k('H', 'call the Heirloom (£10)') + k('B', 'read the mission again') + k('M', 'town map') + k('P', 'pedigree') }
     <p><b>The case so far</b> <small>${tally().text}</small></p>${fragsGot() || S.save.idx > S.story.missions.findIndex(m => m.id === 'blank-and-void') ? `<p>📄 <b>The Foundling File</b> ${fragsGot()} of ${S.story.frags.length} pages <small>${S.story.frags.map(f => (S.save.frags || []).includes(f.id) ? '✔' : `${escapeText(S.story.towns.get(f.town).name)} ${f.year}`).join(' · ')}</small></p>` : ''}${S.story.missions.map((m, i) => i < S.save.idx ? `<div class="row" style="padding:3px 0;border:0"><span>✔ ${escapeText(m.title)} <b style="color:#c8901a">${'★'.repeat((S.save.medals || {})[m.id] || 0)}</b><small>${escapeText(m.act)} · ${escapeText(S.story.towns.get(m.town).name)}, ${m.year}</small></span>${m.town === S.city.town.id && m.year === S.city.year && !S.mission && m.steps.some(x => x.t !== 'travel' && x.t !== 'talk') ? `<button class="alt" data-go="replay:${i}">Replay</button>` : ''}</div>` : i === S.save.idx ? `<div class="row need" style="padding:5px 8px"><span>▶ ${escapeText(m.title)}<small>${escapeText(m.act)} · ${escapeText(S.story.towns.get(m.town).name)}, ${m.year}</small></span></div>` : '').join('')}${S.save.idx < S.story.missions.length - 1 ? `<p>…and ${S.story.missions.length - S.save.idx - 1} more to come.</p>` : ''}
     <div class="foot"><button data-go="close">Resume</button><button class="alt" data-go="easy">Timers: ${S.save.easy ? 'generous' : 'normal'}</button><button class="alt" data-go="music">Music: ${soundOn('music') ? 'on' : 'off'}</button><button class="alt" data-go="sfx">Sound effects: ${soundOn('sfx') ? 'on' : 'off'}</button><button class="alt" data-go="streets">Streets: ${realStreets() ? 'real (OpenStreetMap)' : 'made up'}</button>${realStreets() && S.city.source !== 'osm' && S.nets.get(S.city.town.id)?.source === 'osm' && !S.mission ? '<button class="alt" data-go="realnow">Switch to the real streets now</button>' : ''}<button class="alt" data-go="quit">Save and leave</button><button class="alt" data-go="reset">Restart the story</button></div>`, {
@@ -10241,7 +10351,11 @@ function enterVehicle(v) {
   }
   v.ai = null; v.parked = false; v.wp = null;
   P.vehicle = v; sfx.door();
-  if (VEHICLES[v.type].cab && !S.mission && !S.busy) { hintOnce('fares', 'You are a cab driver now. Take each fare where they want to go, quickly; get out to go off duty.', 6500); startFare(0); }
+  // a cab asks before it puts you to work
+  if (VEHICLES[v.type].cab && !S.mission && !S.busy) S.ui.panel(`<h2>🚕 For hire?</h2><p>This ${escapeText(VEHICLES[v.type].name)} can take fares: get each passenger where they want to go, quickly, for cash and a bonus for every fare in a row. Get out to go off duty.</p><div class="foot"><button data-go="fares">Take fares</button><button class="alt" data-go="close">Just drive</button></div>`, {
+    fares: () => { S.ui.closePanel(); startFare(0); },
+    close: () => S.ui.closePanel(),
+  });
   if (!(S.mission && S.mission.def.id === 'final-notice')) hintOnce('drive', S.ui.touch ? 'Push the stick the way you want to go. BRAKE is the handbrake. GO gets you out.' : 'W accelerates, S brakes and reverses, A and D steer. Space is the handbrake. E gets you out.');
 }
 function startFare(streak) {
@@ -10280,6 +10394,11 @@ function findNear() {
     if (within(c.lots.market, 1.8, 3)) return { label: 'Odd jobs board (£)', go: () => startMission(oddJob(c.town, c.year, hashString(c.town.id + c.year) + (S.save.oddN = (S.save.oddN || 0) + 1))) };
   }
   if (!S.mission && slow && !pv) for (const p of S.peds) if (p.rid && !(p.down > 0) && dist(p, P) < 1.5 * T && !(getIn && carD < dist(p, P) - 10)) return { label: `Chat with ${p.name.split(' ')[0]}`, go: () => chatResident(p) };
+  // side jobs on the road wait to be asked for
+  if (pv && !S.mission && slow) for (const it of S.items) {
+    if (it.frenzy && dist(it, pp) < 2.2 * T) return { label: 'Start the Smash-Up (60 seconds)', go: () => { it.gone = true; startSide('frenzy'); } };
+    if (it.cup && pv === S.heirloom && dist(it, pp) < 2.2 * T) return { label: 'Start the Heirloom Cup', go: () => { it.gone = true; startSide('cup'); } };
+  }
   if (slow && within(c.lots.hub, 2, 3.2) && !(S.step && S.step.loaded)) return { label: c.air ? 'Departures ✈' : 'Tickets ⚓', go: openDepartures };
   if (slow && within(c.lots.garage, 1.8, 3) && !(S.step && S.step.loaded) && !(getIn && carD < dist(c.lots.garage, P) - 10)) return { label: 'Workbench 🔧', go: () => openWorkshop() };
   if (!pv) return getIn || null;
@@ -10431,8 +10550,8 @@ function update(dt) {
   // population
   const pp = P.vehicle || P;
   const vr = Math.hypot(S.view.w, S.view.h) / 2 / S.view.z;
-  for (const v of S.vehicles) if (v.dead && v !== P.vehicle) { v.deadT = (v.deadT || 0) + dt; if (v.deadT > 12 && dist(v, pp) > vr) v.gone = true; }
-  S.vehicles = S.vehicles.filter(v => !v.gone && (v === S.heirloom || v === P.vehicle || v === S.step?.target || v.keep || v.ai === 'cop' || v.ai === 'hunt' || dist(v, pp) < (v.ai ? 40 : 60) * T));
+  for (const v of S.vehicles) if (v.dead && v !== P.vehicle) { v.deadT = (v.deadT || 0) + dt; if ((v.wreck && v.deadT > 3) || (v.deadT > 12 && dist(v, pp) > vr)) v.gone = true; }
+  S.vehicles = S.vehicles.filter(v => !v.gone && (v === S.heirloom || v === P.vehicle || v === S.step?.target || v === S.step?.convoy || v === S.step?.rival || v.convoy || v.keep || v.ai === 'cop' || v.ai === 'hunt' || dist(v, pp) < (v.ai ? 40 : 60) * T));
   S.peds = S.peds.filter(p => p.npc || p.stepPed || p.cop || dist(p, pp) < 34 * T);
   S.spawnT -= dt;
   if (S.spawnT <= 0) { S.spawnT = 0.35; spawnTraffic(trafficCount(c.year)); if (S.peds.filter(p => !p.npc).length < (c.year < 1714 ? 10 : c.year < 1837 ? 14 : 22)) spawnWalker(false); }
@@ -10489,14 +10608,8 @@ function update(dt) {
     });
   }
   for (const it of S.items) if (it.wait && dist(it, pp) > 4 * T) it.wait = false;
-  if (!S.mission && !S.busy && P.vehicle) for (const it of S.items) if (it.frenzy && !it.wait && dist(it, pp) < 1.7 * T) {
-    it.gone = true;
-    startSide('frenzy');
-  }
-  if (!S.mission && !S.busy && P.vehicle === S.heirloom) for (const it of S.items) if (it.cup && !it.wait && dist(it, pp) < 1.7 * T && (hintOnce('cupflag', 'The chequered flag is the Heirloom Cup. Stop on it to start a lap.', 4200), Math.abs(P.vehicle.speed) < 1.5 * T)) {
-    it.gone = true;
-    startSide('cup');
-  }
+  // the Smash-Up and the Heirloom Cup only start when you ask (E or GO on the marker): see findNear
+  if (!S.mission && !S.busy && P.vehicle) for (const it of S.items) if ((it.frenzy || (it.cup && P.vehicle === S.heirloom)) && dist(it, pp) < 2.2 * T) hintOnce(it.frenzy ? 'frenzymark' : 'cupflag', it.frenzy ? 'The pink marker is the Smash-Up: sixty seconds of ramming grey vans for cash. Stop on it and press ' + (S.ui.touch ? 'GO' : 'E') + ' if you fancy it.' : 'The chequered flag is the Heirloom Cup, a timed lap of the town. Stop on it and press ' + (S.ui.touch ? 'GO' : 'E') + ' to start.', 5200);
   if (S.items.some(i => i.gone)) S.items = S.items.filter(i => !i.gone);
   S.near = findNear();
   S.target = S.step ? stepTarget() : idleTarget();
@@ -10534,7 +10647,7 @@ async function openingScene() {
   if (S === tok && S.cut && !S.cut.skip) { Object.assign(S.cut, { x: S.player.x, y: S.player.y, who: null, caption: `${hero.name}. That's you.` }); await say('note', `You are ${hero.first}. You have one very old car, one month, and four hundred years of family depending on you. Go back through time, one ancestor at a time, and prove every one of them existed before Hargreaves can rub them out.`); }
   if (S !== tok) return;
   S.cut = null; S.clock = clock0; S.ui.root.classList.remove('cut'); S.busy = false; S.failT = S.t - 3; persist();
-  S.ui.banner('RELATIVE SPEED', `Save the ${sur} family`, '#ffd84a', 3200);
+  S.ui.banner('A BATTLE IN TIME', `Save the ${sur} family`, '#ffd84a', 3200);
 }
 // The scenes between the parts of the story, played the same way as the opening. cut = { caption, hour, shots }
 // (see addCuts in storyplot.js). Once each; Esc skips; the test driver and the "no cut scenes" switch skip them.
@@ -10613,6 +10726,7 @@ function hud() {
     if (st.rival) { const dp = lotPt(s.t === 'goto' ? s.at : (st.toAlt || s.to)); text += ` <b style="color:#f08aa0">rival ${Math.round(dist(st.rival, dp) / T * 4)}m · you ${Math.round(dist(P.vehicle || P, dp) / T * 4)}m</b>`; }
     if (st.spillPt) text = 'Stop and pick it up!';
     if (s.t === 'tail') text += ` <b>${st.close ? 'too close! ' : st.far ? 'falling behind! ' : ''}${'!'.repeat(Math.ceil(st.sus * 5))}</b>`;
+    if (s.t === 'defend' && st.convoy && !st.convoy.started) text = `Get to the cart (green ring): it sets off when you reach it`;
     if (s.t === 'defend' && st.convoy) text += ` <b>${'■'.repeat(Math.max(0, Math.ceil(st.convoy.hp)))}${'□'.repeat(Math.max(0, st.maxHp - Math.ceil(st.convoy.hp)))}</b>`;
     if (s.t === 'chase' && st.target) text += ` <b>${'■'.repeat(Math.max(0, Math.ceil(st.target.hp)))}${'□'.repeat(Math.max(0, st.maxHp - Math.ceil(st.target.hp)))}</b>`;
     if (s.gentle && st.loaded) text += ` <b>${'♦'.repeat(3 - st.bumps)}</b>`;
@@ -10731,16 +10845,30 @@ function render() {
   for (const f of S.floats) { g.globalAlpha = clamp(f.t, 0, 1); label(f.x, f.y, f.text, f.col, 12); }
   g.globalAlpha = 1;
   g.setTransform(1, 0, 0, 1, 0, 0);
-  // arrow to the target when it is off screen
+  // The sat nav. Off screen: a big pulsing arrow at the edge, pointing the way, with the distance. On screen: a
+  // bouncing pointer and a ring drawn over the buildings, so the place is never hidden behind a roof.
   if (tgt) {
-    const sx = (tgt.x - V.x) * z + w / 2, sy = (tgt.y - V.y) * z + h / 2, m = 46 * dpr;
+    const sx = (tgt.x - V.x) * z + w / 2, sy = (tgt.y - V.y) * z + h / 2, m = 58 * dpr;
+    const col = S.step?.step.t === 'chase' ? '#ff5a4a' : S.step?.step.t === 'defend' ? '#7be07b' : tgt.type ? '#8ab4ff' : '#ffd84a';
+    const dtl = Math.round(Math.hypot(tgt.x - pp.x, tgt.y - pp.y) / T * 4) + 'm', pulse = 1 + 0.12 * Math.sin(t * 7);
+    g.font = `800 ${13 * dpr}px "Fredoka", "Nunito", sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
+    const text = (s, x, y) => { g.lineWidth = 4 * dpr; g.strokeStyle = 'rgba(0,0,0,0.85)'; g.strokeText(s, x, y); g.fillStyle = '#fff'; g.fillText(s, x, y); };
     if (sx < m || sy < m || sx > w - m || sy > h - m) {
       const a = Math.atan2(sy - h / 2, sx - w / 2), r = Math.min((w / 2 - m) / Math.abs(Math.cos(a) || 1e-6), (h / 2 - m) / Math.abs(Math.sin(a) || 1e-6));
-      const ax = w / 2 + Math.cos(a) * r, ay = h / 2 + Math.sin(a) * r, col = S.step?.step.t === 'chase' ? '#ff5a4a' : tgt.type ? '#8ab4ff' : '#ffd84a';
-      g.save(); g.translate(ax, ay); g.rotate(a); g.fillStyle = col; g.strokeStyle = '#000'; g.lineWidth = 3 * dpr; g.beginPath(); g.moveTo(16 * dpr, 0); g.lineTo(-10 * dpr, -11 * dpr); g.lineTo(-4 * dpr, 0); g.lineTo(-10 * dpr, 11 * dpr); g.closePath(); g.stroke(); g.fill(); g.restore();
-      g.font = `700 ${12 * dpr}px "Fredoka", sans-serif`; g.textAlign = 'center'; g.fillStyle = '#fff'; g.strokeStyle = '#000'; g.lineWidth = 3 * dpr;
-      const dtl = Math.round(Math.hypot(tgt.x - pp.x, tgt.y - pp.y) / T * 4) + 'm';
-      g.strokeText(dtl, ax - Math.cos(a) * 26 * dpr, ay - Math.sin(a) * 26 * dpr); g.fillText(dtl, ax - Math.cos(a) * 26 * dpr, ay - Math.sin(a) * 26 * dpr);
+      const ax = w / 2 + Math.cos(a) * r, ay = h / 2 + Math.sin(a) * r, k = dpr * 1.7 * pulse;
+      g.save(); g.translate(ax, ay);
+      g.fillStyle = 'rgba(20,16,28,0.55)'; g.beginPath(); g.arc(0, 0, 24 * dpr, 0, 7); g.fill();
+      g.rotate(a); g.fillStyle = col; g.strokeStyle = '#000'; g.lineWidth = 3 * dpr;
+      g.beginPath(); g.moveTo(16 * k, 0); g.lineTo(-10 * k, -11 * k); g.lineTo(-4 * k, 0); g.lineTo(-10 * k, 11 * k); g.closePath(); g.stroke(); g.fill();
+      g.restore();
+      text(dtl, ax - Math.cos(a) * 40 * dpr, ay - Math.sin(a) * 40 * dpr);
+    } else {
+      const bob = Math.abs(Math.sin(t * 4)) * 10 * dpr, top = sy - 46 * dpr - bob;
+      g.strokeStyle = col; g.lineWidth = 4 * dpr; g.globalAlpha = 0.9;
+      g.beginPath(); g.arc(sx, sy, 22 * dpr * pulse, 0, 7); g.stroke(); g.globalAlpha = 1;
+      g.fillStyle = col; g.strokeStyle = '#000'; g.lineWidth = 3 * dpr;
+      g.beginPath(); g.moveTo(sx, top + 18 * dpr); g.lineTo(sx - 14 * dpr, top); g.lineTo(sx - 5 * dpr, top); g.lineTo(sx - 5 * dpr, top - 12 * dpr); g.lineTo(sx + 5 * dpr, top - 12 * dpr); g.lineTo(sx + 5 * dpr, top); g.lineTo(sx + 14 * dpr, top); g.closePath(); g.stroke(); g.fill();
+      if (Math.hypot(sx - w / 2, sy - h / 2) > 60 * dpr) text(dtl, sx, top - 24 * dpr);
     }
   }
   // the Engine winding up
@@ -10819,8 +10947,8 @@ return { openStory, closeStory, storyOpen, storyState };
 
 // ---- main.js ----
 const __m_main = (() => {
-// Ancestry 3D — roll round a GEDCOM family tree as the person at its root (the Fluffy garden), drive through it
-// (Story mode) or look at it (Visualisation).
+// Ancestry: A Battle in Time — drive through a GEDCOM family tree's towns and years (Story mode), roll round it
+// as the person at its root (the Fluffy garden), or look at it (Visualisation).
 
 const { parseGedcom, decodeGedcomBytes } = __m_gedcom;
 const { genAt, collectAncestors, layoutAncestors, displayName, firstName, lifespan, relationship, countAncestors, birthYear, hashString } = __m_ancestry;
@@ -10844,7 +10972,7 @@ const LOOK_NOTES = {
   fluffy: 'Fluffy: a top-down 2D garden where you and every ancestor are round, fluffy balls. Their fur takes the colours of their period clothes, with their hair (or hat) as a tuft on top. Roll along the paths, bump into people to make them squeak, and chat to them all.',
 };
 const LOGOS = {
-  fluffy: ['Ancestry<br>Fluffs', 'Roll round and meet the family'],
+  fluffy: ['<span class="l1">Ancestry</span><span class="l2">A Battle in Time</span>', 'Four hundred years of family. One very old car.'],
 };
 const S = {
   data: null, fileName: '', fileKey: '', rootId: null, maxGen: 8,
@@ -11087,7 +11215,7 @@ $('btnViz').onclick = () => {
   openViz({ kind: S.vizKind, scope: S.vizScope, data: S.data, rootId: S.rootId, maxGen: S.maxGen, onClose: () => { S.vizOpen = false; } });
 };
 
-// Story mode: "Relative Speed", a top-down driving story played through this family's towns and years.
+// Story mode: "A Battle in Time", a top-down driving story played through this family's towns and years.
 $('btnStory').onclick = () => {
   if (!S.data || !S.rootId) return;
   sfx.select();

@@ -1,6 +1,6 @@
-# Relative Speed
+# Ancestry: A Battle in Time
 
-*The story mode of Ancestry 3D. A top-down driving story, in the spirit of the mid-90s city crime games,
+*The story mode of Ancestry. A top-down driving story, in the spirit of the mid-90s city crime games,
 played through the towns and the years of your own family tree.*
 
 The plot below is the same for every family. Everything in **{braces}** is filled in from the GEDCOM file
@@ -265,7 +265,8 @@ round the town after a girl with a basket, and drive him up to the church. Slowl
 - Story missions, family favours, the £ odd-jobs board in every market place, **cab fares** (get into any
   taxi or hansom and you are for hire, with a bonus for every fare in a row), lost photographs, reunion
   bonuses and badges.
-- **Dorothy's workbench** at the lock-up (a motor shed or tithe barn in earlier years): a tuned engine, a brass
+- **Dorothy's workbench** at the lock-up (a motor shed or tithe barn in earlier years): a tuned engine (the
+  Heirloom starts out a little slow and earns its speed: fully tuned, it is the quickest thing in any century), a brass
   ram bar, an ink economiser, a quick-wind dial, proper tyres, luggage straps, Dorothy's stopwatch (every
   timer runs a little long), a klaxon that clears the road, a police-band wireless, a respray that also
   loses the police, and a flask of tea.

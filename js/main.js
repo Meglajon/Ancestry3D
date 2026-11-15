@@ -1,5 +1,5 @@
-// Ancestry 3D — roll round a GEDCOM family tree as the person at its root (the Fluffy garden), drive through it
-// (Story mode) or look at it (Visualisation).
+// Ancestry: A Battle in Time — drive through a GEDCOM family tree's towns and years (Story mode), roll round it
+// as the person at its root (the Fluffy garden), or look at it (Visualisation).
 import * as THREE from 'three';
 import { parseGedcom, decodeGedcomBytes } from './gedcom.js';
 import { genAt, collectAncestors, layoutAncestors, displayName, firstName, lifespan, relationship, countAncestors, birthYear, hashString } from './ancestry.js';
@@ -24,7 +24,7 @@ const LOOK_NOTES = {
   fluffy: 'Fluffy: a top-down 2D garden where you and every ancestor are round, fluffy balls. Their fur takes the colours of their period clothes, with their hair (or hat) as a tuft on top. Roll along the paths, bump into people to make them squeak, and chat to them all.',
 };
 const LOGOS = {
-  fluffy: ['Ancestry<br>Fluffs', 'Roll round and meet the family'],
+  fluffy: ['<span class="l1">Ancestry</span><span class="l2">A Battle in Time</span>', 'Four hundred years of family. One very old car.'],
 };
 const S = {
   data: null, fileName: '', fileKey: '', rootId: null, maxGen: 8,
@@ -267,7 +267,7 @@ $('btnViz').onclick = () => {
   openViz({ kind: S.vizKind, scope: S.vizScope, data: S.data, rootId: S.rootId, maxGen: S.maxGen, onClose: () => { S.vizOpen = false; } });
 };
 
-// Story mode: "Relative Speed", a top-down driving story played through this family's towns and years.
+// Story mode: "A Battle in Time", a top-down driving story played through this family's towns and years.
 $('btnStory').onclick = () => {
   if (!S.data || !S.rootId) return;
   sfx.select();

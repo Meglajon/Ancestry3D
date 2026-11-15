@@ -52,6 +52,11 @@ function check(story, label) {
   const seq = m => m.steps.map(s => s.t).join(',');
   const main = story.missions.filter(m => !m.odd && m.steps.length > 1);
   for (let k = 1; k < main.length; k++) assert.notEqual(seq(main[k]), seq(main[k - 1]), `${label}: ${main[k].id} has the same acts as ${main[k - 1].id}`);
+  // the quiz is never a guess: Dorothy's note gives the answer away before the question is asked
+  for (const m of story.missions.filter(m => /^meet-/.test(m.id))) {
+    const qz = m.steps.find(s => s.quiz)?.quiz;
+    if (qz) assert.ok(m.intro.map(l => l.text).join(' ').toLowerCase().includes(qz.options[qz.answer].toLowerCase()), `${label}: ${m.id} asks "${qz.q}" without saying ${qz.options[qz.answer]} first`);
+  }
   // a scene at both ends of every chapter
   story.chapters.forEach((c, i) => {
     const own = story.missions.filter(m => m.chapter === i && !m.odd);

@@ -1,4 +1,6 @@
-# Ancestry 3D
+# Ancestry: A Battle in Time
+
+*(The repository is still called Ancestry3D.)*
 
 Walk among your ancestors. Load a GEDCOM family tree and explore it three ways: **Play** (roll round a garden where
 every ancestor is a fluffy ball you can chat to), **Story** (a top-down driving story through the towns and years
@@ -29,7 +31,7 @@ they lived in) and **Visualisation** (a galaxy and a growing tree).
 - **Find people**: dialogue options set a waypoint to their parents or back to their child. The map
   (Tab / M / MAP) shows the whole tree from above; search by name or tap someone to set a waypoint.
 
-### Story mode: Relative Speed
+### Story mode: A Battle in Time
 
 The **Story** tab is a different game on the same family: a top-down driving story in the spirit of the
 mid-90s city crime games, played through the towns and years your ancestors actually lived in. A crooked heir

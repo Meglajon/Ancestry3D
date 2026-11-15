@@ -1,4 +1,4 @@
-// Story mode ("Relative Speed"): turns a GEDCOM tree into the cast, towns, chapters and missions of the story.
+// Story mode ("A Battle in Time"): turns a GEDCOM tree into the cast, towns, chapters and missions of the story.
 // The plot is the same for every family; the people, places, years, jobs and events come from the file.
 // Pure data in, pure data out (no drawing), so it can be tested with node.
 import { dateYear, datePhrase } from './gedcom.js';
@@ -349,12 +349,20 @@ function quizFor(c, cast, rnd) {
   };
   const qs = [];
   const mother = c.mother, father = c.father;
-  if (mother?.surname && mother.surname !== c.surname) qs.push(() => ({ q: 'What was my mother\'s name before she wed?', ...opts(mother.surname, cast.surnames) }));
-  if (father) qs.push(() => ({ q: 'What is my father\'s Christian name?', ...opts(firstName(father), cast.maleNames) }));
-  if (c.spouse) qs.push(() => ({ q: `Who ${c.year >= (c.marriageYear || 0) ? 'did I marry' : 'am I walking out with'}?`, ...opts(displayName(c.spouse), cast.names) }));
-  if (c.byKnown) qs.push(() => ({ q: 'What year was I born?', ...opts(String(c.by), [c.by - 11, c.by + 7, c.by - 4, c.by + 13, c.by - 19].map(String)) }));
-  if (c.job) qs.push(() => ({ q: 'What do I do for my living?', ...opts(c.job, cast.jobs) }));
-  if (c.town) qs.push(() => ({ q: 'Where was I born?', ...opts(c.town.name, cast.towns) }));
+  const wed = c.year >= (c.marriageYear || 0);
+  if (mother?.surname && mother.surname !== c.surname) qs.push(() => ({ q: 'What was my mother\'s name before she wed?', ...opts(mother.surname, cast.surnames),
+    said: `My mother was a «${mother.surname}» before she wed, and she never let my father forget it.`, told: `${cap(c.his)} mother was a ${mother.surname} before she married. ${cap(c.he)}'s prouder of that side than ${c.he} lets on.` }));
+  if (father) qs.push(() => ({ q: 'What is my father\'s Christian name?', ...opts(firstName(father), cast.maleNames),
+    said: `My father, «${firstName(father)}», always said a good name is worth more than a full purse.`, told: `${cap(c.his)} father was ${firstName(father)}, and ${c.he} quotes him at every turn.` }));
+  if (c.spouse) qs.push(() => ({ q: `Who ${wed ? 'did I marry' : 'am I walking out with'}?`, ...opts(displayName(c.spouse), cast.names),
+    said: wed ? `«${displayName(c.spouse)}» will want ${c.sex === 'F' ? 'his' : c.sex === 'M' ? 'her' : 'their'} tea, and I've not set foot in the kitchen.` : `I'm walking out with «${displayName(c.spouse)}», if you must know, and the whole street does know.`,
+    told: wed ? `${cap(c.he)}'s married to ${displayName(c.spouse)}.` : `${cap(c.he)}'s walking out with ${displayName(c.spouse)}, and the whole street knows it.` }));
+  if (c.byKnown) qs.push(() => ({ q: 'What year was I born?', ...opts(String(c.by), [c.by - 11, c.by + 7, c.by - 4, c.by + 13, c.by - 19].map(String)),
+    said: `Born in «${c.by}», I was, and my mother said it was the longest night of her life.`, told: `Born in ${c.by}, by the register.` }));
+  if (c.job) qs.push(() => ({ q: 'What do I do for my living?', ...opts(c.job, cast.jobs),
+    said: `A «${c.job.toLowerCase()}» gets no days off, whatever the solicitors are doing.`, told: `${cap(c.he)} works as a ${c.job.toLowerCase()}.` }));
+  if (c.town) qs.push(() => ({ q: 'Where was I born?', ...opts(c.town.name, cast.towns),
+    said: `I was born in «${c.town.name}», and they'll carry me out of «${c.town.name}» when the time comes.`, told: `${cap(c.he)} was born here in ${c.town.name} and has never left it for long.` }));
   const order = qs.map((f, i) => [rnd(), f]).sort((a, b) => a[0] - b[0]);
   for (const [, f] of order) { const z = f(); if (z.options) return z; }
   return null;
@@ -555,6 +563,7 @@ export function buildStory(data, rootId, opts = {}) {
     const base = { act, town: c.town.id, year: c.year, chapter: i };
     const relLine = `${c.name}, your ${c.rel}`;
     const quiz = quizFor(c, cast, rnd);
+    c.quizSaid = quiz?.said || '';
     // If you have already been born by this year, they know a child of your name, and it is not you.
     // (Unless this is the very year, and the chapter is about you being born: then you are still on the way.)
     const age = hero.byKnown && c.year >= hero.by && !(c.year === hero.by && c.set === 'birth') ? c.year - hero.by : null;
@@ -580,8 +589,8 @@ export function buildStory(data, rootId, opts = {}) {
       ...base, id: `meet-${i}`, title: isFinale ? 'Brick Wall' : `Meeting ${c.first}`, giver: { who: 'dot', at: 'phone' },
       brief: `Find ${relLine}, in ${c.town.name}, ${c.year}.`,
       intro: isFinale
-        ? [{ who: 'dot', text: `A note in Dorothy's hand, pinned where you would see it: "${c.name}, your ${c.rel}${c.job ? ', ' + c.job.toLowerCase() : ''}. Try the house first. If ${c.he} is out, ${c.he} will be at ${N[spots[1]]}, and failing that ${N[spots[2]]}. Be polite. ${knowsNote}"` }]
-        : [{ who: 'dot', text: `A note in Dorothy's hand, pinned where you would see it: "${c.name}, your ${c.rel}${c.job ? ', ' + c.job.toLowerCase() : ''}. ${sch.note} ${knowsNote}"` }],
+        ? [{ who: 'dot', text: `A note in Dorothy's hand, pinned where you would see it: "${c.name}, your ${c.rel}${c.job ? ', ' + c.job.toLowerCase() : ''}. Try the house first. If ${c.he} is out, ${c.he} will be at ${N[spots[1]]}, and failing that ${N[spots[2]]}. Be polite. ${knowsNote}${quiz?.told ? ' Something to remember: ' + quiz.told : ''}"` }]
+        : [{ who: 'dot', text: `A note in Dorothy's hand, pinned where you would see it: "${c.name}, your ${c.rel}${c.job ? ', ' + c.job.toLowerCase() : ''}. ${sch.note} ${knowsNote}${quiz?.told ? ' Something to remember: ' + quiz.told : ''}"` }],
       scheme: isFinale ? null : c.scheme,
       steps: [...(isFinale
         ? [{ t: 'search', spots, miss: { 0: `Nobody in. A neighbour thinks ${c.he} went up to ${N[spots[1]]}.`, 1: `Not here. "Try ${N[spots[2]]}," says somebody, without looking up.`, 2: `Not here either. "Gone to ${N[spots[1]]}, I should think."` }, text: `Find ${c.first}` }]
@@ -960,7 +969,8 @@ export function buildStory(data, rootId, opts = {}) {
     const firstOf = indi => nameOf(indi).split(' ')[0];
     const shot = (at, who, mood, text, extra = {}) => ({ at, who, mood, text, side: who === 'lowe' ? 1 : 0, ...extra });
     // what the ancestor is busy with when the chapter opens, before anybody has told them anything
-    const busyWith = (c, proofM) => {
+    const busyWith = (c, proofM) => (busyLine(c, proofM) + (c.quizSaid ? ' ' + c.quizSaid : ''));
+    const busyLine = (c, proofM) => {
       const sp = c.spouse ? firstOf(c.spouse) : '', ch = c.child ? firstOf(c.child) : '', late = c.late ? nameOf(c.late.indi) : '';
       return {
         wedding: `Saturday I'm to be wed${sp ? ' to ' + sp : ''}. The banns are read, and the parson's book is waiting for the both of us.`,
@@ -1045,7 +1055,7 @@ export function buildStory(data, rootId, opts = {}) {
 
   return {
     frags, bonus,
-    title: 'Relative Speed', hero, villain: { name: 'Silas Hargreaves', firm: 'Hargreaves & Lowe, Probate Genealogists' }, mentor: { name: 'Dorothy Pickering' },
+    title: 'A Battle in Time', hero, villain: { name: 'Silas Hargreaves', firm: 'Hargreaves & Lowe, Probate Genealogists' }, mentor: { name: 'Dorothy Pickering' },
     benefactor, home, now: present, towns, chapters, missions, favours, proofs, tree, surname, foreign,
   };
 }

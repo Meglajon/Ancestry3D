@@ -63,6 +63,7 @@ const CSS = `
 #story .st-btn { position: absolute; pointer-events: auto; width: 64px; height: 64px; border-radius: 50%; border: 3px solid rgba(0,0,0,0.6); font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 14px; color: #1a1a1a; background: rgba(255,216,74,0.92); }
 #story .st-btn.b2 { background: rgba(232,90,74,0.92); color: #fff; }
 #story .st-btn.sm { width: 46px; height: 46px; font-size: 12px; background: rgba(240,236,220,0.9); }
+#story.cut .st-menu, #story.cut .st-obj, #story.cut #stMini, #story.cut .st-touch, #story.cut .st-toast, #story.cut .st-hint, #story.cut #stCash, #story.cut #stStat, #story.cut #stWhere, #story.cut #stHint, #story.cut #stToast, #story.cut #stObj, #story.cut #stDial { opacity: 0; pointer-events: none; }
 #story .st-menu { position: absolute; right: calc(12px + env(safe-area-inset-right, 0px)); top: calc(152px + env(safe-area-inset-top, 0px)); pointer-events: auto; display: flex; gap: 6px; }
 #story .st-menu button { font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 13px; color: #1a1a1a; background: rgba(240,236,220,0.92); border: 2px solid #1a1a1a; border-radius: 8px; padding: 5px 9px; cursor: pointer; }
 @media (max-width: 700px) {

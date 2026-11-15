@@ -28,7 +28,7 @@ async def open_story(b, name, vp, mobile):
     await page.click('#tabs [data-tab="story"]')
     await page.click('#btnDemo')
     await page.wait_for_selector('#cardSetup:not(.hidden)')
-    await page.evaluate("localStorage.clear()")
+    await page.evaluate("localStorage.clear(); localStorage.setItem('a3d:nocut', '1')")
     await page.screenshot(path=str(OUT / f'{name}-0-menu.png'))
     await page.click('#btnStory')
     await page.wait_for_selector('#story')

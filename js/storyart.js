@@ -24,6 +24,8 @@ export const VEHICLES = {
   erasercoach: car(66, 22, 12.3, 8, 2.9, 99, { drift: 0, eng: 'none', name: 'grey carriage', horse: 1 }),
   engine1: car(50, 23, 13.5, 9, 3.0, 99, { drift: 0.8, eng: 'v8', name: 'Engine No. 1' }),
 };
+// Everything on wheels was a fifth too quick to steer comfortably. All slowed by the same amount, so nothing changes places.
+for (const v of Object.values(VEHICLES)) { v.max *= 0.8; v.acc *= 0.86; }
 const CAR_COLORS = ['#c8443a', '#3a6ac8', '#e8e8e4', '#2a2a2e', '#3a9a5a', '#e0b030', '#8a8e94', '#7a3ac8', '#d86a3a', '#2a8a9a'];
 const OLD_COLORS = ['#1c1c20', '#4a1a1a', '#1a2a4a', '#1a3a2a', '#3a2a1a'];
 const HORSES = ['#6a4428', '#3a2618', '#8a5a34', '#c8b8a0', '#2a2220'];

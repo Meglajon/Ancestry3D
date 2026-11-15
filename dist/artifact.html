@@ -1,4 +1,4 @@
-<title>Ancestry: A Battle in Time</title>
+<title>Ancestry 3D</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="Walk among your ancestors: a first-person retro 3D explorer for GEDCOM family trees.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -394,8 +394,8 @@ body.island #verseList label.verse input { accent-color: var(--i-green); }
   #viz .vinfo { top: auto; bottom: calc(120px + env(safe-area-inset-bottom, 0px)); right: 10px; }
 }
 @media (hover: hover) and (pointer: fine) { #touch { display: none; } }
-/* ================= The menu: Ancestry, A Battle in Time =================
-   A cartoon crime-game title screen built from Story mode's own parts: night streets seen from above with
+/* ================= The Story tab: Ancestry, A Battle in Time =================
+   While the Story tab is open (body.tab-story), the menu becomes a cartoon crime-game title screen built from Story mode's own parts: night streets seen from above with
    yellow lane paint, a slanted ink-outlined logotype, a red "A BATTLE IN TIME" banner in the story's pixel
    type, and the story's cream case-file cards and yellow pill buttons. One look in every viewer theme. */
 :root {
@@ -404,7 +404,7 @@ body.island #verseList label.verse input { accent-color: var(--i-green); }
   --b-mustard: #e8c040; --b-grey: #8a8e94; --b-pink: #f08aa0; --b-green: #3a9a4a;
   --b-display: 'Bangers', 'Fredoka', 'Impact', sans-serif; --b-pixel: 'Press Start 2P', monospace; --b-ui: 'Fredoka', 'Nunito', sans-serif; --b-body: 'Nunito', system-ui, sans-serif;
 }
-body.island #menu, #menu {
+body.tab-story #menu {
   color: var(--b-text);
   background:
     radial-gradient(ellipse at 50% 0%, rgba(255,216,74,0.10), transparent 55%),
@@ -419,58 +419,58 @@ body.island #menu, #menu {
     linear-gradient(0deg, transparent 0 82px, var(--b-kerb) 82px 138px, transparent 138px) 0 0 / 220px 220px,
     var(--b-asphalt);
 }
-#menu .inner { max-width: 580px; }
+body.tab-story #menu .inner { max-width: 580px; }
 /* the logotype */
-#menu .logo, body.island #menu .logo { margin: 8px 0 0; background: none; filter: none; -webkit-text-fill-color: currentColor; color: var(--b-paint); text-shadow: none; line-height: 0.9; letter-spacing: 0; display: flex; flex-direction: column; align-items: center; }
-#menu .logo .l1 { font-family: var(--b-display); font-size: clamp(64px, 19vw, 118px); letter-spacing: 3px; transform: rotate(-4deg) skewX(-8deg);
+body.tab-story #menu .logo { margin: 8px 0 0; background: none; filter: none; -webkit-text-fill-color: currentColor; color: var(--b-paint); text-shadow: none; line-height: 0.9; letter-spacing: 0; display: flex; flex-direction: column; align-items: center; }
+body.tab-story #menu .logo .l1 { font-family: var(--b-display); font-size: clamp(64px, 19vw, 118px); letter-spacing: 3px; transform: rotate(-4deg) skewX(-8deg);
   -webkit-text-stroke: 6px var(--b-ink); paint-order: stroke fill; color: var(--b-paint); text-shadow: 6px 7px 0 var(--b-ink), 0 0 30px rgba(255,216,74,0.25); }
-#menu .logo .l2 { margin-top: 10px; transform: rotate(-4deg); font-family: var(--b-pixel); font-size: clamp(11px, 3.2vw, 17px); color: #fff; background: var(--b-red); padding: 9px 14px 8px;
+body.tab-story #menu .logo .l2 { margin-top: 10px; transform: rotate(-4deg); font-family: var(--b-pixel); font-size: clamp(11px, 3.2vw, 17px); color: #fff; background: var(--b-red); padding: 9px 14px 8px;
   border: 3px solid var(--b-ink); box-shadow: 4px 4px 0 var(--b-ink); letter-spacing: 1px; white-space: nowrap; text-transform: uppercase; }
-#menu .tagline, body.island #menu .tagline { font-family: var(--b-ui); font-weight: 600; font-size: 15px; color: #e8e0cc; margin: 20px 0 16px; text-shadow: 0 2px 0 var(--b-ink); letter-spacing: 0; text-transform: none; }
+body.tab-story #menu .tagline { font-family: var(--b-ui); font-weight: 600; font-size: 15px; color: #e8e0cc; margin: 20px 0 16px; text-shadow: 0 2px 0 var(--b-ink); letter-spacing: 0; text-transform: none; }
 /* tabs: chunky blocks on the tarmac */
-#menu .tabs, body.island #menu .tabs { gap: 8px; margin-bottom: 6px; }
-#menu .tabs button, body.island #menu .tabs button { font-family: var(--b-display); font-size: 24px; letter-spacing: 1.5px; text-transform: uppercase; padding: 8px 4px 6px; border-radius: 10px;
+body.tab-story #menu .tabs { gap: 8px; margin-bottom: 6px; }
+body.tab-story #menu .tabs button { font-family: var(--b-display); font-size: 24px; letter-spacing: 1.5px; text-transform: uppercase; padding: 8px 4px 6px; border-radius: 10px;
   color: #d8d2c0; background: var(--b-asphalt2); border: 3px solid var(--b-ink); box-shadow: 0 4px 0 var(--b-ink); }
-#menu .tabs button.on, body.island #menu .tabs button.on { color: var(--b-ink); background: var(--b-paint); transform: translateY(-2px); box-shadow: 0 6px 0 var(--b-ink); }
+body.tab-story #menu .tabs button.on { color: var(--b-ink); background: var(--b-paint); transform: translateY(-2px); box-shadow: 0 6px 0 var(--b-ink); }
 /* cards: the story's case-file paper */
-#menu .card, body.island #menu .card { background: var(--b-paper); color: var(--b-text); border: 4px solid var(--b-ink); border-radius: 14px; padding: 16px 18px; box-shadow: 6px 6px 0 rgba(0,0,0,0.55); margin: 14px 0; }
-#menu .card h2, body.island #menu .card h2 { font-family: var(--b-pixel); font-size: 12px; line-height: 1.5; color: var(--b-red-d); letter-spacing: 0.5px; margin: 0 0 12px; text-transform: none; }
-#menu .note, #menu .field .lbl, body.island #menu .note, body.island #menu .field .lbl { font-family: var(--b-body); font-weight: 700; font-size: 14.5px; color: var(--b-text2); line-height: 1.35; }
-#menu .field .lbl b, body.island #menu .field .lbl b { color: var(--b-red-d); font-weight: 800; }
-#menu .status, body.island #menu .status { font-family: var(--b-body); font-weight: 800; font-size: 15px; color: var(--b-green); }
-#menu .help, body.island #menu .help { font-family: var(--b-body); font-weight: 600; font-size: 14.5px; color: var(--b-text); }
-#menu .help b, body.island #menu .help b { color: var(--b-red-d); font-weight: 800; }
-#menu p.storyPitch { font-family: var(--b-body); font-weight: 600; font-size: 15px; line-height: 1.45; color: var(--b-text); margin: 8px 0; }
-#menu p.storyPitch b { font-family: var(--b-display); font-weight: normal; font-size: 22px; letter-spacing: 1px; color: var(--b-red-d); }
+body.tab-story #menu .card { background: var(--b-paper); color: var(--b-text); border: 4px solid var(--b-ink); border-radius: 14px; padding: 16px 18px; box-shadow: 6px 6px 0 rgba(0,0,0,0.55); margin: 14px 0; }
+body.tab-story #menu .card h2 { font-family: var(--b-pixel); font-size: 12px; line-height: 1.5; color: var(--b-red-d); letter-spacing: 0.5px; margin: 0 0 12px; text-transform: none; }
+body.tab-story #menu .note, body.tab-story #menu .field .lbl { font-family: var(--b-body); font-weight: 700; font-size: 14.5px; color: var(--b-text2); line-height: 1.35; }
+body.tab-story #menu .field .lbl b { color: var(--b-red-d); font-weight: 800; }
+body.tab-story #menu .status { font-family: var(--b-body); font-weight: 800; font-size: 15px; color: var(--b-green); }
+body.tab-story #menu .help { font-family: var(--b-body); font-weight: 600; font-size: 14.5px; color: var(--b-text); }
+body.tab-story #menu .help b { color: var(--b-red-d); font-weight: 800; }
+body.tab-story #menu p.storyPitch { font-family: var(--b-body); font-weight: 600; font-size: 15px; line-height: 1.45; color: var(--b-text); margin: 8px 0; }
+body.tab-story #menu p.storyPitch b { font-family: var(--b-display); font-weight: normal; font-size: 22px; letter-spacing: 1px; color: var(--b-red-d); }
 /* buttons: yellow pills with an ink outline that press down */
-#menu .btn, body.island #menu .btn { font-family: var(--b-ui); font-weight: 700; font-size: 17px; color: var(--b-ink); text-shadow: none; text-transform: none;
+body.tab-story #menu .btn { font-family: var(--b-ui); font-weight: 700; font-size: 17px; color: var(--b-ink); text-shadow: none; text-transform: none;
   background: var(--b-paint); border: 3px solid var(--b-ink); border-radius: 999px; padding: 12px 16px; box-shadow: 0 4px 0 var(--b-ink); }
-#menu .btn:active, body.island #menu .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--b-ink); }
-#menu .btn.alt, body.island #menu .btn.alt { background: #fffaf0; }
-#menu .btn.go, body.island #menu .btn.go { font-family: var(--b-display); font-weight: normal; font-size: 26px; letter-spacing: 1.5px; text-transform: uppercase; color: #fff; background: var(--b-red); padding: 10px 16px 8px;
+body.tab-story #menu .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--b-ink); }
+body.tab-story #menu .btn.alt { background: #fffaf0; }
+body.tab-story #menu .btn.go { font-family: var(--b-display); font-weight: normal; font-size: 26px; letter-spacing: 1.5px; text-transform: uppercase; color: #fff; background: var(--b-red); padding: 10px 16px 8px;
   -webkit-text-stroke: 1.5px var(--b-ink); paint-order: stroke fill; }
 /* inputs and lists */
-#menu input[type=search], #menu input[type=text], body.island #menu input[type=search] { font-family: var(--b-body); font-weight: 700; font-size: 16px; color: var(--b-text); background: #fffdf6; border: 3px solid var(--b-ink); border-radius: 10px; padding: 9px 12px; }
-#menu input[type=range], body.island #menu input[type=range] { accent-color: var(--b-red); }
-#menu .people, body.island #menu .people { background: #fffdf6; border: 3px solid var(--b-ink); border-radius: 10px; }
-#menu .people div, body.island #menu .people div { font-family: var(--b-body); font-weight: 700; font-size: 15.5px; color: var(--b-text); border-bottom: 1px solid var(--b-paper2); }
-#menu .people div span:last-child { color: var(--b-text2); }
-#menu .people div.sel, body.island #menu .people div.sel { background: var(--b-paint); color: var(--b-ink); }
-#menu .people div:hover, body.island #menu .people div:hover { background: #fff3c4; }
-#menu .seg button, body.island #menu .seg button { font-family: var(--b-ui); font-weight: 700; font-size: 14px; color: var(--b-text2); background: #fffdf6; border: 3px solid var(--b-ink); border-radius: 10px; padding: 8px 4px; text-transform: none; }
-#menu .seg button.on, body.island #menu .seg button.on { color: var(--b-ink); background: var(--b-paint); box-shadow: inset 0 -3px 0 rgba(0,0,0,0.18); }
-#menu .toggle .sw, body.island #menu .toggle .sw { background: var(--b-paper2); border: 3px solid var(--b-ink); border-radius: 999px; width: 54px; height: 30px; }
-#menu .toggle .sw::after, body.island #menu .toggle .sw::after { top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 2px solid var(--b-ink); box-shadow: none; }
-#menu .toggle input:checked + .sw, body.island #menu .toggle input:checked + .sw { background: var(--b-green); }
-#menu .toggle input:checked + .sw::after, body.island #menu .toggle input:checked + .sw::after { left: 27px; }
-#menu .toggle .tl, body.island #menu .toggle .tl { font-family: var(--b-body); font-weight: 800; font-size: 16px; color: var(--b-text); }
-#menu .toggle .tl small, body.island #menu .toggle .tl small { font-weight: 600; font-size: 13.5px; color: var(--b-text2); }
-#menu a, body.island #menu a { color: var(--b-red-d) !important; }
-#menu :focus-visible { outline: 3px solid var(--b-red); outline-offset: 2px; }
-#loading, body.island #loading { background: var(--b-asphalt); color: var(--b-paint); font-family: var(--b-pixel); }
+body.tab-story #menu input[type=search], body.tab-story #menu input[type=text] { font-family: var(--b-body); font-weight: 700; font-size: 16px; color: var(--b-text); background: #fffdf6; border: 3px solid var(--b-ink); border-radius: 10px; padding: 9px 12px; }
+body.tab-story #menu input[type=range] { accent-color: var(--b-red); }
+body.tab-story #menu .people { background: #fffdf6; border: 3px solid var(--b-ink); border-radius: 10px; }
+body.tab-story #menu .people div { font-family: var(--b-body); font-weight: 700; font-size: 15.5px; color: var(--b-text); border-bottom: 1px solid var(--b-paper2); }
+body.tab-story #menu .people div span:last-child { color: var(--b-text2); }
+body.tab-story #menu .people div.sel { background: var(--b-paint); color: var(--b-ink); }
+body.tab-story #menu .people div:hover { background: #fff3c4; }
+body.tab-story #menu .seg button { font-family: var(--b-ui); font-weight: 700; font-size: 14px; color: var(--b-text2); background: #fffdf6; border: 3px solid var(--b-ink); border-radius: 10px; padding: 8px 4px; text-transform: none; }
+body.tab-story #menu .seg button.on { color: var(--b-ink); background: var(--b-paint); box-shadow: inset 0 -3px 0 rgba(0,0,0,0.18); }
+body.tab-story #menu .toggle .sw { background: var(--b-paper2); border: 3px solid var(--b-ink); border-radius: 999px; width: 54px; height: 30px; }
+body.tab-story #menu .toggle .sw::after { top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 2px solid var(--b-ink); box-shadow: none; }
+body.tab-story #menu .toggle input:checked + .sw { background: var(--b-green); }
+body.tab-story #menu .toggle input:checked + .sw::after { left: 27px; }
+body.tab-story #menu .toggle .tl { font-family: var(--b-body); font-weight: 800; font-size: 16px; color: var(--b-text); }
+body.tab-story #menu .toggle .tl small { font-weight: 600; font-size: 13.5px; color: var(--b-text2); }
+body.tab-story #menu a { color: var(--b-red-d) !important; }
+body.tab-story #menu :focus-visible { outline: 3px solid var(--b-red); outline-offset: 2px; }
+body.tab-story #loading { background: var(--b-asphalt); color: var(--b-paint); font-family: var(--b-pixel); }
 @media (max-width: 480px) {
-  #menu .tabs button, body.island #menu .tabs button { font-size: 16px; letter-spacing: 0.5px; padding: 8px 2px 6px; }
-  #menu .logo .l1 { -webkit-text-stroke-width: 4px; text-shadow: 4px 5px 0 var(--b-ink); }
+  body.tab-story #menu .tabs button { font-size: 16px; letter-spacing: 0.5px; padding: 8px 2px 6px; }
+  body.tab-story #menu .logo .l1 { -webkit-text-stroke-width: 4px; text-shadow: 4px 5px 0 var(--b-ink); }
 }
 @media (prefers-reduced-motion: reduce) { #menu .btn:active { transform: none; } }
 </style>
@@ -545,8 +545,8 @@ body.island #menu, #menu {
 
 <div id="menu">
   <div class="inner">
-    <div class="logo" id="logo"><span class="l1">Ancestry</span><span class="l2">A Battle in Time</span></div>
-    <div class="tagline" id="tagline">Four hundred years of family. One very old car.</div>
+    <div class="logo" id="logo">Ancestry<br>Fluffs</div>
+    <div class="tagline" id="tagline">Roll round and meet the family</div>
     <div class="tabs" id="tabs" role="tablist">
       <button role="tab" data-tab="play" class="on" aria-selected="true">Play</button><button role="tab" data-tab="story" aria-selected="false">Story</button><button role="tab" data-tab="viz" aria-selected="false">Visualisation</button>
     </div>
@@ -10971,8 +10971,10 @@ const GEN_NAMES = g => g === 0 ? 'YOU' : g === 1 ? 'PARENTS' : g === 2 ? 'GRANDP
 const LOOK_NOTES = {
   fluffy: 'Fluffy: a top-down 2D garden where you and every ancestor are round, fluffy balls. Their fur takes the colours of their period clothes, with their hair (or hat) as a tuft on top. Roll along the paths, bump into people to make them squeak, and chat to them all.',
 };
+// The Story tab has its own name and look (see body.tab-story in dev.html); Play and Visualisation keep the garden's.
+const BRAND = { story: ['<span class="l1">Ancestry</span><span class="l2">A Battle in Time</span>', 'Four hundred years of family. One very old car.', 'Ancestry: A Battle in Time'] };
 const LOGOS = {
-  fluffy: ['<span class="l1">Ancestry</span><span class="l2">A Battle in Time</span>', 'Four hundred years of family. One very old car.'],
+  fluffy: ['Ancestry<br>Fluffs', 'Roll round and meet the family', 'Ancestry 3D'],
 };
 const S = {
   data: null, fileName: '', fileKey: '', rootId: null, maxGen: 8,
@@ -11043,8 +11045,6 @@ function applyStyle() {
   S.style = S.theme = 'fluffy';
   store.set('a3d:style', 'fluffy');
   document.body.classList.add('island', 'fluffy');   // 'island' carries the cozy menu styles
-  $('logo').innerHTML = LOGOS.fluffy[0];
-  $('tagline').textContent = LOGOS.fluffy[1];
   $('lookNote').textContent = LOOK_NOTES.fluffy;
   resize();
 }
@@ -11190,6 +11190,8 @@ function setTab(tab) {
   store.set('a3d:tab', S.tab);
   document.body.classList.toggle('tab-viz', S.tab === 'viz');
   document.body.classList.toggle('tab-story', S.tab === 'story');
+  const brand = BRAND[S.tab] || LOGOS.fluffy;
+  $('logo').innerHTML = brand[0]; $('tagline').textContent = brand[1]; document.title = brand[2];
   $('tabs').querySelectorAll('button').forEach(b => { const on = b.dataset.tab === S.tab; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); });
   updateGenInfo();
 }

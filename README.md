@@ -1,6 +1,4 @@
-# Ancestry: A Battle in Time
-
-*(The repository is still called Ancestry3D.)*
+# Ancestry 3D
 
 Walk among your ancestors. Load a GEDCOM family tree and explore it three ways: **Play** (roll round a garden where
 every ancestor is a fluffy ball you can chat to), **Story** (a top-down driving story through the towns and years

@@ -23,8 +23,10 @@ const GEN_NAMES = g => g === 0 ? 'YOU' : g === 1 ? 'PARENTS' : g === 2 ? 'GRANDP
 const LOOK_NOTES = {
   fluffy: 'Fluffy: a top-down 2D garden where you and every ancestor are round, fluffy balls. Their fur takes the colours of their period clothes, with their hair (or hat) as a tuft on top. Roll along the paths, bump into people to make them squeak, and chat to them all.',
 };
+// The Story tab has its own name and look (see body.tab-story in dev.html); Play and Visualisation keep the garden's.
+const BRAND = { story: ['<span class="l1">Ancestry</span><span class="l2">A Battle in Time</span>', 'Four hundred years of family. One very old car.', 'Ancestry: A Battle in Time'] };
 const LOGOS = {
-  fluffy: ['<span class="l1">Ancestry</span><span class="l2">A Battle in Time</span>', 'Four hundred years of family. One very old car.'],
+  fluffy: ['Ancestry<br>Fluffs', 'Roll round and meet the family', 'Ancestry 3D'],
 };
 const S = {
   data: null, fileName: '', fileKey: '', rootId: null, maxGen: 8,
@@ -95,8 +97,6 @@ function applyStyle() {
   S.style = S.theme = 'fluffy';
   store.set('a3d:style', 'fluffy');
   document.body.classList.add('island', 'fluffy');   // 'island' carries the cozy menu styles
-  $('logo').innerHTML = LOGOS.fluffy[0];
-  $('tagline').textContent = LOGOS.fluffy[1];
   $('lookNote').textContent = LOOK_NOTES.fluffy;
   resize();
 }
@@ -242,6 +242,8 @@ function setTab(tab) {
   store.set('a3d:tab', S.tab);
   document.body.classList.toggle('tab-viz', S.tab === 'viz');
   document.body.classList.toggle('tab-story', S.tab === 'story');
+  const brand = BRAND[S.tab] || LOGOS.fluffy;
+  $('logo').innerHTML = brand[0]; $('tagline').textContent = brand[1]; document.title = brand[2];
   $('tabs').querySelectorAll('button').forEach(b => { const on = b.dataset.tab === S.tab; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); });
   updateGenInfo();
 }

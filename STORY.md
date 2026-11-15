@@ -223,8 +223,10 @@ round the town after a girl with a basket, and drive him up to the church. Slowl
   (the owner will have something to say). Before 1900 that means carts, carriages, wagons and hansom cabs.
 - **Tickets.** The airport (a quay before 1950) sells tickets to every town the story has opened; the
   journey is drawn on a map. The Heirloom travels as freight.
-- **The handbrake.** Space lets the back of the car go: hold it into a corner and slide round, leaving
-  skid marks. Quick cars slide a long way; vans and buses hardly at all. Every kind of vehicle has its own
+- **The handbrake.** Space is a real handbrake, cartoon-sized: in a straight line it stops you dead in half a
+  second; tap it in a corner and the back steps out and slides round, leaving skid marks, and the tyres find
+  their grip again a moment after you let go. Steering on its own never slides, and the steering calms down near
+  top speed. Quick cars slide a long way; vans and buses hardly at all. Every kind of vehicle has its own
   engine note and changes gear.
 - **Crashes.** A glancing touch slides along the wall. A head-on one takes four fifths of your speed,
   throws the car back and spins it. Anything going fast enough goes straight through a tree, which comes
@@ -266,8 +268,8 @@ round the town after a girl with a basket, and drive him up to the church. Slowl
   taxi or hansom and you are for hire, with a bonus for every fare in a row), lost photographs, reunion
   bonuses and badges.
 - **Dorothy's workbench** at the lock-up (a motor shed or tithe barn in earlier years): a tuned engine (the
-  Heirloom starts at half speed and earns the rest: each level adds half her starting speed again, so fully
-  tuned she is twice as quick and the fastest thing in any century), a brass
+  Heirloom starts out gentle and earns its speed: each level adds 30%, so fully tuned she is 1.6 times as
+  quick and the fastest thing in any century), a brass
   ram bar, an ink economiser, a quick-wind dial, proper tyres, luggage straps, Dorothy's stopwatch (every
   timer runs a little long), a klaxon that clears the road, a police-band wireless, a respray that also
   loses the police, and a flask of tea.

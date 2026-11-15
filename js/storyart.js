@@ -26,10 +26,10 @@ export const VEHICLES = {
 };
 // Everything on wheels was a fifth too quick to steer comfortably. All slowed by the same amount, so nothing changes places.
 for (const v of Object.values(VEHICLES)) { v.max *= 0.8; v.acc *= 0.86; }
-// Everything moves at half the speed it was first tuned for, and the Heirloom earns the rest back: each level of
-// the tuned engine adds half its starting speed and pull, so fully tuned it is twice as quick (the old speed).
-// Story mode scales its speed thresholds, people on foot and mission clocks by the same amount.
-export const SPEED_SCALE = 0.5;
+// Everything moves at a little over two fifths of the speed it was first tuned for, and the Heirloom earns some of
+// it back: each level of the tuned engine adds 30% to its starting speed and pull, so fully tuned it is 1.6 times
+// as quick. Story mode scales its speed thresholds, people on foot and mission clocks by the same amount.
+export const SPEED_SCALE = 0.42;
 for (const v of Object.values(VEHICLES)) { v.max *= SPEED_SCALE; v.acc *= SPEED_SCALE; }
 const CAR_COLORS = ['#c8443a', '#3a6ac8', '#e8e8e4', '#2a2a2e', '#3a9a5a', '#e0b030', '#8a8e94', '#7a3ac8', '#d86a3a', '#2a8a9a'];
 const OLD_COLORS = ['#1c1c20', '#4a1a1a', '#1a2a4a', '#1a3a2a', '#3a2a1a'];

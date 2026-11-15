@@ -26,7 +26,7 @@ let S = null;
 
 // ---------------- Upgrades and badges ----------------
 const UPGRADES = [
-  { id: 'engine', name: 'Tuned engine', desc: 'Each level adds half her starting speed and pull again. Fully tuned, she is twice as quick.', max: 2, cost: [300, 700] },
+  { id: 'engine', name: 'Tuned engine', desc: 'Each level adds 30% to her starting speed and pull. Fully tuned, she is 1.6 times as quick.', max: 2, cost: [300, 700] },
   { id: 'bar', name: 'Brass ram bar', desc: 'Every bump on a grey van counts for more.', max: 2, cost: [250, 600] },
   { id: 'ink', name: 'Ink economiser', desc: 'Each level takes a fifth off the ink for a jump.', max: 2, cost: [200, 500] },
   { id: 'wind', name: 'Quick-wind dial', desc: 'The Engine winds up sooner, and at a lower speed.', max: 2, cost: [250, 550] },
@@ -51,7 +51,7 @@ function statsOf(v) {
   const st = VEHICLES[v.type];
   if (v !== S.heirloom) return st;
   const key = up('engine') + ':' + up('tyres');
-  if (!S.hstat || S.hstat.key !== key) S.hstat = { key, st: { ...st, max: st.max * (1 + 0.5 * up('engine')), acc: st.acc * (1 + 0.5 * up('engine')), grip: st.grip + 2 * up('tyres') } };
+  if (!S.hstat || S.hstat.key !== key) S.hstat = { key, st: { ...st, max: st.max * (1 + 0.3 * up('engine')), acc: st.acc * (1 + 0.3 * up('engine')), grip: st.grip + 2 * up('tyres') } };
   return S.hstat.st;
 }
 const inkFor = (y1, y2) => Math.round(inkCost(y1, y2) * (1 - 0.2 * up('ink')));
@@ -292,6 +292,7 @@ export function openStory({ data, rootId, store, key, onClose }) {
     fail() { failMission('Too late.'); },
     useOsm(townId, json, lat, lon) { const net = netFromOsm(json, lat, lon); if (net) S.nets.set(townId, net); return net ? { nodes: net.nodes.length, ways: net.ways.length } : null; },
     startSide(k) { if (!S.mission) startSide(k); },
+    ghost(on) { S.ghost = !!on; },
     startNext() { const n = nextStory(); if (n && isHere(n) && !S.mission) startMission(n); },
   };
   const onResize = () => S && S.ui.resize();
@@ -575,6 +576,7 @@ function circleSolid(x, y, r) {
   return false;
 }
 function vehicleSolid(v, x, y, ang) {
+  if (S.ghost) return false;   // handling tests only: drive through walls
   const st = VEHICLES[v.type], o = st.len * 0.28, r = st.wid * 0.46, cx = Math.cos(ang) * o, cy = Math.sin(ang) * o;
   return circleSolid(x + cx, y + cy, r) || circleSolid(x - cx, y - cy, r);
 }
@@ -587,7 +589,7 @@ function moveWalker(p, dx, dy, r = 8) {
 // ---------------- Vehicles ----------------
 function driveVehicle(v, ctrl, dt) {
   const st = statsOf(v);
-  const rough = S.city.rough(v.x, v.y);
+  const rough = !S.ghost && S.city.rough(v.x, v.y);
   const maxV = st.max * T * (rough ? 0.6 : 1) * (v.dead ? 0 : 1) * (ctrl.cap || 1);
   if (ctrl.thr > 0) v.speed += st.acc * T * ctrl.thr * dt * (v.speed < 0 ? 2.2 : 1);
   else if (ctrl.thr < 0) v.speed += st.acc * T * ctrl.thr * dt * (v.speed > 0 ? 2.4 : 0.7);
@@ -596,17 +598,22 @@ function driveVehicle(v, ctrl, dt) {
   const drift = st.horse ? 0 : st.drift ?? 0.5, hand = !!ctrl.hand && Math.abs(v.speed) > 1.5 * VS * T;
   // the handbrake (Space) stops you dead in well under a second; steer while you hold it and the back slides round
   const handDec = (st.horse ? 12 : 9 + 3 * (1 - drift)) * T;
-  if (ctrl.hand) v.speed -= Math.sign(v.speed) * Math.min(Math.abs(v.speed), handDec * dt);
+  if (ctrl.hand) v.speed -= Math.sign(v.speed) * Math.min(Math.abs(v.speed), handDec * (1 - 0.6 * Math.min(1, Math.abs(ctrl.steer))) * dt);
   v.thr = ctrl.thr; v.hand = !!ctrl.hand;
   if (v.speed > maxV) v.speed = Math.max(maxV, v.speed - 12 * VS * T * dt);
   v.speed = Math.max(v.speed, -maxV * 0.38);
-  const sf = clamp(Math.abs(v.speed) / (3.2 * VS * T), 0, 1) * (v.speed < 0 ? -1 : 1);
+  // steering: full lock at town speeds, easing off towards top speed so the car is calm flat out
+  const hi = clamp((Math.abs(v.speed) - 0.45 * st.max * T) / (0.55 * st.max * T), 0, 1);
+  const sf = clamp(Math.abs(v.speed) / (3.2 * VS * T), 0, 1) * (v.speed < 0 ? -1 : 1) * (hand || v.slideT > 0 ? 1 : 1 - 0.45 * hi);
   const newAng = v.ang + ctrl.steer * st.turn * sf * dt * (hand ? 1 + 0.8 * drift : ctrl.brake ? 1.35 : 1);
   if (!vehicleSolid(v, v.x, v.y, newAng)) v.ang = newAng;
   const wet = 1 - 0.38 * S.rain * (v === S.heirloom && up('tyres') ? 0.25 : 1);
-  // grip: the handbrake lets the back end go (more on a quick car, hardly at all on a bus); so does a hard turn flat out
-  const flatOut = Math.abs(ctrl.steer) > 0.7 && Math.abs(v.speed) > st.max * T * 0.8 ? 1 - 0.4 * drift : 1;
-  const k = 1 - Math.exp(-(v.fling > 0 ? st.grip * 0.1 : hand ? st.grip * (0.5 - 0.38 * drift) : ctrl.brake ? st.grip * 0.45 : st.grip * flatOut) * wet * dt);   // thrown by a crash, the tyres are not gripping at all
+  // grip: only the handbrake lets the back end go (more on a quick car, hardly at all on a bus). Steering on its own
+  // never slides; a tap of the handbrake in a corner does, and the slide runs on for a moment as the tyres find grip.
+  if (hand && Math.abs(ctrl.steer) > 0.3) v.slideT = 0.7; else if (v.slideT > 0) v.slideT -= dt;
+  const firm = st.grip * 2;   // planted: an ordinary corner leaves no skid marks
+  const loose = st.grip * (0.5 - 0.38 * drift), slideGrip = v.slideT > 0 ? loose + (firm - loose) * (1 - v.slideT / 0.7) : firm;
+  const k = 1 - Math.exp(-(v.fling > 0 ? st.grip * 0.1 : hand ? loose : ctrl.brake ? st.grip * 0.45 : slideGrip) * wet * dt);   // thrown by a crash, the tyres are not gripping at all
   v.vx += (Math.cos(v.ang) * v.speed - v.vx) * k; v.vy += (Math.sin(v.ang) * v.speed - v.vy) * k;
   // the handbrake takes the slide off too, so the car stops where you stopped it instead of sailing on
   // (steering hard while you hold it lets the slide run on: that is the handbrake turn)

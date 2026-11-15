@@ -45,7 +45,12 @@ const BADGES = {
   centuries: ['Century hopper', 'Visited four different eras'], fitted: ['Fully fitted', 'Every upgrade on the Heirloom'], proven: ['Proven', 'Lodged every proof'],
 };
 const SILAS = ['Is that one of ours? I mean yours. I mean ours.', 'She has my chin. Do you see it? That is my chin.', 'I had no idea there were so many. Do they all come at Christmas?',
-  'I should like to write that one down. In ink. I have given up pencil.', 'Nobody ever told me families were so loud.', 'May we stop? I think that gentleman is my great-great-great-uncle and I have nothing to give him.'];
+  'I should like to write that one down. In ink. I have given up pencil.', 'Nobody ever told me families were so loud.', 'May we stop? I think that gentleman is my great-great-great-uncle and I have nothing to give him.',
+  'That one looked straight at me. Do I wave? What is the done thing?', 'I have been practising the word "cousin". Cousin. It still sounds like somebody else\'s.', 'Does everybody have this many grandmothers, or have I been oversupplied?',
+  'I have started a list of birthdays. It is already longer than my client list ever was.', 'If anybody asks, what am I to them? Twelfth cousin? Thirteenth? I should like to get the paperwork right.', 'Mr Lowe sends his regards. He has taken up bee-keeping. He says the bees worry him less.'];
+// What Dorothy says at her workbench once there is nothing left to prove: a different line each visit.
+const DOT_DONE = ['Nothing left to prove, dear. Go and visit them. Take your time; you\'ve got all of it.', 'Still here, dear. Still retired. The kettle\'s on, if you\'ve a century to spare.', 'No more grey vans and no more deadlines. Only four hundred years of relatives who\'d love a visit. Do take a cake.'];
+let dotDone = 0;
 const up = id => (S.save.up && S.save.up[id]) || 0;
 function statsOf(v) {
   const st = VEHICLES[v.type];
@@ -1165,10 +1170,7 @@ function enterStep(step) {
   if (step.blocks) hintOnce('blocks', 'Grey vans are parked across the road ahead. Find another way round, or get out and walk the last bit.', 5600);
   if (step.rival && step.t === 'goto') startRival(lotPt(step.at), step.rival);
   if (step.blocks) placeBlocks(step.t === 'goto' ? lotPt(step.at) : lotPt(step.to), step.blocks);
-  if (step.bark) {
-    const sp = step.bark.who ? speaker(step.bark.who) : null, name = step.bark.name || (sp ? sp.who.split(' ')[0] : '');
-    S.ui.toast(`${name}: "${sp && sp.person ? voiceLine(sp.person, step.bark.text) : plainText(step.bark.text)}"`, 5200);
-  }
+  barkToast(step.bark);
   if (step.timed) st.timer = Math.round(14 + tiles / (c.source === 'osm' ? 3.2 : 3.8) / SPEED_SCALE * step.timed + stops * 5);   // (and the clock allows for an untuned engine)   // real streets twist more than drawn ones
   if (step.tokens && st.timer != null) {
     // clocks left about the streets: each one is five more seconds, if you care to go out of your way
@@ -1277,6 +1279,7 @@ function updateMission(dt) {
     const alive = S.vehicles.filter(v => v.prey === cv && v.ai === 'hunt').length;
     if (cv.started && st.wave <= 0 && alive < 2 && st.sent < (s.waves || 6)) {
       st.wave = 9; st.sent++;
+      if (st.sent === 2) barkToast(s.bark2);
       const a = Math.random() * 7, h = spawnAi(S.city.year < 1900 ? 'erasercoach' : 'eraser', { x: cv.x + Math.cos(a) * 11 * T, y: cv.y + Math.sin(a) * 11 * T }, 'hunt', { prey: cv });
       h.hp = 1;
     }
@@ -1304,8 +1307,8 @@ function updateMission(dt) {
       const d = DRILLS[id];
       st.k++; st.peak = 0; st.held = 0; st.spin = null; st.lift = pv.hand;   // the next move starts with a fresh press
       float(pv.x, pv.y - 30, d.done, '#7be07b'); sfx.pick();
-      S.ui.toast(`Dorothy: "${d.praise}"`, 3200); S.lessonKey = 'praise';
-      S.lessonHold = S.t + 3.2;
+      S.ui.toast(`Dorothy: "${d.praise}"`, 4600); S.lessonKey = 'praise';   // (long enough to read her aside)
+      S.lessonHold = S.t + 4.6;
       if (st.k >= s.drills.length) nextStep();
     }
   } else if (s.t === 'travel') {
@@ -1417,6 +1420,7 @@ function hopChase(year) {
   nv.hp = keep.hp; nv.speed = keep.speed; st.target = nv;
   if (st.timer != null) st.timer += 25;
   S.ui.toast(`Hargreaves has jumped to ${year}, and taken you with him!`, 3600);
+  if (st.hops === 2 && st.step.bark2) { const tok = S; setTimeout(() => S === tok && S.step === st && barkToast(st.step.bark2), 3800); }
 }
 // After the first chapter, Hargreaves's men come looking for you while the clock is running.
 function updateAmbush(dt) {
@@ -1434,6 +1438,12 @@ function updateAmbush(dt) {
   v.hp = 2;
   hintOnce('hunt', 'Grey vans on your tail! Every time one rams you, you lose three seconds. Ram them first.', 6500);
 }
+// Something shouted while you drive: a line from whoever is with you, shown as a toast.
+function barkToast(bark) {
+  if (!bark) return;
+  const sp = bark.who ? speaker(bark.who) : null, name = bark.name || (sp ? sp.who.split(' ')[0] : '');
+  S.ui.toast(`${name}: "${sp && sp.person ? voiceLine(sp.person, bark.text) : plainText(bark.text)}"`, 5200);
+}
 async function converse(s) {
   const tok = S;
   S.busy = true;
@@ -1441,13 +1451,14 @@ async function converse(s) {
   if (s.greet) { await runLines([{ who: s.who, greet: true }]); if (S !== tok) return; }
   for (const line of s.lines || []) { if (S !== tok) return; await say(s.who, line); }
   if (s.quiz && S === tok) {
-    let first = true;
+    let first = true, misses = 0;
+    const qz = s.quiz, wrong = qz.wrong && qz.wrong.length ? qz.wrong : ['No. Any stranger off the road would say that. Think on, and try again.'];
     for (;;) {
       const pick = await say(s.who, s.quiz.q, s.quiz.options);
       if (S !== tok) return;
-      if (pick === s.quiz.answer || pick < 0) { await say(s.who, first ? 'Right first time. Nobody but family would know that.' : 'There. Now you sound like one of us.'); if (first) { earn(25); } break; }
+      if (pick === s.quiz.answer || pick < 0) { await say(s.who, first ? qz.right || 'Right first time. Nobody but family would know that.' : qz.rightAtLast || 'There. Now you sound like one of us.'); if (first) { earn(25); } break; }
       first = false;
-      await say(s.who, 'No. Any stranger off the road would say that. Think on, and try again.');
+      await say(s.who, wrong[misses++ % wrong.length]);
       if (S !== tok) return;
     }
   }
@@ -2017,7 +2028,7 @@ async function chat(who) {
 }
 function dotLine() {
   const n = nextStory();
-  return 'Dorothy: "' + (n ? `${n.brief} ${isHere(n) ? '' : `That's ${S.story.towns.get(n.town).name}, ${n.year}.`} And mind the paintwork.` : `Nothing left to prove, dear. Go and visit them. Take your time; you've got all of it.`) + '"';
+  return 'Dorothy: "' + (n ? `${n.brief} ${isHere(n) ? '' : `That's ${S.story.towns.get(n.town).name}, ${n.year}.`} And mind the paintwork.` : DOT_DONE[dotDone++ % DOT_DONE.length]) + '"';
 }
 
 function updatePlayer(dt) {
@@ -2224,17 +2235,20 @@ async function openingScene() {
     await say(who, text);
   };
   await new Promise(r => setTimeout(r, 1400));
-  await shot('office', 'note', '', 0, `The offices of Hargreaves & Lowe, Solicitors. The lights are on late.`, 'Hargreaves & Lowe, Solicitors');
-  await shot('office', 'blank', 'grin', 0, `Another one, Mr Lowe. ${cap(estate)}. A fortune, and nobody has come forward to claim it.`);
-  await shot('office', 'lowe', 'worried', 1, `But there are heirs, Mr Hargreaves. The ${sur} family. Hundreds of them, going back four hundred years. It is all written down in the parish registers.`);
+  await shot('office', 'note', '', 0, `The offices of Hargreaves & Lowe, Solicitors. The lights are on late. Even the lights are grey.`, 'Hargreaves & Lowe, Solicitors');
+  await shot('office', 'blank', 'grin', 0, `Another one, Mr Lowe. ${cap(estate)}. A fortune, gathering dust, and not one soul has come forward to claim it.`);
+  await shot('office', 'lowe', 'worried', 1, `But there are heirs, Mr Hargreaves. The ${sur} family. Hundreds of them, going back four hundred years. It's all in the parish registers. I checked twice. I wish I hadn't.`);
   await shot('office', 'blank', 'angry', 0, `Then we take them OUT of the registers. One name at a time. One generation at a time. All the way back to the very first ${sur}.`);
   await shot('office', 'lowe', 'worried', 1, `If nobody was ever born... and nobody was ever married...`);
-  await shot('office', 'blank', 'grin', 0, `...then there never was a ${sur} family. And the money comes to the only people left to ask for it. Us. Start the time engine, Mr Lowe. We are going to erase a family from history.`);
-  await shot('garage', 'note', '', 0, `Across town, in a lock-up behind the pub, somebody has been listening.`, 'Meanwhile');
+  await shot('office', 'blank', 'grin', 0, `...then there never was a ${sur} family. And the money comes to the only people left to ask for it. Us.`);
+  await shot('office', 'lowe', 'worried', 1, `Is that legal, sir?`);
+  await shot('office', 'blank', 'grin', 0, `Nobody has ever thought to forbid it, Mr Lowe. That is the beauty of it. Start the time engine. We are going to erase a family from history.`);
+  await shot('garage', 'note', '', 0, `Across town, in a lock-up behind the pub, somebody has been listening in. She would call it research.`, 'Meanwhile');
   await shot('garage', 'dot', 'angry', 0, `Not while I'm breathing, Silas Hargreaves.`);
   await shot('garage', 'dot', 'worried', 0, `I'm a ${sur} too, you see. From a good way further down the family tree than anybody alive today. If he rubs out that line, I am never born. Nor is anybody I love.`);
-  await shot('garage', 'dot', 'set', 0, `He has a time machine. So have I: she's old, she's yellow, and she needs a driver. I'm too old to drive her. But I know who isn't.`);
-  if (S === tok && S.cut && !S.cut.skip) { Object.assign(S.cut, { x: S.player.x, y: S.player.y, who: null, caption: `${hero.name}. That's you.` }); await say('note', `You are ${hero.first}. You have one very old car, one month, and four hundred years of family depending on you. Go back through time, one ancestor at a time, and prove every one of them existed before Hargreaves can rub them out.`); }
+  await shot('garage', 'dot', 'set', 0, `He has a time machine. So have I: she's old, she's yellow, and she needs a driver. My hip retired before I did. But I know somebody with two good ones.`);
+  if (S === tok && S.cut && !S.cut.skip) { Object.assign(S.cut, { x: S.player.x, y: S.player.y, who: null, caption: `${hero.name}. That's you.` }); await say('note', `You are ${hero.first}. You have one very old car, one month, and four hundred years of family depending on you. No pressure.`); }
+  if (S === tok && S.cut && !S.cut.skip) await say('note', `Go back through time, one ancestor at a time, and prove every one of them existed before Hargreaves can rub them out.`);
   if (S !== tok) return;
   S.cut = null; S.clock = clock0; S.ui.root.classList.remove('cut'); S.busy = false; S.failT = S.t - 3; persist();
   S.ui.banner('A BATTLE IN TIME', `Save the ${sur} family`, '#ffd84a', 3200);
@@ -2266,11 +2280,11 @@ async function playCut(cut, key) {
 const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
 // Dorothy's driving lesson, a move at a time: what to press, and what she says when you have it.
 const DRILLS = {
-  speed: { name: 'flat out', keys: 'Hold W to put your foot down. Steer with A and D. Keep going until you are near top speed.', touch: 'Push the stick the way you want to go and hold it at the edge. Keep going until you are near top speed.', done: 'Flat out!', praise: 'Oh, she likes that. Now let\'s see you stop her.' },
-  stop: { name: 'brake', keys: 'BRAKE: let go of W and hold S (or Space to stop dead). Stop completely before you hit anything.', touch: 'BRAKE: let go of the stick and hold BRAKE. Stop completely before you hit anything.', done: 'Stopped!', praise: 'Brake in a straight line, before the corner, never in it. My husband never learned.' },
-  reverse: { name: 'reverse', keys: 'REVERSE: once you are stopped, keep holding S and she goes backwards. Back up a car\'s length.', touch: 'REVERSE: once you are stopped, pull the stick behind the car and she goes backwards. Back up a car\'s length.', done: 'Reversing!', praise: 'Good. That gets you out of any dead end in any century.' },
-  slide: { name: 'handbrake slide', keys: 'SKID: get some speed up, steer hard with A or D, and hold SPACE. The back end swings out and leaves skid marks.', touch: 'SKID: get some speed up, turn hard, and hold BRAKE. The back end swings out and leaves skid marks.', done: 'Sliding!', praise: 'Ha! Space lets the back go. Use it to slide round corners without stopping.' },
-  spin: { name: 'handbrake turn', keys: 'HANDBRAKE TURN: go fast, then hold SPACE and steer hard until you are facing back the way you came.', touch: 'HANDBRAKE TURN: go fast, then hold BRAKE and turn hard until you are facing back the way you came.', done: 'Spun round!', praise: 'That\'s how you lose a grey van in a narrow street. Right: you can drive. Off we go.' },
+  speed: { name: 'flat out', keys: 'Hold W to put your foot down. Steer with A and D. Keep going until you are near top speed.', touch: 'Push the stick the way you want to go and hold it at the edge. Keep going until you are near top speed.', done: 'Flat out!', praise: 'Oh, she likes that. She hasn\'t been past thirty since the funeral. Now let\'s see you stop her.' },
+  stop: { name: 'brake', keys: 'BRAKE: let go of W and hold S (or Space to stop dead). Stop completely before you hit anything.', touch: 'BRAKE: let go of the stick and hold BRAKE. Stop completely before you hit anything.', done: 'Stopped!', praise: 'Brake in a straight line, before the corner, never in it. My husband never learned. We got through four hedges and a bandstand.' },
+  reverse: { name: 'reverse', keys: 'REVERSE: once you are stopped, keep holding S and she goes backwards. Back up a car\'s length.', touch: 'REVERSE: once you are stopped, pull the stick behind the car and she goes backwards. Back up a car\'s length.', done: 'Reversing!', praise: 'Good. That gets you out of any dead end in any century. And most family gatherings.' },
+  slide: { name: 'handbrake slide', keys: 'SKID: get some speed up, steer hard with A or D, and hold SPACE. The back end swings out and leaves skid marks.', touch: 'SKID: get some speed up, turn hard, and hold BRAKE. The back end swings out and leaves skid marks.', done: 'Sliding!', praise: 'Ha! Space lets the back go. Use it to slide round corners without stopping. I\'m told it isn\'t in the Highway Code.' },
+  spin: { name: 'handbrake turn', keys: 'HANDBRAKE TURN: go fast, then hold SPACE and steer hard until you are facing back the way you came.', touch: 'HANDBRAKE TURN: go fast, then hold BRAKE and turn hard until you are facing back the way you came.', done: 'Spun round!', praise: 'That\'s how you lose a grey van in a narrow street. Right: you can drive. Better than he could, and I\'ll deny I said so.' },
 };
 // The first mission is the lesson: one instruction at a time, kept on screen until it has been done.
 function lesson() {

@@ -57,6 +57,28 @@ function check(story, label) {
     const qz = m.steps.find(s => s.quiz)?.quiz;
     if (qz) assert.ok(m.intro.map(l => l.text).join(' ').toLowerCase().includes(qz.options[qz.answer].toLowerCase()), `${label}: ${m.id} asks "${qz.q}" without saying ${qz.options[qz.answer]} first`);
   }
+  // nothing is said twice: every line that comes round each chapter is dealt from a pack of alternatives, so no
+  // sentence of five words or more is heard in two different places in one playthrough (favours and the bonus included)
+  {
+    const said = new Map(), hear = (where, text) => {
+      for (const sent of (text || '').replace(/[«»]/g, '').match(/[^.!?]+[.!?]+/g) || []) {
+        const k = sent.trim();
+        if (k.split(/\s+/).length < 5) continue;
+        assert.ok(!said.has(k) || said.get(k) === where, `${label}: "${k}" is said in ${said.get(k)} and again in ${where}`);
+        said.set(k, where);
+      }
+    };
+    for (const m of [...story.missions, ...story.favours, ...(story.bonus ? [story.bonus] : [])]) {
+      for (const l of [...m.intro, ...m.outro]) hear(m.id, l.text);
+      for (const cut of [m.cutIn, m.cutOut]) if (cut) for (const sh of cut.shots) hear(m.id + ' scene', sh.text);
+      for (const s of m.steps) {
+        for (const line of s.lines || []) hear(m.id, line);
+        for (const b of [s.bark, s.bark2, s.switch]) if (b) hear(m.id, b.text);
+        for (const v of Object.values(s.miss || {})) hear(m.id, v);
+        if (s.quiz) { assert.ok(s.quiz.right && s.quiz.rightAtLast && new Set(s.quiz.wrong).size === 3, `${label}: ${m.id} quiz replies`); hear(m.id, s.quiz.right); hear(m.id, s.quiz.rightAtLast); hear(m.id, s.quiz.wrong[0]); }
+      }
+    }
+  }
   // a scene at both ends of every chapter
   story.chapters.forEach((c, i) => {
     const own = story.missions.filter(m => m.chapter === i && !m.odd);

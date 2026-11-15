@@ -9080,10 +9080,12 @@ function driveVehicle(v, ctrl, dt) {
   const maxV = st.max * T * (rough ? 0.6 : 1) * (v.dead ? 0 : 1) * (ctrl.cap || 1);
   if (ctrl.thr > 0) v.speed += st.acc * T * ctrl.thr * dt * (v.speed < 0 ? 2.2 : 1);
   else if (ctrl.thr < 0) v.speed += st.acc * T * ctrl.thr * dt * (v.speed > 0 ? 2.4 : 0.7);
-  else v.speed -= Math.sign(v.speed) * Math.min(Math.abs(v.speed), 2.6 * VS * T * dt);
+  else v.speed -= Math.sign(v.speed) * Math.min(Math.abs(v.speed), 3.6 * T * dt);   // off the gas: from flat out to a stop in under two seconds
   if (ctrl.brake) v.speed -= Math.sign(v.speed) * Math.min(Math.abs(v.speed), 15 * VS * T * dt);
   const drift = st.horse ? 0 : st.drift ?? 0.5, hand = !!ctrl.hand && Math.abs(v.speed) > 1.5 * VS * T;
-  if (ctrl.hand) v.speed -= Math.sign(v.speed) * Math.min(Math.abs(v.speed), (st.horse ? 12 : 3.2 + 5 * (1 - drift)) * VS * T * dt);
+  // the handbrake (Space) stops you dead in well under a second; steer while you hold it and the back slides round
+  const handDec = (st.horse ? 12 : 9 + 3 * (1 - drift)) * T;
+  if (ctrl.hand) v.speed -= Math.sign(v.speed) * Math.min(Math.abs(v.speed), handDec * dt);
   v.thr = ctrl.thr; v.hand = !!ctrl.hand;
   if (v.speed > maxV) v.speed = Math.max(maxV, v.speed - 12 * VS * T * dt);
   v.speed = Math.max(v.speed, -maxV * 0.38);
@@ -9095,6 +9097,9 @@ function driveVehicle(v, ctrl, dt) {
   const flatOut = Math.abs(ctrl.steer) > 0.7 && Math.abs(v.speed) > st.max * T * 0.8 ? 1 - 0.4 * drift : 1;
   const k = 1 - Math.exp(-(v.fling > 0 ? st.grip * 0.1 : hand ? st.grip * (0.5 - 0.38 * drift) : ctrl.brake ? st.grip * 0.45 : st.grip * flatOut) * wet * dt);   // thrown by a crash, the tyres are not gripping at all
   v.vx += (Math.cos(v.ang) * v.speed - v.vx) * k; v.vy += (Math.sin(v.ang) * v.speed - v.vy) * k;
+  // the handbrake takes the slide off too, so the car stops where you stopped it instead of sailing on
+  // (steering hard while you hold it lets the slide run on: that is the handbrake turn)
+  if (ctrl.hand && !(v.fling > 0)) { const vm = Math.hypot(v.vx, v.vy); if (vm > 0) { const f = Math.max(0, vm - handDec * 0.8 * (1 - 0.85 * Math.min(1, Math.abs(ctrl.steer))) * dt) / vm; v.vx *= f; v.vy *= f; } }
   let hit = 0;
   const mine = v === S.player.vehicle, sp0 = Math.hypot(v.vx, v.vy) || 1;
   if (mine && sp0 > 4 * VS * T) fellTrees(v, dt);
@@ -10681,7 +10686,7 @@ const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
 // Dorothy's driving lesson, a move at a time: what to press, and what she says when you have it.
 const DRILLS = {
   speed: { name: 'flat out', keys: 'Hold W to put your foot down. Steer with A and D. Keep going until you are near top speed.', touch: 'Push the stick the way you want to go and hold it at the edge. Keep going until you are near top speed.', done: 'Flat out!', praise: 'Oh, she likes that. Now let\'s see you stop her.' },
-  stop: { name: 'brake', keys: 'BRAKE: let go of W and hold S. Stop completely before you hit anything.', touch: 'BRAKE: let go of the stick and hold BRAKE. Stop completely before you hit anything.', done: 'Stopped!', praise: 'Brake in a straight line, before the corner, never in it. My husband never learned.' },
+  stop: { name: 'brake', keys: 'BRAKE: let go of W and hold S (or Space to stop dead). Stop completely before you hit anything.', touch: 'BRAKE: let go of the stick and hold BRAKE. Stop completely before you hit anything.', done: 'Stopped!', praise: 'Brake in a straight line, before the corner, never in it. My husband never learned.' },
   reverse: { name: 'reverse', keys: 'REVERSE: once you are stopped, keep holding S and she goes backwards. Back up a car\'s length.', touch: 'REVERSE: once you are stopped, pull the stick behind the car and she goes backwards. Back up a car\'s length.', done: 'Reversing!', praise: 'Good. That gets you out of any dead end in any century.' },
   slide: { name: 'handbrake slide', keys: 'SKID: get some speed up, steer hard with A or D, and hold SPACE. The back end swings out and leaves skid marks.', touch: 'SKID: get some speed up, turn hard, and hold BRAKE. The back end swings out and leaves skid marks.', done: 'Sliding!', praise: 'Ha! Space lets the back go. Use it to slide round corners without stopping.' },
   spin: { name: 'handbrake turn', keys: 'HANDBRAKE TURN: go fast, then hold SPACE and steer hard until you are facing back the way you came.', touch: 'HANDBRAKE TURN: go fast, then hold BRAKE and turn hard until you are facing back the way you came.', done: 'Spun round!', praise: 'That\'s how you lose a grey van in a narrow street. Right: you can drive. Off we go.' },

@@ -1403,6 +1403,8 @@ applyStyle($('retroToggle').checked ? 'retro' : 'fluffy', { silent: true });
 S.vizScope = 'ancestors';
 setVizKind(store.get('a3d:viz'));
 setTab(store.get('a3d:tab'));
+// The Story trailer stops itself whenever it goes out of sight: another tab, the game starting, or scrolled away.
+if ('IntersectionObserver' in window) new IntersectionObserver(es => { for (const e of es) if (!e.isIntersecting) e.target.pause(); }).observe($('trailer'));
 S.booted = true;
 buildAttract();
 // expose for debugging / tests

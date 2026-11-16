@@ -447,6 +447,7 @@ body.tab-story #menu .field .lbl b { color: var(--b-red-d); font-weight: 800; }
 body.tab-story #menu .status { font-family: var(--b-body); font-weight: 800; font-size: 15px; color: var(--b-green); }
 body.tab-story #menu .help { font-family: var(--b-body); font-weight: 600; font-size: 14.5px; color: var(--b-text); }
 body.tab-story #menu .help b { color: var(--b-red-d); font-weight: 800; }
+#trailer { display: block; width: 100%; aspect-ratio: 16 / 9; background: #000; border: 3px solid var(--b-ink); border-radius: 8px; }
 body.tab-story #menu p.storyPitch { font-family: var(--b-body); font-weight: 600; font-size: 15px; line-height: 1.45; color: var(--b-text); margin: 8px 0; }
 body.tab-story #menu p.storyPitch b { font-family: var(--b-display); font-weight: normal; font-size: 22px; letter-spacing: 1px; color: var(--b-red-d); }
 /* buttons: yellow pills with an ink outline that press down */
@@ -652,6 +653,11 @@ body.retroOn #menu .secret .secretFight { display: inline-flex; }
     <div class="card playOnly">
       <h2>The garden</h2>
       <div class="note" id="lookNote"></div>
+    </div>
+
+    <div class="card storyOnly" id="cardTrailer">
+      <h2>Watch the trailer</h2>
+      <video id="trailer" controls playsinline preload="metadata" src="promo/ancestry-a-battle-in-time-promo.mp4"></video>
     </div>
 
     <div class="card playOnly" id="cardResume" style="display:none">

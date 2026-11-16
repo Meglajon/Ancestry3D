@@ -125,7 +125,7 @@ export function openViz({ kind, scope = 'ancestors', data, rootId, maxGen, onClo
       if (scope === 'all' && V.view.total > V.view.count) status(`Showing ${V.view.count.toLocaleString()} of ${V.view.total.toLocaleString()} people (the closest relatives first).`);
     } else {
       V.view = createGrowTree(host, {
-        data, rootId, maxGen, onSelect: showInfo, onFrame: tick, style: season, hour, autoDay, bottomInset: () => document.querySelector('#viz .vbar').offsetHeight + 18, verses: chosenVerses(), versesOn,
+        data, rootId, maxGen, onSelect: showInfo, onFrame: tick, style: season, hour, autoDay, bottomInset: () => document.querySelector('#viz .vbar').offsetHeight + 18, verses: chosenVerses(), versesOn, chart: chartOn,
         onEnd: () => { if (V?.recorder?.recording) setTimeout(finishRecording, 1500); },
       });
       const [a, b] = V.view.range;
@@ -133,7 +133,8 @@ export function openViz({ kind, scope = 'ancestors', data, rootId, maxGen, onClo
       V.view.setSpeed(+($('vSpeed').dataset.x || 1));
       V.view.setSpacing(document.querySelector('#vSpace button.on')?.dataset.space);
       V.view.setDirection(document.querySelector('#vDir button.on')?.dataset.dir);
-      V.view.play();
+      if (!chartOn) V.view.play();
+      showChart();
     }
   } catch (err) {
     console.error(err);
@@ -157,6 +158,19 @@ export const vizView = () => V?.view;
 $('vClose').onclick = () => closeViz();
 $('vTour').onclick = () => { if (!V || V.kind !== 'galaxy') return; if (V.view.touring) V.view.stopTour(); else V.view.startTour(); };
 $('vRec').onclick = toggleRecord;
+// The classic chart: the same family as a plain family tree on parchment, no flowers and no growing.
+let chartOn = (() => { try { return localStorage.getItem('a3d:treeChart') === '1'; } catch (e) { return false; } })();
+function showChart() {
+  $('viz').dataset.chart = chartOn ? '1' : '';
+  $('vChart').textContent = chartOn ? '🌸 Growing tree' : '📜 Family tree';
+  $('vChart').setAttribute('aria-pressed', chartOn);
+}
+$('vChart').onclick = () => {
+  chartOn = !chartOn;
+  try { localStorage.setItem('a3d:treeChart', chartOn ? '1' : '0'); } catch (e) { /* no storage */ }
+  if (V?.view?.setChart) { V.view.setChart(chartOn); if (!chartOn) { V.view.restart(); V.view.play(); } }
+  showChart();
+};
 $('vPlay').onclick = () => { if (!V?.view?.state) return; if (V.view.state.playing) V.view.pause(); else V.view.play(); };
 $('vRestart').onclick = () => { V?.view?.restart?.(); V?.view?.play?.(); };
 $('vScrub').addEventListener('input', e => { if (V?.view?.seek) { V.view.pause(); V.view.seek(+e.target.value); } });

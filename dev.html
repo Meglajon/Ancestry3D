@@ -362,6 +362,8 @@ body.island .help i { color: var(--i-orange); }
 #viz .vseg button.on { background: #ffd36a; color: #2a2030; }
 #viz #vScrub { flex-basis: 100%; width: 100%; accent-color: #ffd36a; height: 24px; }
 #viz[data-kind="galaxy"] .t-only, #viz[data-kind="tree"] .g-only { display: none; }
+/* the parchment chart needs none of the growing tree's controls */
+#viz[data-chart="1"] .t-only:not(#vChart), #viz[data-chart="1"] .vlegend, #viz[data-chart="1"] #vStatus { display: none !important; }
 #viz .vlegend { position: absolute; left: max(12px, env(safe-area-inset-left, 0px)); top: calc(60px + env(safe-area-inset-top, 0px)); font-size: 12px; font-weight: 700; line-height: 1.7; background: rgba(14,12,34,0.6); border-radius: 12px; padding: 8px 12px; pointer-events: none; }
 #viz[data-kind="tree"] .vlegend { top: calc(100px + env(safe-area-inset-top, 0px)); left: 12px; display: flex; flex-wrap: wrap; gap: 4px 14px; max-width: calc(100% - 24px); padding: 4px 12px; background: rgba(14,12,34,0.55); color: #fff4dc; font-size: 11px; }
 #viz .vlegend .vlh { font-family: 'Fredoka', sans-serif; font-size: 13px; color: #ffe6a8; }
@@ -543,18 +545,39 @@ body.tab-viz #menu details.verses summary { color: var(--v-gold2); }
 body.tab-viz #menu a { color: var(--v-gold2) !important; }
 body.tab-viz #menu :focus-visible { outline: 2px solid var(--v-gold2); outline-offset: 2px; }
 @media (max-width: 480px) { body.tab-viz #menu .tabs button { font-size: 16px; padding: 8px 2px; } body.tab-viz #menu .logo .l0 { letter-spacing: 12px; } }
+
+/* The secret Retro box under the Layout row: small and quiet, so it is found rather than shown. */
+#menu .secret { display: flex; gap: 14px; justify-content: flex-end; margin-top: 6px; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 12px; opacity: 0.55; }
+#menu .secret:hover, #menu .secret:focus-within { opacity: 1; }
+#menu .secret label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+#menu .secret input { width: 13px; height: 13px; margin: 0; accent-color: #d0502a; }
+#menu .secret .secretFight { display: none; }
+body.retroOn #menu .secret .secretFight { display: inline-flex; }
 </style>
 </head>
 <body>
+<canvas id="game"></canvas>
 <canvas id="flat"></canvas>
 
+<div id="hurt" aria-hidden="true"></div>
 <div id="hud" class="hidden">
   <div id="msgs"></div>
   <div id="compass" class="hidden"><span class="arrow">▲</span><div class="dist"></div></div>
+  <div id="crosshair"></div>
   <div id="nametag" class="hidden"></div>
   <div id="missions" class="hidden" aria-live="polite"></div>
   <div id="prompt" class="hidden"></div>
-  <div id="islandHud"><canvas id="iFace" width="64" height="64"></canvas><div><b id="iName"></b><span id="iInfo"></span></div></div>
+  <div id="islandHud"><canvas id="iFace" width="64" height="64"></canvas><div><b id="iName"></b><span id="iInfo"></span></div><div class="coins"><i></i>× <span id="pCoins">0</span></div></div>
+  <div id="bar">
+    <div class="cell" id="ammoCell"><div class="num" id="sAmmo">400</div><div class="cap">AMMO</div></div>
+    <div class="cell fightOnly"><div class="num small" id="sHealth">100%</div><div class="cap">HEALTH</div></div>
+    <div class="cell fightOnly"><div class="num small" id="sScore">0</div><div class="cap">SCORE</div></div>
+    <div class="cell"><div class="num" id="sGen">0</div><div class="cap">GEN</div></div>
+    <div class="cell"><div class="num small" id="sMet">0/0</div><div class="cap">MET</div></div>
+    <div class="cell face"><canvas id="sFace" width="64" height="64"></canvas></div>
+    <div class="cell notFight"><div class="num small" id="sEra">----</div><div class="cap">ERA</div></div>
+    <div class="cell lines notFight"><div class="num" id="sLines">1</div><div class="cap">LINES</div></div>
+  </div>
 </div>
 
 <div id="touch" class="hidden">
@@ -562,8 +585,10 @@ body.tab-viz #menu :focus-visible { outline: 2px solid var(--v-gold2); outline-o
   <div class="zone right" id="tRight"></div>
   <div id="stick" class="hidden"><div class="knob"></div></div>
   <button class="tbtn hidden" id="tTalk">Talk</button>
+  <button class="tbtn" id="tFire">Fire</button>
   <button class="tbtn" id="tMap">Map</button>
   <button class="tbtn" id="tRun">Run</button>
+  <button class="tbtn" id="tJump">Jump</button>
   <button class="tbtn" id="tMenu" aria-label="Menu">☰</button>
 </div>
 
@@ -599,6 +624,7 @@ body.tab-viz #menu :focus-visible { outline: 2px solid var(--v-gold2); outline-o
   <div class="vinfo hidden" id="vInfo"></div>
   <div class="vbar">
     <button class="vb g-only" id="vTour">▶ Fly-through</button>
+    <button class="vb t-only" id="vChart" aria-pressed="false">📜 Family tree</button>
     <button class="vb t-only" id="vPlay">▶ Play</button>
     <button class="vb t-only" id="vRestart" aria-label="Start again">⟲</button>
     <div class="vseg t-only" id="vDir"><button data-dir="back" class="on">Back in time</button><button data-dir="forward">Forward</button></div>
@@ -613,6 +639,7 @@ body.tab-viz #menu :focus-visible { outline: 2px solid var(--v-gold2); outline-o
   </div>
 </div>
 
+<div id="resume" class="hidden">Click to resume<br><small>Esc for menu</small></div>
 <div id="loading" class="hidden">Loading…</div>
 
 <div id="menu">
@@ -656,6 +683,10 @@ body.tab-viz #menu :focus-visible { outline: 2px solid var(--v-gold2); outline-o
           <button data-shape="circle">Full circle</button><button data-shape="half">Half fan</button><button data-shape="tree">Tree</button>
         </div>
         <div class="note" style="margin-top:4px">Full circle surrounds you. Half fan puts everyone in front of you. Tree lays the generations out in rows, like a family tree chart.</div>
+        <div class="secret">
+          <label for="retroToggle"><input type="checkbox" id="retroToggle"> retro</label>
+          <label for="fightToggle" class="secretFight"><input type="checkbox" id="fightToggle"> fight back</label>
+        </div>
       </div>
       <label class="toggle" for="couplesToggle">
         <input type="checkbox" id="couplesToggle" checked>

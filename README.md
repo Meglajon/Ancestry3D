@@ -87,6 +87,10 @@ The whole plot, and how each part is filled in from the GEDCOM, is in [STORY.md]
 
 ### The garden (Play)
 
+*(There is also a small **retro** box under the Layout row. Tick it and Enter loads the old first-person Retro
+courtyard instead: the minigun, exploding barrels, and an optional **fight back** mode.)*
+
+
 A top-down 2D garden where you and every ancestor are round, fluffy balls in colours taken from their period
 clothes, with their hair as a tuft on top (or their hat). Roll along the paths, bump into people (they squeak and
 tell you off in their own accent), and chat to them.
@@ -124,6 +128,8 @@ generations, then open one of these:
   butterflies (robins in winter) visit the flowers, caterpillars inch along the branches and turn into
   butterflies, flowers bloom in the meadow, petals, leaves, seeds, snow or fireflies drift about, and rabbits,
   deer, red squirrels, foxes and hedgehogs wander through at the right time of day.
+  **📜 Family tree** swaps the growing tree for a classic chart on old parchment: every generation a row, every
+  person a box with their dates, joined by ink lines, you at the foot. Zoom and drag to read the top rows.
   **Bible verses** about the generations are written across the meadow, a word at a time (each verse appears in a
   second or two). Choose which ones in the Visualisation tab (New International Version), or switch them off
   with the *Verses* button.

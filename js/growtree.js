@@ -6,7 +6,7 @@
 // Height is the year each person was born (or simply their generation), and width is shared out like the
 // courtyard wedges, so big branches get more room. Anyone alive in the year on the clock glows.
 // The art (seasons, light, blossoms, butterflies and so on) is in treeart.js; Bible verses in verses.js.
-import { collectAncestors, displayName, firstName, lifespan, relationship, findEvent, seededRandom, hashString } from './ancestry.js';
+import { collectAncestors, displayName, firstName, lifespan, relationship, findEvent, seededRandom, hashString, parentsOf } from './ancestry.js';
 import { estimateYears, personLines } from './vizkit.js';
 import { makeLook, seasonKey, EST_FLOWER, paintBackdrop, vignette, BranchBatch, addLeaf, drawGlow, drawFlowerFast, Life, bezierAt, bezTangent } from './treeart.js';
 import { VerseReader } from './verses.js';
@@ -93,7 +93,7 @@ export function createGrowTree(host, opts) {
   window.addEventListener('resize', resize);
 
   const state = { dir: 'back', spacing: 'year', T: yMax, playing: false, speed: 1, popAt: new Map(), selected: null,
-    season: seasonKey(opts.style), hour: opts.hour ?? 12, autoDay: !!opts.autoDay, versesOn: opts.versesOn !== false };
+    season: seasonKey(opts.style), hour: opts.hour ?? 12, autoDay: !!opts.autoDay, versesOn: opts.versesOn !== false, chart: !!opts.chart };
   const life = new Life(hashString(rootId));
   // leaves along each branch, placed once so they don't jump about
   for (const e of edges) {
@@ -136,7 +136,7 @@ export function createGrowTree(host, opts) {
     if (T <= p) return [1, 1];
     return [1 - ease((T - p) / Math.max(1, c - p)), 1];
   }
-  const visible = (p, T) => state.dir === 'back' ? T <= p.birth || p === root : T >= p.birth;
+  const visible = (p, T) => state.chart || (state.dir === 'back' ? T <= p.birth || p === root : T >= p.birth);
 
   // ---- drawing ----
   const SHADOW = 'rgba(20,14,30,0.7)';
@@ -146,8 +146,146 @@ export function createGrowTree(host, opts) {
     ctx.strokeStyle = SHADOW; ctx.lineWidth = 3; ctx.strokeText(str, x, y);
     ctx.fillStyle = color; ctx.fillText(str, x, y);
   }
+
+  // ---- the classic chart: a family tree on old parchment ----
+  // A classic pedigree: one person at the foot, their parents above, then grandparents, each in a named and dated
+  // box joined by ink brackets. It shows as many generations as can be read on this screen (the top row written
+  // up the boxes, as printed charts do); tap someone on the top row with a ▲ to climb that line, and tap the person
+  // at the foot to come back down. No growing and no flowers.
+  let paper = null;
+  function parchment() {
+    if (paper && paper.w === W && paper.h === H) return paper.c;
+    const c = document.createElement('canvas'); c.width = Math.round(W * dpr); c.height = Math.round(H * dpr);
+    const g = c.getContext('2d'); g.scale(dpr, dpr);
+    const gr = g.createRadialGradient(W / 2, H * 0.45, Math.min(W, H) * 0.15, W / 2, H / 2, Math.max(W, H) * 0.78);
+    gr.addColorStop(0, '#f7ecd2'); gr.addColorStop(0.65, '#ecd9ac'); gr.addColorStop(1, '#c49f62');
+    g.fillStyle = gr; g.fillRect(0, 0, W, H);
+    const r = seededRandom(1066);
+    for (let i = 0; i < W * H / 90; i++) { g.fillStyle = r() < 0.55 ? `rgba(120,86,40,${(0.02 + r() * 0.05).toFixed(3)})` : `rgba(255,250,236,${(0.04 + r() * 0.06).toFixed(3)})`; g.fillRect(r() * W, r() * H, 1 + r() * 2, 1 + r() * 1.5); }
+    for (let i = 0; i < 16; i++) { const x = r() * W, y = r() * H, sz = 12 + r() * 46, fg = g.createRadialGradient(x, y, 0, x, y, sz); fg.addColorStop(0, 'rgba(150,96,36,0.10)'); fg.addColorStop(1, 'rgba(150,96,36,0)'); g.fillStyle = fg; g.fillRect(x - sz, y - sz, sz * 2, sz * 2); }
+    g.strokeStyle = 'rgba(90,60,30,0.6)'; g.lineWidth = 2.2; g.strokeRect(14, 14, W - 28, H - 28);
+    g.lineWidth = 0.8; g.strokeRect(20, 20, W - 40, H - 40);
+    for (const [x, y] of [[20, 20], [W - 20, 20], [20, H - 20], [W - 20, H - 20]]) { g.beginPath(); g.arc(x, y, 5, 0, 7); g.fillStyle = 'rgba(90,60,30,0.6)'; g.fill(); }
+    paper = { w: W, h: H, c };
+    return c;
+  }
+  const INK = '#4a3218', INK2 = '#7a5a34';
+  const relTo = (k, sex) => k === 0 ? '' : k === 1 ? (sex === 'F' ? 'Mother' : sex === 'M' ? 'Father' : 'Parent') : k === 2 ? 'Grandparents' : k === 3 ? 'Great-grandparents' : `${k - 2}× great-grandparents`;
+  const chart = { root: rootId, stack: [], boxes: [] };
+  const parentsIn = id => { const pr = parentsOf(data, id); return [pr.father, pr.mother]; };
+  const hasParents = id => parentsIn(id).some(Boolean);
+  // the generations (relative to whoever is at the foot) and every box's place: 2^k slots in row k, father left
+  function chartLayout() {
+    const top = 132, bottom = H - inset() - 30, l = 40, cw = W - 80, avail = bottom - top;
+    const across = Math.max(1, Math.floor(Math.log2(Math.max(1, cw / 92))) + 1);   // rows with names written across (row k holds 2^k boxes)
+    let rows = across + 1;                                                     // and one row written sideways on top
+    const tallH = () => Math.min(200, avail * 0.42), wideH = () => Math.min(84, (avail - tallH()) / across);
+    const entries = [];
+    const place = (id, k, slot) => {
+      if (!id || k > rows - 1) return;
+      const n = 2 ** k, x = l + (slot + 0.5) / n * cw;
+      entries.push({ id, k, slot, x, indi: data.individuals.get(id) });
+      const [f, m] = parentsIn(id);
+      place(f, k + 1, slot * 2); place(m, k + 1, slot * 2 + 1);
+    };
+    place(chart.root, 0, 0);
+    rows = Math.min(rows, 1 + Math.max(0, ...entries.map(e => e.k)));
+    let y = bottom;
+    const rowY = [], rowH = [];
+    for (let k = 0; k < rows; k++) { const h = k === rows - 1 && rows > across ? tallH() : wideH(); rowH[k] = h; rowY[k] = y - h / 2; y -= h; }
+    for (const e of entries) {
+      const n = 2 ** e.k, slotW = cw / n, sideways = e.k === rows - 1 && rows > across;
+      e.y = rowY[e.k]; e.sideways = sideways;
+      e.w = Math.min(e.k === 0 ? 230 : 190, slotW - (sideways ? 6 : 10));
+      e.h = sideways ? rowH[e.k] * 0.82 : Math.min(54, rowH[e.k] * 0.66);
+      e.more = e.k === rows - 1 && hasParents(e.id);
+    }
+    return { entries, rows, rowY, rowH };
+  }
+  function drawChart() {
+    const { entries, rows, rowY, rowH } = chartLayout();
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.drawImage(parchment(), 0, 0, W, H);
+    const s = view.s, byKey = new Map(entries.map(e => [e.k + ':' + e.slot, e]));
+    // ink brackets: each person up to both parents
+    ctx.strokeStyle = INK2; ctx.lineWidth = Math.max(0.8, 1.4 * Math.sqrt(s)); ctx.lineCap = 'round';
+    for (const e of entries) {
+      const ps = [byKey.get((e.k + 1) + ':' + e.slot * 2), byKey.get((e.k + 1) + ':' + (e.slot * 2 + 1))].filter(Boolean);
+      if (!ps.length) continue;
+      const cx = X(e.x), cy = Y(e.y - e.h / 2), py = Math.max(...ps.map(q => Y(q.y + q.h / 2))), my = (cy + py) / 2;
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, my);
+      const xs = ps.map(q => X(q.x)); ctx.moveTo(Math.min(cx, ...xs), my); ctx.lineTo(Math.max(cx, ...xs), my);
+      for (const q of ps) { ctx.moveTo(X(q.x), my); ctx.lineTo(X(q.x), Y(q.y + q.h / 2)); }
+      ctx.stroke();
+    }
+    chart.boxes = [];
+    for (const e of entries) {
+      const bw = e.w * s, bh = e.h * s, x = X(e.x) - bw / 2, y = Y(e.y) - bh / 2, sex = e.indi?.sex;
+      chart.boxes.push({ e, x, y, w: bw, h: bh });
+      if (x > W + 20 || x + bw < -20 || y > H + 20 || y + bh < -20) continue;
+      const sel = state.selectedId === e.id, stripe = sex === 'F' ? '#a8606e' : sex === 'M' ? '#5a7898' : '#8a7a5a';
+      ctx.fillStyle = 'rgba(70,46,20,0.18)'; ctx.fillRect(x + 2, y + 3, bw, bh);
+      ctx.fillStyle = sel ? '#fff4c8' : '#fbf4e2'; ctx.fillRect(x, y, bw, bh);
+      ctx.strokeStyle = sel ? '#b8862a' : INK; ctx.lineWidth = sel ? 2.4 : 1.2; ctx.strokeRect(x + 0.5, y + 0.5, bw - 1, bh - 1);
+      const name = e.indi ? displayName(e.indi) : '?', life = e.indi ? lifespan(e.indi) : '';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      if (e.sideways) {
+        ctx.fillStyle = stripe; ctx.fillRect(x + 1, y + 1, Math.max(2, bw * 0.1), bh - 2);
+        const two = bw >= 32 && !!life, size = Math.min(15, Math.max(9, bw * (two ? 0.34 : 0.5)));
+        ctx.save(); ctx.translate(x + bw / 2 + bw * 0.05, y + bh / 2); ctx.rotate(-Math.PI / 2);
+        ctx.fillStyle = '#2a1a0a'; ctx.font = `700 ${size}px "Cormorant Garamond", Georgia, serif`;
+        ctx.fillText(fitText(name, bh - 12), 0, two ? -size * 0.55 : 0);
+        if (two) { ctx.font = `italic 500 ${size * 0.84}px "Cormorant Garamond", Georgia, serif`; ctx.fillStyle = INK2; ctx.fillText(fitText(life, bh - 12), 0, size * 0.62); }
+        ctx.restore();
+      } else {
+        ctx.fillStyle = stripe; ctx.fillRect(x + 1, y + 1, bw - 2, Math.max(2, bh * 0.08));
+        const size = Math.min(e.k === 0 ? 20 : 17, Math.max(10, bh * 0.32)), two = !!life && bh > size * 2.6;
+        ctx.fillStyle = '#2a1a0a'; ctx.font = `700 ${size}px "Cormorant Garamond", Georgia, serif`;
+        ctx.fillText(fitText(name, bw - 10), x + bw / 2, y + bh * (two ? 0.4 : 0.54));
+        if (two) { ctx.font = `italic 500 ${size * 0.84}px "Cormorant Garamond", Georgia, serif`; ctx.fillStyle = INK2; ctx.fillText(fitText(life, bw - 10), x + bw / 2, y + bh * 0.74); }
+      }
+      // more of this line above: a small ▲ to climb it
+      if (e.more) { ctx.fillStyle = '#7a4a1a'; ctx.beginPath(); const ax = x + bw / 2, ay = y - 6 * Math.sqrt(s); ctx.moveTo(ax, ay - 8); ctx.lineTo(ax - 7, ay + 2); ctx.lineTo(ax + 7, ay + 2); ctx.closePath(); ctx.fill(); }
+      // and below the foot, the way back down
+      if (e.k === 0 && chart.stack.length) { ctx.fillStyle = '#7a4a1a'; ctx.font = `italic 600 13px "Cormorant Garamond", Georgia, serif`; ctx.fillText('▼ tap to go back down', x + bw / 2, y + bh + 14); }
+    }
+    // generation names down the left
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.font = `italic 600 13px "Cormorant Garamond", Georgia, serif`;
+    for (let k = 1; k < rows; k++) {
+      const label = k === 1 ? 'Parents' : relTo(k), yy = Y(rowY[k] - rowH[k] * 0.44) - 2, tw2 = ctx.measureText(label).width;
+      if (yy < 112 || yy > H - inset()) continue;
+      ctx.fillStyle = 'rgba(244,230,198,0.9)'; ctx.fillRect(24, yy - 8, tw2 + 10, 16);
+      ctx.fillStyle = 'rgba(74,50,24,0.85)'; ctx.fillText(label, 29, yy);
+    }
+    // the title on its own band of paper
+    const band = ctx.createLinearGradient(0, 0, 0, 124); band.addColorStop(0, 'rgba(240,224,188,0.97)'); band.addColorStop(0.8, 'rgba(240,224,188,0.9)'); band.addColorStop(1, 'rgba(240,224,188,0)');
+    ctx.fillStyle = band; ctx.fillRect(14, 14, W - 28, 110);
+    const footName = data.individuals.get(chart.root) ? displayName(data.individuals.get(chart.root)) : '';
+    ctx.textAlign = 'center';
+    ctx.font = `700 ${W < 600 ? 24 : 34}px "Cormorant Garamond", Georgia, serif`; ctx.fillStyle = '#3a240e';
+    ctx.fillText(fitText(`The Family Tree of ${footName}`, W - 60), W / 2, 56);
+    ctx.font = `italic 500 ${W < 600 ? 13 : 17}px "Cormorant Garamond", Georgia, serif`; ctx.fillStyle = INK2;
+    ctx.fillText(chart.stack.length ? `${chart.stack.length} generation${chart.stack.length === 1 ? '' : 's'} up from ${displayName(root.indi)} · tap a ▲ to climb further` : 'Tap a ▲ to climb a line · tap anyone to read about them', W / 2, 86);
+    const tw = Math.min(260, W * 0.3);
+    ctx.strokeStyle = 'rgba(74,50,24,0.5)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(W / 2 - tw, 102); ctx.lineTo(W / 2 - 14, 102); ctx.moveTo(W / 2 + 14, 102); ctx.lineTo(W / 2 + tw, 102); ctx.stroke();
+    ctx.beginPath(); ctx.arc(W / 2, 102, 3, 0, 7); ctx.fillStyle = 'rgba(74,50,24,0.6)'; ctx.fill();
+  }
+  // a tap on the chart: read about them, climb their line from the top row, or step back down from the foot
+  function chartTap(mx, my) {
+    const hit = chart.boxes.find(b => mx >= b.x - 4 && mx <= b.x + b.w + 4 && my >= b.y - 14 && my <= b.y + b.h + 20);
+    if (!hit) { state.selectedId = null; onSelect(null); return; }
+    const e = hit.e;
+    if (e.more) { chart.stack.push(chart.root); chart.root = e.id; }
+    else if (e.k === 0 && chart.stack.length) { chart.root = chart.stack.pop(); }
+    state.selectedId = e.id;
+    const info = personLines(e.indi), tp = tree.people.get(e.id);
+    onSelect({ ...info, rel: e.id === rootId ? 'You' : tp ? relationship(tp.gen, e.indi.sex).replace(/^./, c => c.toUpperCase()) : '', estimated: '' });
+  }
+  function chartHome() { view.s = 1; view.tx = 0; view.ty = 0; }
   let lastDraw = performance.now();
   function draw() {
+    if (state.chart) { drawChart(); return; }
     const now = performance.now(), t = now / 1000, dt = Math.min(0.1, (now - lastDraw) / 1000); lastDraw = now;
     if (state.autoDay) state.hour = (state.hour + dt * 24 / 80) % 24; // a whole day in 80 seconds
     const T = state.T, st = makeLook(state.season, state.hour);
@@ -430,6 +568,7 @@ export function createGrowTree(host, opts) {
   function tap(cx, cy) {
     const rect = canvas.getBoundingClientRect();
     const mx = cx - rect.left, my = cy - rect.top;
+    if (state.chart) { chartTap(mx, my); return; }
     let best = null, bd = Infinity;
     for (const p of people) {
       if (!visible(p, state.T) || !p.hitR) continue;
@@ -447,7 +586,7 @@ export function createGrowTree(host, opts) {
   canvas.addEventListener('pointerup', onUp);
   canvas.addEventListener('pointercancel', onUp);
   canvas.addEventListener('wheel', onWheel, { passive: false });
-  canvas.addEventListener('dblclick', () => { view.s = 1; view.tx = 0; view.ty = 0; });
+  canvas.addEventListener('dblclick', () => { if (state.chart) chartHome(); else { view.s = 1; view.tx = 0; view.ty = 0; } });
 
   // ---- loop ----
   let raf = 0, last = performance.now();
@@ -463,6 +602,7 @@ export function createGrowTree(host, opts) {
     onFrame(state);
   }
   state.T = startYear();
+  if (state.chart) chartHome();
   raf = requestAnimationFrame(frame);
 
   return {
@@ -480,6 +620,7 @@ export function createGrowTree(host, opts) {
     setVerses(list) { reader = list?.length ? new VerseReader(list) : null; },
     setSpacing(s) { state.spacing = s === 'gen' ? 'gen' : 'year'; },
     setSpeed(x) { state.speed = x; },
+    setChart(on) { state.chart = !!on; if (on) state.playing = false; state.selected = null; if (on) chartHome(); else { view.s = 1; view.tx = 0; view.ty = 0; } },
     resetView() { view.s = 1; view.tx = 0; view.ty = 0; },
     dispose() {
       cancelAnimationFrame(raf);

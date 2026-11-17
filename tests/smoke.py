@@ -1,13 +1,13 @@
 # Headless smoke test: loads the page, plays the demo in the Fluffy garden in each layout, on desktop and phone
 # sizes, opens both visualisations, and takes screenshots. (Story mode has its own: story-smoke.py.)
 #   python3 tests/smoke.py            (serve the folder on :8765 first for dev.html)
-#   PAGE=index.html python3 tests/smoke.py   (built single file, opened from disk)
+#   PAGE=explore.html python3 tests/smoke.py   (built single file, opened from disk)
 import asyncio, os, pathlib
 from playwright.async_api import async_playwright
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 VENDOR = pathlib.Path(os.environ.get('THREE_DIR', '/home/claude/vendor/three'))
 OUT = pathlib.Path(os.environ.get('SHOTS', '/tmp/claude-0/shots')); OUT.mkdir(parents=True, exist_ok=True)
-PAGE = os.environ.get('PAGE', 'dev.html')
+PAGE = os.environ.get('PAGE', 'dev.html?page=explore')   # the garden and Visualisation live on explore.html
 RUNS = [('fluffy', False, 'circle'), ('fluffy', True, 'half'), ('fluffy', True, 'tree')]
 
 async def run(b, name, vp, mobile, style, couples, shape='circle'):
@@ -25,7 +25,7 @@ async def run(b, name, vp, mobile, style, couples, shape='circle'):
         else:
             await r.abort()
     await page.route('**/*', route)
-    await page.goto((ROOT / PAGE).as_uri() if PAGE.startswith('index') else 'http://localhost:8765/' + PAGE)
+    await page.goto('http://localhost:8765/' + PAGE if PAGE.startswith('dev') else (ROOT / PAGE).as_uri())
     await page.wait_for_timeout(1200)
     await page.wait_for_timeout(300)
     tag = f'{name}-{style}-{shape}'

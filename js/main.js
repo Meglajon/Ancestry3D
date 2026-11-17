@@ -35,11 +35,10 @@ const LOOK_NOTES = {
 };
 // Each tab has its own name and look: Play is the Fluffy garden, Story is A Battle in Time (body.tab-story in
 // dev.html) and Visualisation is Roots & Stars (body.tab-viz). The menu keeps them even when Retro is ticked.
-const BRAND = {
-  play: ['Ancestry<br>Fluffs', 'Roll round and meet the family', 'Ancestry 3D'],
-  story: ['<span class="l1">Ancestry</span><span class="l2">A Battle in Time</span>', 'Four hundred years of family. One very old car.', 'Ancestry: A Battle in Time'],
-  viz: ['<span class="l0" aria-hidden="true">✦ ✦ ✦</span><span class="l1">Ancestry</span><span class="l2">Roots &amp; Stars</span>', 'Your family as a galaxy of stars, or a tree growing back through time.', 'Ancestry: Roots & Stars'],
-};
+// Story has a page to itself (index.html); Play and Visualisation share explore.html. The page script in dev.html
+// decides which page this is and sets the names (A3D_BRAND) and the tabs this page offers (A3D_TABS).
+const BRAND = window.A3D_BRAND;
+const TABS = window.A3D_TABS;
 const LOGOS = {
   retro: ['ANCESTRY<br>3D', 'WALK AMONG YOUR ANCESTORS'],
   island: ['Ancestry<br>Island', 'Come and meet the family'],
@@ -347,8 +346,8 @@ const VIZ_NOTES = {
   tree: 'A tree with you as the trunk that grows back in time, generation by generation, along a timeline. Record it as a video.',
 };
 function setTab(tab) {
-  S.tab = tab === 'viz' || tab === 'story' ? tab : 'play';
-  store.set('a3d:tab', S.tab);
+  S.tab = TABS.includes(tab) ? tab : TABS[0];
+  if (TABS.length > 1) store.set('a3d:tab', S.tab);
   document.body.classList.toggle('tab-viz', S.tab === 'viz');
   document.body.classList.toggle('tab-story', S.tab === 'story');
   const brand = BRAND[S.tab];
@@ -1404,7 +1403,7 @@ S.vizScope = 'ancestors';
 setVizKind(store.get('a3d:viz'));
 setTab(store.get('a3d:tab'));
 // The Story trailer stops itself whenever it goes out of sight: another tab, the game starting, or scrolled away.
-if ('IntersectionObserver' in window) new IntersectionObserver(es => { for (const e of es) if (!e.isIntersecting) e.target.pause(); }).observe($('trailer'));
+if ($('trailer') && 'IntersectionObserver' in window) new IntersectionObserver(es => { for (const e of es) if (!e.isIntersecting) e.target.pause(); }).observe($('trailer'));
 S.booted = true;
 buildAttract();
 // expose for debugging / tests

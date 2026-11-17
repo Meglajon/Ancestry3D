@@ -761,8 +761,50 @@ body.retroOn #menu .secret .secretFight { display: inline-flex; }
       </div>
       <div class="note" style="margin-top:8px">You start in the middle as the person you chose. Generations are paths in the garden: roll outward to go back in time. Blue lines run through fathers, red or pink through mothers.</div>
     </div>
+
+    <div class="card" id="cardOther">
+      <h2 id="otherTitle"></h2>
+      <div class="note"><a id="otherLink" href="#"></a></div>
+    </div>
   </div>
 </div>
+
+<script>
+// Two pages, one game. index.html is Story mode (A Battle in Time) on its own; explore.html is the Fluffy garden
+// (Play) and Roots & Stars (Visualisation). The build sets A3D_PAGE and A3D_OTHER (the other page's address, empty
+// where there is no other page to link to); while developing, dev.html is Story and dev.html?page=explore the rest.
+// This runs before the modules load, so the right tabs, name and look are on screen straight away.
+(() => {
+  const dev = !('A3D_PAGE' in window);
+  const page = window.A3D_PAGE = (dev ? new URLSearchParams(location.search).get('page') : window.A3D_PAGE) === 'explore' ? 'explore' : 'story';
+  const tabs = window.A3D_TABS = page === 'story' ? ['story'] : ['play', 'viz'];
+  // Each tab's logo, tagline and page title. main.js's setTab reads these when you switch tabs.
+  const brand = window.A3D_BRAND = {
+    play: ['Ancestry<br>Fluffs', 'Roll round and meet the family', 'Ancestry 3D'],
+    story: ['<span class="l1">Ancestry</span><span class="l2">A Battle in Time</span>', 'Four hundred years of family. One very old car.', 'Ancestry: A Battle in Time'],
+    viz: ['<span class="l0" aria-hidden="true">✦ ✦ ✦</span><span class="l1">Ancestry</span><span class="l2">Roots &amp; Stars</span>', 'Your family as a galaxy of stars, or a tree growing back through time.', 'Ancestry: Roots & Stars'],
+  };
+  let tab = tabs[0];
+  try { const saved = localStorage.getItem('a3d:tab'); if (tabs.includes(saved)) tab = saved; } catch (e) {}
+  const $ = id => document.getElementById(id);
+  for (const b of [...$('tabs').querySelectorAll('button')]) if (!tabs.includes(b.dataset.tab)) b.remove();
+  $('tabs').classList.toggle('hidden', tabs.length < 2);
+  if (page !== 'story') $('cardTrailer').remove();
+  document.body.classList.toggle('tab-story', tab === 'story');
+  document.body.classList.toggle('tab-viz', tab === 'viz');
+  $('logo').innerHTML = brand[tab][0]; $('tagline').textContent = brand[tab][1]; document.title = brand[tab][2];
+  const other = dev ? (page === 'story' ? 'dev.html?page=explore' : 'dev.html') : window.A3D_OTHER;
+  if (!other) { $('cardOther').remove(); return; }
+  $('otherLink').href = other;
+  if (page === 'story') {
+    $('otherTitle').textContent = 'More ways to see your family';
+    $('otherLink').textContent = 'Ancestry Fluffs (roll round a garden of your ancestors) and Roots & Stars (your family as a galaxy or a growing tree) →';
+  } else {
+    $('otherTitle').textContent = 'Story mode';
+    $('otherLink').textContent = 'Ancestry: A Battle in Time. Drive through the towns and years your family lived in →';
+  }
+})();
+</script>
 
 <script>
 // dev-only: browsers block module files on file:// pages, so point people at the built index.html

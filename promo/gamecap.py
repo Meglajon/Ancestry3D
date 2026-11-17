@@ -26,7 +26,6 @@ async def open_story(p, cuts=True, vp=(1280, 720), scale=1.5):
     await page.goto('http://127.0.0.1:8765/dev.html')
     await page.wait_for_timeout(900)
     await page.evaluate("document.fonts.ready")
-    await page.click('#tabs [data-tab="story"]')
     await page.click('#btnDemo')
     await page.wait_for_selector('#cardSetup:not(.hidden)')
     await page.evaluate("localStorage.clear(); localStorage.setItem('a3d:nocut', %s)" % ("'0'" if cuts else "'1'"))

@@ -4,6 +4,10 @@ Walk among your ancestors. Load a GEDCOM family tree and explore it three ways: 
 every ancestor is a fluffy ball you can chat to), **Story** (a top-down driving story through the towns and years
 they lived in) and **Visualisation** (a galaxy and a growing tree).
 
+Story mode has a page of its own: `index.html` is **Ancestry: A Battle in Time**, and `explore.html` holds the
+garden (Play) and Visualisation. Each page links to the other, and a tree loaded on one is ready to reload on the
+other.
+
 - **You are the root person.** Pick who you're playing on the setup screen; you start at the centre as them.
 - **Generations are paths on the ground.** Walk outward to go back in time. Each ancestor stands directly behind
   the child they descend through, fathers first.
@@ -31,7 +35,7 @@ they lived in) and **Visualisation** (a galaxy and a growing tree).
 
 ### Story mode: A Battle in Time
 
-The **Story** tab is a different game on the same family: a top-down driving story in the spirit of the
+**Story mode** (`index.html`) is a different game on the same family: a top-down driving story in the spirit of the
 mid-90s city crime games, played through the towns and years your ancestors actually lived in. A crooked heir
 hunter is rubbing your family out of the parish registers one generation at a time, and you have a battered
 estate car that runs on register ink to stop him.
@@ -103,7 +107,7 @@ search finds names, birthplaces and jobs.
 
 ## Visualisation
 
-The menu has two tabs: **Play** and **Visualisation**. Load a tree, pick whose family it is and how many
+On `explore.html` the menu has two tabs: **Play** and **Visualisation**. Load a tree, pick whose family it is and how many
 generations, then open one of these:
 
 - **Galaxy**: the family as glowing stars in 3D, with you as the sun in the middle. Stars are coloured by the
@@ -149,8 +153,8 @@ Bible verses: Scripture quotations taken from The Holy Bible, New International 
 
 ## Play
 
-- **Double-click `index.html`.** It is a single self-contained file, so it works straight from your disk, on
-  GitHub Pages, or any web host. It needs an internet connection the first time to fetch three.js and the fonts.
+- **Double-click `index.html`** for Story mode, or **`explore.html`** for the garden and Visualisation. Each is a
+  single self-contained file, so it works straight from your disk, on GitHub Pages, or any web host. It needs an internet connection the first time to fetch three.js and the fonts.
 - **Demo:** press *Play the demo family* to explore a fictional family from Lancashire, Yorkshire, the Black
   Country, Ireland, Jamaica and more.
 
@@ -167,15 +171,18 @@ Phones work in portrait, but landscape gives the best view.
 
 ## Host it on GitHub Pages
 
-Settings → Pages → *Deploy from a branch* → `main` / root. The game will be at `https://<user>.github.io/<repo>/`.
+Settings → Pages → *Deploy from a branch* → `main` / root. Story mode will be at `https://<user>.github.io/<repo>/` and the garden
+and Visualisation at `https://<user>.github.io/<repo>/explore.html`.
 
 ## Develop
 
 Plain ES modules, no framework. three.js r160 is loaded from jsDelivr through an import map.
 
 ```
-index.html          built, self-contained game (generated, don't edit by hand)
-dev.html            source page: HUD, menus, styles and the Visualisation screen (loads js/* as modules; needs a local server)
+index.html          built, self-contained Story mode page (generated, don't edit by hand)
+explore.html        built, self-contained garden and Visualisation page (generated, don't edit by hand)
+dev.html            source page for both: HUD, menus, styles and the Visualisation screen (loads js/* as modules; needs
+                    a local server). dev.html is the Story page, dev.html?page=explore the other one
 js/gedcom.js        GEDCOM parser (any line endings, CONC/CONT, shared notes, all life events, ANSI/UTF-16 decoding)
 js/ancestry.js      ancestor walk (Ahnentafel, pedigree collapse), relationships, ground layout, couples
 js/places.js        place gazetteer: region, dialect and colouring for a GEDCOM place
@@ -209,11 +216,12 @@ tests/              parser, layout and story tests (npm test), headless browser 
 ```
 npm test            # parser, dates, layout spacing (incl. a 2,047-person tree, couples mode and every layout),
                     # and the story: every person in the demo file as hero, plus awkward trees
-npm run build       # writes index.html (self-contained) and dist/artifact.html
+npm run build       # writes index.html and explore.html (self-contained), and dist/artifact*.html
 ```
 
-While developing, serve the folder (e.g. `python3 -m http.server`) and open http://localhost:8000/dev.html,
-then run `npm run build` to refresh `index.html`.
+While developing, serve the folder (e.g. `python3 -m http.server`) and open http://localhost:8000/dev.html
+(Story) or http://localhost:8000/dev.html?page=explore (garden and Visualisation), then run `npm run build` to
+refresh `index.html` and `explore.html`.
 
 ### Layout
 
